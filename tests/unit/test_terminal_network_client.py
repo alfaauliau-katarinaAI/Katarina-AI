@@ -49,6 +49,9 @@ const packet={captured_at_utc:stamp,agent_board:{schema_version:1,result:'SNAPSH
  operational:{market_tick_utc:stamp,technical_evaluations:[{symbol:'XAUUSD',method:'TREND_PULLBACK',market_state:'TREND_UP',action:'WAIT'}]},
  activity:{pid:42,cycle:4,fresh:true,events:[event(1,'CONNECT','STARTED'),event(2,'TECHNICAL','DONE',{symbol:'XAUUSD',method:'TREND_PULLBACK',market_state:'TREND_UP',action:'WAIT'})],current:event(2,'TECHNICAL','DONE')},
  lanes:['SCAN','ANALYST','STRATEGY','BALANCE','EXEC','AUDIT'].map(id=>({id,status:id==='EXEC'?'LIVE_OFF':'OBSERVED',description:id}))}};
+const docId='document:'+ 'a'.repeat(24),partId='paragraph:'+ 'b'.repeat(24);
+packet.agent_board.research_graph={nodes:[{id:docId,kind:'document',label:'DOC / aaaaaaaa',known_utc:stamp},{id:partId,kind:'paragraph',label:'TEXT / bbbbbbbb',known_utc:stamp}],edges:[{a:docId,b:partId,relation:'PART_OF_DOCUMENT'}],total_documents:1};
+packet.agent_board.entries={status:'OBSERVED',positions:[]};
 sandbox.packet=packet;
 run('render(packet)');
 assert.equal(get('symbols').textContent,'1');assert.equal(get('cycles').textContent,'4');
@@ -62,7 +65,7 @@ const graphBefore=run('graph'),tableRowBefore=get('events').children[0],watchBef
 run('render(packet)');assert.equal(run('pulseKeys.size'),0);
 assert.equal(run('graph'),graphBefore);assert.equal(get('events').children[0],tableRowBefore);
 assert.equal(get('watch').children[0],watchBefore);
-assert.equal(run('orbitOn'),false);get('orbit').listeners.click();assert.equal(run('orbitOn'),true);
+assert.equal(run('orbitOn'),true);
 const orbitYaw=run('yaw');run('draw(500)');run('draw(560)');assert.ok(run('yaw')>orbitYaw);
 get('orbit').listeners.click();assert.equal(run('orbitOn'),false);
 const stoppedYaw=run('yaw');run('draw(600)');assert.equal(run('yaw'),stoppedYaw);
@@ -78,8 +81,8 @@ assert.equal(get('lanes').children.filter(x=>x.className==='lane active').length
 assert.equal(run('detailed'),false);assert.equal(run('graph.nodes.filter(n=>n.kind==="attribute"||n.kind==="event").length'),0);
 get('detail-mode').listeners.click();assert.ok(run('graph.nodes.some(n=>n.kind==="event")'));
 get('detail-mode').listeners.click();assert.equal(run('graph.nodes.filter(n=>n.kind==="event").length'),0);
-run('selectNode("s:XAUUSD")');assert.ok(get('selection').children[1].textContent.includes('TREND_PULLBACK'));
-assert.equal(get('node-select').value,'s:XAUUSD');
+run('selectNode("k:"+packet.agent_board.research_graph.nodes[0].id)');assert.ok(get('selection').children[1].textContent.includes('DOC / aaaaaaaa'));
+assert.equal(get('node-select').value,'k:'+docId);
 const yaw0=run('yaw');
 get('network').listeners.pointerdown({pointerId:1,clientX:20,clientY:20});
 get('network').listeners.pointermove({pointerId:1,clientX:60,clientY:25});
@@ -109,13 +112,18 @@ sandbox.stale=stale;assert.throws(()=>run('render(stale)'),/kedaluwarsa/);
  clock=fixed;packet.agent_board.result='SNAPSHOT_PASS';packet.agent_board.snapshot_process_matches=true;
  sandbox.fetch=async()=>({ok:true,json:async()=>packet});
  await run('refresh()');const retained=run('graph');assert.ok(retained.nodes.length>0);
+const newId='document:'+ 'c'.repeat(24);clock=fixed+1000;packet.captured_at_utc=new Date(clock).toISOString();
+packet.agent_board.research_graph.nodes.push({id:newId,kind:'document',label:'DOC / cccccccc',known_utc:new Date(fixed+500).toISOString()});
+await run('refresh()');assert.ok(run('nodeMap.has("k:"+packet.agent_board.research_graph.nodes.at(-1).id)'));
+assert.ok(run('pulseKeys.has("knowledge:"+packet.agent_board.research_graph.nodes.at(-1).id)'));
+const retainedNew=run('graph');
  sandbox.fetch=async()=>{throw new TypeError('temporary network loss')};clock=fixed+1000;
- await run('refresh()');assert.equal(run('graph'),retained);assert.ok(get('notice').textContent.includes('snapshot terakhir'));
- clock=fixed+121000;await run('refresh()');assert.equal(run('graph.nodes.length'),0);
+ await run('refresh()');assert.equal(run('graph'),retainedNew);assert.ok(get('notice').textContent.includes('snapshot terakhir'));
+ clock=fixed+122000;await run('refresh()');assert.equal(run('graph.nodes.length'),0);
  assert.equal(get('symbols').textContent,'—');
  console.log('PASS_TERMINAL_EVENTS_TOUCH_ZOOM_INSPECTION_PULSE_EXPIRY_REFRESH');
 })().catch(error=>{console.error(error);process.exitCode=1});
 """
         result = subprocess.run([shutil.which("node")], input=harness.replace("WORKER_SOURCE", json.dumps(source), 1),
-                                capture_output=True, text=True, timeout=20)
+                                capture_output=True, text=True, encoding='utf-8', timeout=20)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

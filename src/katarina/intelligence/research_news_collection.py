@@ -164,7 +164,8 @@ def collect(db, now, *, exchange=None):
     return dict(source_checked=source,status=status,new_documents=new,total_documents=total,
                 source_count=len(SOURCES),source_statuses={r[0]:r[1] for r in db.execute(
                     'SELECT source,status FROM research_news_fetches')},
-                document_contexts=[dict(id=ident,source=src,known_utc=known,**describe_body(body))
+                document_contexts=[dict(id=ident,source=src,known_utc=known,**describe_body(body),
+                    paragraph_ids=[sha256(p.strip().encode()).hexdigest() for p in body.splitlines() if len(p.split())>=12][:8])
                     for ident,src,known,body in db.execute(
                         'SELECT id,source,known_utc,body FROM research_news_documents ORDER BY known_utc DESC LIMIT 48')],
                 scope='AUXILIARY_RESEARCH_NO_MACRO_CLEARANCE',

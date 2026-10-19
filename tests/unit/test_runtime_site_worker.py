@@ -42,6 +42,11 @@ const packet={captured_at_utc:now,private:'PRIVATE_SENTINEL',agent_board:{
 packet.agent_board.learning={status:'NO_NEW_MATURED_EVIDENCE',observation_utc:now,cognitive_as_of_utc:now,
  ledger_status:'ALREADY_LEARNED_NO_REWRITE',matured_observations:0,memory_records_inserted:0,
  shadow_rows_read:1,external_models_invoked:0,account_login:'PRIVATE_SENTINEL',improvement_verified:true};
+packet.agent_board.operational.technical_evaluations[0].symbol='PRIVATE_MARKET_SYMBOL';
+packet.agent_board.activity.events[0].symbol='PRIVATE_MARKET_SYMBOL';
+packet.agent_board.entries={status:'OBSERVED',positions:[{symbol:'EURUSD',side:'BUY',entry_price:1.2,opened_utc:now,lot:88,profit:'PRIVATE_SENTINEL',ticket:'PRIVATE_SENTINEL'}]};
+const docId='document:'+ 'a'.repeat(24),partId='paragraph:'+ 'b'.repeat(24);
+packet.agent_board.research_graph={nodes:[{id:docId,kind:'document',label:'DOC / aaaaaaaa',known_utc:now,body:'PRIVATE_SENTINEL'},{id:partId,kind:'paragraph',label:'TEXT / bbbbbbbb'}],edges:[{a:docId,b:partId,relation:'PART_OF_DOCUMENT'}],total_documents:1};
 assert.equal((await request('/public-status')).status,503);
 assert.match(await (await request('/')).text(),/const PUBLIC_STATUS = true;/);
 assert.equal((await request('/ingest',packet)).status,403);
@@ -55,7 +60,12 @@ assert.equal(JSON.parse(body).agent_board.activity.current.phase,'TECHNICAL');
 assert.equal(JSON.parse(body).agent_board.learning.status,'NO_NEW_MATURED_EVIDENCE');
 assert.equal(JSON.parse(body).agent_board.learning.memory_records_inserted,0);
 assert.equal(JSON.parse(body).agent_board.learning.improvement_verified,false);
-assert.equal(JSON.parse(body).agent_board.operational.technical_evaluations[0].action,'WAIT');
+assert.deepEqual(JSON.parse(body).agent_board.operational,{});
+assert.ok(!body.includes('PRIVATE_MARKET_SYMBOL'));assert.ok(!body.includes('"lot"'));assert.ok(!body.includes('"ticket"'));
+assert.equal(JSON.parse(body).agent_board.entries.positions[0].symbol,'EURUSD');
+assert.equal(JSON.parse(body).agent_board.entries.positions[0].entry_price,1.2);
+assert.equal(JSON.parse(body).agent_board.research_graph.nodes.length,2);
+assert.equal(JSON.parse(body).agent_board.research_graph.edges.length,1);
 assert.equal((await request('/ingest',packet,token)).status,409);
 const stale=structuredClone(packet);stale.captured_at_utc=new Date(Date.now()-121000).toISOString();
 assert.equal((await request('/ingest',stale,token)).status,400);
