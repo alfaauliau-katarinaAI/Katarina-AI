@@ -56,7 +56,12 @@ sandbox.packet=packet;
 run('render(packet)');
 assert.equal(get('symbols').textContent,'1');assert.equal(get('cycles').textContent,'4');
 assert.equal(get('execution').textContent,'LIVE / OFF');assert.equal(get('model-proof').textContent,'BELUM TERHUBUNG');
-assert.equal(get('events').children.length,2);assert.equal(get('lanes').children.length,6);
+assert.equal(get('events').children.length,2);
+assert.ok(get('engine-headline').textContent.includes('Menganalisis pasar'));
+assert.ok(get('events').children.some(row=>row.children[1].textContent==='Menganalisis pasar'));
+assert.equal(run('humanPhase("WAIT_ACK")'),'Memeriksa balasan penghubung');
+assert.ok(run('phaseNotes.WAIT_ACK').includes('bukan permintaan persetujuan'));
+assert.ok(page.includes('Mengapa alamatnya memakai chatgpt.site?'));assert.equal(get('lanes').children.length,6);
 assert.equal(run('pulseKeys.size'),0); // first load is historical, not new work
 assert.ok(run('graph.nodes.length')>2);
 assert.ok(run('graph.edges.every(e=>nodeMap.has(e.a)&&nodeMap.has(e.b))'));
