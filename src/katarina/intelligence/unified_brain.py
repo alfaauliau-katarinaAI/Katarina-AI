@@ -306,6 +306,10 @@ class UnifiedKatarinaBrain:
         return {"commands":[asdict(c) for c in commands], "orders_submitted":0,
                 "delivery":"DISABLED", "live_execution_authorized":False}
 
+    def market_atr(self, rows):
+        """Delegate observed volatility to the existing perception engine."""
+        return self._perception._atr(rows)
+
     def evaluate_contextually(self, **evidence):
         # Preserve the existing market decision semantics and hard controls.
         return self._perception.evaluate_contextually(**evidence)

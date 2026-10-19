@@ -1,5 +1,7 @@
 """A real offline observer emits events only around its existing execution path."""
 from pathlib import Path
+from dataclasses import replace
+from unittest.mock import patch
 import tempfile
 import unittest
 from katarina.adapters.automatic_connection import BoundLocalBroker
@@ -65,3 +67,31 @@ class ObserverActivityTests(unittest.TestCase):
                         max_symbols=3,max_cycles=2,wait=lambda _:None)
                 self.assertEqual(read_activity(root)['current']['phase'],'BLOCKED')
                 self.assertEqual(broker.orders,0)
+
+    def test_conditional_research_hypothesis_uses_the_existing_atr_engine(self):
+        calls=[]
+        class CandidateBrain(UnifiedKatarinaBrain):
+            def evaluate_contextually(self,**evidence):
+                card=super().evaluate_contextually(**evidence)
+                price=evidence['candles']['M5'][-1].close
+                return replace(card,conditional_side='BUY',
+                    conditional_invalidation=price*.5,conditional_target=price*1.5)
+            def market_atr(self,rows):
+                calls.append(len(rows))
+                return super().market_atr(rows)
+        with tempfile.TemporaryDirectory() as tmp:
+            broker=AccountBroker();root=Path(tmp)
+            # Force this engineering branch, not a profitable strategy or live permission.
+            with patch('katarina.intelligence.brain_observer.calendar_status',
+                       return_value=(True,False,'fixture_calendar')):
+                result=run_continuous(root,config=config(priority=('local',),attempts=1),
+                    factories={'local':lambda c:BoundLocalBroker(broker,c)},brain_type=CandidateBrain,
+                    max_symbols=3,max_cycles=1)
+            self.assertGreater(len(calls),0)
+            self.assertTrue(all(n>=55 for n in calls))
+            self.assertEqual(result['received_market_data_symbols'],result['observed_symbols'] if 'observed_symbols' in result else 3)
+            import json
+            report=json.loads((root/'latest.json').read_text(encoding='utf-8'))
+            self.assertTrue(all(card['market_state']!='UNKNOWN' for card in report['symbols'].values()))
+            self.assertTrue(all(card['live_execution_authorized'] is False for card in report['symbols'].values()))
+            self.assertEqual(broker.orders,0)
