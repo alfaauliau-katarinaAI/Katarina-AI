@@ -99,7 +99,18 @@ run('render(packet)');assert.equal(get('symbols').textContent,'—');assert.equa
 assert.equal(run('graph.nodes.filter(n=>n.kind==="symbol").length'),0);
 const stale=JSON.parse(JSON.stringify(packet));stale.captured_at_utc=new Date(fixed-121000).toISOString();
 sandbox.stale=stale;assert.throws(()=>run('render(stale)'),/kedaluwarsa/);
-console.log('PASS_TERMINAL_EVENTS_TOUCH_ZOOM_INSPECTION_PULSE_EXPIRY');
+;(async()=>{
+ // Let the initial failed automatic request finish before testing the real refresh path.
+ await new Promise(resolve=>setImmediate(resolve));
+ clock=fixed;packet.agent_board.result='SNAPSHOT_PASS';packet.agent_board.snapshot_process_matches=true;
+ sandbox.fetch=async()=>({ok:true,json:async()=>packet});
+ await run('refresh()');const retained=run('graph');assert.ok(retained.nodes.length>0);
+ sandbox.fetch=async()=>{throw new TypeError('temporary network loss')};clock=fixed+1000;
+ await run('refresh()');assert.equal(run('graph'),retained);assert.ok(get('notice').textContent.includes('snapshot terakhir'));
+ clock=fixed+121000;await run('refresh()');assert.equal(run('graph.nodes.length'),0);
+ assert.equal(get('symbols').textContent,'—');
+ console.log('PASS_TERMINAL_EVENTS_TOUCH_ZOOM_INSPECTION_PULSE_EXPIRY_REFRESH');
+})().catch(error=>{console.error(error);process.exitCode=1});
 """
         result = subprocess.run([shutil.which("node")], input=harness.replace("WORKER_SOURCE", json.dumps(source), 1),
                                 capture_output=True, text=True, timeout=20)
