@@ -1,7 +1,7 @@
 {
   "endpoint": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-  "fast_model": "gemini-2.5-flash-lite",
-  "deep_model": "gemini-2.5-flash-lite",
+  "fast_model": "gemini-3.5-flash-lite",
+  "deep_model": "gemini-3.5-flash-lite",
   "token_env": "GEMINI_API_KEY",
   "timeout_seconds": 25,
   "max_output_tokens": 650,
