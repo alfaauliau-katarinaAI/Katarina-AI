@@ -14,7 +14,13 @@ def owner_surface(model=None, *, workspace=None, sources_config=None, state_dir=
     @contextmanager
     def attach(brain):
         brain.dashboard_model = model
+        public_only = getattr(getattr(model, 'config', None), 'data_scope', None) == 'PUBLIC_RESEARCH_ONLY'
+        brain.public_research_model = model if public_only else None
         def turn(text, *, session_id, mode='auto', principal=None):
+            if public_only:
+                return dict(status='BLOCKED_EXTERNAL_MODEL_PUBLIC_ONLY',
+                            answer='Gemini hanya untuk riset artikel publik; dialog dan memori privat tidak dikirim.',
+                            trace=[], orders_submitted=0, live_execution_authorized=False)
             if model is None:
                 return dict(status='BLOCKED_MODEL_NOT_CONFIGURED',
                             answer='Model dialog belum dikonfigurasi. Gunakan pemeriksaan status.',
@@ -44,8 +50,8 @@ def owner_surface(model=None, *, workspace=None, sources_config=None, state_dir=
                               'telemetry': model.telemetry() if callable(getattr(model, 'telemetry', None)) else None}
             from katarina.monitoring.activity_trace import read_activity
             board['activity'] = read_activity(state_dir) if state_dir is not None else {}
-            return {**evidence, 'dialog_available': model is not None,
-                    'surface_mode': 'DIALOG_AND_STATUS' if model is not None else 'STATUS_ONLY',
+            return {**evidence, 'dialog_available': model is not None and not public_only,
+                    'surface_mode': 'PUBLIC_RESEARCH_AND_STATUS' if public_only else 'DIALOG_AND_STATUS' if model is not None else 'STATUS_ONLY',
                     'delivery': delivery,
                     'agent_board': board}
         server = create_server(turn, status_callback=status, **server_options)

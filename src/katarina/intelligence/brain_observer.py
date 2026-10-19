@@ -232,6 +232,16 @@ class BrainObserver:
         research_news=collect_research_news(store.db,datetime.now(timezone.utc)) if fetch_news and os.environ.get('KATARINA_EXTENDED_NEWS_RESEARCH')=='1' else {'status':'DISABLED','new_documents':[]}
         for document in research_news['new_documents']:
             brain.memory.append_operational_event('research_news_body_v1',document,event_id='research-news:'+document['id'])
+        language_research = {'status': 'MODEL_NOT_CONFIGURED', 'live_execution_authorized': False}
+        research_model = getattr(brain, 'public_research_model', None)
+        if research_model is not None and fetch_news and os.environ.get('KATARINA_EXTENDED_NEWS_RESEARCH') == '1':
+            from katarina.intelligence.public_language_research import review_one
+            emit('RESEARCH','STARTED')
+            language_research = review_one(store.db, datetime.now(timezone.utc), model=research_model)
+            emit('RESEARCH','DONE')
+            if language_research['status'] == 'CANDIDATE_RECORDED':
+                brain.memory.append_operational_event('public_language_research_v1', language_research,
+                    event_id='public-language:' + language_research['review_id'])
         now=datetime.now(timezone.utc)
         emit('NEWS','DONE',count=len(articles))
         emit('SENSORS','STARTED')
@@ -422,6 +432,7 @@ class BrainObserver:
         emit('ASSOCIATION','STARTED')
         report['observational_associations'] = observe_associations(store.db, latest_quotes, now)
         report['research_news']=research_news
+        report['public_language_research']=language_research
         report['news_market_event_study']=event_study(store.db,now)
         brain.memory.append_operational_event('news_market_event_study_v1',report['news_market_event_study'])
         association = report['observational_associations']
