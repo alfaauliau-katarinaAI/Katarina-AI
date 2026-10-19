@@ -24,4 +24,10 @@ def build_public_runtime(root):
     board['model']={'configured':status.get('model_configured') is True,
                     'telemetry':status.get('model_telemetry',{})}
     board['activity']=activity
-    return public_dashboard_snapshot({'agent_board':board})
+    public = public_dashboard_snapshot({'agent_board':board})
+    from katarina.monitoring.learning_evidence import read_learning
+    public['agent_board']['learning'] = (
+        read_learning(root, observation_utc=evidence.get('operational', {}).get('observation_utc'))
+        if board['snapshot_process_matches'] and board.get('result') == 'SNAPSHOT_PASS'
+        else {'status': 'NOT_ATTESTED', 'source': 'CANONICAL_RESEARCH_SNAPSHOT'})
+    return public
