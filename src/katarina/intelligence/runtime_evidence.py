@@ -74,7 +74,9 @@ def assess_runtime(status, observation, *, now=None, max_age_seconds=180):
     if (type(cycles) is not int or type(successful) is not int
             or not 1 <= successful <= cycles):
         blockers.append('INVALID_CYCLE_COUNTERS')
+    from katarina.monitoring.runtime_details import runtime_details
     return dict(schema_version=1, assessed_at_utc=now.isoformat(),
+                operational=runtime_details(status, observation, fresh=not blockers),
                 result='BLOCKED' if blockers else 'PASS_READONLY_SNAPSHOT_ONLY',
                 blockers=sorted(set(blockers)),
                 received_market_data_symbols=count if type(count) is int else None,

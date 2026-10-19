@@ -40,6 +40,11 @@ def project_agent_board(evidence: Mapping[str, Any], *, delivery: str = "DISABLE
     blockers = sorted(set(b for b in blockers
                           if isinstance(b, str) and len(b) <= 96)) if isinstance(blockers, list) else []
     delivery_off = delivery == "DISABLED"
+    operational = evidence.get("operational")
+    operational = operational if isinstance(operational, dict) and passed else {}
+    cards = operational.get("technical_evaluations")
+    cards = cards if isinstance(cards, list) else []
+    book = operational.get("account_book_observed") is True
     statuses = {
         "SCAN": ("OBSERVED" if passed and count is not None else "BLOCKED",
                  "Snapshot pasar lolos pemeriksaan" if passed and count is not None
@@ -54,7 +59,13 @@ def project_agent_board(evidence: Mapping[str, Any], *, delivery: str = "DISABLE
                   "Struktur dan freshness snapshot lolos" if passed
                   else "Snapshot gagal pemeriksaan"),
     }
+    if cards:
+        statuses["ANALYST"] = ("TECHNICAL_EVALUATED", str(len(cards)) + " analisis teknis nyata; bukan panggilan model bahasa")
+        statuses["STRATEGY"] = ("RESEARCH_EVALUATED", "Metode dan tindakan dari output mesin; belum bukti profit atau izin trading")
+    if book:
+        statuses["BALANCE"] = ("BOOK_OBSERVED", "Posisi/order broker dibaca; Risk Governor belum memberi izin eksekusi")
     return {
+        "operational": operational,
         "schema_version": 1,
         "architecture": "SINGLE_UNIFIED_KATARINA_BRAIN",
         "visualization_only": True,
