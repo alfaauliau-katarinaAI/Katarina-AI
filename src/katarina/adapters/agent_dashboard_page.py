@@ -45,7 +45,7 @@ canvas{width:100%;height:100%;display:block}.center-note{font-size:12px;margin-t
 <div class="stat"><small>Profit broker terverifikasi</small><strong id="profit">—</strong></div>
 </section>
 <section class="layout">
-<div class="panel"><h2>Brain Topology</h2><div class="network"><canvas id="mesh" role="img" aria-label="Ilustrasi statis enam kemampuan di sekitar satu otak Katarina"></canvas></div><p class="center-note">Diagram jaringan hanya ilustrasi arsitektur. Garis dan titik bukan aktivitas neuron atau bukti transaksi.</p></div>
+<div class="panel"><h2>Proses Katarina Nyata</h2><p id="process-proof">Proses belum diperiksa.</p><p id="model-proof">Model AI belum diperiksa.</p><p id="book-proof">Buku posisi broker belum diperiksa.</p><div style="overflow-x:auto"><table style="width:100%;font-size:12px;text-align:left"><thead><tr><th>Simbol</th><th>Kondisi</th><th>Metode</th><th>Tindakan</th></tr></thead><tbody id="evaluations"></tbody></table></div><p class="center-note">Baris hanya berasal dari keluaran mesin pada snapshot terbaru. Analisis teknis deterministik, panggilan model bahasa, dan izin trading adalah bukti yang berbeda.</p></div>
 <div class="panel"><h2>Status Kapabilitas</h2><div class="lanes" id="lanes"><p>Status belum diterima.</p></div></div>
 </section>
 <section class="panel"><h2>Evidence &amp; Limitations</h2><div id="blockers">Snapshot broker, risk governor, kualitas model, serta profit belum dibuktikan pada sesi ini.</div>
@@ -56,24 +56,21 @@ canvas{width:100%;height:100%;display:block}.center-note{font-size:12px;margin-t
 const names=["SCAN","ANALYST","STRATEGY","BALANCE","EXEC","AUDIT"];
 const $=id=>document.getElementById(id);
 let timer=null,busy=false;
-function visual(){
- const canvas=$("mesh"),bounds=canvas.getBoundingClientRect(),ratio=Math.min(2,window.devicePixelRatio||1);
- const w=Math.max(260,bounds.width),h=Math.max(200,bounds.height);
- canvas.width=Math.round(w*ratio);canvas.height=Math.round(h*ratio);
- const g=canvas.getContext("2d");if(!g)return;g.scale(ratio,ratio);
- const cx=w/2,cy=h/2,r=Math.min(w*.34,h*.35);
- const pts=names.map((name,i)=>{const a=(i/6)*2*Math.PI-Math.PI/2;return {name,x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r}});
- g.strokeStyle="#326079";g.lineWidth=1.3;
- for(const p of pts){g.beginPath();g.moveTo(cx,cy);g.lineTo(p.x,p.y);g.stroke()}
- for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++)if((i+j)%3===0){g.strokeStyle="#204159";g.beginPath();g.moveTo(pts[i].x,pts[i].y);g.lineTo(pts[j].x,pts[j].y);g.stroke()}
- g.shadowColor="#3ebea9";g.shadowBlur=21;g.fillStyle="#12404a";g.beginPath();g.arc(cx,cy,45,0,Math.PI*2);g.fill();g.shadowBlur=0;g.strokeStyle="#5fe5d0";g.stroke();
- g.fillStyle="#e9ffff";g.font="bold 14px system-ui";g.textAlign="center";g.textBaseline="middle";g.fillText("KATARINA",cx,cy-6);g.font="11px system-ui";g.fillText("ONE BRAIN",cx,cy+13);
- pts.forEach(p=>{g.fillStyle="#12304a";g.strokeStyle="#537b9b";g.beginPath();g.arc(p.x,p.y,Math.max(21,Math.min(28,w/17)),0,Math.PI*2);g.fill();g.stroke();g.fillStyle="#e6f2ff";g.font="bold 10px system-ui";g.fillText(p.name,p.x,p.y)});
-}
 function classify(value){return ["OBSERVED","SNAPSHOT_PASS"].includes(value)?"ok":value==="BLOCKED"?"bad":"warn"}
 function put(id,text){$(id).textContent=String(text)}
 function render(report){
  const board=report.agent_board;if(!board||board.schema_version!==1||!Array.isArray(board.lanes))throw Error("Status agent belum tersedia di versi server ini.");
+ const op=board.operational||{}, model=board.model||{};
+ put("process-proof","PID server: "+(board.current_process_pid||"—")+" · snapshot cocok: "+(board.snapshot_process_matches===true?"YA":"BELUM TERVERIFIKASI")+" · siklus: "+(board.cycles??"—")+" · tick UTC: "+(op.market_tick_utc||"—"));
+ const telemetry=model.telemetry;
+ put("model-proof",model.configured===true?"Model dikonfigurasi · panggilan berhasil: "+(telemetry?.successful_calls??"belum ada bukti")+" · kualitas belum tervalidasi":"Model bahasa BELUM TERHUBUNG; analisis tabel berasal dari mesin teknis.");
+ put("book-proof",op.account_book_observed===true?"Buku broker: "+op.positions_count+" posisi · "+op.pending_orders_count+" pending · izin risiko: BELUM DIBERIKAN":"Buku broker belum tervalidasi.");
+ const table=$("evaluations");table.replaceChildren();
+ for(const row of (Array.isArray(op.technical_evaluations)?op.technical_evaluations:[])){
+  const tr=document.createElement("tr");
+  for(const value of [row.symbol,row.market_state,row.method,row.action]){const td=document.createElement("td");td.textContent=String(value);tr.append(td)}
+  table.append(tr);
+ }
  put("overall",board.result);put("symbols",board.market_symbols===null?"—":board.market_symbols);
  put("cycles",Number.isInteger(board.cycles)?board.cycles:"—");
  put("execution",board.delivery==="DISABLED"?"LIVE OFF":"BELUM TERVERIFIKASI");
@@ -95,6 +92,7 @@ function render(report){
 function invalidate(){
  put("overall","BELUM TERVERIFIKASI");put("symbols","—");put("cycles","—");
  put("execution","BELUM TERVERIFIKASI");put("profit","—");
+ $("evaluations").replaceChildren();put("process-proof","Proses belum terverifikasi.");put("model-proof","Status model belum terverifikasi.");put("book-proof","Buku broker belum terverifikasi.");
  $("lanes").replaceChildren();put("blockers","Data tidak tersedia; lakukan pemeriksaan berautentikasi lagi.");
  put("timestamp","Pembaruan terakhir: —");
 }
@@ -112,5 +110,5 @@ $("refresh").addEventListener("click",refresh);
 $("auto").addEventListener("click",()=>{if(timer){clearInterval(timer);timer=null}else{timer=setInterval(()=>{if(!document.hidden)refresh()},30000);refresh()}
  const on=Boolean(timer);$("auto").textContent=on?"Auto: ON":"Auto: OFF";$("auto").setAttribute("aria-pressed",String(on));
 });
-window.addEventListener("resize",visual);visual();
+
 </script></body></html>'''

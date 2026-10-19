@@ -1,6 +1,7 @@
 """Foreground HTTP requests run serially inside the existing observation brain."""
 from contextlib import contextmanager
 import time
+import os
 
 from katarina.adapters.owner_dialog_server import create_server
 
@@ -34,10 +35,16 @@ def owner_surface(model=None, *, workspace=None, sources_config=None, state_dir=
                 result='BLOCKED', blockers=['OBSERVER_STATE_NOT_CONFIGURED'], live_clearance=False)
             from katarina.monitoring.agent_projection import project_agent_board
             delivery = brain.control.snapshot()['delivery']
+            board = project_agent_board(evidence, delivery=delivery)
+            board['current_process_pid'] = os.getpid()
+            operational = evidence.get('operational', {})
+            board['snapshot_process_matches'] = operational.get('snapshot_pid') == os.getpid()
+            board['model'] = {'configured': model is not None, 'quality_verified': False,
+                              'telemetry': model.telemetry() if callable(getattr(model, 'telemetry', None)) else None}
             return {**evidence, 'dialog_available': model is not None,
                     'surface_mode': 'DIALOG_AND_STATUS' if model is not None else 'STATUS_ONLY',
                     'delivery': delivery,
-                    'agent_board': project_agent_board(evidence, delivery=delivery)}
+                    'agent_board': board}
         server = create_server(turn, status_callback=status, **server_options)
         try:
             def idle(_):

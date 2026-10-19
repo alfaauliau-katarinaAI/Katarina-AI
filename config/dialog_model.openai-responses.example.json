@@ -1,0 +1,9 @@
+{
+  "endpoint": "https://api.openai.com/v1/responses",
+  "fast_model": "gpt-6.1-sol",
+  "deep_model": "gpt-6-astra",
+  "token_env": "KATARINA_MODEL_TOKEN",
+  "timeout_seconds": 60,
+  "max_output_tokens": 4096,
+  "api_format": "responses"
+}
