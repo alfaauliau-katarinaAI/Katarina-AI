@@ -32,6 +32,7 @@ def main():
     parser.add_argument('--max-cycles', type=int, help='Optional bounded observation soak')
     parser.add_argument('--owner-model-config', help='Optional dialog on the same continuous brain')
     parser.add_argument('--owner-status-ui', action='store_true', help='Authenticated status on the same brain; model optional')
+    parser.add_argument('--owner-public-status', action='store_true', help='Opt-in token-free technical dashboard only; Owner commands stay authenticated')
     parser.add_argument('--owner-access-config', help='Private revocable Owner/analyst token hash policy')
     parser.add_argument('--owner-workspace', help='Owner-granted read-only folder')
     parser.add_argument('--owner-sources-config', help='Owner-granted HTTPS research sources')
@@ -40,6 +41,8 @@ def main():
     parser.add_argument('--owner-cert')
     parser.add_argument('--owner-key')
     args=parser.parse_args()
+    if args.owner_public_status and not (args.continuous and args.owner_status_ui):
+        parser.error('public status requires --continuous --owner-status-ui')
     if args.extended_news_research:
         if not args.continuous or args.no_fetch:
             parser.error('extended news requires continuous observation with fetching enabled')
@@ -85,7 +88,8 @@ def main():
                 surface = owner_surface(model, state_dir=root,
                     bind=args.owner_bind, port=args.owner_port, cert=args.owner_cert,
                     key=args.owner_key, access_config=args.owner_access_config,
-                    workspace=args.owner_workspace, sources_config=args.owner_sources_config)
+                    workspace=args.owner_workspace, sources_config=args.owner_sources_config,
+                    public_status=args.owner_public_status)
             result = run_continuous(root, config=config, max_symbols=symbols,
                 interval_seconds=args.interval_seconds, max_cycles=args.max_cycles,
                 surface_factory=surface, fetch_news=not args.no_fetch)

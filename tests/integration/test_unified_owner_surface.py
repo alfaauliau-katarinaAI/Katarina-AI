@@ -255,3 +255,69 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
             finally:
                 server.shutdown(); thread.join(timeout=4); server.server_close()
             self.assertFalse(thread.is_alive())
+
+    def test_opt_in_public_dashboard_exposes_only_technical_status_and_no_commands(self):
+        from katarina.monitoring.agent_projection import project_agent_board
+        with tempfile.TemporaryDirectory() as tmp:
+            access = Path(tmp)/'access.json'; policy(access)
+            report = {'credential': 'PRIVATE_SENTINEL', 'agent_board': project_agent_board({
+                'result': 'PASS_READONLY_SNAPSHOT_ONLY', 'received_market_data_symbols': 1,
+                'cycles': 7, 'successful_cycles': 7, 'assessed_at_utc': '2026-10-19T11:00:00Z',
+                'operational': {'technical_evaluations': [
+                    dict(symbol='XAUUSD',market_state='TREND_UP',method='PULLBACK',
+                         action='WAIT',private='PRIVATE_SENTINEL')],
+                    'account_book_observed': True, 'positions_count': 123456,
+                    'account_login': 'PRIVATE_SENTINEL'}})}
+            board = report['agent_board']
+            board.update(current_process_pid=42, snapshot_process_matches=True,
+                         private='PRIVATE_SENTINEL',
+                         model={'configured':False,'endpoint':'PRIVATE_SENTINEL','telemetry':None})
+            for enabled in (False, True):
+                server = create_server(lambda *a, **kw: self.fail('public route called turn'),
+                    port=0, access_config=access, status_callback=lambda:report, public_status=enabled)
+                thread = threading.Thread(target=server.serve_forever); thread.start()
+                try:
+                    def request(method, path):
+                        conn = http.client.HTTPConnection('127.0.0.1',server.server_port,timeout=3)
+                        conn.request(method,path,'{}' if method == 'POST' else None)
+                        reply=conn.getresponse()
+                        data=(reply.status,reply.read().decode(),reply.getheader('Cache-Control'))
+                        conn.close(); return data
+                    self.assertEqual(request('POST','/turn')[0],403)
+                    self.assertEqual(request('POST','/status')[0],403)
+                    code, body, cache = request('GET','/public-status')
+                    self.assertEqual(code,200 if enabled else 404)
+                    if enabled:
+                        self.assertEqual(cache,'no-store')
+                        self.assertNotIn('PRIVATE_SENTINEL',body)
+                        self.assertNotIn('positions_count',body)
+                        self.assertNotIn('account_login',body)
+                        public=json.loads(body)
+                        self.assertEqual(public['view_mode'],'PUBLIC_READONLY')
+                        self.assertFalse(public['dialog_available'])
+                        self.assertEqual(public['agent_board']['operational']['technical_evaluations'][0]['action'],'WAIT')
+                        self.assertEqual(public['delivery'],'DISABLED')
+                        code, page, _ = request('GET','/')
+                        self.assertEqual(code,200)
+                        self.assertIn('const PUBLIC_STATUS = true;',page)
+                        self.assertIn('class="public-status"',page)
+                        self.assertNotIn(OWNER,page)
+                    else:
+                        self.assertNotIn('const PUBLIC_STATUS = true;',request('GET','/agents')[1])
+                finally:
+                    server.shutdown();thread.join(timeout=4);server.server_close()
+
+    def test_public_status_failure_returns_no_partial_owner_payload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            access=Path(tmp)/'access.json';policy(access)
+            server=create_server(lambda *a,**k:None,port=0,access_config=access,
+                                 public_status=True,status_callback=lambda:{'secret':'PRIVATE_SENTINEL'})
+            thread=threading.Thread(target=server.serve_forever);thread.start()
+            try:
+                conn=http.client.HTTPConnection('127.0.0.1',server.server_port,timeout=3)
+                conn.request('GET','/public-status');reply=conn.getresponse()
+                self.assertEqual(reply.status,503)
+                self.assertNotIn('PRIVATE_SENTINEL',reply.read().decode())
+                conn.close()
+            finally:
+                server.shutdown();thread.join(timeout=4);server.server_close()

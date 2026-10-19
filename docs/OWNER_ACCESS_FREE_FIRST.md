@@ -22,3 +22,13 @@ The radial tree maps the canonical PID to up to 17 actual technical symbol evalu
 No price chart, profit, trade fill or language-model activity is invented to match the video.
 Unauthenticated, failed, stale or mismatched-process reads must not retain the prior graph.
 The full symbol records and six capability lanes remain visible below the graph.
+
+## Owner-authorized token-free test view
+
+Use `--continuous --owner-status-ui --owner-public-status` to opt in.
+Opening `/` or `/agents` then loads the technical snapshot automatically and refreshes every 30 seconds without a token.
+The separate `GET /public-status` endpoint exports only the projected technical tree, cycle counters, timestamps, capability statuses and model-call counters.
+It does not export account identifiers, account-book counts, credentials, full owner evidence, memory or provider endpoints.
+Owner `POST /status` and `POST /turn` still require the existing private access policy. No token is embedded in HTML or JavaScript.
+Remove the public-status flag and restart the existing task to restore the token-gated test view.
+This option is off by default and does not configure a paid model or authorize live trading.
