@@ -33,7 +33,49 @@ const entry=document.createElement('pre');entry.textContent='Owner: '+input+'\\n
 </script></html>'''
 
 
-def handler_type(turn, token, *, access_config=None, status_callback=None):
+
+def public_dashboard_snapshot(report):
+    """Only technical display fields; never expose the full owner status payload."""
+    from katarina.monitoring.agent_projection import project_agent_board
+    import re
+    board = report['agent_board']
+    source = board.get('operational', {})
+    passed = board.get('result') == 'SNAPSHOT_PASS'
+    def code(value):
+        return value if isinstance(value, str) and re.fullmatch(r'[A-Za-z0-9_.:+-]{1,96}', value) else None
+    rows = []
+    for row in source.get('technical_evaluations', [])[:17] if passed else []:
+        values = {key: code(row.get(key)) for key in ('symbol', 'market_state', 'method', 'action')}
+        if all(values.values()):
+            rows.append(values)
+    operational = {'technical_evaluations': rows}
+    tick = source.get('market_tick_utc')
+    if isinstance(tick, str) and re.fullmatch(r'[0-9T:.+Z-]{1,40}', tick):
+        operational['market_tick_utc'] = tick
+    public = project_agent_board({
+        'result': 'PASS_READONLY_SNAPSHOT_ONLY' if passed else 'BLOCKED',
+        'received_market_data_symbols': board.get('market_symbols'),
+        'cycles': board.get('cycles'), 'successful_cycles': board.get('successful_cycles'),
+        'assessed_at_utc': board.get('observed_at_utc') if isinstance(board.get('observed_at_utc'), str)
+            and re.fullmatch(r'[0-9T:.+Z-]{1,40}', board['observed_at_utc']) else None,
+        'blockers': [] if passed else ['SNAPSHOT_NOT_VERIFIED'],
+        'operational': operational,
+    }, delivery=board.get('delivery'))
+    pid = board.get('current_process_pid')
+    public['current_process_pid'] = pid if type(pid) is int and pid > 0 else None
+    public['snapshot_process_matches'] = board.get('snapshot_process_matches') is True
+    model = board.get('model', {})
+    telemetry = model.get('telemetry') or {}
+    public['model'] = {
+        'configured': model.get('configured') is True, 'quality_verified': False,
+        'telemetry': {key: value for key in ('successful_calls', 'failed_calls')
+                      if type(value := telemetry.get(key)) is int and value >= 0},
+    }
+    return {'agent_board': public, 'view_mode': 'PUBLIC_READONLY',
+            'dialog_available': False, 'delivery': public['delivery']}
+
+
+def handler_type(turn, token, *, access_config=None, status_callback=None, public_status=False):
     class Handler(BaseHTTPRequestHandler):
         def setup(self):
             super().setup()
@@ -55,11 +97,24 @@ def handler_type(turn, token, *, access_config=None, status_callback=None):
             self.wfile.write(raw)
 
         def do_GET(self):
-            if self.path not in ('/', '/agents'):
+            if self.path == '/public-status':
+                if not public_status or status_callback is None:
+                    self.reply(404, '{}')
+                    return
+                try:
+                    content = json.dumps(public_dashboard_snapshot(status_callback()),
+                                         ensure_ascii=False, allow_nan=False)
+                except Exception:
+                    self.reply(503, '{"status":"SNAPSHOT_UNAVAILABLE"}')
+                    return
+                self.reply(200, content)
+                return
+            if self.path not in ('/', '/agents', '/owner'):
                 self.reply(404, '{}')
                 return
-            # Neither page contains account data; /status remains bearer protected.
-            self.reply(200, AGENT_PAGE if self.path == '/agents' else PAGE, 'text/html')
+            from katarina.adapters.agent_dashboard_page import dashboard_page
+            dashboard = self.path == '/agents' or (self.path == '/' and public_status)
+            self.reply(200, dashboard_page(public_status=public_status) if dashboard else PAGE, 'text/html')
 
         def do_POST(self):
             principal = None
@@ -111,7 +166,9 @@ def handler_type(turn, token, *, access_config=None, status_callback=None):
 
 
 def create_server(turn, *, bind='127.0.0.1', port=8765, cert=None, key=None, access_config=None,
-                  status_callback=None):
+                  status_callback=None, public_status=False):
+    if type(public_status) is not bool:
+        raise ValueError('invalid_public_status_option')
     token = os.environ.get('KATARINA_OWNER_TOKEN', '')
     if access_config:
         from katarina.adapters.owner_access import load_access
@@ -143,7 +200,7 @@ def create_server(turn, *, bind='127.0.0.1', port=8765, cert=None, key=None, acc
                 client.close()
                 raise
     server = BoundedServer((bind, port), handler_type(turn, token, access_config=access_config,
-                                                  status_callback=status_callback))
+                                                  status_callback=status_callback, public_status=public_status))
     try:
         print('KATARINA_OWNER_UI_READY · LIVE OFF · port ' + str(server.server_port), flush=True)
         server.timeout = 1

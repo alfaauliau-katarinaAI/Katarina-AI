@@ -1,4 +1,4 @@
-"""Owner-only six-lane visualization; all actual status comes from authenticated POST /status.
+"""Six-lane monitor with explicit opt-in public technical status.
 
 The radial graph maps actual snapshot records, not simulated neural activity.
 This file contains no external dependencies, market-feed proxies or trade controls.
@@ -14,6 +14,8 @@ main{max-width:1500px;margin:auto;padding:20px 18px 40px}header{display:flex;fle
 h1{font-size:clamp(22px,4vw,34px);letter-spacing:.04em;margin:8px 0 0}h2{font-size:12px;letter-spacing:.14em;margin:0 0 14px;text-transform:uppercase;color:#d4d6e2}p{margin:8px 0;color:var(--muted)}
 a{color:var(--mint);text-decoration:none}a:hover{text-decoration:underline}.pill{font-size:10px;letter-spacing:.1em;border:1px solid var(--line);padding:6px 10px;color:var(--amber)}
 main>section{margin-top:14px}.panel{border:1px solid var(--line);background:var(--panel);padding:16px}
+.public-status #token,.public-status #token-help,.public-status #owner-link{display:none!important}
+.public-status .auth{grid-template-columns:1fr 1fr}
 .auth{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-top:16px}
 input,button{font:inherit;border:1px solid #42495e;border-radius:3px;color:var(--text);padding:10px 12px;background:#101622;min-height:44px;min-width:0}
 button{background:#253e3d;font-weight:700;cursor:pointer}button:hover{background:#345854}button:disabled{opacity:.5;cursor:wait}
@@ -34,9 +36,9 @@ table{border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #242a3b
 @media(max-width:600px){main{padding:14px 10px 30px}.auth{grid-template-columns:1fr 1fr}.auth input{grid-column:1/-1}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.lanes{grid-template-columns:1fr}.panel{padding:12px}.trace-panel{padding:0}#trace{min-width:600px}h1{font-size:23px}}
 </style></head><body><main>
 <header><div><div class="pill" style="display:inline-block">KATARINA · OWNER CONSOLE</div><h1>Multi-Agent Intelligence</h1><p>READ-ONLY TERMINAL · satu otak · enam kapabilitas · tanpa API berbayar saat ini</p></div>
-<div><span class="pill" id="overall">BELUM DIPERIKSA</span> &nbsp; <a href="/">Dialog Owner ↗</a></div></header>
+<div><span class="pill" id="overall">BELUM DIPERIKSA</span> &nbsp; <a id="owner-link" href="/owner">Dialog Owner ↗</a></div></header>
 <div class="auth"><input id="token" type="password" autocomplete="off" placeholder="Token Owner (tidak disimpan)" aria-label="Token autentikasi Owner"><button id="refresh">Periksa sekarang</button><button id="auto" aria-pressed="false">Auto: OFF</button></div>
-<details class="token-help"><summary>Token Owner dan API key berbeda — baca petunjuk</summary><p>Token Owner diberikan oleh pemilik instalasi untuk masuk dashboard. Token ini tidak dibeli dan tidak dibuat di penyedia AI. API key hanya diperlukan bila model bahasa eksternal diaktifkan. Mesin teknis dan monitor ini bekerja tanpa API model. Token tidak disimpan di browser.</p></details>
+<details class="token-help" id="token-help"><summary>Token Owner dan API key berbeda — baca petunjuk</summary><p>Token Owner diberikan oleh pemilik instalasi untuk masuk dashboard. Token ini tidak dibeli dan tidak dibuat di penyedia AI. API key hanya diperlukan bila model bahasa eksternal diaktifkan. Mesin teknis dan monitor ini bekerja tanpa API model. Token tidak disimpan di browser.</p></details>
 <div id="notice" role="status" aria-live="polite">Tidak ada data sampai pemeriksaan berautentikasi berhasil.</div>
 <section class="stats" aria-label="Ringkasan observasi">
 <div class="stat"><small>Instrumen tervalidasi</small><strong id="symbols">—</strong></div>
@@ -60,6 +62,7 @@ table{border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #242a3b
 "use strict";
 const names=["SCAN","ANALYST","STRATEGY","BALANCE","EXEC","AUDIT"];
 const $=id=>document.getElementById(id);
+const PUBLIC_STATUS = false;
 let timer=null,busy=false;
 function classify(value){return ["OBSERVED","SNAPSHOT_PASS","TECHNICAL_EVALUATED","RESEARCH_EVALUATED","BOOK_OBSERVED"].includes(value)?"ok":value==="BLOCKED"?"bad":"warn"}
 function put(id,text){$(id).textContent=String(text)}
@@ -113,7 +116,7 @@ function render(report){
  put("process-proof","PID server: "+(board.current_process_pid||"—")+" · snapshot cocok: "+(board.snapshot_process_matches===true?"YA":"BELUM TERVERIFIKASI")+" · siklus: "+(board.cycles??"—")+" · tick UTC: "+(op.market_tick_utc||"—"));
  const telemetry=model.telemetry;
  put("model-proof",model.configured===true?"Model dikonfigurasi · panggilan berhasil: "+(telemetry?.successful_calls??"belum ada bukti")+" · kualitas belum tervalidasi":"Model bahasa BELUM TERHUBUNG; analisis tabel berasal dari mesin teknis.");
- put("book-proof",op.account_book_observed===true?"Buku broker: "+op.positions_count+" posisi · "+op.pending_orders_count+" pending · izin risiko: BELUM DIBERIKAN":"Buku broker belum tervalidasi.");
+ put("book-proof",PUBLIC_STATUS?"Data akun disembunyikan pada mode uji publik.":op.account_book_observed===true?"Buku broker: "+op.positions_count+" posisi · "+op.pending_orders_count+" pending · izin risiko: BELUM DIBERIKAN":"Buku broker belum tervalidasi.");
  const table=$("evaluations");table.replaceChildren();
  for(const row of (Array.isArray(op.technical_evaluations)?op.technical_evaluations:[])){
   const tr=document.createElement("tr");
@@ -144,22 +147,39 @@ function invalidate(){
  put("overall","BELUM TERVERIFIKASI");put("symbols","—");put("cycles","—");
  put("execution","BELUM TERVERIFIKASI");put("profit","—");
  $("evaluations").replaceChildren();put("process-proof","Proses belum terverifikasi.");put("model-proof","Status model belum terverifikasi.");put("book-proof","Buku broker belum terverifikasi.");
- $("lanes").replaceChildren();put("blockers","Data tidak tersedia; lakukan pemeriksaan berautentikasi lagi.");
+ $("lanes").replaceChildren();put("blockers","Data tidak tersedia; periksa koneksi dan coba lagi.");
  put("timestamp","Pembaruan terakhir: —");
 }
 async function refresh(){
- if(busy)return;const token=$("token").value;if(!token){invalidate();put("notice","Masukkan token Owner terlebih dahulu.");return}
+ if(busy)return;const token=$("token").value;if(!PUBLIC_STATUS&&!token){invalidate();put("notice","Masukkan token Owner terlebih dahulu.");return}
  busy=true;$("refresh").disabled=true;
  const controller=new AbortController(),deadline=setTimeout(()=>controller.abort(),10000);
- try{const response=await fetch("/status",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:"{}"});
+ try{const response=await fetch(PUBLIC_STATUS?"/public-status":"/status",PUBLIC_STATUS?
+ {method:"GET",cache:"no-store",signal:controller.signal}:
+ {method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:"{}"});
  if(!response.ok)throw Error("Permintaan status ditolak (HTTP "+response.status+")");
  const data=await response.json();render(data);
  put("notice","Data dibaca dari pemeriksaan snapshot read-only; tidak ada perintah trading.");
  }catch(e){invalidate();put("notice",e.message)}finally{clearTimeout(deadline);busy=false;$("refresh").disabled=false}
 }
 $("refresh").addEventListener("click",refresh);
-$("auto").addEventListener("click",()=>{if(timer){clearInterval(timer);timer=null}else{timer=setInterval(()=>{if(!document.hidden)refresh()},30000);refresh()}
+function toggleAuto(){if(timer){clearInterval(timer);timer=null}else{timer=setInterval(()=>{if(!document.hidden)refresh()},30000);refresh()}
  const on=Boolean(timer);$("auto").textContent=on?"Auto: ON":"Auto: OFF";$("auto").setAttribute("aria-pressed",String(on));
-});
+}
+$("auto").addEventListener("click",toggleAuto);
+if(PUBLIC_STATUS)toggleAuto();
 
 </script></body></html>'''
+
+
+def dashboard_page(*, public_status=False):
+    if not public_status:
+        return AGENT_PAGE
+    return (AGENT_PAGE.replace('const PUBLIC_STATUS = false;', 'const PUBLIC_STATUS = true;')
+            .replace('<body>', '<body class="public-status">')
+            .replace('KATARINA · OWNER CONSOLE', 'KATARINA · DASHBOARD UJI')
+            .replace('Tidak ada data sampai pemeriksaan berautentikasi berhasil.',
+                     'Memuat proses Katarina otomatis…')
+            .replace('Masukkan token dan periksa snapshot.', 'Memuat snapshot terbaru…')
+            .replace('Data hanya dari endpoint /status berautentikasi',
+                     'Mode uji tanpa token · data teknis terbatas'))
