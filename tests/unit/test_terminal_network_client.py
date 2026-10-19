@@ -62,6 +62,7 @@ const graphBefore=run('graph'),tableRowBefore=get('events').children[0],watchBef
 run('render(packet)');assert.equal(run('pulseKeys.size'),0);
 assert.equal(run('graph'),graphBefore);assert.equal(get('events').children[0],tableRowBefore);
 assert.equal(get('watch').children[0],watchBefore);
+assert.equal(run('orbitOn'),false);get('orbit').listeners.click();assert.equal(run('orbitOn'),true);
 const orbitYaw=run('yaw');run('draw(500)');assert.ok(run('yaw')>orbitYaw);
 get('orbit').listeners.click();assert.equal(run('orbitOn'),false);
 const stoppedYaw=run('yaw');run('draw(600)');assert.equal(run('yaw'),stoppedYaw);
@@ -74,6 +75,9 @@ run('render(packet)');assert.equal(run('pulseKeys.size'),1);assert.equal(run('pu
 assert.equal(run('graph'),eventGraph);clock=fixed;
 assert.ok(intervals.some(x=>x.ms===2000));
 assert.equal(get('lanes').children.filter(x=>x.className==='lane active').length,1);
+assert.equal(run('detailed'),false);assert.equal(run('graph.nodes.filter(n=>n.kind==="attribute"||n.kind==="event").length'),0);
+get('detail-mode').listeners.click();assert.ok(run('graph.nodes.some(n=>n.kind==="event")'));
+get('detail-mode').listeners.click();assert.equal(run('graph.nodes.filter(n=>n.kind==="event").length'),0);
 run('selectNode("s:XAUUSD")');assert.ok(get('selection').children[1].textContent.includes('TREND_PULLBACK'));
 assert.equal(get('node-select').value,'s:XAUUSD');
 const yaw0=run('yaw');
