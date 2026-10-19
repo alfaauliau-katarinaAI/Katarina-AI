@@ -30,4 +30,19 @@ def build_public_runtime(root):
         read_learning(root, observation_utc=evidence.get('operational', {}).get('observation_utc'))
         if board['snapshot_process_matches'] and board.get('result') == 'SNAPSHOT_PASS'
         else {'status': 'NOT_ATTESTED', 'source': 'CANONICAL_RESEARCH_SNAPSHOT'})
+    from katarina.monitoring.public_research import read_public_research
+    allowed = board['snapshot_process_matches'] and board.get('result') == 'SNAPSHOT_PASS'
+    graph, entries = read_public_research(root,evidence.get('operational',{}).get('observation_utc')) if allowed else (
+        {'schema_version':1,'nodes':[],'edges':[],'status':'NOT_ATTESTED'},
+        {'status':'NOT_ATTESTED','positions':[]})
+    public_board=public['agent_board']
+    public_board['research_graph']=graph
+    public_board['entries']=entries
+    public_board['market_symbols']=None
+    public_board['operational']={}
+    public_board['learning'].pop('no_signal_observations',None)
+    trace=public_board['activity']
+    trace['events']=[{k:e[k] for k in ('seq','at_utc','phase','state')} for e in trace['events']]
+    trace['current']=trace['events'][-1] if trace['events'] else None
+    public_board['public_scope']='RESEARCH_GRAPH_AND_ENTRY_ONLY'
     return public
