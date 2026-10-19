@@ -6,6 +6,8 @@ import json
 import os
 import ssl
 
+from katarina.adapters.agent_dashboard_page import AGENT_PAGE
+
 PAGE = '''<!doctype html><html lang="id"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Katarina AI</title><style>body{font:17px system-ui;background:#101826;color:#e4eefb;max-width:820px;margin:30px auto;padding:20px}
 input,textarea,button,select{box-sizing:border-box;font:inherit;padding:12px;border:1px solid #40516a;border-radius:8px;background:#19283a;color:inherit;margin:6px 0;width:100%}
@@ -53,10 +55,11 @@ def handler_type(turn, token, *, access_config=None, status_callback=None):
             self.wfile.write(raw)
 
         def do_GET(self):
-            if self.path != '/':
+            if self.path not in ('/', '/agents'):
                 self.reply(404, '{}')
                 return
-            self.reply(200, PAGE, 'text/html')
+            # Neither page contains account data; /status remains bearer protected.
+            self.reply(200, AGENT_PAGE if self.path == '/agents' else PAGE, 'text/html')
 
         def do_POST(self):
             principal = None
