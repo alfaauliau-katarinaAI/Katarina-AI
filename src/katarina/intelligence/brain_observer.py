@@ -371,7 +371,7 @@ class BrainObserver:
                         official_news_verified=bool(
                             news.ready and sources and calendar["ready"]),
                         spread_atr=(observed_spread/max(
-                            brain._atr(bars["M15"]),1e-12)),
+                            brain.market_atr(bars["M15"]),1e-12)),
                     ))
                     card["research_shadow_hypothesis"]="QUEUED_FOR_DETERMINISTIC_RANKING"
                 emit('TECHNICAL','DONE',symbol=symbol,method=card.get('selected_method'),
