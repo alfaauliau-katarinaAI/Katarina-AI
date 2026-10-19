@@ -126,7 +126,19 @@ const retainedNew=run('graph');
  await run('refresh()');assert.equal(run('graph'),retainedNew);assert.ok(get('notice').textContent.includes('snapshot terakhir'));
  clock=fixed+122000;await run('refresh()');assert.equal(run('graph.nodes.length'),0);
  assert.equal(get('symbols').textContent,'—');
- console.log('PASS_TERMINAL_EVENTS_TOUCH_ZOOM_INSPECTION_PULSE_EXPIRY_REFRESH');
+ clock=fixed;packet.captured_at_utc=stamp;packet.agent_board.activity.current=event(40,'RECALL','STARTED');
+packet.agent_board.activity.events.push(packet.agent_board.activity.current);
+sandbox.fetch=async()=>({ok:true,json:async()=>packet});await run('refresh()');
+run('orbitOn=false');assert.equal(run('currentWork().phase'),'RECALL');
+const before=frames.length;run('lastFrame=null;draw(8000)');assert.ok(frames.length>before);
+packet.agent_board.activity.current=event(41,'RECALL','DONE');
+packet.agent_board.activity.events.push(packet.agent_board.activity.current);await run('refresh()');
+assert.equal(run('currentWork()'),null);
+packet.agent_board.activity.current=event(42,'WAITING','IDLE');
+packet.agent_board.activity.events.push(packet.agent_board.activity.current);await run('refresh()');
+assert.equal(run('currentWork()'),null);
+assert.ok(get('engine-headline').textContent.includes('Menunggu siklus'));
+console.log('PASS_TERMINAL_EVENTS_TOUCH_ZOOM_INSPECTION_PULSE_EXPIRY_REFRESH_WORK');
 })().catch(error=>{console.error(error);process.exitCode=1});
 """
         result = subprocess.run([shutil.which("node")], input=harness.replace("WORKER_SOURCE", json.dumps(source), 1),
