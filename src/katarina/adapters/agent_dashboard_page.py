@@ -194,13 +194,13 @@ async function refresh(){
  try{const response=await fetch(PUBLIC_STATUS?"/public-status":"/status",PUBLIC_STATUS?
  {method:"GET",cache:"no-store",signal:controller.signal}:
  {method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:"{}"});
- if(!response.ok)throw Error("Permintaan status ditolak (HTTP "+response.status+")");
+ if(!response.ok)throw Error(response.status===503?"Menunggu data proses VPS terbaru; pemeriksaan otomatis akan mencoba lagi.":"Permintaan status ditolak (HTTP "+response.status+")");
  const data=await response.json();render(data);
  put("notice","Data proses VPS terbaru diterima · hanya pemantauan · LIVE OFF.");
  }catch(e){invalidate();put("notice",e.message)}finally{clearTimeout(deadline);busy=false;$("refresh").disabled=false}
 }
 $("refresh").addEventListener("click",refresh);
-function toggleAuto(){if(timer){clearInterval(timer);timer=null}else{timer=setInterval(()=>{if(!document.hidden)refresh()},30000);refresh()}
+function toggleAuto(){if(timer){clearInterval(timer);timer=null}else{timer=setInterval(()=>{if(!document.hidden)refresh()},PUBLIC_STATUS?5000:30000);refresh()}
  const on=Boolean(timer);$("auto").textContent=on?"Auto: ON":"Auto: OFF";$("auto").setAttribute("aria-pressed",String(on));
 }
 $("auto").addEventListener("click",toggleAuto);

@@ -16,7 +16,7 @@ class NoRedirect(HTTPRedirectHandler):
 def publish_once(root,config):
     endpoint=config['endpoint']
     target=urlsplit(endpoint)
-    if (target.scheme!='https' or not target.hostname or not target.hostname.endswith('.onrender.com')
+    if (target.scheme!='https' or not target.hostname or not (target.hostname.endswith('.onrender.com') or target.hostname.endswith('.chatgpt.site'))
             or target.path!='/ingest' or target.username or target.password or target.query or target.fragment
             or target.port not in (None,443)):
         raise ValueError('invalid_monitor_endpoint')

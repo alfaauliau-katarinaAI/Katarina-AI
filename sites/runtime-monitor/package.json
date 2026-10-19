@@ -1,0 +1,9 @@
+{
+  "name": "katarina-runtime-monitor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "test:artifact": "node scripts/validate-artifact.mjs"
+  }
+}
