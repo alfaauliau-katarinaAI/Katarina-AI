@@ -71,6 +71,8 @@ def public_dashboard_snapshot(report):
         'telemetry': {key: value for key in ('successful_calls', 'failed_calls')
                       if type(value := telemetry.get(key)) is int and value >= 0},
     }
+    from katarina.monitoring.activity_trace import clean_activity
+    public['activity'] = clean_activity(board.get('activity', {}))
     return {'agent_board': public, 'view_mode': 'PUBLIC_READONLY',
             'dialog_available': False, 'delivery': public['delivery']}
 

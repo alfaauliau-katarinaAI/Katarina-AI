@@ -25,6 +25,7 @@ button{background:#253e3d;font-weight:700;cursor:pointer}button:hover{background
 .trace-panel{padding:0;background:radial-gradient(ellipse at center,#171a2a 0%,#0b0f19 62%)}
 .trace-head{padding:12px 16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line)}.trace-head h2{margin:0}.trace-head span{color:var(--amber);font-size:11px}
 .trace-viewport{overflow:auto;overscroll-behavior-x:contain}#trace{display:block;width:100%;min-width:600px;max-height:760px}
+.observed-new{animation:observed-event .9s ease-out 1}@keyframes observed-event{from{stroke-width:6;opacity:1}to{stroke-width:1;opacity:.7}}@media(prefers-reduced-motion:reduce){.observed-new{animation:none}}
 .trace-legend{border-top:1px solid var(--line);padding:10px 16px;color:var(--muted);font-size:11px}.trace-legend b{color:var(--amber)}
 .layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,1fr);gap:14px}
 .lanes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lane{padding:12px;border:1px solid var(--line);background:#101522}.lane-top{display:flex;align-items:center;gap:8px;justify-content:space-between}.lane b{letter-spacing:.09em;font-size:12px}.lane small{display:block;color:var(--muted);line-height:1.5;margin-top:7px}
@@ -48,9 +49,10 @@ table{border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #242a3b
 </section>
 <section class="panel trace-panel" aria-label="Peta hasil proses aktual">
 <div class="trace-head"><h2>◈ KATARINA / PROCESS TRACE</h2><span id="trace-count">MENUNGGU BUKTI</span></div>
-<div class="trace-viewport"><svg id="trace" viewBox="0 0 1000 760" role="img" aria-label="Pohon hasil analisis dari snapshot Katarina yang tervalidasi"><text x="500" y="380" text-anchor="middle" fill="#929aaf">Masukkan token dan periksa snapshot.</text></svg></div>
-<div class="trace-legend"><b>PID → simbol → kondisi / metode / tindakan</b> · Setiap cabang berasal dari satu hasil mesin. Bukan visualisasi neuron atau worker tambahan. Geser diagram di HP; rincian lengkap ada di tabel.</div>
+<p id="trace-state" style="padding:0 16px">Aktivitas proses belum diterima.</p><div class="trace-viewport"><svg id="trace" viewBox="0 0 1000 760" role="img" aria-label="Pohon hasil analisis dari snapshot Katarina yang tervalidasi"><text x="500" y="380" text-anchor="middle" fill="#929aaf">Masukkan token dan periksa snapshot.</text></svg></div>
+<div class="trace-legend"><b>PID → simbol → kondisi / metode / tindakan</b> · Setiap cabang berasal dari satu hasil mesin. Bukan visualisasi neuron atau worker tambahan. Simpul tahap menyala satu kali hanya ketika ada event baru dari VPS. Ketuk simbol untuk rincian.</div>
 </section>
+<section class="panel"><h2>Jejak aktivitas dari VPS / UTC</h2><p id="trace-selected">Ketuk simpul simbol untuk melihat hasil dan aktivitasnya.</p><div style="overflow-x:auto"><table style="width:100%;font-size:12px;text-align:left"><thead><tr><th>Waktu UTC</th><th>Tahap</th><th>Status</th><th>Simbol / Hasil</th></tr></thead><tbody id="activity-events"></tbody></table></div></section>
 <section class="layout">
 <div class="panel"><h2>Proses Katarina Nyata</h2><p id="process-proof">Proses belum diperiksa.</p><p id="model-proof">Model AI belum diperiksa.</p><p id="book-proof">Buku posisi broker belum diperiksa.</p><div style="overflow-x:auto"><table style="width:100%;font-size:12px;text-align:left"><thead><tr><th>Simbol</th><th>Kondisi</th><th>Metode</th><th>Tindakan</th></tr></thead><tbody id="evaluations"></tbody></table></div><p class="center-note">Baris hanya berasal dari keluaran mesin pada snapshot terbaru. Analisis teknis deterministik, panggilan model bahasa, dan izin trading adalah bukti yang berbeda.</p></div>
 <div class="panel"><h2>Status Kapabilitas</h2><div class="lanes" id="lanes"><p>Status belum diterima.</p></div></div>
@@ -63,7 +65,7 @@ table{border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #242a3b
 const names=["SCAN","ANALYST","STRATEGY","BALANCE","EXEC","AUDIT"];
 const $=id=>document.getElementById(id);
 const PUBLIC_STATUS = false;
-let timer=null,busy=false;
+let timer=null,busy=false,previousActivityKey=null,activityChanged=false;
 function classify(value){return ["OBSERVED","SNAPSHOT_PASS","TECHNICAL_EVALUATED","RESEARCH_EVALUATED","BOOK_OBSERVED"].includes(value)?"ok":value==="BLOCKED"?"bad":"warn"}
 function put(id,text){$(id).textContent=String(text)}
 
@@ -73,13 +75,32 @@ function traceElement(tag,attrs,text){
  if(text!==undefined)el.textContent=String(text);
  return el;
 }
+
+function renderActivity(board){
+ const a=board.activity||{},current=a.current;
+ const key=a.fresh===true&&current?[a.pid,current.seq,current.at_utc].join(":"):null;
+ activityChanged=Boolean(key&&key!==previousActivityKey);previousActivityKey=key;
+ const state={STARTED:"sedang berjalan",DONE:"selesai",FAILED:"gagal",IDLE:"menunggu"};
+ put("trace-state",a.fresh===true&&current?
+  "Aktivitas tercatat: "+current.phase+" · "+state[current.state]+(current.symbol?" · "+current.symbol:"")+" · "+current.at_utc+" · siklus "+a.cycle:
+  "Belum ada event proses yang baru; aktivitas tidak dianggap sedang berjalan.");
+ const table=$("activity-events");table.replaceChildren();
+ for(const event of (Array.isArray(a.events)?a.events:[]).slice(-12).reverse()){
+  const tr=document.createElement("tr");
+  for(const value of [event.at_utc,event.phase,state[event.state]||event.state,
+     [event.symbol,event.method,event.market_state,event.action,Number.isInteger(event.count)?"jumlah "+event.count:null].filter(x=>x!==null&&x!==undefined).join(" · ")]){
+   const td=document.createElement("td");td.textContent=String(value);tr.append(td);
+  }table.append(tr);
+ }
+}
+
 function drawTrace(board,op){
  const svg=$("trace");svg.replaceChildren();
- const rows=Array.isArray(op.technical_evaluations)?op.technical_evaluations.slice(0,17):[];
  const verified=board.result==="SNAPSHOT_PASS"&&board.snapshot_process_matches===true;
+ const rows=verified&&Array.isArray(op.technical_evaluations)?op.technical_evaluations.slice(0,17):[];
  if(!verified||!rows.length){
-  svg.append(traceElement("text",{x:500,y:380,"text-anchor":"middle",fill:"#929aaf"},"Belum ada hasil proses yang tervalidasi."));
-  put("trace-count","MENUNGGU BUKTI");return;
+  svg.append(traceElement("text",{x:500,y:730,"text-anchor":"middle",fill:"#929aaf"},"Hasil pasar belum tervalidasi."));
+  put("trace-count","MENUNGGU BUKTI");
  }
  const center={x:500,y:380};
  function point(radius,angle){return {x:center.x+radius*Math.cos(angle),y:center.y+radius*Math.sin(angle)}}
@@ -92,7 +113,11 @@ function drawTrace(board,op){
   const node=point(235,angle),color=i<Math.ceil(rows.length/2)?"#d7cf89":"#b4a4de";
   const start=point(82,angle);link(start,node,color,1.1);
   const circle=traceElement("circle",{cx:node.x,cy:node.y,r:4,fill:color});
-  circle.append(traceElement("title",{},row.symbol+" · "+row.market_state+" · "+row.method+" · "+row.action));svg.append(circle);
+  circle.append(traceElement("title",{},row.symbol+" · "+row.market_state+" · "+row.method+" · "+row.action));
+  circle.setAttribute("tabindex","0");circle.setAttribute("role","button");circle.setAttribute("aria-label","Rincian "+row.symbol);
+  const select=()=>{const events=(board.activity?.events||[]).filter(e=>e.symbol===row.symbol).slice(-2);
+   put("trace-selected",row.symbol+" · "+row.market_state+" · "+row.method+" · "+row.action+" | "+events.map(e=>e.at_utc+" "+e.phase+" "+e.state).join(" | "))};
+  circle.addEventListener("click",select);circle.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" ")select()});svg.append(circle);
   const label=point(262,angle);
   svg.append(traceElement("text",{x:label.x,y:label.y,"text-anchor":"middle",fill:color,"font-size":12},row.symbol));
   const values=[row.market_state,row.method,row.action];
@@ -107,13 +132,24 @@ function drawTrace(board,op){
  for(const [y,size,color,text] of [[355,12,"#929aaf","SATU OTAK"],[383,22,"#e4e6ee","KATARINA"],[407,12,"#d7cf89","PID "+board.current_process_pid]]){
   svg.append(traceElement("text",{x:500,y,"text-anchor":"middle",fill:color,"font-size":size},text));
  }
- put("trace-count",rows.length+" SIMBOL / "+rows.length*3+" HASIL / LIVE OFF");
+ const a=board.activity||{},events=Array.isArray(a.events)?a.events:[];
+ const phases=["CONNECT","NEWS","SENSORS","TECHNICAL","MEMORY","RISK_AUDIT","WAIT_ACK","PUBLISH","WAITING"];
+ for(let i=0;i<phases.length;i++){
+  const phase=phases[i],event=events.filter(e=>e.phase===phase).slice(-1)[0];
+  const p=point(142,-Math.PI/2+i*2*Math.PI/phases.length);
+  const color=a.fresh===true&&event?(event.state==="FAILED"?"#d57798":event.state==="STARTED"?"#d7cf89":"#80d4bd"):"#4b5264";
+  const circle=traceElement("circle",{cx:p.x,cy:p.y,r:6,fill:color,stroke:color,
+    class:activityChanged&&a.current?.phase===phase?"observed-new":""});
+  circle.append(traceElement("title",{},event?phase+" "+event.state+" "+event.at_utc:phase+" BELUM TERAMATI"));svg.append(circle);
+  svg.append(traceElement("text",{x:p.x,y:p.y+20,"text-anchor":"middle",fill:color,"font-size":9},phase));
+ }
+ put("trace-count",rows.length+" SIMBOL / "+events.length+" EVENT TERCATAT / LIVE OFF");
 }
 
 function render(report){
  const board=report.agent_board;if(!board||board.schema_version!==1||!Array.isArray(board.lanes))throw Error("Status agent belum tersedia di versi server ini.");
  const op=board.operational||{}, model=board.model||{};
- put("process-proof","PID server: "+(board.current_process_pid||"—")+" · snapshot cocok: "+(board.snapshot_process_matches===true?"YA":"BELUM TERVERIFIKASI")+" · siklus: "+(board.cycles??"—")+" · tick UTC: "+(op.market_tick_utc||"—"));
+ put("process-proof","PID VPS tercatat: "+(board.current_process_pid||"—")+" · snapshot cocok: "+(board.snapshot_process_matches===true?"YA":"BELUM TERVERIFIKASI")+" · siklus: "+(board.cycles??"—")+" · tick UTC: "+(op.market_tick_utc||"—"));
  const telemetry=model.telemetry;
  put("model-proof",model.configured===true?"Model dikonfigurasi · panggilan berhasil: "+(telemetry?.successful_calls??"belum ada bukti")+" · kualitas belum tervalidasi":"Model bahasa BELUM TERHUBUNG; analisis tabel berasal dari mesin teknis.");
  put("book-proof",PUBLIC_STATUS?"Data akun disembunyikan pada mode uji publik.":op.account_book_observed===true?"Buku broker: "+op.positions_count+" posisi · "+op.pending_orders_count+" pending · izin risiko: BELUM DIBERIKAN":"Buku broker belum tervalidasi.");
@@ -138,11 +174,12 @@ function render(report){
   const reason=document.createElement("small");reason.textContent=v.reason;
   top.append(title,badge);div.append(top,sub,reason);list.append(div);
  }
- drawTrace(board,op);
+ renderActivity(board);drawTrace(board,op);
  const details=board.blockers.length?"Blocker: "+board.blockers.join(", "):"Snapshot lulus pemeriksaan struktur dan freshness. Ini bukan bukti trading, model, atau proses independen.";
  put("blockers",details);put("timestamp","Pemeriksaan: "+(board.observed_at_utc||"tidak tersedia"));
 }
 function invalidate(){
+ previousActivityKey=null;activityChanged=false;$("activity-events").replaceChildren();put("trace-state","Aktivitas belum terverifikasi.");put("trace-selected","Menunggu data proses terbaru.");
  $("trace").replaceChildren();put("trace-count","MENUNGGU BUKTI");
  put("overall","BELUM TERVERIFIKASI");put("symbols","—");put("cycles","—");
  put("execution","BELUM TERVERIFIKASI");put("profit","—");
@@ -159,7 +196,7 @@ async function refresh(){
  {method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:"{}"});
  if(!response.ok)throw Error("Permintaan status ditolak (HTTP "+response.status+")");
  const data=await response.json();render(data);
- put("notice","Data dibaca dari pemeriksaan snapshot read-only; tidak ada perintah trading.");
+ put("notice","Data proses VPS terbaru diterima · hanya pemantauan · LIVE OFF.");
  }catch(e){invalidate();put("notice",e.message)}finally{clearTimeout(deadline);busy=false;$("refresh").disabled=false}
 }
 $("refresh").addEventListener("click",refresh);
@@ -168,6 +205,7 @@ function toggleAuto(){if(timer){clearInterval(timer);timer=null}else{timer=setIn
 }
 $("auto").addEventListener("click",toggleAuto);
 if(PUBLIC_STATUS)toggleAuto();
+document.addEventListener?.("visibilitychange",()=>{if(!document.hidden&&PUBLIC_STATUS)refresh()});
 
 </script></body></html>'''
 

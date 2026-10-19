@@ -39,7 +39,7 @@ const board={schema_version:1,result:"SNAPSHOT_PASS",market_symbols:3,cycles:24,
   await vm.runInContext("refresh()",context);
   assert.equal(nodes.get("overall").textContent,"SNAPSHOT_PASS");
   assert.equal(nodes.get("lanes").children.length,6);
-  assert.match(nodes.get("trace-count").textContent,/1 SIMBOL \/ 3 HASIL/);
+  assert.match(nodes.get("trace-count").textContent,/1 SIMBOL \/ 0 EVENT TERCATAT/);
   assert.ok(nodes.get("trace").children.length>4);
   if(mode==="missing-token") nodes.get("token").value="";
   else context.fetch=async()=>{
@@ -53,6 +53,7 @@ const board={schema_version:1,result:"SNAPSHOT_PASS",market_symbols:3,cycles:24,
   assert.equal(nodes.get("execution").textContent,"BELUM TERVERIFIKASI");
   assert.equal(nodes.get("lanes").children.length,0);
   assert.equal(nodes.get("trace").children.length,0);
+  assert.equal(nodes.get("activity-events").children.length,0);
   assert.equal(nodes.get("trace-count").textContent,"MENUNGGU BUKTI");
   assert.equal(nodes.get("refresh").disabled,false);
  }
@@ -70,6 +71,8 @@ const assert=require("node:assert/strict"),vm=require("node:vm"),nodes=new Map()
 function element(){return {value:"",textContent:"",children:[],append(...v){this.children.push(...v)},
  replaceChildren(...v){this.children=v},setAttribute(){},addEventListener(){}}}
 const board={schema_version:1,result:"SNAPSHOT_PASS",market_symbols:1,cycles:7,
+ activity:{pid:42,cycle:7,fresh:true,current:{seq:2,at_utc:"2026-10-19T11:00:00Z",phase:"TECHNICAL",state:"DONE",symbol:"XAUUSD"},
+ events:[{seq:1,at_utc:"2026-10-19T10:59:59Z",phase:"TECHNICAL",state:"STARTED",symbol:"XAUUSD"},{seq:2,at_utc:"2026-10-19T11:00:00Z",phase:"TECHNICAL",state:"DONE",symbol:"XAUUSD"}]},
  delivery:"DISABLED",blockers:[],lanes:[],snapshot_process_matches:true,current_process_pid:42,
  operational:{technical_evaluations:[{symbol:"XAUUSD",market_state:"TREND_UP",method:"PULLBACK",action:"WAIT"}]}};
 const context=vm.createContext({
@@ -88,8 +91,12 @@ vm.runInContext(SCRIPT,context);
  assert.equal(nodes.get("token").value,"");
  assert.equal(nodes.get("overall").textContent,"SNAPSHOT_PASS");
  assert.equal(nodes.get("auto").textContent,"Auto: ON");
+ assert.equal(nodes.get("activity-events").children.length,2);
+ assert.match(nodes.get("trace-state").textContent,/TECHNICAL.*selesai/);
+ assert.equal(vm.runInContext("activityChanged",context),true);
  await vm.runInContext("refresh()",context);
  assert.equal(requests.length,2);
+ assert.equal(vm.runInContext("activityChanged",context),false);
  context.fetch=async()=>({ok:false,status:503});
  await vm.runInContext("refresh()",context);
  assert.equal(nodes.get("overall").textContent,"BELUM TERVERIFIKASI");

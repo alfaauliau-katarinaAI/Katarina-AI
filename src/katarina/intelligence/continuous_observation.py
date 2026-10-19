@@ -40,7 +40,7 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
         raise ValueError('positive_cycle_limit_required')
     root = Path(root)
     lock = lock_worker(root)
-    context = memory = None
+    context = memory = brain = None
     surfaces = ExitStack()
     factories = factories if factories is not None else {'local': local_factory, 'cloud': cloud_factory}
     stop = root / 'continuous.stop'
@@ -54,6 +54,18 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
     def publish(phase, reason=None):
         status.update(status=phase, reason=reason,
                       heartbeat_utc=datetime.now(timezone.utc).isoformat())
+        if brain is not None:
+            brain_ref = brain
+            status['delivery'] = brain_ref.control.snapshot()['delivery']
+            model = getattr(brain_ref, 'dashboard_model', None)
+            status['model_configured'] = model is not None
+            status['model_telemetry'] = model.telemetry() if callable(getattr(model,'telemetry',None)) else {}
+            event_phase = 'CONNECT' if phase == 'OBSERVING' else phase
+            if event_phase in ('STARTING','CONNECT','WAITING','DEGRADED','STOPPED','BLOCKED'):
+                brain_ref.activity_trace.cycle = status['cycles'] + (1 if phase == 'OBSERVING' else 0)
+                brain_ref.activity_trace.emit(event_phase,
+                    'STARTED' if phase == 'OBSERVING' else 'IDLE' if phase == 'WAITING' else
+                    'FAILED' if phase in ('DEGRADED','BLOCKED') else 'DONE')
         temp = root / 'continuous-status.tmp'
         temp.write_text(json.dumps(status, sort_keys=True) + '\n', encoding='utf-8')
         temp.replace(root / 'continuous-status.json')
@@ -66,6 +78,8 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
         context = ContextStore(root / 'context.sqlite3')
         memory = MemoryStore(root / 'cognitive-memory.sqlite3')
         brain = brain_type(context.db, memory)
+        from katarina.monitoring.activity_trace import ActivityTrace
+        brain.activity_trace = ActivityTrace(root)
         brain.context_store = context
         idle = surfaces.enter_context(surface_factory(brain)) if surface_factory else wait
         publish('STARTING')
