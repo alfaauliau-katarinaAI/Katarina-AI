@@ -214,3 +214,44 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
                 self.assertEqual(len(seen),2)
             finally:
                 server.server_close()
+
+    def test_agents_page_and_status_use_existing_authenticated_server(self):
+        from katarina.monitoring.agent_projection import project_agent_board
+        with tempfile.TemporaryDirectory() as tmp:
+            access = Path(tmp)/'access.json'; policy(access)
+            calls = []
+            def status():
+                calls.append('status')
+                return {'agent_board': project_agent_board({'result': 'BLOCKED'})}
+            server = create_server(lambda *a, **kw: self.fail('dashboard called turn'),
+                                   port=0, access_config=access, status_callback=status)
+            thread = threading.Thread(target=server.serve_forever); thread.start()
+            try:
+                def request(method, route, token=None):
+                    conn = http.client.HTTPConnection('127.0.0.1', server.server_port, timeout=3)
+                    headers = {} if token is None else {'Authorization': 'Bearer '+token}
+                    conn.request(method, route, '{}' if method == 'POST' else None, headers)
+                    reply = conn.getresponse()
+                    result = reply.status, reply.read().decode('utf-8')
+                    conn.close()
+                    return result
+                code, page = request('GET', '/agents')
+                self.assertEqual(code, 200)
+                self.assertIn('Multi-Agent Intelligence', page)
+                self.assertNotIn(OWNER, page)
+                self.assertNotIn(ANALYST, page)
+                self.assertEqual(request('POST', '/status', 'wrong')[0], 403)
+                self.assertEqual(calls, [])
+                code, body = request('POST', '/status', ANALYST)
+                self.assertEqual(code, 200)
+                board = json.loads(body)['agent_board']
+                self.assertEqual(board['delivery'], 'DISABLED')
+                self.assertEqual(board['agent_workers_started'], 0)
+                self.assertFalse(board['live_execution_authorized'])
+                self.assertEqual(len(board['lanes']), 6)
+                policy(access, analyst_enabled=False)
+                self.assertEqual(request('POST', '/status', ANALYST)[0], 403)
+                self.assertEqual(calls, ['status'])
+            finally:
+                server.shutdown(); thread.join(timeout=4); server.server_close()
+            self.assertFalse(thread.is_alive())
