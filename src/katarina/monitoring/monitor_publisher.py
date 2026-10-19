@@ -46,12 +46,33 @@ def publish_once(root,config):
             raise ValueError('monitor_ingest_not_accepted')
     return {'status':'PUBLISHED','captured_at_utc':report['captured_at_utc']}
 
+def _source_version(root):
+    try:
+        root=Path(root)
+        return tuple((root/name).stat().st_mtime_ns
+                     for name in ('runtime-activity.json','continuous-status.json'))
+    except OSError:
+        return None
+
+
+def _wait_for_publication(root,version,started,interval_seconds,*,sleep=time.sleep,clock=time.monotonic):
+    """Coalesce changed lifecycle files; no broker/DB access and at most one upload per 2s."""
+    deadline=started+interval_seconds
+    while True:
+        now=clock()
+        if now>=deadline or (now-started>=2 and _source_version(root)!=version):
+            return
+        sleep(min(1,max(0,deadline-now)))
+
+
 def run(root,config_path,*,interval_seconds=15,once=False):
     if type(interval_seconds) is not int or not 10<=interval_seconds<=60:
         raise ValueError('invalid_monitor_interval')
     config=json.loads(Path(config_path).read_text(encoding='utf-8-sig'))
     failures=0
     while True:
+        version=_source_version(root)
+        started=time.monotonic()
         try:
             health=publish_once(root,config)
             failures=0
@@ -64,4 +85,7 @@ def run(root,config_path,*,interval_seconds=15,once=False):
         temp.replace(Path(root)/'monitor-publisher-health.json')
         if once:
             return health
-        time.sleep(min(60,interval_seconds*2**min(failures,2)))
+        if failures:
+            time.sleep(min(60,interval_seconds*2**min(failures,2)))
+        else:
+            _wait_for_publication(root,version,started,interval_seconds)

@@ -21,7 +21,8 @@ class ObserverActivityTests(unittest.TestCase):
             self.assertEqual(broker.orders,0)
             activity=read_activity(root)
             phases={(e['phase'],e['state']) for e in activity['events']}
-            for phase in ('NEWS','SENSORS','MEMORY','RISK_AUDIT','WAIT_ACK','PUBLISH'):
+            for phase in ('NEWS','SENSORS','MEMORY','SETTLE','CHECKPOINT','LEARNING_REVIEW',
+                          'RESEARCH','MEMORY_WRITE','RECALL','ASSOCIATION','RISK_AUDIT','WAIT_ACK','PUBLISH'):
                 self.assertIn((phase,'STARTED'),phases)
                 self.assertIn((phase,'DONE'),phases)
             self.assertEqual(activity['current']['phase'],'STOPPED')

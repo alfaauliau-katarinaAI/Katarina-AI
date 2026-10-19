@@ -6,7 +6,8 @@ from pathlib import Path
 import re
 
 PHASES = frozenset(('STARTING','CONNECT','NEWS','SENSORS','TECHNICAL','MEMORY',
-                   'RISK_AUDIT','WAIT_ACK','PUBLISH','WAITING','DEGRADED','STOPPED','BLOCKED'))
+                   'RISK_AUDIT','WAIT_ACK','PUBLISH','WAITING','DEGRADED','STOPPED','BLOCKED',
+                   'SETTLE','CHECKPOINT','LEARNING_REVIEW','RESEARCH','MEMORY_WRITE','RECALL','ASSOCIATION'))
 STATES = frozenset(('STARTED','DONE','FAILED','IDLE'))
 FIELDS = ('symbol','method','market_state','action')
 

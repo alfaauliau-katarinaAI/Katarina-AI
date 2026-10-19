@@ -419,6 +419,7 @@ class BrainObserver:
         report["observed_symbols"]=len(report["symbols"])
         report["received_market_data_symbols"]=len(latest_quotes)
         from katarina.intelligence.observational_associations import observe_associations
+        emit('ASSOCIATION','STARTED')
         report['observational_associations'] = observe_associations(store.db, latest_quotes, now)
         report['research_news']=research_news
         report['news_market_event_study']=event_study(store.db,now)
@@ -427,6 +428,7 @@ class BrainObserver:
         # One brain and the existing shared memory; no extra worker or model.
         brain.memory.append_operational_event('observational_associations_v1', association,
             event_id='associations:'+sha256(json.dumps(association,sort_keys=True).encode()).hexdigest())
+        emit('ASSOCIATION','DONE')
         emit('RISK_AUDIT','STARTED')
         report.update(brain.inspect_foundation(
             mt5, report, expected_symbols=len(symbols)))
