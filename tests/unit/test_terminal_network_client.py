@@ -129,7 +129,7 @@ const retainedNew=run('graph');
  clock=fixed;packet.captured_at_utc=stamp;packet.agent_board.activity.current=event(40,'RECALL','STARTED');
 packet.agent_board.activity.events.push(packet.agent_board.activity.current);
 sandbox.fetch=async()=>({ok:true,json:async()=>packet});await run('refresh()');
-run('orbitOn=false');assert.equal(run('currentWork().phase'),'RECALL');
+run('orbitOn=false;pulseOn=true');assert.equal(run('currentWork().phase'),'RECALL');
 const before=frames.length;run('lastFrame=null;draw(8000)');assert.ok(frames.length>before);
 packet.agent_board.activity.current=event(41,'RECALL','DONE');
 packet.agent_board.activity.events.push(packet.agent_board.activity.current);await run('refresh()');
