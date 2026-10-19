@@ -2,8 +2,17 @@
 import argparse
 import os
 from pathlib import Path
-import re
 import subprocess
+
+def validate_secret(key):
+    # Accept current authorization keys (including dots) and legacy keys.
+    # RSA-3072 OAEP-SHA256 can seal at most 318 plaintext bytes.
+    if not key:
+        raise ValueError('GEMINI_SECRET_NOT_CONFIGURED')
+    if not 20 <= len(key) <= 318 or not key.isascii() or any(not 33 <= ord(ch) <= 126 for ch in key):
+        raise ValueError('GEMINI_SECRET_FORMAT_INVALID')
+    return key
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -11,8 +20,10 @@ def main():
     p.add_argument('--output', required=True)
     a = p.parse_args()
     key = os.environ.get('GEMINI_API_KEY', '').strip()
-    if not re.fullmatch(r'[A-Za-z0-9_-]{20,256}', key):
-        raise SystemExit('GEMINI_SECRET_NOT_CONFIGURED')
+    try:
+        key = validate_secret(key)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
     try:
         result = subprocess.run(['openssl', 'pkeyutl', '-encrypt', '-pubin',
             '-inkey', a.public_key, '-pkeyopt', 'rsa_padding_mode:oaep',
