@@ -151,8 +151,12 @@ class UnifiedKatarinaBrain:
         from katarina.governance.multi_model_evolution_review import review_candidate
         if self.shadow_book is None or self.quote_journal is None:
             raise RuntimeError("brain_observer_resources_not_attached")
+        trace = getattr(self, 'activity_trace', None)
+        emit = trace.emit if trace is not None else lambda *a, **k: None
+        emit('SETTLE','STARTED')
         resolved = self.quote_journal.resolve(latest_quotes, now, quote_lookup=quote_lookup)
         settled = self.shadow_book.settle(now=now, quotes=latest_quotes)
+        emit('SETTLE','DONE')
         unified = self.run_unified_cognitive_cycle(as_of_utc=now)
         policy = unified["research_policy"]
         priorities = {
@@ -327,16 +331,24 @@ class UnifiedKatarinaBrain:
                 or as_of_utc.utcoffset() is None):
             raise ValueError("timezone_aware_cognitive_clock_required")
         clock = as_of_utc.astimezone(timezone.utc)
+        trace = getattr(self, 'activity_trace', None)
+        emit = trace.emit if trace is not None else lambda *a, **k: None
+        emit('CHECKPOINT','STARTED')
         # Verify the Owner's checkpoint before learning, including read-only runs.
         history = verify_cognitive_history(self.shadow_db)
         if history["last_event_as_of_utc"] is not None:
             last = datetime.fromisoformat(history["last_event_as_of_utc"])
             if last > clock:
                 raise ValueError("cognitive_learning_clock_regressed")
+        emit('CHECKPOINT','DONE')
+        emit('LEARNING_REVIEW','STARTED')
         cognition = run_unified_cognitive_cycle(
             self.shadow_db, as_of_utc=clock, persist=persist)
+        emit('LEARNING_REVIEW','DONE')
+        emit('RESEARCH','STARTED')
         lab = evaluate_shadow_self_evolution(self.shadow_db, as_of_utc=clock)
         policy = derive_shadow_research_policy(lab)
+        emit('RESEARCH','DONE')
         blockers = []
         if (cognition.get("source_snapshot_matches_active") is False
                 or history["last_event_kind"] == "ROLLBACK"):
@@ -346,6 +358,7 @@ class UnifiedKatarinaBrain:
             blockers.append("ACTIVE_CHECKPOINT_NOT_CURRENT_SNAPSHOT")
         tags = set(context_tags)
         inserted = 0
+        emit('MEMORY_WRITE','STARTED')
         if not blockers:
             for row in cognition["episodic_memory"]:
                 # Quote markouts never become independently validated broker P/L.
@@ -373,8 +386,11 @@ class UnifiedKatarinaBrain:
                     reason="VIRTUAL_QUOTE_MARKOUT_NOT_BROKER_EXECUTION",
                 )
                 inserted += int(self._knowledge.remember(evidence))
+        emit('MEMORY_WRITE','DONE',count=inserted)
+        emit('RECALL','STARTED')
         recall = self._knowledge.recall(
             tuple(sorted(tags)), as_of_ns=int(clock.timestamp() * 1_000_000_000), mode=mode)
+        emit('RECALL','DONE',count=recall.records_considered)
         if recall.history_truncated:
             blockers.append("KNOWLEDGE_RECALL_HISTORY_TRUNCATED")
         if blockers:
