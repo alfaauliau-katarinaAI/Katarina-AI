@@ -44,7 +44,8 @@ def read_learning(root, *, observation_utc):
     """Read an existing bounded JSON snapshot; never open a database or write state."""
     unknown = dict(status='NOT_ATTESTED', source='CANONICAL_RESEARCH_SNAPSHOT')
     try:
-        raw = (Path(root) / 'latest.json').read_bytes()
+        with (Path(root) / 'latest.json').open('rb') as stream:
+            raw = stream.read(2_000_001)
         if len(raw) > 2_000_000:
             return unknown
         report = json.loads(raw)
