@@ -92,14 +92,21 @@ function render(report){
  const details=board.blockers.length?"Blocker: "+board.blockers.join(", "):"Snapshot lulus pemeriksaan struktur dan freshness. Ini bukan bukti trading, model, atau proses independen.";
  put("blockers",details);put("timestamp","Pemeriksaan: "+(board.observed_at_utc||"tidak tersedia"));
 }
+function invalidate(){
+ put("overall","BELUM TERVERIFIKASI");put("symbols","—");put("cycles","—");
+ put("execution","BELUM TERVERIFIKASI");put("profit","—");
+ $("lanes").replaceChildren();put("blockers","Data tidak tersedia; lakukan pemeriksaan berautentikasi lagi.");
+ put("timestamp","Pembaruan terakhir: —");
+}
 async function refresh(){
- if(busy)return;const token=$("token").value;if(!token){put("notice","Masukkan token Owner terlebih dahulu.");return}
+ if(busy)return;const token=$("token").value;if(!token){invalidate();put("notice","Masukkan token Owner terlebih dahulu.");return}
  busy=true;$("refresh").disabled=true;
- try{const response=await fetch("/status",{method:"POST",cache:"no-store",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:"{}"});
+ const controller=new AbortController(),deadline=setTimeout(()=>controller.abort(),10000);
+ try{const response=await fetch("/status",{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:"{}"});
  if(!response.ok)throw Error("Permintaan status ditolak (HTTP "+response.status+")");
  const data=await response.json();render(data);
  put("notice","Data dibaca dari pemeriksaan snapshot read-only; tidak ada perintah trading.");
- }catch(e){put("notice",e.message);put("overall","BELUM TERVERIFIKASI")}finally{busy=false;$("refresh").disabled=false}
+ }catch(e){invalidate();put("notice",e.message)}finally{clearTimeout(deadline);busy=false;$("refresh").disabled=false}
 }
 $("refresh").addEventListener("click",refresh);
 $("auto").addEventListener("click",()=>{if(timer){clearInterval(timer);timer=null}else{timer=setInterval(()=>{if(!document.hidden)refresh()},30000);refresh()}
