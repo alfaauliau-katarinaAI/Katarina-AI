@@ -212,8 +212,11 @@ class BrainObserver:
 
     def run(self, *, max_symbols=17, fetch_news=True):
         brain, mt5, root = self.brain, self.broker, self.root
+        trace = getattr(brain,'activity_trace',None)
+        emit = trace.emit if trace is not None else lambda *a,**k:None
         store = brain.context_store
         journal = brain.quote_journal
+        emit('NEWS','STARTED')
         feed_started_at=datetime.now(timezone.utc)
         feed_status=store.refresh(feed_started_at) if fetch_news else {
             s:"OFFLINE_TEST_DISABLED" for s in ("fed","ecb","boe","calendar")}
@@ -230,6 +233,8 @@ class BrainObserver:
         for document in research_news['new_documents']:
             brain.memory.append_operational_event('research_news_body_v1',document,event_id='research-news:'+document['id'])
         now=datetime.now(timezone.utc)
+        emit('NEWS','DONE',count=len(articles))
+        emit('SENSORS','STARTED')
         catalog=mt5.symbols_get()
         if catalog is None:raise RuntimeError("BROKER_CATALOG_NOT_FOUND")
         selection=resolve_broker_symbols(catalog)
@@ -242,6 +247,7 @@ class BrainObserver:
             now.timestamp())
         if not clock.suitable_for_readonly_snapshot:
             raise RuntimeError("BROKER_CLOCK_NOT_VERIFIED")
+        emit('SENSORS','DONE',count=len(symbols))
         offset=clock.observed_hours_shift
         time_reference=capture_time_reference(clock,now)
         correction=timedelta(hours=offset)
@@ -278,6 +284,7 @@ class BrainObserver:
         market_clock_epochs=[]
         paper_hypotheses=[]
         for symbol in symbols:
+            emit('TECHNICAL','STARTED',symbol=symbol)
             tick=ticks.get(symbol)
             try:
                 if not mt5.symbol_select(symbol,True):
@@ -367,6 +374,8 @@ class BrainObserver:
                             brain._atr(bars["M15"]),1e-12)),
                     ))
                     card["research_shadow_hypothesis"]="QUEUED_FOR_DETERMINISTIC_RANKING"
+                emit('TECHNICAL','DONE',symbol=symbol,method=card.get('selected_method'),
+                     market_state=card.get('market_state'),action=card.get('action'))
                 report["symbols"][symbol]=card
                 latest_quotes[symbol]=past
                 market_clock_epochs.append(quote_at)
@@ -381,6 +390,7 @@ class BrainObserver:
                     except (ValueError,TypeError):
                         card["journal_status"]="REJECTED_INVALID_TIMESTAMP_OR_QUOTE"
             except Exception as ex:
+                emit('TECHNICAL','FAILED',symbol=symbol)
                 report["symbols"][symbol]={
                     "action":"WAIT","conditional_side":"WAIT",
                     "market_state":"UNKNOWN","blocking_reasons":["sensor_error:"+type(ex).__name__],
@@ -397,9 +407,11 @@ class BrainObserver:
             datetime.fromtimestamp(max(market_clock_epochs),timezone.utc).isoformat()
             if market_clock_epochs else None)
         report["vps_timestamp_usage"]="SAFETY_FRESHNESS_AND_SCHEDULING_ONLY"
+        emit('MEMORY','STARTED')
         report.update(brain.advance_shadow_cycle(
             now=now, latest_quotes=latest_quotes, paper_hypotheses=paper_hypotheses,
             quote_lookup=due_lookup))
+        emit('MEMORY','DONE')
         report["market_states"]=dict(Counter(
             x["market_state"] for x in report["symbols"].values()))
         report["final_actions"]=dict(Counter(
@@ -415,10 +427,16 @@ class BrainObserver:
         # One brain and the existing shared memory; no extra worker or model.
         brain.memory.append_operational_event('observational_associations_v1', association,
             event_id='associations:'+sha256(json.dumps(association,sort_keys=True).encode()).hexdigest())
+        emit('RISK_AUDIT','STARTED')
         report.update(brain.inspect_foundation(
             mt5, report, expected_symbols=len(symbols)))
+        emit('RISK_AUDIT','DONE')
+        emit('WAIT_ACK','STARTED')
         report["brain_hands_feedback"] = brain.acknowledge_observation(mt5, report)
+        emit('WAIT_ACK','DONE',count=len(report['brain_hands_feedback'].get('receipts',[])))
+        emit('PUBLISH','STARTED')
         brain.publish_observation(root,report)
+        emit('PUBLISH','DONE')
         return {"observed_symbols":report["observed_symbols"],
                 "received_market_data_symbols":report["received_market_data_symbols"],
                 "market_states":report["market_states"],"final_actions":report["final_actions"],

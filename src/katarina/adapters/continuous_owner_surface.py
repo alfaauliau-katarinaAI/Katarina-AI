@@ -13,6 +13,7 @@ def owner_surface(model=None, *, workspace=None, sources_config=None, state_dir=
         sources = load_sources(sources_config)
     @contextmanager
     def attach(brain):
+        brain.dashboard_model = model
         def turn(text, *, session_id, mode='auto', principal=None):
             if model is None:
                 return dict(status='BLOCKED_MODEL_NOT_CONFIGURED',
@@ -41,6 +42,8 @@ def owner_surface(model=None, *, workspace=None, sources_config=None, state_dir=
             board['snapshot_process_matches'] = operational.get('snapshot_pid') == os.getpid()
             board['model'] = {'configured': model is not None, 'quality_verified': False,
                               'telemetry': model.telemetry() if callable(getattr(model, 'telemetry', None)) else None}
+            from katarina.monitoring.activity_trace import read_activity
+            board['activity'] = read_activity(state_dir) if state_dir is not None else {}
             return {**evidence, 'dialog_available': model is not None,
                     'surface_mode': 'DIALOG_AND_STATUS' if model is not None else 'STATUS_ONLY',
                     'delivery': delivery,
