@@ -62,7 +62,7 @@ class PCAcceptanceTests(unittest.TestCase):
             self.assertIn('PASS_SYNTHETIC_PC_ONLY',result.stdout)
 
     def test_pc_bootstrap_help_needs_no_research_dependencies(self):
-        result=subprocess.run([sys.executable,'-I',str(ROOT/'katarina_pc.py'),'--help'],
+        result=subprocess.run([sys.executable,'-I','-X','utf8',str(ROOT/'katarina_pc.py'),'--help'],
                               capture_output=True,text=True,timeout=15)
         self.assertEqual(result.returncode,0,result.stderr)
         self.assertIn('LIVE OFF',result.stdout)
