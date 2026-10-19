@@ -63,7 +63,7 @@ run('render(packet)');assert.equal(run('pulseKeys.size'),0);
 assert.equal(run('graph'),graphBefore);assert.equal(get('events').children[0],tableRowBefore);
 assert.equal(get('watch').children[0],watchBefore);
 assert.equal(run('orbitOn'),false);get('orbit').listeners.click();assert.equal(run('orbitOn'),true);
-const orbitYaw=run('yaw');run('draw(500)');assert.ok(run('yaw')>orbitYaw);
+const orbitYaw=run('yaw');run('draw(500)');run('draw(560)');assert.ok(run('yaw')>orbitYaw);
 get('orbit').listeners.click();assert.equal(run('orbitOn'),false);
 const stoppedYaw=run('yaw');run('draw(600)');assert.equal(run('yaw'),stoppedYaw);
 get('orbit').listeners.click();assert.equal(run('orbitOn'),true);
