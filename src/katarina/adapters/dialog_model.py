@@ -6,7 +6,8 @@ import os
 import time
 from pathlib import Path
 from urllib.parse import urlsplit
-from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
+from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler, HTTPSHandler
+import ssl
 
 
 class ModelUnavailable(RuntimeError):
@@ -27,9 +28,17 @@ class ModelConfig:
     timeout_seconds: int = 30
     max_output_tokens: int = 800
     api_format: str = 'chat_completions'
+    data_scope: str = 'OWNER_GRANTED_DIALOG'
+    token_file: str | None = None
+    ca_file: str | None = None
 
     def __post_init__(self):
         try:
+            if self.data_scope not in ('OWNER_GRANTED_DIALOG', 'PUBLIC_RESEARCH_ONLY'):
+                raise ValueError()
+            if any(v is not None and (not isinstance(v, str) or not v or len(v) > 1024)
+                   for v in (self.token_file, self.ca_file)):
+                raise ValueError()
             if self.api_format not in ('chat_completions', 'responses'):
                 raise ValueError()
             p = urlsplit(self.endpoint)
@@ -73,6 +82,17 @@ class JSONDialogModel:
 
     def _http(self, payload):
         token = os.environ.get(self.config.token_env, '')
+        if not token and self.config.token_file:
+            try:
+                with Path(self.config.token_file).open('rb') as stream:
+                    raw = stream.read(513)
+                if not 1 <= len(raw) <= 512:
+                    raise ValueError()
+                token = raw.decode('ascii').strip()
+                if not token or any(c.isspace() for c in token):
+                    raise ValueError()
+            except (OSError, ValueError, UnicodeError):
+                raise ModelUnavailable('MODEL_CREDENTIAL_UNAVAILABLE') from None
         if urlsplit(self.config.endpoint).scheme == 'https' and not token:
             raise ModelUnavailable('MODEL_CREDENTIAL_REQUIRED')
         headers = {'Content-Type': 'application/json'}
@@ -81,7 +101,8 @@ class JSONDialogModel:
         req = Request(self.config.endpoint, data=json.dumps(payload, allow_nan=False).encode(),
                       headers=headers, method='POST')
         try:
-            with build_opener(ProxyHandler({}), NoRedirect()).open(
+            with build_opener(ProxyHandler({}), NoRedirect(),
+                    HTTPSHandler(context=ssl.create_default_context(cafile=self.config.ca_file))).open(
                     req, timeout=self.config.timeout_seconds) as response:
                 raw = response.read(131073)
             if len(raw) > 131072:

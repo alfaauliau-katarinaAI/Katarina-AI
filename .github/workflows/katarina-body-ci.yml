@@ -408,3 +408,25 @@ jobs:
           path: build/validation/workflow-catalog-hygiene.json
           if-no-files-found: error
           retention-days: 30
+
+  provision-gemini-credential:
+    name: Seal Gemini secret for owner VPS (explicit one-time request)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && contains(github.event.head_commit.message, '[gemini-provision]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Seal credential; no plaintext files or logs
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || secrets.GOOGLE_API_KEY }}
+        run: python scripts/ai/seal_gemini_secret.py --public-key ops/credentials/katarina-gemini-transfer-public.pem --output build/provision/gemini-key.rsa
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gemini-vps-encrypted-credential
+          path: build/provision/gemini-key.rsa
+          if-no-files-found: error
+          retention-days: 1
