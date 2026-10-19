@@ -26,6 +26,7 @@ const context = vm.createContext({
  AbortController,setTimeout,clearTimeout,setInterval,clearInterval
 });
 vm.runInContext(SCRIPT, context);
+context.document.getElementById("token");
 const board={schema_version:1,result:"SNAPSHOT_PASS",market_symbols:3,cycles:24,
  delivery:"DISABLED",blockers:[],observed_at_utc:"2026-10-19T00:00:00Z",
  lanes:["SCAN","ANALYST","STRATEGY","BALANCE","EXEC","AUDIT"].map(id=>({
