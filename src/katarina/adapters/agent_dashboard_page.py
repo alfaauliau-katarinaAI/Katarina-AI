@@ -33,7 +33,7 @@ table{border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #242a3b
 @media(max-width:850px){.layout{grid-template-columns:1fr}}
 @media(max-width:600px){main{padding:14px 10px 30px}.auth{grid-template-columns:1fr 1fr}.auth input{grid-column:1/-1}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.lanes{grid-template-columns:1fr}.panel{padding:12px}.trace-panel{padding:0}#trace{min-width:600px}h1{font-size:23px}}
 </style></head><body><main>
-<header><div><div class="pill" style="display:inline-block">KATARINA · OWNER CONSOLE</div><h1>KATARINA / INTELLIGENCE</h1><p>READ-ONLY TERMINAL · satu otak · enam kapabilitas · tanpa API berbayar saat ini</p></div>
+<header><div><div class="pill" style="display:inline-block">KATARINA · OWNER CONSOLE</div><h1>Multi-Agent Intelligence</h1><p>READ-ONLY TERMINAL · satu otak · enam kapabilitas · tanpa API berbayar saat ini</p></div>
 <div><span class="pill" id="overall">BELUM DIPERIKSA</span> &nbsp; <a href="/">Dialog Owner ↗</a></div></header>
 <div class="auth"><input id="token" type="password" autocomplete="off" placeholder="Token Owner (tidak disimpan)" aria-label="Token autentikasi Owner"><button id="refresh">Periksa sekarang</button><button id="auto" aria-pressed="false">Auto: OFF</button></div>
 <details class="token-help"><summary>Token Owner dan API key berbeda — baca petunjuk</summary><p>Token Owner diberikan oleh pemilik instalasi untuk masuk dashboard. Token ini tidak dibeli dan tidak dibuat di penyedia AI. API key hanya diperlukan bila model bahasa eksternal diaktifkan. Mesin teknis dan monitor ini bekerja tanpa API model. Token tidak disimpan di browser.</p></details>
