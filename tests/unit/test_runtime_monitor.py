@@ -86,3 +86,31 @@ class RuntimeMonitorTests(unittest.TestCase):
                          'https://test.onrender.com/ingest?token=PRIVATE'):
             with self.assertRaises(ValueError):
                 publish_once('unused',dict(endpoint=endpoint,token='x'*40))
+
+    def test_publisher_uses_official_site_service_access_only_for_its_exact_origin(self):
+        endpoint='https://monitor.example.chatgpt.site/ingest'
+        config=dict(endpoint=endpoint,token='ingest-test-'+'x'*40,
+                    service_origin='https://monitor.example.chatgpt.site',
+                    sites_service_token='service-test-'+'y'*40)
+        seen=[]
+        class Reply:
+            status=202
+            def __enter__(self):return self
+            def __exit__(self,*a):pass
+        class Opener:
+            def open(self,request,**options):
+                seen.append(request);return Reply()
+        with patch('katarina.monitoring.monitor_publisher.build_public_runtime',return_value={'agent_board':{'result':'BLOCKED'}}), \
+             patch('katarina.monitoring.monitor_publisher.build_opener',return_value=Opener()):
+            result=publish_once('unused',config)
+        headers={key.lower():value for key,value in seen[0].header_items()}
+        self.assertEqual(headers['oai-sites-authorization'],'Bearer '+config['sites_service_token'])
+        self.assertEqual(headers['user-agent'],'Katarina-Runtime-Monitor/1.0')
+        self.assertNotIn(config['token'],seen[0].data.decode())
+        self.assertNotIn(config['sites_service_token'],seen[0].data.decode())
+        self.assertNotIn(config['sites_service_token'],json.dumps(result))
+        for origin in ('https://other.chatgpt.site','https://monitor.example.chatgpt.site/other'):
+            with self.assertRaises(ValueError):
+                publish_once('unused',{**config,'service_origin':origin})
+        with self.assertRaises(ValueError):
+            publish_once('unused',{**config,'endpoint':'https://monitor.onrender.com/ingest'})
