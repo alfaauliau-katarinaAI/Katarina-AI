@@ -39,6 +39,9 @@ const packet={captured_at_utc:now,private:'PRIVATE_SENTINEL',agent_board:{
  operational:{account_login:'PRIVATE_SENTINEL',positions_count:123,
  technical_evaluations:[{symbol:'XAUUSD',method:'PULLBACK',market_state:'TREND_UP',action:'WAIT',secret:'PRIVATE_SENTINEL'}]},
  activity:{pid:42,cycle:2,events:[{seq:1,at_utc:now,phase:'TECHNICAL',state:'DONE',symbol:'XAUUSD',secret:'PRIVATE_SENTINEL'}]}}};
+packet.agent_board.learning={status:'NO_NEW_MATURED_EVIDENCE',observation_utc:now,cognitive_as_of_utc:now,
+ ledger_status:'ALREADY_LEARNED_NO_REWRITE',matured_observations:0,memory_records_inserted:0,
+ shadow_rows_read:1,external_models_invoked:0,account_login:'PRIVATE_SENTINEL',improvement_verified:true};
 assert.equal((await request('/public-status')).status,503);
 assert.match(await (await request('/')).text(),/const PUBLIC_STATUS = true;/);
 assert.equal((await request('/ingest',packet)).status,403);
@@ -49,6 +52,9 @@ const response=await request('/public-status'),body=await response.text();
 assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
 assert.ok(!body.includes('PRIVATE_SENTINEL'));assert.ok(!body.includes('positions_count'));
 assert.equal(JSON.parse(body).agent_board.activity.current.phase,'TECHNICAL');
+assert.equal(JSON.parse(body).agent_board.learning.status,'NO_NEW_MATURED_EVIDENCE');
+assert.equal(JSON.parse(body).agent_board.learning.memory_records_inserted,0);
+assert.equal(JSON.parse(body).agent_board.learning.improvement_verified,false);
 assert.equal(JSON.parse(body).agent_board.operational.technical_evaluations[0].action,'WAIT');
 assert.equal((await request('/ingest',packet,token)).status,409);
 const stale=structuredClone(packet);stale.captured_at_utc=new Date(Date.now()-121000).toISOString();
