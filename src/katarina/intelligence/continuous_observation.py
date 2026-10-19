@@ -24,6 +24,10 @@ from katarina.memory.store import MemoryStore
 FATAL_BINDING = frozenset(('ACCOUNT_LOGIN_MISMATCH', 'ACCOUNT_SERVER_MISMATCH',
     'TERMINAL_TRADING_MUST_BE_OFF', 'IDENTITY_CHECK_FAILED'))
 
+# Missing market metadata is retryable; permission, identity and unknown errors stay fatal.
+RECOVERABLE_SENSOR = frozenset(('BROKER_CATALOG_NOT_FOUND',
+    'NO_ELIGIBLE_BROKER_SYMBOLS', 'BROKER_CLOCK_NOT_VERIFIED'))
+
 
 def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                    max_cycles=None, factories=None, brain_type=UnifiedKatarinaBrain,
@@ -103,6 +107,11 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                         fault = diagnostic_code(exc, route)
                         if str(exc) in FATAL_BINDING:
                             raise RuntimeError('ACCOUNT_OR_TRADING_PERMISSION_CHANGED') from None
+                    except RuntimeError as exc:
+                        if str(exc) not in RECOVERABLE_SENSOR:
+                            raise
+                        fault = str(exc)
+                        brain.activity_trace.emit('SENSORS','FAILED',action=fault)
                     except ImportError:
                         # Missing packages/configuration need repair, not endless retries.
                         raise RuntimeError('SENSOR_DEPENDENCY_UNAVAILABLE') from None
