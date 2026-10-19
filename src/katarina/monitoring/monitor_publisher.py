@@ -23,6 +23,16 @@ def publish_once(root,config):
     token=config['token']
     if not isinstance(token,str) or len(token)<32 or not token.isascii() or any(c.isspace() for c in token):
         raise ValueError('invalid_monitor_secret')
+    headers={'Content-Type':'application/json','Authorization':'Bearer '+token,
+             'User-Agent':'Katarina-Runtime-Monitor/1.0'}
+    service_token=config.get('sites_service_token')
+    if service_token:
+        if (not target.hostname.endswith('.chatgpt.site')
+                or config.get('service_origin') != 'https://'+target.netloc
+                or not isinstance(service_token,str) or len(service_token)<32
+                or not service_token.isascii() or any(c.isspace() for c in service_token)):
+            raise ValueError('site_service_access_origin_mismatch')
+        headers['OAI-Sites-Authorization']='Bearer '+service_token
     report=build_public_runtime(root)
     report['captured_at_utc']=datetime.now(timezone.utc).isoformat()
     raw=json.dumps(report,allow_nan=False).encode()
@@ -30,7 +40,7 @@ def publish_once(root,config):
         raise ValueError('monitor_snapshot_too_large')
     context=ssl.create_default_context(cafile=config.get('ca_file'))
     request=Request(endpoint,data=raw,method='POST',
-                    headers={'Content-Type':'application/json','Authorization':'Bearer '+token})
+                    headers=headers)
     with build_opener(ProxyHandler({}),HTTPSHandler(context=context),NoRedirect()).open(request,timeout=30) as response:
         if response.status!=202:
             raise ValueError('monitor_ingest_not_accepted')
