@@ -71,8 +71,18 @@ sandbox.growth={status:'PERSISTED_RESEARCH_COUNTS',as_of_utc:stamp,experiments:1
 run('renderLearning({status:"NOT_ATTESTED"},{research_growth:growth,model:{telemetry:{successful_calls:2}}})');
 assert.ok(get('learning-proof').children.some(c=>c.textContent.includes('12 eksperimen')));
 assert.ok(get('learning-proof').children.some(c=>c.textContent==='CHECKPOINT KOGNITIF BELUM SINKRON'));
-assert.ok(draws.some(d=>d[0]==='quadraticCurveTo'));
+assert.ok(draws.some(d=>d[0]==='lineTo'));assert.ok(draws.some(d=>d[0]==='drawImage'));
+const cachedDraws=draws.length;run('draw(200)');assert.equal(draws.slice(cachedDraws).filter(d=>d[0]==='fillText').length,0);
+assert.equal(run('orbitOn'),false);
+run('acceptPulseEvents([packet.agent_board.activity.current,packet.agent_board.activity.current],200,false)');assert.equal(run('eventPulses.filter(e=>e.phase==="TECHNICAL").length'),1);
 run('selectNode("k:"+packet.agent_board.research_graph.nodes[0].id)');assert.ok(get('selection').children[1].textContent.includes('DOC / aaaaaaaa'));
+// Rendering budgets are enforced regardless of server graph density.
+sandbox.edges=Array.from({length:512},(_,i)=>({a:'k:a'+i,b:'k:b'+i,relation:'PART_OF_DOCUMENT'}));
+assert.equal(run('visibleEdges(edges).length'),160);
+run('selected=null;acceptPulseEvents(Array.from({length:40},(_,i)=>({phase:"P"+i,seq:i,state:"DONE",at_utc:new Date().toISOString()})),300,false)');assert.ok(run('eventPulses.length')<=16);
+get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),false);
+get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),true);
+get('reset-view').listeners.click();assert.equal(run('cameraInput.zoom'),1);
 get('network').listeners.pointerdown({pointerId:1,clientX:20,clientY:20});
 get('network').listeners.pointermove({pointerId:1,clientX:60,clientY:25});
 get('network').listeners.pointercancel({pointerId:1});
