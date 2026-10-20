@@ -1,0 +1,23 @@
+name: Seal Hugging Face credential for owner VPS
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/hf-vps-storage.yml'
+      - 'scripts/ai/seal_hf_secret.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  seal:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Encrypt HF credential using verified VPS public key
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python scripts/ai/seal_hf_secret.py
