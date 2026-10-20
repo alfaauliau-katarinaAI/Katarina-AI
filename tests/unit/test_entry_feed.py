@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -12,18 +13,18 @@ class EntryFeedTests(unittest.TestCase):
             root=Path(temp);private=root/'demo-forward';private.mkdir();now=datetime.now(timezone.utc)
             for name,doc in [('executor',dict(pid=7,independent=True,mode='DEMO',as_of_utc=now.isoformat())),('status',dict(pid=7,as_of_utc=now.isoformat(),live_authorized=False))]:
                 (private/(name+'.json')).write_text(json.dumps(doc))
-            with sqlite3.connect(private/'orders.sqlite3') as db:
+            with closing(sqlite3.connect(private/'orders.sqlite3')) as db, db:
                 db.execute('CREATE TABLE demo_outbox(intent_id,state,updated_at,intent_json,outcome_json)')
                 intent=dict(symbol='XAUUSD.vx',side='BUY',price=4000,stop_loss=3990,take_profit=4020,created_at=now.timestamp()-60,volume=99,login='SECRET')
                 db.execute('INSERT INTO demo_outbox VALUES(?,?,?,?,?)',('entry','CLOSED',now.timestamp(),json.dumps(intent),json.dumps(dict(closed_observed_at=now.timestamp(),net_profit_native=99))))
                 db.execute('INSERT INTO demo_outbox VALUES(?,?,?,?,?)',('unconfirmed','ACCEPTED',now.timestamp(),json.dumps(intent),None))
             ident='a'*64;trial='b'*64
             report=dict(qualified=False,parameters=dict(method='MOMENTUM',side='BUY',lookback=24,horizon=4,threshold=.5),checks=[dict(multiplier=1,passed=False)],secret='SECRET')
-            with sqlite3.connect(private/'experiment.sqlite3') as db:
+            with closing(sqlite3.connect(private/'experiment.sqlite3')) as db, db:
                 db.execute('CREATE TABLE demo_variants(id,trial_id,report_json)');db.execute('INSERT INTO demo_variants VALUES(?,?,?)',(ident,trial,json.dumps(report)))
                 db.execute('CREATE TABLE demo_candidate_visits(trial_id,last_checked)');db.execute('INSERT INTO demo_candidate_visits VALUES(?,?)',(trial,now.timestamp()))
                 db.execute('CREATE TABLE demo_policy_reviews(variant_id,report_json)');db.execute('CREATE TABLE demo_lessons(variant_id,report_json)')
-            with sqlite3.connect(root/'experiment-jobs.sqlite3') as db:
+            with closing(sqlite3.connect(root/'experiment-jobs.sqlite3')) as db, db:
                 db.execute('CREATE TABLE trials(id,symbol)');db.execute('INSERT INTO trials VALUES(?,?)',(trial,'XAUUSD.vx'))
             before={str(p):p.read_bytes() for p in root.rglob('*.sqlite3')}
             feed=read_entry_feed(root,allowed=True,now=now)
