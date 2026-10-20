@@ -15,7 +15,7 @@ const assert=require('node:assert/strict'),vm=require('node:vm');
 const source=WORKER_SOURCE;
 const page=JSON.parse(source.slice(source.indexOf('const PAGE=')+11,source.indexOf(';\nconst phases=')));
 const script=page.split('<script>')[1].split('</script>')[0];
-assert.match(page,/touch-action:pan-y/);assert.ok(!page.includes('id="pair-focus"'));assert.ok(!page.includes('id="pause-pulse"'));assert.ok(!page.includes('id="reset-view"'));assert.ok(!page.includes('class="controls"'));
+assert.match(page,/canvas#network\{touch-action:none/);assert.ok(!page.includes("touch-action:pan-y"));assert.ok(!page.includes('id="pair-focus"'));assert.ok(!page.includes('id="pause-pulse"'));assert.ok(!page.includes('id="reset-view"'));assert.ok(!page.includes('class="controls"'));
 assert.match(page,/max-width:420px/);
 assert.match(page,/id="network"/);assert.ok(!page.includes('class="parallel-board"'));assert.ok(!page.includes('id="parallel-grid"'));assert.match(page,/Rotasi visual/);
 assert.ok(!page.includes('type="password"'));
@@ -100,7 +100,21 @@ run('acceptPulseEvents([{phase:"TECHNICAL",seq:102,state:"DONE",at_utc:new Date(
 run('acceptPulseEvents([{phase:"TECHNICAL",seq:104,state:"DONE",at_utc:new Date(Date.now()-25000).toISOString()}],400,false)');assert.equal(run('eventPulses.length'),3);
 
 assert.ok(run('graph.nodes.some(n=>n.kind==="event")'));assert.ok(run('graph.edges.some(e=>e.relation==="EVENT_REPORT")'));
-assert.equal(get('network').listeners.pointerdown,undefined);assert.equal(get('network').listeners.pointermove,undefined);assert.equal(get('network').listeners.wheel,undefined);assert.equal(get('network').listeners.keydown,undefined);assert.equal(typeof get('network').listeners.click,'function');
+// Exercise actual registered controls: drag, simultaneous pinch/pan, cancellation and resume.
+const controls=get('network').listeners;
+const pointer=(id,x,y)=>({pointerId:id,clientX:x,clientY:y,button:0,preventDefault(){}});
+clock=fixed+2000;run('resetView();draw(2000)');const initialYaw=run('yaw'),initialRotation=run('networkRotation');
+controls.pointerdown(pointer(1,100,100));clock+=32;controls.pointermove(pointer(1,150,120));
+assert.ok(run('yaw')>initialYaw);assert.ok(run('pitch')>0);run('draw(2032)');assert.equal(run('networkRotation'),initialRotation);
+controls.pointerdown(pointer(2,250,120));const oldZoom=run('zoom'),oldPan=run('panX');
+clock+=32;controls.pointermove(pointer(2,290,140));assert.ok(run('zoom')>oldZoom);assert.ok(run('panX')>oldPan);
+controls.pointerup(pointer(2,290,140));const yawBefore=run('yaw');clock+=32;controls.pointermove(pointer(1,155,120));assert.ok(Math.abs(run('yaw')-yawBefore)<.1,'Second finger release jumped');
+controls.pointercancel(pointer(1,155,120));assert.equal(run('pointers.size'),0);assert.equal(get('network').dataset.dragging,'false');assert.equal(run('cameraVelocity.yaw'),0);
+clock=fixed+3000;run('draw(3000)');assert.equal(run('networkRotation'),initialRotation);
+clock=fixed+4100;run('draw(4100)');assert.ok(run('networkRotation')>initialRotation,'Auto rotation did not resume');
+controls.wheel({deltaY:-100,preventDefault(){}});assert.ok(run('zoom')>oldZoom);
+controls.keydown({key:'Home',preventDefault(){}});assert.equal(run('zoom'),1);assert.equal(run('panX'),0);assert.equal(run('yaw'),0);
+clock+=50;controls.pointerdown(pointer(1,10,10));controls.pointerup(pointer(1,10,10));run('zoom=2');clock+=150;controls.pointerdown(pointer(1,10,10));controls.pointerup(pointer(1,10,10));assert.equal(run('zoom'),1,'Double tap must restore view');
 run('pulseOn=false');assert.equal(run('ambientAllowed()'),false);run('pulseOn=true');
 clock=fixed+121000;run('checkFreshness()');assert.equal(run('graph.nodes.length'),0);assert.equal(run('graphFresh'),false);
 console.log('PASS_CURRENT_HOSTED_CODES_RESIZE_ORDER_PROVENANCE_EXPIRY');
