@@ -6,6 +6,7 @@ import sqlite3
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from katarina.intelligence.autonomous_research import ResearchWorker
 
 class WorkerAutonomyTests(unittest.TestCase):
@@ -27,3 +28,13 @@ class WorkerAutonomyTests(unittest.TestCase):
             finally:worker.close()
             with closing(sqlite3.connect(root/'experiment-jobs.sqlite3')) as db:
                 self.assertGreater(db.execute('SELECT COUNT(*) FROM trials').fetchone()[0],0)
+
+    def test_capacity_policy_is_wired_into_the_actual_worker(self):
+        with tempfile.TemporaryDirectory() as d:
+            class Trace:
+                def emit(self,*_,**__):pass
+            worker=ResearchWorker(Path(d),Trace(),'MOMENTUM',4)
+            with patch('katarina.intelligence.research_capacity.research_capacity',return_value={'status':'PAUSED_LOW_DISK'}) as capacity:
+                self.assertFalse(worker.tick());capacity.assert_called_once_with(Path(d))
+                self.assertEqual(worker.state['status'],'PAUSED_LOW_DISK')
+                self.assertFalse((Path(d)/'experiment-jobs.sqlite3').exists())

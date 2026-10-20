@@ -13,6 +13,8 @@ def activate(root,state,python,config):
     if not (s.get('live_execution_authorized') is False and s.get('production_execution') is False
             and d.get('live_authorized') is False and d.get('broker_positions_open')==0
             and d.get('unresolved_submissions')==0):raise RuntimeError('FLAT_DEMO_AND_LIVE_OFF_REQUIRED')
+    if (state/'demo-forward/demo.stop').exists() or (state/'continuous.stop').exists():
+        raise RuntimeError('OWNER_STOP_MUST_BE_PRESERVED')
     name='KatarinaDemoExecutionWorker'
     task=subprocess.run(['schtasks','/Query','/TN',name,'/XML'],capture_output=True,text=True)
     if task.returncode==0 and 'run_independent_demo_worker.py' not in task.stdout:
@@ -32,10 +34,8 @@ def activate(root,state,python,config):
     limit=tree.find('t:Settings/t:ExecutionTimeLimit',ns)
     if limit is not None:limit.text='PT0S'
     definition=root/'handoff-backups/autonomous-workers-20261020/executor-task.xml';definition.parent.mkdir(parents=True,exist_ok=True)
-    tree.write(definition,encoding='utf-16',xml_declaration=True)
+    ET.ElementTree(tree).write(definition,encoding='utf-16',xml_declaration=True)
     subprocess.run(['schtasks','/Create','/TN',name,'/XML',str(definition),'/F'],check=True)
-    if (state/'demo-forward/demo.stop').exists() or (state/'continuous.stop').exists():
-        raise RuntimeError('OWNER_STOP_MUST_BE_PRESERVED')
     subprocess.run(['schtasks','/End','/TN','KatarinaOwnerContinuousReadonly'],check=True)
     try:
         marker=state/'demo-forward/independent.enabled';marker.write_text('DEMO_ONLY_AUTONOMOUS_EXECUTOR_V1\n',encoding='utf-8')

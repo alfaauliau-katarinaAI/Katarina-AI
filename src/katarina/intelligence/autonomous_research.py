@@ -5,7 +5,8 @@ from hashlib import sha256
 from itertools import product
 import json
 from pathlib import Path
-import shutil
+import os
+from katarina.monitoring.snapshot_io import replace_snapshot
 import sqlite3
 import threading
 import zlib
@@ -96,11 +97,12 @@ class ResearchWorker:
         if self.thread.is_alive(): raise RuntimeError('RESEARCH_WORKER_STOP_TIMEOUT')
 
     def tick(self):
-        if shutil.disk_usage(self.root).free < 2*1024**3:
-            self.state['status']='PAUSED_LOW_DISK';return False
+        from katarina.intelligence.research_capacity import research_capacity
+        capacity=research_capacity(self.root)
+        self.state['capacity']=capacity
+        if capacity['status']!='READY':
+            self.state['status']=capacity['status'];return False
         target=self.root/'experiment-jobs.sqlite3'
-        if target.exists() and target.stat().st_size>256*1024**2:
-            self.state['status']='PAUSED_STORAGE_BUDGET';return False
         with closing(sqlite3.connect(target,timeout=2)) as jobs:
             jobs.execute('CREATE TABLE IF NOT EXISTS trials(id TEXT PRIMARY KEY,symbol TEXT,digest TEXT,created_utc TEXT,result_json TEXT)')
             jobs.execute("CREATE INDEX IF NOT EXISTS trials_role ON trials(json_extract(result_json,'$.method'),json_extract(result_json,'$.horizon'))")
@@ -152,11 +154,11 @@ class ResearchWorker:
                 self.state['status']='WAITING_DATA_OR_DATABASE';worked=False
             except Exception:
                 self.state['status']='RETRY_PENDING';worked=False
-            payload=dict(self.state,as_of_utc=datetime.now(timezone.utc).isoformat(),grid_size=len(GRID))
+            payload=dict(self.state,pid=os.getpid(),autonomous=True,as_of_utc=datetime.now(timezone.utc).isoformat(),grid_size=len(GRID))
             try:
                 name='multitask-status' if self.family is None else 'worker-'+self.phase
                 temp=self.root/(name+'.tmp')
-                temp.write_text(json.dumps(payload)+'\n',encoding='utf-8');temp.replace(self.root/(name+'.json'))
+                temp.write_text(json.dumps(payload)+'\n',encoding='utf-8');replace_snapshot(temp,self.root/(name+'.json'))
             except OSError: pass
             # Bounded pace, no expensive model calls or busy looping when all jobs are exhausted.
             self.stop.wait(2 if worked else 10)
@@ -295,7 +297,7 @@ class ResearchPool:
                     reviews=db.execute('SELECT COUNT(*) FROM stress_reviews').fetchone()[0]
                 self.state.update(status='RUNNING',completed=count,stress_reviews=reviews,background_workers=self.background_count,
                                   research_workers=12,workers=[dict(w.state,role=w.family,phase=w.phase,horizon=w.horizon) for w in self.workers],gemini=dict(self.model_state))
-                temp=self.root/'multitask-status.tmp';temp.write_text(json.dumps(dict(self.state,as_of_utc=datetime.now(timezone.utc).isoformat(),grid_size=len(GRID)))+'\n');temp.replace(self.root/'multitask-status.json')
+                temp=self.root/'multitask-status.tmp';temp.write_text(json.dumps(dict(self.state,as_of_utc=datetime.now(timezone.utc).isoformat(),grid_size=len(GRID)))+'\n');replace_snapshot(temp,self.root/'multitask-status.json')
             except (sqlite3.Error,OSError):pass
             self.stop.wait(1)
 

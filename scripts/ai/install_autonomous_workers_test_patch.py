@@ -9,8 +9,13 @@ def install(root,payload_path):
     root=Path(root);payload=json.loads(Path(payload_path).read_text(encoding='utf-8'))
     pool=root/'src/katarina/intelligence/autonomous_research.py'
     current=pool.read_text(encoding='utf-8')
-    expected='b95821f06fc8c771f7067af7a95608a1490023b5c4c1ce9ae94caf5806d95984'
-    if hashlib.sha256(current.encode()).hexdigest()!=expected and 'research_capacity(self.root)' not in current:
+    replacement=payload['src/katarina/intelligence/autonomous_research.py']
+    if 'research_capacity(self.root)' not in replacement or 'pid=os.getpid()' not in replacement:
+        raise RuntimeError('INCOMPLETE_RESEARCH_POOL_PAYLOAD')
+    expected={'b95821f06fc8c771f7067af7a95608a1490023b5c4c1ce9ae94caf5806d95984',
+              'c8337e02c45405875272add1c6da295e4a19611e1f37c8a6894deeed7ce5f3ae',
+              hashlib.sha256(replacement.encode()).hexdigest()}
+    if hashlib.sha256(current.encode()).hexdigest() not in expected:
         raise RuntimeError('UNKNOWN_RESEARCH_POOL_SOURCE')
     sources={root/name:value for name,value in payload.items()}
     observer=root/'src/katarina/intelligence/continuous_observation.py'
@@ -31,7 +36,9 @@ def install(root,payload_path):
         if 'from __future__ import annotations' in s:s=s.replace('from __future__ import annotations','from __future__ import annotations\nfrom katarina.monitoring.snapshot_io import replace_snapshot')
         else:s+='\nfrom katarina.monitoring.snapshot_io import replace_snapshot\n'
     s=s.replace("tmp.replace(self.private/'status.json')","replace_snapshot(tmp,self.private/'status.json')")
-    s=s.replace("            reason=self.boundary._identity_error()","            self.permission='UNVERIFIED'\n            reason=self.boundary._identity_error()");sources[demo]=s
+    if "            self.permission='UNVERIFIED'\n            reason=self.boundary._identity_error()" not in s:
+        s=s.replace("            reason=self.boundary._identity_error()","            self.permission='UNVERIFIED'\n            reason=self.boundary._identity_error()")
+    sources[demo]=s
     for path,source in sources.items():compile(source,str(path),'exec')
     backup=root/'handoff-backups'/'autonomous-workers-20261020';backup.mkdir(parents=True,exist_ok=True)
     for path,source in sources.items():
