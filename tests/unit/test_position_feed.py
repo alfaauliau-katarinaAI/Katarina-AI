@@ -16,7 +16,9 @@ class PositionFeedTests(unittest.TestCase):
             def account_info(self):return S(currency='USC',trade_mode=0,balance=9999,equity=10000,margin=0,margin_free=9999,login=123)
             def positions_get(self):return [S(ticket=7,symbol='XAUUSD.vx',type=0,price_open=4000,time=now.timestamp()-50,price_current=4001,sl=3990,tp=4020,profit=100,swap=-2),S(ticket=8,symbol='EURUSD.vx',type=1,price_open=1.1,time=now.timestamp()-40,price_current=1.2,sl=0,tp=0,profit=-20,swap=-1)]
             def orders_get(self):return []
-        monitor=inspect_broker_account(Broker(),observed_at_utc=now)
+        broker=Broker();broker.demo_observation_enabled=True
+        monitor=inspect_broker_account(broker,observed_at_utc=now)
+        self.assertEqual(monitor["status"],"DEMO_ACCOUNT_OBSERVED_NO_RISK_CLEARANCE")
         self.assertEqual(monitor['position_snapshot']['floating_total'],77)
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);(root/'demo-forward').mkdir()

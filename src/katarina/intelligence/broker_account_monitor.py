@@ -70,6 +70,8 @@ def inspect_broker_account(mt5, *, observed_at_utc: datetime) -> dict:
             _amount_available(getattr(account, "margin", None)) and
             _amount_available(getattr(account, "margin_free", None))
         )
+    result["demo_observation_enabled"] = (getattr(mt5,"demo_observation_enabled",None) is True
+                                           and result["account_mode"] == "DEMO")
     if positions is not None:
         result["positions_read_success"] = True
         result["positions_count"] = len(positions)
@@ -121,11 +123,13 @@ def inspect_broker_account(mt5, *, observed_at_utc: datetime) -> dict:
     if orders is not None:
         result["orders_read_success"] = True
         result["pending_orders_count"] = len(orders)
-    if (result["connected"] and result["algo_trading_off"] and
+    from katarina.adapters.demo_permissions import monitor_permission
+    if (result["connected"] and monitor_permission(result) and
             result["account_financial_fields_available"] and
             result["positions_read_success"] and
             result["orders_read_success"]):
-        result["status"] = "READONLY_ACCOUNT_OBSERVED_NO_RISK_CLEARANCE"
+        result["status"] = ("READONLY_ACCOUNT_OBSERVED_NO_RISK_CLEARANCE" if result["algo_trading_off"]
+                            else "DEMO_ACCOUNT_OBSERVED_NO_RISK_CLEARANCE")
     else:
         result["status"] = "BROKER_ACCOUNT_SNAPSHOT_DEGRADED"
     return result
