@@ -47,3 +47,17 @@ class FileHousekeepingTests(unittest.TestCase):
             for i in range(30):(inbox/f'{i}.txt').write_text(str(i))
             r=organize(root,now=2000000000,limit=3)
             self.assertEqual(r['checked'],3);self.assertEqual(r['moved'],3)
+
+    def test_changed_or_conflicting_restore_is_refused(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);inbox=root/'housekeeping'/'inbox';inbox.mkdir(parents=True)
+            (inbox/'report.txt').write_text('original')
+            organize(root,now=2000000000)
+            records=[json.loads(s) for s in (inbox.parent/'moves.jsonl').read_text().splitlines()]
+            moved=records[-1];target=inbox.parent/moved['destination']
+            target.write_text('changed')
+            with self.assertRaises(ValueError):restore(root,moved['id'])
+            self.assertEqual(target.read_text(),'changed')
+            target.write_text('original');(inbox/'report.txt').write_text('new')
+            with self.assertRaises(ValueError):restore(root,moved['id'])
+            self.assertEqual((inbox/'report.txt').read_text(),'new')
