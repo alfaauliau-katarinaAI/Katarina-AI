@@ -118,4 +118,20 @@ def read_reports(root, pid):
                 unreported_experiments=max(0,total-sum(counts.values())),counts=counts,
                 recent=recent,candidates=candidates,live_authorized=False,production_approved=False)
     except (sqlite3.Error,OSError,ValueError,KeyError,TypeError):
-        return {'status':'NOT_ATTESTED'}
+        # Immutable reports remain inspectable while live DB observation is busy.
+        # Keep the original creation time; only the file verification time is new.
+        try:
+            raw=(root/'research-reports.json').read_bytes()
+            if len(raw)>32768:raise ValueError()
+            cached=json.loads(raw)
+            stamp=datetime.fromisoformat(cached['as_of_utc'])
+            if (cached.get('status')!='RESEARCH_REPORTS' or stamp.tzinfo is None
+                    or (datetime.now(timezone.utc)-stamp).total_seconds() < -30):raise ValueError()
+            cached['producer_pid']=cached.get('pid')
+            cached.update(pid=pid,snapshot_role='PERSISTED_REPORT_FILE_OBSERVATION',
+                          latest_report_utc=cached['as_of_utc'],
+                          as_of_utc=datetime.now(timezone.utc).isoformat(),
+                          live_authorized=False,production_approved=False)
+            return cached
+        except (OSError,ValueError,KeyError,TypeError):
+            return {'status':'NOT_ATTESTED'}

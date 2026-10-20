@@ -13,3 +13,14 @@ class PersistedReportsTests(unittest.TestCase):
             self.assertEqual(out['latest_report_utc'],row['reported_utc']);self.assertEqual(out['recent'][0]['reported_utc'],row['reported_utc'])
             self.assertEqual(out['reviewed_experiments'],1);self.assertFalse(out['production_approved']);self.assertEqual(db.total_changes,before)
             db.close()
+
+    def test_busy_or_missing_database_keeps_historical_report_with_its_old_timestamp(self):
+        with tempfile.TemporaryDirectory() as root:
+            stamp='2026-10-19T00:00:00+00:00'
+            Path(root,'research-reports.json').write_text(json.dumps(dict(status='RESEARCH_REPORTS',pid=10,as_of_utc=stamp,recent=[],counts={})))
+            out=read_reports(root,999)
+            self.assertEqual(out['latest_report_utc'],stamp)
+            self.assertEqual(out['producer_pid'],10)
+            self.assertEqual(out['pid'],999)
+            self.assertNotEqual(out['as_of_utc'],stamp)
+            self.assertFalse(out['production_approved'])
