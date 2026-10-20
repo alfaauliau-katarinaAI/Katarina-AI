@@ -18,3 +18,14 @@ class ResearchAgendaTests(unittest.TestCase):
         self.assertFalse(status(db)['answers_verified'])
         self.assertFalse(status(db)['live_execution_authorized'])
         self.assertEqual(prioritize(db,stories),stories)
+
+    def test_restart_uses_only_questions_from_persisted_model_reviews(self):
+        import json
+        db=sqlite3.connect(':memory:')
+        db.execute('CREATE TABLE public_language_reviews(review_id TEXT,created_utc TEXT,candidate_json TEXT)')
+        db.execute('INSERT INTO public_language_reviews VALUES(?,?,?)',('prior-review','2026-10-20',json.dumps({'questions':['Bagaimana inflation rates terkait gold bullion?']})))
+        db.execute('INSERT INTO public_language_reviews VALUES(?,?,?)',('bad-review','2026-10-20','not-json'))
+        stories=[{'title':'Bank update'},{'title':'Gold bullion and inflation rates'}]
+        self.assertEqual(prioritize(db,stories)[0],stories[1])
+        self.assertEqual(db.execute('SELECT origin_review FROM public_research_agenda').fetchone()[0],'prior-review')
+        self.assertEqual(status(db)['questions_total'],1)
