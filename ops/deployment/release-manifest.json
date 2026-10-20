@@ -25,6 +25,11 @@
       "normalized_sha256": "303be286be80850cc0aa04f9a253effd41b86deb36a91dfaba969a08293f5715",
       "sha256": "303be286be80850cc0aa04f9a253effd41b86deb36a91dfaba969a08293f5715"
     },
+    "mt5/Experts/KatarinaStatusDashboard.mq5": {
+      "bytes": 3858,
+      "normalized_sha256": "452c3aafcaa4460d1a4fcb848d5c3b320e645f5fb14a1a87b5bf55ba3c1eb948",
+      "sha256": "452c3aafcaa4460d1a4fcb848d5c3b320e645f5fb14a1a87b5bf55ba3c1eb948"
+    },
     "mt5/Include/Katarina/BarSource.mqh": {
       "bytes": 1206,
       "normalized_sha256": "1fca0ee5fe450eb24b4b81c3b3f18779d0d875fae0188cb23e2ef681ea70f889",
