@@ -9,12 +9,12 @@ from pathlib import Path
 
 METHODS = frozenset(('terminal_info', 'account_info', 'positions_get', 'orders_get',
     'symbols_get', 'symbol_info_tick', 'symbol_info', 'symbol_select',
-    'copy_ticks_range', 'copy_rates_from_pos', 'history_deals_get'))
+    'copy_ticks_range', 'copy_rates_from_pos', 'copy_rates_range', 'history_deals_get'))
 CONSTANTS = ('TIMEFRAME_M5', 'TIMEFRAME_M15', 'TIMEFRAME_H1', 'COPY_TICKS_INFO',
              'ACCOUNT_TRADE_MODE_DEMO')
 DIAGNOSTIC_CODES = frozenset((
     'TERMINAL_UNAVAILABLE', 'TERMINAL_NOT_CONNECTED', 'TERMINAL_TRADING_MUST_BE_OFF',
-    'ACCOUNT_UNAVAILABLE', 'ACCOUNT_LOGIN_MISMATCH', 'ACCOUNT_SERVER_MISMATCH',
+    'DEMO_ACCOUNT_REQUIRED', 'ACCOUNT_UNAVAILABLE', 'ACCOUNT_LOGIN_MISMATCH', 'ACCOUNT_SERVER_MISMATCH',
     'IDENTITY_CHECK_FAILED', 'LOCAL_CONNECT_FAILED', 'LOCAL_BINDING_UNAVAILABLE',
     'LOCAL_NOT_CONNECTED', 'LOCAL_READ_FAILED', 'LOCAL_FEEDBACK_REJECTED',
     'CLOUD_NOT_CONFIGURED', 'LOCAL_MT5_PACKAGE_UNAVAILABLE',
@@ -43,8 +43,11 @@ class ConnectionConfig:
     cloud_url: str | None = None
     cloud_token_env: str = 'KATARINA_CLOUD_TOKEN'
     attempts: int = 2
+    demo_experiments: bool = False
 
     def __post_init__(self):
+        if type(self.demo_experiments) is not bool or (self.demo_experiments and (self.priority != ('local',) or not self.terminal_path)):
+            raise ValueError('explicit_local_demo_configuration_required')
         if type(self.expected_login) is not int or self.expected_login <= 0:
             raise ValueError('expected_account_required')
         if not isinstance(self.expected_server, str) or not self.expected_server.strip():
@@ -76,10 +79,15 @@ class ConnectionConfig:
 def verify_identity(broker, config):
     try:
         terminal, account = broker.terminal_info(), broker.account_info()
+        flag=getattr(broker, 'ACCOUNT_TRADE_MODE_DEMO', None)
+        demo_ok=(config.demo_experiments and type(flag) is int
+                 and type(getattr(account,'trade_mode',None)) is int
+                 and account.trade_mode == flag)
         checks = (
+            (config.demo_experiments and not demo_ok, 'DEMO_ACCOUNT_REQUIRED'),
             (terminal is None, 'TERMINAL_UNAVAILABLE'),
             (getattr(terminal, 'connected', None) is not True, 'TERMINAL_NOT_CONNECTED'),
-            (getattr(terminal, 'trade_allowed', None) is not False, 'TERMINAL_TRADING_MUST_BE_OFF'),
+            (getattr(terminal, 'trade_allowed', None) is not False and not demo_ok, 'TERMINAL_TRADING_MUST_BE_OFF'),
             (account is None, 'ACCOUNT_UNAVAILABLE'),
             (type(getattr(account, 'login', None)) is not int
              or getattr(account, 'login', None) != config.expected_login, 'ACCOUNT_LOGIN_MISMATCH'),
@@ -102,6 +110,16 @@ class BoundLocalBroker:
         self._feedback = FeedbackInbox()
         self._ready = False
         self.connection_failed = False
+        self._demo_service = None
+
+    def set_demo_service(self, callback):
+        if not self._config.demo_experiments or not callable(callback):
+            raise ValueError('explicit_demo_service_required')
+        self._demo_service=callback
+
+    @property
+    def demo_observation_enabled(self):
+        return self._config.demo_experiments
 
     def initialize(self):
         try:
@@ -145,6 +163,9 @@ class BoundLocalBroker:
             raise ConnectionUnavailable('LOCAL_FEEDBACK_REJECTED') from None
 
     def __getattr__(self, name):
+        if name == 'COPY_TICKS_ALL':
+            # Optional local capability; do not change the cloud handshake.
+            return getattr(self._native,name)
         if name in CONSTANTS:
             return getattr(self._native,name)
         if name not in METHODS:
@@ -154,6 +175,9 @@ class BoundLocalBroker:
                 raise ConnectionUnavailable('LOCAL_NOT_CONNECTED')
             try:
                 verify_identity(self._native,self._config)
+                if self._demo_service is not None:
+                    self._demo_service()
+                    verify_identity(self._native,self._config)
                 result = getattr(self._native,name)(*args,**kwargs)
                 verify_identity(self._native,self._config)
                 return result

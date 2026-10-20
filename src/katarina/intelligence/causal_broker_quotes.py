@@ -116,6 +116,15 @@ def last_past_quote(mt5,symbol,as_of_utc,lookback_seconds=90):
     # A stable maximum, rather than assuming broker arrays are sorted.
     matched=[q for q in (_verified_quote(row,lower,upper) for row in arr)
              if q is not None]
+    if not matched:
+        # An empty/oversized broad response gets three smaller same-broker queries.
+        # Keep the original causal and age bounds; never substitute another feed.
+        for seconds in (0,30,60):
+            end=now-timedelta(seconds=seconds)
+            start=max(before,end-timedelta(seconds=30))
+            part=_fetch_ticks(mt5,symbol,start,end)
+            matched=[q for q in (_verified_quote(row,lower,upper) for row in part) if q is not None]
+            if matched:break
     return max(matched,key=lambda q:q[2]) if matched else None
 
 

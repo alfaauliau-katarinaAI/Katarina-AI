@@ -70,6 +70,8 @@ def assess_foundation(report: dict, *, expected_symbols: int = 17) -> dict:
         "account_position_order_book_readable": (
             monitor.get("status") ==
             "READONLY_ACCOUNT_OBSERVED_NO_RISK_CLEARANCE"
+            or (monitor.get("status")=="DEMO_ACCOUNT_OBSERVED_NO_RISK_CLEARANCE"
+                and monitor.get("demo_observation_enabled") is True and monitor.get("account_mode")=="DEMO")
         ),
         "canonical_utc_market_clock": clock_ok,
         "no_unprotected_broker_positions": (
@@ -117,7 +119,9 @@ def assess_foundation(report: dict, *, expected_symbols: int = 17) -> dict:
         "independent_out_of_sample_strategy_proof",
         "owner_approved_live_execution",
     ]
-    bad = [name for name, ok in engineering.items() if not ok]
+    explicit_demo=(monitor.get("demo_observation_enabled") is True and monitor.get("account_mode")=="DEMO")
+    bad = [name for name, ok in engineering.items() if not ok
+           and not (name=="read_only_terminal_confirmed" and explicit_demo)]
     # News transport can degrade without invalidating the market and
     # cognition history, but is NEVER a permission to fabricate news.
     status = ("RESEARCH_FOUNDATION_PASS_PRODUCTION_BLOCKED" if not bad

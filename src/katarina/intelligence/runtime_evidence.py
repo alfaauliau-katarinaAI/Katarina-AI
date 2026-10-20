@@ -37,7 +37,26 @@ def assess_runtime(status, observation, *, now=None, max_age_seconds=180):
                 or source.get('live_execution_authorized') is not False
                 or source.get('production_execution') is not False):
             blockers.append('LIVE_OFF_NOT_CONFIRMED')
-    if type(status.get('background_workers')) is not int or status['background_workers'] != 0:
+    workers = status.get('background_workers')
+    pool = status.get('research_worker')
+    pool = pool if isinstance(pool, dict) else {}
+    expected = {f'TEST_{family}_H{h}' for family in ('MOMENTUM','REVERSION','BREAKOUT') for h in (4,12,24)}
+    roles = pool.get('workers')
+    doctor = status.get('network_doctor')
+    doctor = doctor if isinstance(doctor, dict) else {}
+    doctor_matches = (workers == 14 and doctor.get('pid') == status.get('pid')
+                      and type(status.get('pid')) is int and status['pid'] > 0
+                      and fresh(doctor.get('as_of_utc'))
+                      and doctor.get('status') in ('HEALTHY', 'REVIEW_REQUIRED'))
+    bounded_pool = (type(workers) is int and (workers == 13 or doctor_matches)
+                    and pool.get('background_workers') == 13
+                    and pool.get('research_workers') == 12
+                    and pool.get('live_authorized') is False
+                    and pool.get('status') == 'RUNNING'
+                    and isinstance(roles, list) and len(roles) == 9
+                    and all(isinstance(w, dict) and w.get('live_authorized') is False for w in roles)
+                    and {w.get('phase') for w in roles} == expected)
+    if not (type(workers) is int and workers == 0) and not bounded_pool:
         blockers.append('UNEXPECTED_BACKGROUND_WORKERS')
     count = observation.get('received_market_data_symbols')
     observed = observation.get('observed_symbols')

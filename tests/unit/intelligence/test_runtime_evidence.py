@@ -83,3 +83,20 @@ class RuntimeEvidenceTest(unittest.TestCase):
 
     def test_nonobject_snapshots_block(self):
         self.assertEqual(self.assess(status=[])['result'], 'BLOCKED')
+
+    def test_bounded_research_pool_and_matching_doctor_remain_live_off(self):
+        roles=[dict(phase=f'TEST_{family}_H{h}',live_authorized=False)
+               for family in ('MOMENTUM','REVERSION','BREAKOUT') for h in (4,12,24)]
+        status=dict(self.status,pid=42,background_workers=13,
+                    research_worker=dict(background_workers=13,research_workers=12,
+                                         status='RUNNING',live_authorized=False,workers=roles))
+        self.assertEqual(self.assess(status=status)['result'],'PASS_READONLY_SNAPSHOT_ONLY')
+        status.update(background_workers=14,network_doctor=dict(pid=42,status='HEALTHY',as_of_utc=self.now.isoformat()))
+        result=self.assess(status=status)
+        self.assertEqual(result['result'],'PASS_READONLY_SNAPSHOT_ONLY')
+        self.assertFalse(result['live_clearance'])
+        status['network_doctor']['pid']=99
+        self.assertIn('UNEXPECTED_BACKGROUND_WORKERS',self.assess(status=status)['blockers'])
+        status['network_doctor']['pid']=42
+        status['research_worker']['workers'][0]['live_authorized']=True
+        self.assertIn('UNEXPECTED_BACKGROUND_WORKERS',self.assess(status=status)['blockers'])

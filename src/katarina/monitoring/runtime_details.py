@@ -1,3 +1,4 @@
+from katarina.adapters.demo_permissions import monitor_permission
 """Bounded allowlist of real observation outputs; never invent work or risk clearance."""
 import re
 
@@ -28,7 +29,7 @@ def runtime_details(status, observation, *, fresh):
     monitor = observation.get("broker_account_monitor")
     monitor = monitor if isinstance(monitor, dict) else {}
     observed = bool(fresh and monitor.get("connected") is True
-                    and monitor.get("algo_trading_off") is True
+                    and monitor_permission(monitor)
                     and monitor.get("positions_read_success") is True
                     and monitor.get("orders_read_success") is True
                     and counter(monitor.get("positions_count")) is not None

@@ -112,7 +112,8 @@ class UnifiedKatarinaBrain:
             if not broker.initialize():
                 raise RuntimeError("BROKER_NOT_CONNECTED")
             terminal = broker.terminal_info()
-            if terminal is None or terminal.trade_allowed:
+            from katarina.adapters.demo_permissions import observation_permission
+            if not observation_permission(broker,terminal):
                 raise RuntimeError("FAIL_CLOSED_TRADING_MUST_BE_DISABLED")
             context = ContextStore(root / "context.sqlite3")
             memory = MemoryStore(root / "cognitive-memory.sqlite3")
@@ -224,7 +225,8 @@ class UnifiedKatarinaBrain:
         from katarina.intelligence.official_cache_provenance import inspect_cached_official_sources
         from katarina.intelligence.foundation_readiness import assess_foundation
         monitor = inspect_broker_account(broker, observed_at_utc=datetime.now(timezone.utc))
-        if not monitor["algo_trading_off"]:
+        from katarina.adapters.demo_permissions import monitor_permission
+        if not monitor_permission(monitor):
             raise RuntimeError("FAIL_CLOSED_TRADING_PERMISSION_CHANGED")
         result = {
             "broker_account_monitor":monitor,
@@ -270,7 +272,8 @@ class UnifiedKatarinaBrain:
             if not broker.initialize():
                 raise RuntimeError('BROKER_NOT_CONNECTED')
             terminal = broker.terminal_info()
-            if terminal is None or terminal.trade_allowed:
+            from katarina.adapters.demo_permissions import observation_permission
+            if not observation_permission(broker,terminal):
                 raise RuntimeError('FAIL_CLOSED_TRADING_MUST_BE_DISABLED')
             self.prepare_research()
             self.observer = BrainObserver(self, broker, root)
