@@ -3,6 +3,7 @@
 The host owns process supervision. This loop creates no worker or scheduler.
 Only redacted operational counters are published; full evidence stays private.
 """
+from katarina.monitoring.snapshot_io import replace_snapshot
 from datetime import datetime, timezone
 import json
 import os
@@ -72,7 +73,7 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                     'FAILED' if phase in ('DEGRADED','BLOCKED') else 'DONE')
         temp = root / 'continuous-status.tmp'
         temp.write_text(json.dumps(status, sort_keys=True) + '\n', encoding='utf-8')
-        temp.replace(root / 'continuous-status.json')
+        replace_snapshot(temp,root / 'continuous-status.json')
 
     try:
         # A retained stop request cannot silently restart observation.

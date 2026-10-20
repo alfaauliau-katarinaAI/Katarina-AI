@@ -7,6 +7,7 @@ decision engine, and a separate quote-only observation journal.
 Never uses the live/order gateway, never writes to GitHub, and never
 automatically promotes signals. Legacy observers must remain disabled.
 """
+from katarina.monitoring.snapshot_io import replace_snapshot
 from __future__ import annotations
 from dataclasses import replace
 from datetime import datetime,timedelta,timezone
@@ -203,7 +204,7 @@ def publish(root,data):
     raw=(json.dumps(data,ensure_ascii=False,indent=2,allow_nan=False)+"\n").encode()
     temp.write_bytes(raw)
     # Do not fallback to overwriting ACL-locked files owned by legacy observers.
-    temp.replace(target)
+    replace_snapshot(temp,target)
 
 class BrainObserver:
     """Internal observer capability. The brain owns resources and lifecycle."""

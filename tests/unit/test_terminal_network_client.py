@@ -64,7 +64,14 @@ assert.equal(run('nodeCode({kind:"document",id:"k:doc"})'),run('nodeCode({kind:"
 const count=draws.length;run('resize()');assert.equal(draws.slice(count).filter(d=>d[0]==='setTransform').length,0);
 const older=JSON.parse(JSON.stringify(packet));older.captured_at_utc=new Date(fixed-1000).toISOString();older.agent_board.research_graph.nodes=[];
 sandbox.older=older;run('render(older)');assert.equal(run('graph'),firstGraph);
-run('draw(0)');run('draw(100)');assert.ok(draws.some(d=>d[0]==='quadraticCurveTo'));
+run('orbitOn=false;draw(0)');
+const coordinates=run('JSON.stringify(projected.map(p=>[p.node.id,p.x,p.y]))');run('draw(100)');
+assert.equal(run('JSON.stringify(projected.map(p=>[p.node.id,p.x,p.y]))'),coordinates);
+sandbox.growth={status:'PERSISTED_RESEARCH_COUNTS',as_of_utc:stamp,experiments:12,hypotheses:3,documents:4,reports:8};
+run('renderLearning({status:"NOT_ATTESTED"},{research_growth:growth,model:{telemetry:{successful_calls:2}}})');
+assert.ok(get('learning-proof').children.some(c=>c.textContent.includes('12 eksperimen')));
+assert.ok(get('learning-proof').children.some(c=>c.textContent==='CHECKPOINT KOGNITIF BELUM SINKRON'));
+assert.ok(draws.some(d=>d[0]==='quadraticCurveTo'));
 run('selectNode("k:"+packet.agent_board.research_graph.nodes[0].id)');assert.ok(get('selection').children[1].textContent.includes('DOC / aaaaaaaa'));
 get('network').listeners.pointerdown({pointerId:1,clientX:20,clientY:20});
 get('network').listeners.pointermove({pointerId:1,clientX:60,clientY:25});
