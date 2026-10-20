@@ -47,6 +47,8 @@ packet.agent_board.learning={status:'NO_NEW_MATURED_EVIDENCE',observation_utc:no
 packet.agent_board.operational.technical_evaluations[0].symbol='PRIVATE_MARKET_SYMBOL';
 packet.agent_board.activity.events[0].symbol='PRIVATE_MARKET_SYMBOL';
 packet.agent_board.entries={status:'OBSERVED',positions:[{symbol:'EURUSD',side:'BUY',entry_price:1.2,opened_utc:now,lot:88,profit:'PRIVATE_SENTINEL',ticket:'PRIVATE_SENTINEL'}]};
+packet.agent_board.telemetry_verified=true;
+packet.agent_board.entry_feed={status:'OBSERVED',mode:'DEMO',executor_pid:99,as_of_utc:now,history_status:'OBSERVED',plans_status:'OBSERVED',history_total:1,history:[{id:'a'.repeat(24),symbol:'XAUUSD.vx',side:'BUY',state:'CLOSED',decision_utc:now,requested_price:4000,stop_loss:3990,take_profit:4020,login:'PRIVATE_SENTINEL',volume:99},{id:'c'.repeat(24),symbol:'XAUUSD.vx',side:'BUY',state:'ACCEPTED',decision_utc:now}],plans:[{id:'b'.repeat(24),symbol:'EURUSD.vx',side:'SELL',method:'BREAKOUT',state:'AWAITING_SIGNAL_REVIEW',lookback:24,horizon:4,threshold:.5,last_reviewed_utc:now,checks:[{multiplier:1,passed:true}],executable:true,login:'PRIVATE_SENTINEL'}]};
 const docId='document:'+ 'a'.repeat(24),partId='paragraph:'+ 'b'.repeat(24);
 packet.agent_board.research_graph={nodes:[{id:docId,kind:'document',label:'DOC / aaaaaaaa',known_utc:now,body:'PRIVATE_SENTINEL'},{id:partId,kind:'paragraph',label:'TEXT / bbbbbbbb'}],edges:[{a:docId,b:partId,relation:'PART_OF_DOCUMENT'}],total_documents:1};
 assert.equal((await request('/public-status')).status,503);
@@ -66,6 +68,7 @@ assert.equal(JSON.parse(body).agent_board.learning.memory_records_inserted,0);
 assert.equal(JSON.parse(body).agent_board.learning.improvement_verified,false);
 assert.deepEqual(JSON.parse(body).agent_board.operational,{});
 assert.ok(!body.includes('PRIVATE_MARKET_SYMBOL'));assert.ok(!body.includes('"lot"'));assert.ok(!body.includes('"ticket"'));
+assert.equal(JSON.parse(body).agent_board.entry_feed.history.length,1);assert.equal(JSON.parse(body).agent_board.entry_feed.history[0].requested_price,4000);assert.equal(JSON.parse(body).agent_board.entry_feed.plans[0].executable,false);assert.equal(JSON.parse(body).agent_board.entry_feed.plans[0].signal_verified,false);
 assert.equal(JSON.parse(body).agent_board.entries.positions[0].symbol,'EURUSD');
 assert.equal(JSON.parse(body).agent_board.entries.positions[0].entry_price,1.2);
 assert.equal(JSON.parse(body).agent_board.research_graph.nodes.length,2);

@@ -82,4 +82,6 @@ def build_public_runtime(root):
     public_board['public_scope']='RESEARCH_GRAPH_AND_ENTRY_ONLY'
     from katarina.monitoring.pair_activity import read_pair_activity
     public_board['pair_activity']=read_pair_activity(root,pid,allowed=public_board.get('telemetry_verified') is True and board['snapshot_process_matches'])
+    from katarina.monitoring.entry_feed import read_entry_feed
+    public_board['entry_feed']=read_entry_feed(root,allowed=research_allowed)
     return public

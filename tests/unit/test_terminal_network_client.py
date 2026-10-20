@@ -100,6 +100,13 @@ run('acceptPulseEvents([{phase:"TECHNICAL",seq:102,state:"DONE",at_utc:new Date(
 run('acceptPulseEvents([{phase:"TECHNICAL",seq:104,state:"DONE",at_utc:new Date(Date.now()-25000).toISOString()}],400,false)');assert.equal(run('eventPulses.length'),3);
 
 assert.ok(run('graph.nodes.some(n=>n.kind==="event")'));assert.ok(run('graph.edges.some(e=>e.relation==="EVENT_REPORT")'));
+// Lists are collapsed by default, selected detail survives data refresh, stale data clears both lists.
+sandbox.entryFixture={status:'OBSERVED',history_status:'OBSERVED',plans_status:'OBSERVED',history:[{id:'a'.repeat(24),symbol:'XAUUSD.vx',side:'BUY',state:'CLOSED',decision_utc:stamp,requested_price:4000,stop_loss:3990,take_profit:4020}],plans:[{id:'b'.repeat(24),symbol:'EURUSD.vx',side:'SELL',method:'BREAKOUT',state:'NOT_QUALIFIED',lookback:24,horizon:4,threshold:.5,last_reviewed_utc:stamp,checks:[]}]};
+run('renderEntries(null,entryFixture)');let row=get('methods').children[0],planRow=get('entry-plans').children[0];
+assert.equal(row.tag,'details');assert.equal(row.open,false);assert.equal(planRow.open,false);assert.equal(row.children[0].tag,'summary');assert.match(row.children[0].children[0].textContent,/XAUUSD/);
+row.open=true;row.listeners.toggle();sandbox.entryFixture.history[0].state='OPEN';run('renderEntries(null,entryFixture)');assert.equal(get('methods').children[0].open,true,'Selection lost on refresh');
+assert.match(run('planTrigger(entryFixture.plans[0])'),/low terendah/);
+run('renderEntries(null,null)');assert.ok(get('methods').children.every(r=>r.tag!=='details'));assert.ok(get('entry-plans').children.every(r=>r.tag!=='details'));
 // Exercise actual registered controls: drag, simultaneous pinch/pan, cancellation and resume.
 const controls=get('network').listeners;
 const pointer=(id,x,y)=>({pointerId:id,clientX:x,clientY:y,button:0,preventDefault(){}});
