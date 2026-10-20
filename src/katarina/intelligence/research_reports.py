@@ -46,6 +46,13 @@ def decision_report(trial_id, symbol, created_utc, original, reviews):
     return out
 
 
+def prepare_report_indexes(db):
+    db.execute('CREATE INDEX IF NOT EXISTS research_heads_report_id ON research_report_heads(report_id)')
+    db.execute('CREATE INDEX IF NOT EXISTS research_reports_created ON research_reports(created_utc DESC,id DESC)')
+    db.execute('CREATE INDEX IF NOT EXISTS research_reports_decision_created ON research_reports(decision,created_utc DESC,id DESC)')
+    db.execute('CREATE INDEX IF NOT EXISTS research_reports_head_counts ON research_reports(id,decision)')
+
+
 def publish_reports(root, trace=None, batch=64):
     root=Path(root);stamp=datetime.now(timezone.utc).isoformat()
     target=root/'experiment-jobs.sqlite3'
@@ -53,6 +60,7 @@ def publish_reports(root, trace=None, batch=64):
     with closing(sqlite3.connect(root/'experiment-jobs.sqlite3',timeout=2)) as db:
         db.execute('CREATE TABLE IF NOT EXISTS research_reports(id TEXT PRIMARY KEY,trial_id TEXT,created_utc TEXT,decision TEXT,report_json TEXT)')
         db.execute('CREATE TABLE IF NOT EXISTS research_report_heads(trial_id TEXT PRIMARY KEY,signature TEXT,report_id TEXT)')
+        prepare_report_indexes(db)
         tables={r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         if not {'trials','stress_reviews'}<=tables:return 0
         fields=('status','development.n','review.n','development.mean_range_units','review.mean_range_units')
@@ -98,12 +106,12 @@ def read_reports(root, pid):
             db.set_progress_handler(lambda: int(time.monotonic()>deadline),10000)
             db.execute('BEGIN')
             join='FROM research_report_heads h JOIN research_reports r ON r.id=h.report_id'
-            recent=[json.loads(r[0]) for r in db.execute('SELECT r.report_json '+join+' ORDER BY r.created_utc DESC,r.rowid DESC LIMIT 8')]
-            candidates=[json.loads(r[0]) for r in db.execute("SELECT r.report_json "+join+" WHERE r.decision IN ('CANDIDATE_FORWARD','AWAITING_COST_REVIEWS') ORDER BY r.created_utc DESC,r.rowid DESC LIMIT 3")]
+            recent=[json.loads(r[0]) for r in db.execute('SELECT r.report_json FROM research_reports r INDEXED BY research_reports_created WHERE EXISTS(SELECT 1 FROM research_report_heads h WHERE h.report_id=r.id) ORDER BY r.created_utc DESC,r.id DESC LIMIT 8')]
+            candidates=[json.loads(r[0]) for r in db.execute("SELECT r.report_json FROM research_reports r INDEXED BY research_reports_decision_created WHERE r.decision IN ('CANDIDATE_FORWARD','AWAITING_COST_REVIEWS') AND EXISTS(SELECT 1 FROM research_report_heads h WHERE h.report_id=r.id) ORDER BY r.created_utc DESC,r.id DESC LIMIT 3")]
             counts={k:0 for k in DECISIONS}
-            counts.update(dict(db.execute('SELECT r.decision,COUNT(*) '+join+' GROUP BY r.decision')))
+            counts.update(dict(db.execute('SELECT r.decision,COUNT(*) FROM research_report_heads h JOIN research_reports r INDEXED BY research_reports_head_counts ON r.id=h.report_id GROUP BY r.decision')))
             total=db.execute('SELECT COUNT(*) FROM trials').fetchone()[0]
-            latest=db.execute('SELECT MAX(r.created_utc) '+join).fetchone()[0]
+            latest=recent[0]['reported_utc'] if recent else None
             return dict(schema_version=1,status='RESEARCH_REPORTS',source='PERSISTED_RULE_BASED_RESEARCH_REPORTS',
                 snapshot_role='READONLY_REPORT_OBSERVATION',pid=pid,as_of_utc=datetime.now(timezone.utc).isoformat(),
                 latest_report_utc=latest,reviewed_experiments=sum(counts.values()),
