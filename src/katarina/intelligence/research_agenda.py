@@ -4,6 +4,7 @@ Matching evidence is a research lead, never an answer or trading authorization.
 """
 from hashlib import sha256
 import re
+import json
 
 
 def prepare(db):
@@ -13,6 +14,23 @@ def prepare(db):
     db.execute('''CREATE TABLE IF NOT EXISTS public_research_leads(
         question_id TEXT NOT NULL, document_id TEXT NOT NULL, known_utc TEXT NOT NULL,
         PRIMARY KEY(question_id,document_id))''')
+    if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='public_language_reviews'").fetchone():
+        with db:
+            for review_id, stamp, raw in db.execute(
+                    'SELECT review_id,created_utc,candidate_json FROM public_language_reviews ORDER BY created_utc DESC LIMIT 48'):
+                try:
+                    questions = json.loads(raw)['questions']
+                    if not isinstance(questions, list):
+                        continue
+                    for question in questions[:3]:
+                        if not isinstance(question, str) or not 1 <= len(question) <= 300:
+                            continue
+                        ident = sha256(' '.join(question.lower().split()).encode()).hexdigest()
+                        db.execute('INSERT OR IGNORE INTO public_research_agenda VALUES(?,?,?,?)',
+                                   (ident, question, review_id, stamp))
+                except (ValueError, KeyError, TypeError):
+                    continue
+
 
 
 def remember_questions(db, review_id, questions, stamp):
