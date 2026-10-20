@@ -48,6 +48,8 @@ def decision_report(trial_id, symbol, created_utc, original, reviews):
 
 
 def prepare_report_indexes(db):
+    db.execute('PRAGMA temp_store=MEMORY')
+    db.execute('PRAGMA cache_size=-16384')
     db.execute('CREATE INDEX IF NOT EXISTS research_heads_report_id ON research_report_heads(report_id)')
     db.execute('CREATE INDEX IF NOT EXISTS research_reports_created ON research_reports(created_utc DESC,id DESC)')
     db.execute('CREATE INDEX IF NOT EXISTS research_reports_decision_created ON research_reports(decision,created_utc DESC,id DESC)')

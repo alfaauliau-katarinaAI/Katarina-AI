@@ -172,4 +172,3 @@ def worker_research_runs(root):
                 'data_sha256':row[2],'method':result.get('method'),'horizon':result.get('horizon')}))
         return runs
     except (sqlite3.Error,OSError):return []
-
