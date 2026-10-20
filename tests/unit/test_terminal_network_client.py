@@ -88,9 +88,16 @@ assert.equal(run('signalSegment({x:0,y:0},{x:100,y:0}).a.x'),15);
 assert.equal(run('signalSegment({x:0,y:0},{x:100,y:0}).b.x'),89);
 assert.equal(run('signalSegment({x:0,y:0},{x:10,y:0})'),null);
 // Rendering budgets are enforced regardless of server graph density.
-sandbox.edges=Array.from({length:512},(_,i)=>({a:'k:a'+i,b:'k:b'+i,relation:'PART_OF_DOCUMENT'}));
-assert.equal(run('visibleEdges(edges).length'),160);
-run('selected=null;acceptPulseEvents(Array.from({length:40},(_,i)=>({phase:"P"+i,seq:i,state:"DONE",at_utc:new Date().toISOString()})),300,false)');assert.ok(run('eventPulses.length')<=16);
+sandbox.edges=Array.from({length:1000},(_,i)=>({a:'k:a'+i,b:'k:b'+i,relation:'PART_OF_DOCUMENT'}));
+assert.equal(run('visibleEdges(edges).length'),640);
+run('selected=null;acceptPulseEvents(Array.from({length:40},(_,i)=>({phase:"P"+i,seq:i,state:"DONE",at_utc:new Date().toISOString()})),300,false)');assert.ok(run('eventPulses.length')<=96);
+// Preserve multiple actual events per phase, deduplicate exact identities, keep concurrent timestamps.
+run('eventPulses=[];acceptPulseEvents([{phase:"TECHNICAL",seq:101,state:"STARTED",at_utc:new Date().toISOString()},{phase:"TECHNICAL",seq:102,state:"DONE",at_utc:new Date().toISOString()},{phase:"MEMORY",seq:103,state:"STARTED",at_utc:new Date().toISOString()}],400,false)');
+assert.equal(run('eventPulses.length'),3);assert.equal(run('new Set(eventPulses.map(p=>p.start)).size'),1);
+run('acceptPulseEvents([{phase:"TECHNICAL",seq:102,state:"DONE",at_utc:new Date().toISOString()}],400,false)');assert.equal(run('eventPulses.length'),3);
+run('acceptPulseEvents([{phase:"TECHNICAL",seq:104,state:"DONE",at_utc:new Date(Date.now()-25000).toISOString()}],400,false)');assert.equal(run('eventPulses.length'),3);
+run('renderParallelBoard({worker_runtime:{status:"OBSERVED",workers:[{status:"PAUSED_LOW_DISK",fresh:true,completed:9}]},activity:{events:[]}})');assert.equal(get('parallel-grid').children[0].dataset.state,'paused');assert.match(get('parallel-count').textContent,/1 JEDA/);
+assert.ok(run('graph.nodes.some(n=>n.kind==="event")'));assert.ok(run('graph.edges.some(e=>e.relation==="EVENT_REPORT")'));
 get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),false);
 get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),true);
 get('reset-view').listeners.click();assert.equal(run('cameraInput.zoom'),1);
