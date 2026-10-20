@@ -339,7 +339,9 @@ def backup_database(source, target):
             raise RuntimeError('BACKUP_TIME_LIMIT')
         if shutil.disk_usage(target.parent).free < RESERVE + 32 * 1024**2:
             raise RuntimeError('BACKUP_WAITING_DISK_RESERVE')
-    uncompressed_temporary(target)
+    if os.name == 'nt':
+        subprocess.run(['compact.exe', '/C', '/I', '/Q', str(target.parent)],
+                       capture_output=True, check=True, timeout=10)
     with contextlib.closing(sqlite3.connect(source.as_uri() + '?mode=ro', uri=True, timeout=5)) as src:
         src.execute('BEGIN')
         src.execute('SELECT count(*) FROM sqlite_master').fetchone()
