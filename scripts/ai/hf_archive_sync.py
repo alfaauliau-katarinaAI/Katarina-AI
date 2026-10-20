@@ -334,21 +334,23 @@ def backup_database(source, target):
     if shutil.disk_usage(source).free < RESERVE + 64 * 1024**2:
         raise RuntimeError('BACKUP_WAITING_DISK_RESERVE')
     deadline = time.monotonic() + 300
-    def progress(*args):
-        if time.monotonic() > deadline:
-            raise RuntimeError('BACKUP_TIME_LIMIT')
-        if shutil.disk_usage(target.parent).free < RESERVE + 32 * 1024**2:
-            raise RuntimeError('BACKUP_WAITING_DISK_RESERVE')
+    def interrupted():
+        return int(time.monotonic() > deadline or
+                   shutil.disk_usage(target.parent).free < RESERVE + 32 * 1024**2)
     if os.name == 'nt':
         subprocess.run(['compact.exe', '/C', '/I', '/Q', str(target.parent)],
                        capture_output=True, check=True, timeout=10)
+    # VACUUM INTO creates a consistent, compact copy without changing the live database.
     with contextlib.closing(sqlite3.connect(source.as_uri() + '?mode=ro', uri=True, timeout=5)) as src:
-        src.execute('BEGIN')
-        src.execute('SELECT count(*) FROM sqlite_master').fetchone()
-        with contextlib.closing(sqlite3.connect(target, timeout=5)) as dst:
-            src.backup(dst, pages=1024, progress=progress, sleep=.1)
-            if dst.execute('pragma quick_check').fetchone()[0] != 'ok':
-                raise RuntimeError('BACKUP_INTEGRITY_FAILED')
+        src.set_progress_handler(interrupted, 10000)
+        src.execute('PRAGMA cache_size=-4096')
+        src.execute('PRAGMA temp_store=MEMORY')
+        src.execute('VACUUM INTO ?', (str(target),))
+    with contextlib.closing(sqlite3.connect(target.as_uri() + '?mode=ro', uri=True, timeout=5)) as dst:
+        dst.set_progress_handler(interrupted, 10000)
+        if dst.execute('pragma quick_check').fetchone()[0] != 'ok':
+            raise RuntimeError('BACKUP_INTEGRITY_FAILED')
+
 @contextlib.contextmanager
 def capture_json_file(source, work):
     """Capture one complete atomic JSON version before slow network operations."""
