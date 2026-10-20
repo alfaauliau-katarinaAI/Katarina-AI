@@ -34,7 +34,7 @@ async function request(path,body,key){
 }
 const now=new Date().toISOString();
 const packet={captured_at_utc:now,private:'PRIVATE_SENTINEL',agent_board:{
- result:'SNAPSHOT_PASS',market_symbols:1,cycles:2,delivery:'DISABLED',
+ result:'SNAPSHOT_PASS',research_source_verified:true,market_symbols:1,cycles:2,delivery:'DISABLED',
  observed_at_utc:now,current_process_pid:42,snapshot_process_matches:true,model:{configured:false,endpoint:'PRIVATE_SENTINEL'},
  operational:{account_login:'PRIVATE_SENTINEL',positions_count:123,
  technical_evaluations:[{symbol:'XAUUSD',method:'PULLBACK',market_state:'TREND_UP',action:'WAIT',secret:'PRIVATE_SENTINEL'}]},

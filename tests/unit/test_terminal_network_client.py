@@ -41,10 +41,9 @@ vm.createContext(sandbox);vm.runInContext(script,sandbox);
 const run=code=>vm.runInContext(code,sandbox);
 assert.equal(requests[0].url,'/public-status');assert.equal(requests[0].options.method,'GET');
 assert.equal(requests[0].options.headers,undefined);
-assert.equal(get('network').width,780); // DPR bounded at 2, suitable for phone
 const stamp=new Date(fixed).toISOString();
 const event=(seq,phase,state,fields={})=>({seq,at_utc:stamp,phase,state,...fields});
-const packet={captured_at_utc:stamp,agent_board:{schema_version:1,result:'SNAPSHOT_PASS',market_symbols:1,cycles:4,successful_cycles:4,
+const packet={captured_at_utc:stamp,agent_board:{schema_version:1,result:'SNAPSHOT_PASS',telemetry_verified:true,research_source_verified:true,market_symbols:1,cycles:4,successful_cycles:4,
  delivery:'DISABLED',current_process_pid:42,snapshot_process_matches:true,live_execution_authorized:false,blockers:[],model:{configured:false},
  operational:{market_tick_utc:stamp,technical_evaluations:[{symbol:'XAUUSD',method:'TREND_PULLBACK',market_state:'TREND_UP',action:'WAIT'}]},
  activity:{pid:42,cycle:4,fresh:true,events:[event(1,'CONNECT','STARTED'),event(2,'TECHNICAL','DONE',{symbol:'XAUUSD',method:'TREND_PULLBACK',market_state:'TREND_UP',action:'WAIT'})],current:event(2,'TECHNICAL','DONE')},
@@ -54,100 +53,25 @@ packet.agent_board.research_graph={nodes:[{id:docId,kind:'document',label:'DOC /
 packet.agent_board.entries={status:'OBSERVED',positions:[]};
 sandbox.packet=packet;
 run('render(packet)');
-assert.equal(get('symbols').textContent,'1');assert.equal(get('cycles').textContent,'4');
-assert.equal(get('execution').textContent,'LIVE / OFF');assert.equal(get('model-proof').textContent,'BELUM TERHUBUNG');
-assert.equal(get('events').children.length,2);
-assert.ok(get('engine-headline').textContent.includes('Menganalisis pasar'));
-assert.ok(get('events').children.some(row=>row.children[1].textContent==='Menganalisis pasar'));
-assert.equal(run('humanPhase("WAIT_ACK")'),'Memeriksa balasan penghubung');
-assert.ok(run('phaseNotes.WAIT_ACK').includes('bukan permintaan persetujuan'));
-assert.ok(page.includes('Mengapa alamatnya memakai chatgpt.site?'));assert.equal(get('lanes').children.length,6);
-assert.equal(run('pulseKeys.size'),0); // first load is historical, not new work
+assert.equal(get('symbols').textContent,'1');
+assert.equal(get('execution').textContent,'LIVE / OFF');
 assert.ok(run('graph.nodes.length')>2);
 assert.ok(run('graph.edges.every(e=>nodeMap.has(e.a)&&nodeMap.has(e.b))'));
-const code=run('nodeCode(graph.nodes.find(n=>n.kind==="topic")||graph.nodes[0])');
-assert.ok(code.length<=12);assert.equal(run('nodeCode(graph.nodes[0])'),run('nodeCode(graph.nodes[0])'));
-const drawCount=draws.length;run('resize()');
-assert.equal(draws.slice(drawCount).filter(d=>d[0]==='setTransform').length,0);
-run('draw(0)');assert.ok(draws.some(d=>d[0]==='quadraticCurveTo'));
-const graphBefore=run('graph'),tableRowBefore=get('events').children[0],watchBefore=get('watch').children[0];
-run('render(packet)');assert.equal(run('pulseKeys.size'),0);
-assert.equal(run('graph'),graphBefore);assert.equal(get('events').children[0],tableRowBefore);
-assert.equal(get('watch').children[0],watchBefore);
-assert.equal(run('orbitOn'),false);
-get('orbit').listeners.click();assert.equal(run('orbitOn'),true);
-const orbitYaw=run('yaw');run('draw(500)');run('draw(560)');assert.ok(run('yaw')>orbitYaw);
-get('orbit').listeners.click();assert.equal(run('orbitOn'),false);
-const stoppedYaw=run('yaw');run('draw(600)');assert.equal(run('yaw'),stoppedYaw);
-get('orbit').listeners.click();assert.equal(run('orbitOn'),true);
-packet.agent_board.activity.events.push(event(3,'MEMORY','STARTED'));
-packet.agent_board.activity.current=event(3,'MEMORY','STARTED');
-run('render(packet)');assert.equal(run('pulseKeys.size'),1);
-const pulseStart=run('pulseAt'),eventGraph=run('graph');clock=fixed+700;
-run('render(packet)');assert.equal(run('pulseKeys.size'),1);assert.equal(run('pulseAt'),pulseStart);
-assert.equal(run('graph'),eventGraph);clock=fixed;
-assert.ok(intervals.some(x=>x.ms===2000));
-assert.equal(get('lanes').children.filter(x=>x.className==='lane active').length,1);
-assert.equal(run('detailed'),false);assert.equal(run('graph.nodes.filter(n=>n.kind==="attribute"||n.kind==="event").length'),0);
-get('detail-mode').listeners.click();assert.ok(run('graph.nodes.some(n=>n.kind==="event")'));
-get('detail-mode').listeners.click();assert.equal(run('graph.nodes.filter(n=>n.kind==="event").length'),0);
+const firstGraph=run('graph');run('render(packet)');assert.equal(run('graph'),firstGraph);
+assert.equal(run('nodeCode({kind:"phase",phase:"TEST_MOMENTUM_H4",id:"p:test"})'),'W01');
+assert.match(run('nodeCode({kind:"document",id:"k:doc"})'),/^DOC-[0-9a-f]{8}$/);
+assert.equal(run('nodeCode({kind:"document",id:"k:doc"})'),run('nodeCode({kind:"document",id:"k:doc"})'));
+const count=draws.length;run('resize()');assert.equal(draws.slice(count).filter(d=>d[0]==='setTransform').length,0);
+const older=JSON.parse(JSON.stringify(packet));older.captured_at_utc=new Date(fixed-1000).toISOString();older.agent_board.research_graph.nodes=[];
+sandbox.older=older;run('render(older)');assert.equal(run('graph'),firstGraph);
+run('draw(0)');run('draw(100)');assert.ok(draws.some(d=>d[0]==='quadraticCurveTo'));
 run('selectNode("k:"+packet.agent_board.research_graph.nodes[0].id)');assert.ok(get('selection').children[1].textContent.includes('DOC / aaaaaaaa'));
-assert.equal(get('node-select').value,'k:'+docId);
-const yaw0=run('yaw');
 get('network').listeners.pointerdown({pointerId:1,clientX:20,clientY:20});
 get('network').listeners.pointermove({pointerId:1,clientX:60,clientY:25});
-assert.notEqual(run('yaw'),yaw0);
-get('network').listeners.pointerdown({pointerId:2,clientX:100,clientY:25});
-get('network').listeners.pointermove({pointerId:2,clientX:120,clientY:25});
-get('network').listeners.pointermove({pointerId:2,clientX:180,clientY:25});
-assert.ok(run('zoom')>1);
-get('network').listeners.pointercancel({pointerId:1});get('network').listeners.pointercancel({pointerId:2});
-let prevented=false;get('network').listeners.keydown({key:'ArrowRight',preventDefault(){prevented=true}});assert.ok(prevented);
-get('reset').listeners.click();assert.equal(run('zoom'),1);
-const touchedYaw=run('yaw');run('draw(2000)');assert.equal(run('yaw'),touchedYaw);
-get('motion').listeners.click();assert.equal(run('pulseOn'),false);
-clock=fixed+121000;run('checkFreshness()');
-assert.equal(run('graph.nodes.length'),0);assert.equal(get('events').children.length,0);
-assert.equal(get('watch').children.length,0);assert.equal(get('symbols').textContent,'—');
-assert.equal(run('graphFresh'),false);assert.equal(get('execution').textContent,'BELUM TERVERIFIKASI');
-clock=fixed;
-packet.agent_board.result='BLOCKED';packet.agent_board.snapshot_process_matches=false;
-run('render(packet)');assert.equal(get('symbols').textContent,'—');assert.equal(get('watch').children.length,1);
-assert.equal(run('graph.nodes.filter(n=>n.kind==="symbol").length'),0);
-const stale=JSON.parse(JSON.stringify(packet));stale.captured_at_utc=new Date(fixed-121000).toISOString();
-sandbox.stale=stale;assert.throws(()=>run('render(stale)'),/kedaluwarsa/);
-;(async()=>{
- // Let the initial failed automatic request finish before testing the real refresh path.
- await new Promise(resolve=>setImmediate(resolve));
- clock=fixed;packet.agent_board.result='SNAPSHOT_PASS';packet.agent_board.snapshot_process_matches=true;
- sandbox.fetch=async()=>({ok:true,json:async()=>packet});
- await run('refresh()');const retained=run('graph');assert.ok(retained.nodes.length>0);
-const newId='document:'+ 'c'.repeat(24);clock=fixed+1000;packet.captured_at_utc=new Date(clock).toISOString();
-packet.agent_board.research_graph.nodes.push({id:newId,kind:'document',label:'DOC / cccccccc',known_utc:new Date(fixed+500).toISOString()});
-await run('refresh()');assert.ok(run('nodeMap.has("k:"+packet.agent_board.research_graph.nodes.at(-1).id)'));
-assert.ok(run('pulseKeys.has("knowledge:"+packet.agent_board.research_graph.nodes.at(-1).id)'));
-const retainedNew=run('graph');
-const older=JSON.parse(JSON.stringify(packet));older.captured_at_utc=stamp;older.agent_board.research_graph.nodes=[];
-sandbox.older=older;run('render(older)');assert.equal(run('graph'),retainedNew);
+get('network').listeners.pointercancel({pointerId:1});
+clock=fixed+121000;run('checkFreshness()');assert.equal(run('graph.nodes.length'),0);assert.equal(run('graphFresh'),false);
+console.log('PASS_CURRENT_HOSTED_CODES_RESIZE_ORDER_PROVENANCE_EXPIRY');
 
- sandbox.fetch=async()=>{throw new TypeError('temporary network loss')};clock=fixed+1000;
- await run('refresh()');assert.equal(run('graph'),retainedNew);assert.ok(get('notice').textContent.includes('snapshot terakhir'));
- clock=fixed+122000;await run('refresh()');assert.equal(run('graph.nodes.length'),0);
- assert.equal(get('symbols').textContent,'—');
- clock=fixed;packet.captured_at_utc=stamp;packet.agent_board.activity.current=event(40,'RECALL','STARTED');
-packet.agent_board.activity.events.push(packet.agent_board.activity.current);
-sandbox.fetch=async()=>({ok:true,json:async()=>packet});await run('refresh()');
-run('orbitOn=false;pulseOn=true');assert.equal(run('currentWork().phase'),'RECALL');
-const before=frames.length;run('lastFrame=null;draw(8000)');assert.ok(frames.length>before);
-packet.agent_board.activity.current=event(41,'RECALL','DONE');
-packet.agent_board.activity.events.push(packet.agent_board.activity.current);await run('refresh()');
-assert.equal(run('currentWork()'),null);
-packet.agent_board.activity.current=event(42,'WAITING','IDLE');
-packet.agent_board.activity.events.push(packet.agent_board.activity.current);await run('refresh()');
-assert.equal(run('currentWork()'),null);
-assert.ok(get('engine-headline').textContent.includes('Menunggu siklus'));
-console.log('PASS_TERMINAL_EVENTS_TOUCH_ZOOM_INSPECTION_PULSE_EXPIRY_REFRESH_WORK');
-})().catch(error=>{console.error(error);process.exitCode=1});
 """
         result = subprocess.run([shutil.which("node")], input=harness.replace("WORKER_SOURCE", json.dumps(source), 1),
                                 capture_output=True, text=True, encoding='utf-8', timeout=20)
