@@ -296,6 +296,26 @@ def backup_database(source, target):
             src.backup(dst, pages=1024, progress=progress, sleep=.1)
             if dst.execute('pragma quick_check').fetchone()[0] != 'ok':
                 raise RuntimeError('BACKUP_INTEGRITY_FAILED')
+@contextlib.contextmanager
+def capture_json_file(source, work):
+    """Capture one complete atomic JSON version before slow network operations."""
+    source, work = Path(source), Path(work)
+    for attempt in range(3):
+        try:
+            raw = source.read_bytes()
+            if len(raw) > 2 * 1024**2:
+                raise RuntimeError('JSON_CAPTURE_LIMIT')
+            json.loads(raw)
+            break
+        except FileNotFoundError:
+            if attempt == 2:
+                raise
+            time.sleep(.1)
+    with tempfile.TemporaryDirectory(prefix='capture-', dir=work) as directory:
+        snapshot = Path(directory) / source.name
+        snapshot.write_bytes(raw)
+        yield snapshot
+
 def sync(config, hub):
     work = BASE / 'work'
     ledger = BASE / 'manifests'
@@ -322,10 +342,13 @@ def sync(config, hub):
             print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
     for name in config.get('sync_files', []):
         source = Path(name)
-        if not source.is_file() or source.stat().st_size > 2 * 1024**2:
+        if not source.is_file():
             continue
         try:
-            results.append(archive_file(source, hub, ledger, work))
+            with capture_json_file(source, work) as snapshot:
+                result = archive_file(snapshot, hub, ledger, work)
+                result['snapshot_source'] = str(source)
+                results.append(result)
         except Exception as e:
             record = dict(source=str(source), error=safe_error(e))
             errors.append(record)

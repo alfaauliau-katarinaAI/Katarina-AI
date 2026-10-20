@@ -91,5 +91,22 @@ class ArchiveTests(unittest.TestCase):
             with patch.object(mod.shutil,'disk_usage',return_value=SimpleNamespace(free=mod.RESERVE-100)):
                 with self.assertRaises(RuntimeError):mod.archive_file(p,FakeHub(),l,w)
             self.assertEqual(p.read_bytes(),original)
+    def test_mutable_json_is_archived_as_a_stable_captured_version(self):
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d);p=d/'status.json';p.write_bytes(b'{"version":1}')
+            work=d/'work';work.mkdir();hub=FakeHub()
+            with mod.capture_json_file(p,work) as snapshot:
+                p.write_bytes(b'{"version":2}')
+                mod.archive_file(snapshot,hub,d/'ledger',work)
+            manifest=json.loads(next((d/'ledger').glob('*.json')).read_text())
+            mod.restore_file(manifest,hub,d/'restored.json')
+            self.assertEqual((d/'restored.json').read_bytes(),b'{"version":1}')
+            self.assertEqual(p.read_bytes(),b'{"version":2}')
+    def test_json_capture_retries_a_transient_atomic_rename_gap(self):
+        with tempfile.TemporaryDirectory() as d:
+            work=Path(d)
+            with patch.object(Path,'read_bytes',side_effect=[FileNotFoundError(),b'{"valid":true}']),patch.object(mod.time,'sleep'):
+                with mod.capture_json_file(work/'status.json',work) as snapshot:
+                    self.assertEqual(snapshot.stat().st_size,len(b'{"valid":true}'))
 if __name__=='__main__':unittest.main()
 
