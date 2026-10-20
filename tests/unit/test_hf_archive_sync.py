@@ -25,6 +25,9 @@ class FakeHub:
         if self.mutate and name.startswith('objects/'):self.mutate.write_bytes(b'new source content')
         return p
 class ArchiveTests(unittest.TestCase):
+    def setUp(self):
+        disk=patch.object(mod.shutil,'disk_usage',return_value=SimpleNamespace(free=10*1024**3))
+        disk.start();self.addCleanup(disk.stop)
     def fixture(self,d):
         d=Path(d);p=d/'sample.jsonl';p.write_bytes(b'{"synthetic":true}\n'*500)
         os.utime(p,(1000000000,1000000000))
@@ -82,4 +85,11 @@ class ArchiveTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     mod.archive_file(p,FakeHub(corrupt=True),l,w,evict=True,allowed_cold=[p])
             self.assertEqual(p.read_bytes(),original)
+    def test_low_disk_does_not_stage_unapproved_live_source(self):
+        with tempfile.TemporaryDirectory() as d:
+            p,l,w=self.fixture(d);original=p.read_bytes()
+            with patch.object(mod.shutil,'disk_usage',return_value=SimpleNamespace(free=mod.RESERVE-100)):
+                with self.assertRaises(RuntimeError):mod.archive_file(p,FakeHub(),l,w)
+            self.assertEqual(p.read_bytes(),original)
 if __name__=='__main__':unittest.main()
+
