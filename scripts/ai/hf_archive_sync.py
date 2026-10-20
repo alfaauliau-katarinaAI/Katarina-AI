@@ -76,9 +76,18 @@ class Hub:
                 repo_id=REPO, repo_type='dataset', commit_message='Preserve verified Katarina research archive')
         return info.oid
     def download(self, name, revision, cache):
-        from huggingface_hub import hf_hub_download
-        return Path(hf_hub_download(REPO, name, repo_type='dataset', revision=revision,
-                    token=self.token, cache_dir=str(cache), force_download=True))
+        import httpx
+        cache = uncompressed_temporary(cache, directory=True)
+        target = uncompressed_temporary(cache / 'payload.download')
+        url = 'https://huggingface.co/datasets/' + REPO + '/resolve/' + revision + '/' + name
+        # A short flat path avoids Windows MAX_PATH failures in nested Hub caches.
+        with httpx.Client(follow_redirects=True, timeout=60) as client:
+            with client.stream('GET', url, headers={'Authorization': 'Bearer ' + self.token}) as response:
+                response.raise_for_status()
+                with target.open('wb') as stream:
+                    for block in response.iter_bytes(1024**2):
+                        stream.write(block)
+        return target
     def download_memory(self, name, revision, limit=32*1024**2):
         import httpx
         url = 'https://huggingface.co/datasets/' + REPO + '/resolve/' + revision + '/' + name
@@ -270,8 +279,11 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
         atomic_json(local_manifest, manifest)
         manifest_revision = hub.upload(local_manifest, remote_manifest)
         # Verify the manifest as well, before any local data is removed.
-        manifest_copy = hub.download(remote_manifest, manifest_revision, temp / 'manifest-download')
-        if manifest_copy.read_bytes() != local_manifest.read_bytes():
+        if hasattr(hub, 'download_memory'):
+            manifest_bytes = hub.download_memory(remote_manifest, manifest_revision)
+        else:
+            manifest_bytes = hub.download(remote_manifest, manifest_revision, temp / 'manifest-download').read_bytes()
+        if manifest_bytes != local_manifest.read_bytes():
             raise RuntimeError('MANIFEST_CHECKSUM_MISMATCH')
         manifest['manifest_object'] = remote_manifest
         manifest['manifest_revision'] = manifest_revision

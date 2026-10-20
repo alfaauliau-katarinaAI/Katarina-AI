@@ -130,5 +130,16 @@ class ArchiveTests(unittest.TestCase):
                 with closing(sqlite3.connect(path)) as db:
                     self.assertEqual(db.execute('pragma quick_check').fetchone()[0],'ok')
                     self.assertEqual(db.execute('select count(*) from evidence').fetchone()[0],100)
+    def test_hub_download_uses_a_short_flat_path(self):
+        import contextlib,sys
+        payload=b'private synthetic fixture'
+        response=SimpleNamespace(raise_for_status=lambda:None,iter_bytes=lambda size:iter([payload]))
+        client=SimpleNamespace(stream=lambda *args,**kw:contextlib.nullcontext(response))
+        httpx=SimpleNamespace(Client=lambda **kw:contextlib.nullcontext(client))
+        hub=mod.Hub.__new__(mod.Hub);hub.token='synthetic-test-only'
+        with tempfile.TemporaryDirectory() as d,patch.dict(sys.modules,{'httpx':httpx}):
+            result=hub.download('manifests/'+'a'*64+'/'+'b'*64+'.json','c'*40,Path(d)/'cache')
+            self.assertEqual(result.name,'payload.download')
+            self.assertEqual(result.read_bytes(),payload)
 if __name__=='__main__':unittest.main()
 
