@@ -76,10 +76,17 @@ def publish_reports(root, trace=None, batch=64):
                 db.execute('INSERT OR REPLACE INTO research_report_heads VALUES(?,?,?)',(ident,version,report_id))
         if rows and trace:trace.emit('REPORT','DONE',action='EVIDENCE_DECISION_REPORT',count=len(rows))
         join='FROM research_report_heads h JOIN research_reports r ON r.id=h.report_id'
-        recent=[json.loads(r[0]) for r in db.execute('SELECT r.report_json '+join+' ORDER BY r.created_utc DESC,r.rowid DESC LIMIT 8')]
-        candidates=[json.loads(r[0]) for r in db.execute("SELECT r.report_json "+join+" WHERE r.decision IN ('CANDIDATE_FORWARD','AWAITING_COST_REVIEWS') ORDER BY r.created_utc DESC,r.rowid DESC LIMIT 3")]
+        indexes={r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='index'")}
+        if {'research_reports_created','research_reports_decision_created','research_reports_head_counts'}<=indexes:
+            recent=[json.loads(r[0]) for r in db.execute('SELECT r.report_json FROM research_reports r INDEXED BY research_reports_created WHERE EXISTS(SELECT 1 FROM research_report_heads h WHERE h.report_id=r.id) ORDER BY r.created_utc DESC,r.id DESC LIMIT 8')]
+            candidates=[json.loads(r[0]) for r in db.execute("SELECT r.report_json FROM research_reports r INDEXED BY research_reports_decision_created WHERE r.decision IN ('CANDIDATE_FORWARD','AWAITING_COST_REVIEWS') AND EXISTS(SELECT 1 FROM research_report_heads h WHERE h.report_id=r.id) ORDER BY r.created_utc DESC,r.id DESC LIMIT 3")]
+            count_join='FROM research_report_heads h JOIN research_reports r INDEXED BY research_reports_head_counts ON r.id=h.report_id'
+        else:
+            recent=[json.loads(r[0]) for r in db.execute('SELECT r.report_json '+join+' ORDER BY r.created_utc DESC,r.rowid DESC LIMIT 8')]
+            candidates=[json.loads(r[0]) for r in db.execute("SELECT r.report_json "+join+" WHERE r.decision IN ('CANDIDATE_FORWARD','AWAITING_COST_REVIEWS') ORDER BY r.created_utc DESC,r.rowid DESC LIMIT 3")]
+            count_join=join
         counts={k:0 for k in DECISIONS}
-        counts.update(dict(db.execute('SELECT r.decision,COUNT(*) '+join+' GROUP BY r.decision')))
+        counts.update(dict(db.execute('SELECT r.decision,COUNT(*) '+count_join+' GROUP BY r.decision')))
         total=db.execute('SELECT COUNT(*) FROM trials').fetchone()[0]
         value=dict(schema_version=1,status='RESEARCH_REPORTS',source='PERSISTED_RULE_BASED_RESEARCH_REPORTS',pid=os.getpid(),as_of_utc=stamp,
                    reviewed_experiments=sum(counts.values()),unreported_experiments=max(0,total-sum(counts.values())),counts=counts,
