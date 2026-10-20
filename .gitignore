@@ -224,6 +224,10 @@ Tester/cache/
 *.pem
 secrets/
 credentials/
+*.dpapi
+*.secret
+*.private.json
+/hf-storage/
 
 # KATARINA local supervisor/runtime state
 .katarina/

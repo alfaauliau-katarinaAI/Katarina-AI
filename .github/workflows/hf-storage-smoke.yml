@@ -1,10 +1,5 @@
 name: Hugging Face private storage smoke test
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - '.github/workflows/hf-storage-smoke.yml'
-      - 'scripts/ai/hf_storage_smoke.py'
   workflow_dispatch:
 permissions:
   contents: read

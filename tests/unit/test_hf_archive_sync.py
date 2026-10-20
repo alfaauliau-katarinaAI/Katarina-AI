@@ -25,6 +25,20 @@ class FakeHub:
         if self.mutate and name.startswith('objects/'):self.mutate.write_bytes(b'new source content')
         return p
 class ArchiveTests(unittest.TestCase):
+    def test_logical_backup_identity_survives_temp_path_changes_and_restores_remotely(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);one=root/'first-capture.json';two=root/'different-capture.json'
+            payload=b'{"preserve":true}'
+            one.write_bytes(payload);two.write_bytes(payload);hub=FakeHub()
+            mod.archive_file(one,hub,root/'ledger',root/'work',logical_source='state/research.json')
+            one.unlink();before=len(hub.objects)
+            result=mod.archive_file(two,hub,root/'ledger',root/'work',logical_source='state/research.json')
+            self.assertEqual(result['status'],'UNCHANGED');self.assertEqual(len(hub.objects),before)
+            self.assertEqual(len(list((root/'ledger').glob('*.json'))),1)
+            remote=json.loads(next(data for name,data in hub.objects.items() if name.startswith('manifests/')))
+            self.assertEqual(remote['logical_source'],'state/research.json')
+            mod.restore_file(remote,hub,root/'new-machine'/'research.json')
+            self.assertEqual((root/'new-machine'/'research.json').read_bytes(),payload)
     def test_upload_rate_limit_honors_retry_after_without_repeating_requests(self):
         with tempfile.TemporaryDirectory() as d,patch.object(mod,'BASE',Path(d)):
             failure=RuntimeError('do not log server body')
@@ -47,7 +61,7 @@ class ArchiveTests(unittest.TestCase):
     def test_partial_backup_retries_only_failed_database(self):
         with tempfile.TemporaryDirectory() as d:
             base=Path(d);state=base/'state';state.mkdir()
-            sources=[base/'failed.sqlite3',base/'ready.sqlite3']
+            sources=[state/'failed.sqlite3',state/'ready.sqlite3']
             for p in sources:p.touch()
             hub=SimpleNamespace(stored_bytes=lambda:0)
             config={'backup_databases':[str(p) for p in sources]}

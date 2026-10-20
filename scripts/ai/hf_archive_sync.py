@@ -16,10 +16,59 @@ import tempfile
 import time
 import zlib
 
-BASE = Path(r'C:\KatarinaDev\config\hf-storage')
-STATE = Path(r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer')
-REPO = 'alfaaulia/katarina-research-archive'
+BASE = Path(os.environ.get('KATARINA_HF_BASE', r'C:\KatarinaDev\config\hf-storage' if os.name == 'nt'
+                           else str(Path.home() / '.local/state/katarina/hf-storage')))
+STATE = Path(os.environ.get('KATARINA_STATE_DIR', r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer'
+                            if os.name == 'nt' else str(BASE.parent / 'runtime')))
+REPO = os.environ.get('KATARINA_HF_REPO', 'alfaaulia/katarina-research-archive')
+EXPECTED_ACCOUNT = os.environ.get('KATARINA_HF_ACCOUNT', 'alfaaulia')
 RESERVE = 2 * 1024**3
+
+def configure_runtime(config):
+    global BASE, STATE, REPO, EXPECTED_ACCOUNT
+    BASE = Path(config.get('base_dir', BASE)).expanduser().resolve()
+    STATE = Path(config.get('state_dir', STATE)).expanduser().resolve()
+    REPO = config.get('repo', REPO)
+    EXPECTED_ACCOUNT = config.get('expected_account', EXPECTED_ACCOUNT)
+    if not isinstance(REPO, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,95}/[A-Za-z0-9][A-Za-z0-9_.-]{0,95}', REPO):
+        raise RuntimeError('INVALID_REPOSITORY')
+    if not isinstance(EXPECTED_ACCOUNT, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,95}', EXPECTED_ACCOUNT):
+        raise RuntimeError('INVALID_EXPECTED_ACCOUNT')
+    if BASE == STATE:
+        raise RuntimeError('STATE_AND_CREDENTIAL_DIRECTORIES_MUST_DIFFER')
+
+def load_token(config):
+    token = os.environ.get(config.get('token_env', 'HF_TOKEN'), '').strip()
+    if not token:
+        if os.name == 'nt':
+            token = dpapi((BASE / 'token.dpapi').read_bytes(), decrypt=True).decode('ascii').strip()
+        else:
+            path = Path(os.environ.get('HF_TOKEN_FILE') or config.get('token_file') or BASE / 'token.secret')
+            if path.is_symlink():
+                raise RuntimeError('CREDENTIAL_SYMLINK_FORBIDDEN')
+            stat = path.stat()
+            if stat.st_mode & 0o077 or stat.st_uid != os.getuid():
+                raise RuntimeError('CREDENTIAL_PERMISSIONS_REQUIRED')
+            token = path.read_text(encoding='ascii').strip()
+    if not re.fullmatch(r'hf_[A-Za-z0-9]{10,}', token):
+        raise RuntimeError('INVALID_HF_CREDENTIAL')
+    return token
+
+def safe_remote_path(name, revision):
+    if (not isinstance(name, str) or not isinstance(revision, str)
+            or not re.fullmatch(r'[a-f0-9]{40}', revision)
+            or not re.fullmatch(r'(?:objects/[a-f0-9]{2}/[a-f0-9]{64}\.gz|manifests/[a-f0-9]{64}/[a-f0-9]{64}\.json)', name)):
+        raise RuntimeError('INVALID_PINNED_ARCHIVE_PATH')
+    return 'https://huggingface.co/datasets/' + REPO + '/resolve/' + revision + '/' + name
+
+def validate_cold_source(source):
+    source = Path(source).resolve()
+    if (source.is_relative_to(BASE.resolve()) or source.is_relative_to(STATE.resolve())
+            or source.suffix.lower() not in ('.json', '.jsonl', '.csv', '.sqlite3')
+            or any(word in source.name.lower() for word in ('private', 'credential', 'secret', 'token'))
+            or source.suffix.lower() == '.sqlite3' and Path(str(source) + '-wal').exists()):
+        raise RuntimeError('PROTECTED_SOURCE_EVICTION_FORBIDDEN')
+
 def cooldown():
     path = BASE / 'cooldown.json'
     if path.exists():
@@ -87,10 +136,16 @@ class Hub:
         from huggingface_hub import HfApi
         self.token = token
         self.api = HfApi(token=token)
-        if self.api.whoami().get('name') != 'alfaaulia':
+        if self.api.whoami().get('name') != EXPECTED_ACCOUNT:
             raise RuntimeError('UNEXPECTED_ACCOUNT')
-        self.api.create_repo(REPO, repo_type='dataset', private=True, exist_ok=True)
-        if self.api.repo_info(REPO, repo_type='dataset').private is not True:
+        try:
+            info = self.api.repo_info(REPO, repo_type='dataset')
+        except Exception as error:
+            if getattr(getattr(error, 'response', None), 'status_code', None) != 404:
+                raise
+            self.api.create_repo(REPO, repo_type='dataset', private=True, exist_ok=True)
+            info = self.api.repo_info(REPO, repo_type='dataset')
+        if info.private is not True:
             raise RuntimeError('PRIVATE_REPOSITORY_REQUIRED')
     def upload(self, local, name):
         if cooldown():
@@ -113,7 +168,7 @@ class Hub:
         import httpx
         cache = uncompressed_temporary(cache, directory=True)
         target = uncompressed_temporary(cache / 'payload.download')
-        url = 'https://huggingface.co/datasets/' + REPO + '/resolve/' + revision + '/' + name
+        url = safe_remote_path(name, revision)
         # A short flat path avoids Windows MAX_PATH failures in nested Hub caches.
         with httpx.Client(follow_redirects=True, timeout=60) as client:
             with client.stream('GET', url, headers={'Authorization': 'Bearer ' + self.token}) as response:
@@ -124,7 +179,7 @@ class Hub:
         return target
     def download_memory(self, name, revision, limit=32*1024**2):
         import httpx
-        url = 'https://huggingface.co/datasets/' + REPO + '/resolve/' + revision + '/' + name
+        url = safe_remote_path(name, revision)
         parts, size = [], 0
         # httpx drops Authorization on cross-origin redirects to signed storage URLs.
         with httpx.Client(follow_redirects=True, timeout=60) as client:
@@ -138,7 +193,7 @@ class Hub:
         return b''.join(parts)
     def verify_stream(self, name, revision, manifest):
         import httpx
-        url = 'https://huggingface.co/datasets/' + REPO + '/resolve/' + revision + '/' + name
+        url = safe_remote_path(name, revision)
         with httpx.Client(follow_redirects=True, timeout=60) as client:
             with client.stream('GET', url, headers={'Authorization': 'Bearer ' + self.token}) as response:
                 response.raise_for_status()
@@ -251,7 +306,7 @@ def archive_memory(source, hub, receipt, before, key):
                 archive_bytes=len(payload), sha256=manifest['source_sha256'], evicted=True,
                 restore_verified=True, memory_bootstrap=True)
 
-def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
+def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=(), logical_source=None):
     source = Path(source)
     if source.is_symlink():
         raise RuntimeError('SYMLINK_SOURCE_FORBIDDEN')
@@ -262,7 +317,13 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
     cold = source in {Path(p).resolve() for p in allowed_cold}
     if evict and (not cold or time.time() - before.st_mtime < 86400):
         raise RuntimeError('EVICTION_NOT_ALLOWLISTED_OR_NOT_COLD')
-    key = hashlib.sha256(str(source).casefold().encode()).hexdigest()
+    if evict:
+        validate_cold_source(source)
+    if logical_source is not None and (evict or not re.fullmatch(r'state/[A-Za-z0-9_./-]+', logical_source)
+                                       or '..' in logical_source.split('/')):
+        raise RuntimeError('INVALID_LOGICAL_SOURCE')
+    identity = 'logical:' + logical_source if logical_source is not None else str(source).casefold()
+    key = hashlib.sha256(identity.encode()).hexdigest()
     work, ledger = Path(work), Path(ledger)
     work.mkdir(parents=True, exist_ok=True)
     ledger.mkdir(parents=True, exist_ok=True)
@@ -273,8 +334,12 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
         return archive_memory(source, hub, receipt, before, key)
     if not evict and receipt.exists():
         old = json.loads(receipt.read_text())
-        if old.get('source_bytes') == before.st_size and old.get('source_mtime_ns') == before.st_mtime_ns:
-            return dict(status='UNCHANGED', source=str(source), source_bytes=before.st_size)
+        same = (old.get('source_bytes') == before.st_size and old.get('source_mtime_ns') == before.st_mtime_ns)
+        if logical_source is not None:
+            same = old.get('source_sha256') == sha_file(source)
+        if same and old.get('repo') == REPO:
+            return dict(status='UNCHANGED', source=str(source), source_bytes=before.st_size,
+                        sha256=old['source_sha256'],restore_verified=bool(old.get('restore_verified_utc')))
     with tempfile.TemporaryDirectory(prefix='archive-', dir=work) as temporary:
         temp = Path(temporary)
         packed = uncompressed_temporary(temp / 'payload.gz')
@@ -297,6 +362,8 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
                         source_mtime_ns=before.st_mtime_ns, source_sha256=digest,
                         archive_bytes=packed.stat().st_size, archive_sha256=archive_digest,
                         object=remote, object_revision=revision, archived_utc=utc())
+        if logical_source is not None:
+            manifest['logical_source'] = logical_source
         if hasattr(hub, 'verify_stream'):
             hub.verify_stream(remote, revision, manifest)
         else:
@@ -339,12 +406,21 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
 def restore_file(manifest, hub, destination):
     if manifest.get('repo') != REPO:
         raise RuntimeError('WRONG_REPOSITORY')
+    safe_remote_path(manifest.get('object'), manifest.get('object_revision'))
+    for key in ('source_bytes', 'archive_bytes'):
+        if type(manifest.get(key)) is not int or manifest[key] < 0:
+            raise RuntimeError('INVALID_RESTORE_SIZE')
+    for key in ('source_sha256', 'archive_sha256'):
+        if not isinstance(manifest.get(key), str) or not re.fullmatch(r'[a-f0-9]{64}', manifest[key]):
+            raise RuntimeError('INVALID_RESTORE_CHECKSUM')
     destination = Path(destination)
     if destination.exists():
         if sha_file(destination) == manifest['source_sha256']:
             return destination
         raise RuntimeError('RESTORE_DESTINATION_EXISTS')
     destination.parent.mkdir(parents=True, exist_ok=True)
+    if shutil.disk_usage(destination.parent).free < RESERVE + manifest['source_bytes'] + manifest['archive_bytes']:
+        raise RuntimeError('RESTORE_WAITING_DISK_RESERVE')
     with tempfile.TemporaryDirectory(prefix='hf-restore-', dir=destination.parent) as tmp:
         tmp = Path(tmp)
         compressed = hub.download(manifest['object'], manifest['object_revision'], tmp / 'download')
@@ -420,7 +496,7 @@ def sync(config, hub):
     results, errors = [], []
     if publish_cooldown():
         return
-    # Leave 20 GB headroom within the currently documented private free allowance.
+    # Configured archive budget; this threshold does not infer provider billing.
     used = hub.stored_bytes()
     if used > 80 * 1000**3:
         atomic_json(status_path, dict(status='PAUSED_CLOUD_QUOTA', cloud_bytes=used, as_of_utc=utc()))
@@ -445,7 +521,8 @@ def sync(config, hub):
             continue
         try:
             with capture_json_file(source, work) as snapshot:
-                result = archive_file(snapshot, hub, ledger, work)
+                result = archive_file(snapshot, hub, ledger, work,
+                                      logical_source='state/' + source.resolve().relative_to(STATE.resolve()).as_posix())
                 result['snapshot_source'] = str(source)
                 results.append(result)
         except Exception as e:
@@ -470,6 +547,7 @@ def sync(config, hub):
             source = Path(name)
             if not source.is_file():
                 backups_ok = False
+                errors.append(dict(source=str(source),error='BACKUP_SOURCE_MISSING'))
                 continue
             if time.time() - completed.get(name, {}).get('last_success_epoch', clock.get('last_success_epoch', 0)) < 86400:
                 results.append(dict(status='BACKUP_CURRENT', database_source=name))
@@ -478,7 +556,8 @@ def sync(config, hub):
                 with tempfile.TemporaryDirectory(prefix='snapshot-', dir=work) as d:
                     snapshot = Path(d) / source.name
                     backup_database(source, snapshot)
-                    result = archive_file(snapshot, hub, ledger, work)
+                    result = archive_file(snapshot, hub, ledger, work,
+                                          logical_source='state/' + source.resolve().relative_to(STATE.resolve()).as_posix())
                     result['database_source'] = str(source)
                     results.append(result)
                     completed[name] = dict(last_success_epoch=time.time(), sha256=result['sha256'])
@@ -506,19 +585,22 @@ def main():
     p.add_argument('--restore-manifest')
     p.add_argument('--destination')
     a = p.parse_args()
+    config = json.loads(Path(a.config).read_text(encoding='utf-8-sig'))
+    configure_runtime(config)
     import sys
-    sys.path.insert(0, r'C:\KatarinaDev\runtime\hf-client')
+    client_dir = config.get('client_dir') or os.environ.get('KATARINA_HF_CLIENT_DIR')
+    if client_dir or os.name == 'nt':
+        sys.path.insert(0, client_dir or r'C:\KatarinaDev\runtime\hf-client')
     import certifi
     os.environ['SSL_CERT_FILE'] = certifi.where()
     os.environ['HF_HUB_DISABLE_XET'] = '1'
     os.environ['HF_HUB_DISABLE_PROGRESS_BARS'] = '1'
     os.environ['HF_HUB_DISABLE_TELEMETRY'] = '1'
-    if publish_cooldown():
-        return
-    token = dpapi((BASE / 'token.dpapi').read_bytes(), decrypt=True).decode('ascii')
-    hub = Hub(token)
     from filelock import FileLock
     with FileLock(str(BASE / 'sync.lock'), timeout=1):
+        if not a.restore_manifest and publish_cooldown():
+            return
+        hub = Hub(load_token(config))
         if a.restore_manifest:
             if not a.destination:
                 raise RuntimeError('RESTORE_DESTINATION_REQUIRED')
@@ -530,7 +612,7 @@ def main():
             for stale in (BASE / 'work').glob('*'):
                 if stale.is_dir() and not stale.is_symlink() and stale.name.startswith(('snapshot-', 'capture-', 'archive-')):
                     shutil.rmtree(stale)
-            sync(json.loads(Path(a.config).read_text()), hub)
+            sync(config, hub)
 if __name__ == '__main__':
     try:
         main()

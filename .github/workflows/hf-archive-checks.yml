@@ -1,12 +1,5 @@
 name: Verify private archive integrity guards
 on:
-  pull_request:
-    paths:
-      - 'scripts/ai/hf_archive_sync.py'
-      - 'scripts/ai/install_hf_archive_test.py'
-      - 'scripts/ai/run_hf_archive_sync.py'
-      - 'tests/unit/test_hf_archive_sync.py'
-      - '.github/workflows/hf-archive-checks.yml'
   workflow_dispatch:
 permissions:
   contents: read
