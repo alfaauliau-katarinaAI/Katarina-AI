@@ -22,7 +22,7 @@ REPO = 'alfaaulia/katarina-research-archive'
 RESERVE = 2 * 1024**3
 def safe_error(error):
     if isinstance(error, sqlite3.Error):
-        return 'SQLITE_' + getattr(error, 'sqlite_errorname', type(error).__name__)
+        return getattr(error, 'sqlite_errorname', 'SQLITE_' + type(error).__name__)
     text = str(error)
     return text if re.fullmatch(r'[A-Z][A-Z0-9_]{2,79}', text) else type(error).__name__
 
@@ -340,7 +340,10 @@ def backup_database(source, target):
         return int(time.monotonic() > deadline or
                    shutil.disk_usage(target.parent).free < RESERVE + 32 * 1024**2)
     if os.name == 'nt':
-        subprocess.run(['compact.exe', '/C', '/I', '/Q', str(target.parent)],
+        # Avoid NTFS recompressing SQLite's changing pages on every write when
+        # a plain copy fits. Compress the completed snapshot once instead.
+        plain = shutil.disk_usage(target.parent).free > RESERVE + source.stat().st_size + 64 * 1024**2
+        subprocess.run(['compact.exe', '/U' if plain else '/C', '/I', '/Q', str(target.parent)],
                        capture_output=True, check=True, timeout=10)
     # VACUUM INTO creates a consistent, compact copy without changing the live database.
     with contextlib.closing(sqlite3.connect(source.as_uri() + '?mode=ro', uri=True, timeout=5)) as src:
@@ -352,6 +355,9 @@ def backup_database(source, target):
         dst.set_progress_handler(interrupted, 10000)
         if dst.execute('pragma quick_check').fetchone()[0] != 'ok':
             raise RuntimeError('BACKUP_INTEGRITY_FAILED')
+    if os.name == 'nt':
+        subprocess.run(['compact.exe', '/C', '/I', '/Q', str(target)],
+                       capture_output=True, check=True, timeout=120)
 
 @contextlib.contextmanager
 def capture_json_file(source, work):
