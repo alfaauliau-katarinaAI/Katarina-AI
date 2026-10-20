@@ -72,7 +72,8 @@ def verify(repo_root):
     brain=(repo_root/"src/katarina/intelligence/unified_brain.py").read_text()
     observer=(repo_root/"src/katarina/intelligence/brain_observer.py").read_text()
     assert "UnifiedKatarinaBrain.observe_once(" in cli
-    assert "terminal_info()" in brain and "terminal.trade_allowed" in brain
+    assert "terminal_info()" in brain and "observation_permission(broker,terminal)" in brain
+    assert "FAIL_CLOSED_TRADING_MUST_BE_DISABLED" in brain
     assert "lock_worker(" in brain and "lock.close()" in brain
     assert "ProspectiveShadowBook(" in brain
     assert "collect_market_articles(" in observer
