@@ -86,4 +86,6 @@ def build_public_runtime(root):
     public_board['entry_feed']=read_entry_feed(root,allowed=research_allowed)
     from katarina.monitoring.position_feed import read_position_feed
     public_board['position_feed']=read_position_feed(root,allowed=research_allowed)
+    from katarina.monitoring.research_health import read_research_health
+    public_board['research_health']=read_research_health(root,pid,allowed=research_allowed)
     return public

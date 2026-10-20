@@ -111,6 +111,11 @@ sandbox.positionsFixture={status:'OBSERVED',as_of_utc:stamp,currency:'USC',total
 run('renderPositions(positionsFixture,{status:"OBSERVED",currency:"USC",net_pnl:25})');assert.match(get('floating-total').textContent,/-12.50 USC/);assert.equal(get('floating-total').className,'pnl-negative');assert.match(get('realized-total').textContent,/\+25.00 USC/);assert.equal(get('open-positions').children[0].open,false);
 get('open-positions').children[0].open=true;get('open-positions').children[0].listeners.toggle();sandbox.positionsFixture.positions[0].profit=-13;run('renderPositions(positionsFixture,null)');assert.equal(get('open-positions').children[0].open,true);
 run('renderPositions(null,null)');assert.equal(get('floating-total').textContent,'Belum tersedia');assert.ok(get('open-positions').children.every(r=>r.tag!=='details'));
+// Visible lane indicators distinguish active work, completion, pause and live waiting.
+run('render(packet)');run('boardNow.activity.active=[{phase:"VALIDATE",state:"STARTED",seq:900,at_utc:new Date().toISOString()}];renderLanes(boardNow)');
+assert.ok(get('lanes').children.some(r=>r.className==='lane processing'));
+run('boardNow.activity.active=[];boardNow.research_health={status:"OBSERVED",capacity:{status:"PAUSED_LOW_DISK"},pending_cost2:0,pending_cost3:0};renderLanes(boardNow)');assert.ok(get('lanes').children.some(r=>r.className==='lane paused'));
+run('boardNow.research_health.capacity.status="READY";boardNow.activity.events=[{phase:"VALIDATE",state:"DONE",seq:901,at_utc:new Date().toISOString()}];renderLanes(boardNow)');assert.ok(get('lanes').children.some(r=>r.className==='lane recent'));
 // Exercise actual registered controls: drag, simultaneous pinch/pan, cancellation and resume.
 const controls=get('network').listeners;
 const pointer=(id,x,y)=>({pointerId:id,clientX:x,clientY:y,button:0,preventDefault(){}});

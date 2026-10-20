@@ -174,6 +174,7 @@ class ResearchPool:
         self.stress_thread=threading.Thread(target=self.review_loop,args=(3,),name='cost-stress-3x',daemon=True)
         self.model_thread=threading.Thread(target=self.model_loop,name='gemini-hypotheses',daemon=True)
         self.thread=threading.Thread(target=self.run,name='research-coordinator',daemon=True)
+        self.review_states={level:{'status':'STARTING','completed':0} for level in (2,3)}
         self.model_state={'status':'WAITING_BUDGET' if model is not None else 'NOT_CONFIGURED','successful_calls':0,'failed_calls':0}
 
     @property
@@ -190,7 +191,17 @@ class ResearchPool:
         for t in [self.thread,self.review_thread,self.stress_thread,self.model_thread]+[w.thread for w in self.workers]:t.join(timeout=65)
         if self.background_count:raise RuntimeError('RESEARCH_POOL_STOP_TIMEOUT')
 
+    def _publish_role(self,phase,state):
+        payload=dict(state,pid=os.getpid(),phase=phase,autonomous=True,as_of_utc=datetime.now(timezone.utc).isoformat())
+        try:
+            temp=self.root/('worker-'+phase+'.tmp');temp.write_text(json.dumps(payload)+'\n',encoding='utf-8');replace_snapshot(temp,self.root/('worker-'+phase+'.json'))
+        except OSError:pass
+
     def review_one(self, level=2):
+        from katarina.intelligence.research_capacity import research_capacity
+        capacity=research_capacity(self.root);state=self.review_states[level]
+        if capacity['status']!='READY':
+            state['status']=capacity['status'];return False
         phase="VALIDATE" if level==2 else "VALIDATE3"
         prefix="" if level==2 else "COST3:"
         with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=2)) as db:
@@ -199,8 +210,9 @@ class ResearchPool:
             frozen=db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='research_datasets'").fetchone()
             priority="CASE WHEN json_extract(result_json,'$.status')='NEEDS_FORWARD_VALIDATION' THEN 0 ELSE 1 END,"
             if frozen:priority+='CASE WHEN t.digest IN (SELECT digest FROM research_datasets) THEN 0 ELSE 1 END,'
-            trial=db.execute('SELECT id,symbol,digest,result_json FROM trials t WHERE NOT EXISTS (SELECT 1 FROM stress_reviews s WHERE s.trial_id=?||t.id) ORDER BY '+priority+'created_utc LIMIT 1',(prefix,)).fetchone()
-            if not trial:return False
+            trial=db.execute("SELECT id,symbol,digest,result_json FROM trials t WHERE json_extract(t.result_json,'$.status')='NEEDS_FORWARD_VALIDATION' AND NOT EXISTS (SELECT 1 FROM stress_reviews s WHERE s.trial_id=?||t.id) ORDER BY "+priority+'created_utc LIMIT 1',(prefix,)).fetchone()
+            if not trial:state['status']='WAITING_ELIGIBLE_CANDIDATE';return False
+            state['status']='REVIEWING';self._publish_role(phase,state)
             self.trace.emit(phase,'STARTED',action='COST_STRESS_'+str(level)+'X')
             original=json.loads(trial[3]);rows=preserved_dataset(db,trial[2]);source='FROZEN_EXPERIMENT_SNAPSHOT'
             if rows is None:
@@ -213,14 +225,17 @@ class ResearchPool:
                 result=cost_review(rows,original,level);result['dataset_source']=source
             with db:db.execute('INSERT OR IGNORE INTO stress_reviews VALUES(?,?,?)',(prefix+trial[0],datetime.now(timezone.utc).isoformat(),json.dumps(result,allow_nan=False)))
             self.trace.emit(phase,'DONE',count=1)
+            state.update(status='REVIEW_COMPLETED',completed=state['completed']+1)
             return True
 
     def repair_one(self):
         """Retry a failed legacy review only when its exact original dataset exists."""
+        from katarina.intelligence.research_capacity import research_capacity
+        if research_capacity(self.root)['status']!='READY':return False
         with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=2)) as db:
             db.execute('CREATE TABLE IF NOT EXISTS research_repairs(id TEXT PRIMARY KEY,created_utc TEXT,result_json TEXT)')
             if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='research_datasets'").fetchone():return False
-            row=db.execute("SELECT s.trial_id,t.digest,t.result_json FROM stress_reviews s JOIN trials t ON t.id=CASE WHEN s.trial_id LIKE 'COST3:%' THEN substr(s.trial_id,7) ELSE s.trial_id END JOIN research_datasets d ON d.digest=t.digest WHERE json_extract(s.result_json,'$.status')='DATASET_CHANGED_REVIEW_UNAVAILABLE' ORDER BY s.created_utc LIMIT 1").fetchone()
+            row=db.execute("SELECT s.trial_id,t.digest,t.result_json FROM stress_reviews s JOIN trials t ON t.id=CASE WHEN s.trial_id LIKE 'COST3:%' THEN substr(s.trial_id,7) ELSE s.trial_id END JOIN research_datasets d ON d.digest=t.digest WHERE json_extract(s.result_json,'$.status')='DATASET_CHANGED_REVIEW_UNAVAILABLE' AND json_extract(t.result_json,'$.status')='NEEDS_FORWARD_VALIDATION' ORDER BY s.created_utc LIMIT 1").fetchone()
             if row is None:return False
             rows=preserved_dataset(db,row[1]);original=json.loads(row[2])
             self.trace.emit('LEARNING_REVIEW','STARTED',action='REPAIR_EXACT_DATASET_REVIEW')
@@ -237,11 +252,16 @@ class ResearchPool:
         while not self.stop.is_set():
             try:worked=self.review_one(level)
             except Exception:
+                self.review_states[level]['status']='RETRY_PENDING'
                 self.trace.emit('VALIDATE' if level==2 else 'VALIDATE3','FAILED',action='RETRY_PENDING');worked=False
-            self.stop.wait(1 if worked else 5)
+            self._publish_role('VALIDATE' if level==2 else 'VALIDATE3',self.review_states[level])
+            self.stop.wait(15 if worked else 30)
 
     def model_once(self):
         if self.model is None:return False
+        from katarina.intelligence.research_capacity import research_capacity
+        capacity=research_capacity(self.root)
+        if capacity['status']!='READY':self.model_state['status']=capacity['status'];return False
         target=self.root/'gemini-research.json'
         try:
             old=json.loads(target.read_text())
@@ -274,6 +294,7 @@ class ResearchPool:
         while not self.stop.is_set():
             try:self.model_once()
             except Exception:self.model_state['status']='RETRY_AFTER_COOLDOWN'
+            self._publish_role('GEMINI',self.model_state)
             self.stop.wait(5)
 
     def run(self):

@@ -52,6 +52,8 @@ packet.agent_board.entry_feed={status:'OBSERVED',mode:'DEMO',executor_pid:99,as_
 packet.agent_board.entry_feed.realized_summary={status:'OBSERVED',currency:'USC',net_pnl:-123.45,closed_count:3,scope:'forged',account:'PRIVATE_SENTINEL'};
 packet.agent_board.entry_feed.history[0].realized_pnl=-123.45;packet.agent_board.entry_feed.history[0].currency='USC';
 packet.agent_board.position_feed={status:'OBSERVED',as_of_utc:now,currency:'USC',mode:'DEMO',total_count:2,floating_total:999,katarina_floating:1,positions:[{id:'d'.repeat(24),symbol:'XAUUSD.vx',side:'BUY',opened_utc:null,owner:'KATARINA_DEMO',entry_price:4000,current_price:4001,stop_loss:3990,take_profit:4020,profit:100,swap:-2,floating:999,login:'PRIVATE_SENTINEL'},{id:'e'.repeat(24),symbol:'EURUSD.vx',side:'SELL',opened_utc:now,entry_price:1.1,current_price:1.2,stop_loss:0,take_profit:0,profit:-20,swap:-1,volume:999}]};
+packet.agent_board.research_health={status:'OBSERVED',pid:42,as_of_utc:now,policy:'BASELINE_ELIGIBLE_ONLY',review_interval_seconds:15,capacity:{status:'READY',disk_free_bytes:3000000000},eligible_candidates:207,pending_cost2:0,pending_cost3:0,latest_hypothesis_utc:now,support:[{phase:'VALIDATE',fresh:true,status:'WAITING_ELIGIBLE_CANDIDATE',secret:'PRIVATE_SENTINEL'}],secret:'PRIVATE_SENTINEL'};
+packet.agent_board.learning.new_matured_observations=0;
 const docId='document:'+ 'a'.repeat(24),partId='paragraph:'+ 'b'.repeat(24);
 packet.agent_board.research_graph={nodes:[{id:docId,kind:'document',label:'DOC / aaaaaaaa',known_utc:now,body:'PRIVATE_SENTINEL'},{id:partId,kind:'paragraph',label:'TEXT / bbbbbbbb'}],edges:[{a:docId,b:partId,relation:'PART_OF_DOCUMENT'}],total_documents:1};
 assert.equal((await request('/public-status')).status,503);
@@ -66,6 +68,7 @@ assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Contr
 assert.ok(!body.includes('PRIVATE_SENTINEL'));assert.ok(!body.includes('positions_count'));
 assert.equal(JSON.parse(body).agent_board.activity.current.phase,'TECHNICAL');assert.equal(JSON.parse(body).agent_board.pair_activity.events[0].symbol,'EURUSD.vx');assert.ok(!body.includes('\"bid\"'));assert.equal(JSON.parse(body).agent_board.pair_activity.events[0].login,undefined);
 assert.equal(JSON.parse(body).agent_board.worker_runtime.mt5_algo_enabled,true);assert.equal(JSON.parse(body).agent_board.worker_runtime.paused_workers,1);assert.equal(JSON.parse(body).agent_board.worker_runtime.executor.pid,99);assert.equal(JSON.parse(body).agent_board.worker_runtime.live_authorized,false);
+assert.equal(JSON.parse(body).agent_board.research_health.pending_cost2,0);assert.equal(JSON.parse(body).agent_board.research_health.capacity.status,'READY');assert.equal(JSON.parse(body).agent_board.learning.new_matured_observations,0);
 assert.equal(JSON.parse(body).agent_board.learning.status,'NO_NEW_MATURED_EVIDENCE');
 assert.equal(JSON.parse(body).agent_board.learning.memory_records_inserted,0);
 assert.equal(JSON.parse(body).agent_board.learning.improvement_verified,false);

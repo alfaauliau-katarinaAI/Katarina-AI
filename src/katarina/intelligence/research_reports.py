@@ -60,7 +60,8 @@ def publish_reports(root, trace=None, batch=64):
     """Process a bounded evidence queue; reconcile archive categories incrementally."""
     root=Path(root);stamp=datetime.now(timezone.utc).isoformat()
     target=root/'experiment-jobs.sqlite3'
-    if shutil.disk_usage(root).free<2*1024**3 or (target.exists() and target.stat().st_size>320*1024**2):return 0
+    from katarina.intelligence.research_capacity import research_capacity
+    if research_capacity(root)['status']!='READY':return 0
     with closing(sqlite3.connect(target,timeout=2)) as db:
         db.execute('CREATE TABLE IF NOT EXISTS research_reports(id TEXT PRIMARY KEY,trial_id TEXT,created_utc TEXT,decision TEXT,report_json TEXT)')
         db.execute('CREATE TABLE IF NOT EXISTS research_report_heads(trial_id TEXT PRIMARY KEY,signature TEXT,report_id TEXT,decision TEXT)')

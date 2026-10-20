@@ -23,12 +23,12 @@ def summarize_learning(report):
     virtual = obj('virtual_shadow_summary').get('counts', {})
     return dict(
         status='NO_NEW_MATURED_EVIDENCE' if ledger == 'ALREADY_LEARNED_NO_REWRITE'
-            and matured == 0 and inserted == 0 else 'RESEARCH_REPORTED',
+            else 'RESEARCH_REPORTED',
         source='CANONICAL_RESEARCH_SNAPSHOT',
         observation_utc=stamp(report.get('observed_at_utc')),
         cognitive_as_of_utc=stamp(cognition.get('as_of_utc')),
         ledger_status=ledger,
-        matured_observations=matured, memory_records_inserted=inserted,
+        matured_observations=matured, new_matured_observations=0 if ledger=='ALREADY_LEARNED_NO_REWRITE' else matured, memory_records_inserted=inserted,
         memory_records_considered=counter(memory.get('records_considered')),
         shadow_rows_read=counter(evolution.get('rows_read')),
         external_models_invoked=counter(evolution.get('external_models_invoked')),
