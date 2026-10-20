@@ -39,6 +39,7 @@ const packet={captured_at_utc:now,private:'PRIVATE_SENTINEL',agent_board:{
  operational:{account_login:'PRIVATE_SENTINEL',positions_count:123,
  technical_evaluations:[{symbol:'XAUUSD',method:'PULLBACK',market_state:'TREND_UP',action:'WAIT',secret:'PRIVATE_SENTINEL'}]},
  activity:{pid:42,cycle:2,events:[{seq:1,at_utc:now,phase:'TECHNICAL',state:'DONE',symbol:'XAUUSD',secret:'PRIVATE_SENTINEL'}]}}};
+packet.agent_board.worker_runtime={status:'OBSERVED',pid:42,as_of_utc:now,mt5_algo_enabled:true,demo_permission:true,demo_status:'PROTECTED_VARIANT_NOT_QUALIFIED',private:'PRIVATE_SENTINEL',workers:[{fresh:true,autonomous:true,status:'PAUSED_STORAGE_BUDGET',completed:4,secret:'PRIVATE_SENTINEL'}],executor:{pid:99,independent:true,audit_only:false,cycles:2,status:'RUNNING',as_of_utc:now,login:'PRIVATE_SENTINEL'}};
 packet.agent_board.learning={status:'NO_NEW_MATURED_EVIDENCE',observation_utc:now,cognitive_as_of_utc:now,
  ledger_status:'ALREADY_LEARNED_NO_REWRITE',matured_observations:0,memory_records_inserted:0,
  shadow_rows_read:1,external_models_invoked:0,account_login:'PRIVATE_SENTINEL',improvement_verified:true};
@@ -57,6 +58,7 @@ const response=await request('/public-status'),body=await response.text();
 assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
 assert.ok(!body.includes('PRIVATE_SENTINEL'));assert.ok(!body.includes('positions_count'));
 assert.equal(JSON.parse(body).agent_board.activity.current.phase,'TECHNICAL');
+assert.equal(JSON.parse(body).agent_board.worker_runtime.mt5_algo_enabled,true);assert.equal(JSON.parse(body).agent_board.worker_runtime.paused_workers,1);assert.equal(JSON.parse(body).agent_board.worker_runtime.executor.pid,99);assert.equal(JSON.parse(body).agent_board.worker_runtime.live_authorized,false);
 assert.equal(JSON.parse(body).agent_board.learning.status,'NO_NEW_MATURED_EVIDENCE');
 assert.equal(JSON.parse(body).agent_board.learning.memory_records_inserted,0);
 assert.equal(JSON.parse(body).agent_board.learning.improvement_verified,false);
