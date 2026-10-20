@@ -335,7 +335,7 @@ def backup_database(source, target):
     # Hold the normal reserve while creating a consistent SQLite backup.
     if shutil.disk_usage(source).free < RESERVE + 64 * 1024**2:
         raise RuntimeError('BACKUP_WAITING_DISK_RESERVE')
-    deadline = time.monotonic() + 300
+    deadline = time.monotonic() + 900
     def interrupted():
         return int(time.monotonic() > deadline or
                    shutil.disk_usage(target.parent).free < RESERVE + 32 * 1024**2)
@@ -477,6 +477,11 @@ def main():
             restore_file(json.loads(Path(a.restore_manifest).read_text()), hub, a.destination)
             print('RESTORE_VERIFIED')
         else:
+            # Only this locked service owns these temporary directories. Recover
+            # staging space left behind by an interrupted scheduled task.
+            for stale in (BASE / 'work').glob('*'):
+                if stale.is_dir() and not stale.is_symlink() and stale.name.startswith(('snapshot-', 'capture-', 'archive-')):
+                    shutil.rmtree(stale)
             sync(json.loads(Path(a.config).read_text()), hub)
 if __name__ == '__main__':
     try:
