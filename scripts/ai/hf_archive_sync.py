@@ -14,6 +14,7 @@ import sqlite3
 import subprocess
 import tempfile
 import time
+import zlib
 
 BASE = Path(r'C:\KatarinaDev\config\hf-storage')
 STATE = Path(r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer')
@@ -92,6 +93,13 @@ class Hub:
                         raise RuntimeError('MEMORY_ARCHIVE_LIMIT')
                     parts.append(block)
         return b''.join(parts)
+    def verify_stream(self, name, revision, manifest):
+        import httpx
+        url = 'https://huggingface.co/datasets/' + REPO + '/resolve/' + revision + '/' + name
+        with httpx.Client(follow_redirects=True, timeout=60) as client:
+            with client.stream('GET', url, headers={'Authorization': 'Bearer ' + self.token}) as response:
+                response.raise_for_status()
+                verify_chunks(response.iter_bytes(65536), manifest)
     def stored_bytes(self):
         info = self.api.repo_info(REPO, repo_type='dataset', files_metadata=True)
         return sum(s.size or 0 for s in info.siblings)
@@ -120,6 +128,31 @@ def verify_archive(path, manifest):
                 raise RuntimeError('RESTORE_SIZE_EXCEEDED')
     if h.hexdigest() != manifest['source_sha256'] or size != manifest['source_bytes']:
         raise RuntimeError('RESTORE_CHECKSUM_MISMATCH')
+def verify_chunks(chunks, manifest):
+    """Verify a remote gzip stream without staging another archive copy on disk."""
+    packed_hash, source_hash = hashlib.sha256(), hashlib.sha256()
+    packed_size = source_size = 0
+    decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
+    for chunk in chunks:
+        packed_hash.update(chunk)
+        packed_size += len(chunk)
+        if packed_size > manifest['archive_bytes']:
+            raise RuntimeError('ARCHIVE_SIZE_EXCEEDED')
+        pending = chunk
+        while pending:
+            block = decoder.decompress(pending, 1024**2)
+            source_size += len(block)
+            source_hash.update(block)
+            if source_size > manifest['source_bytes']:
+                raise RuntimeError('RESTORE_SIZE_EXCEEDED')
+            pending = decoder.unconsumed_tail
+    if not decoder.eof or decoder.unused_data:
+        raise RuntimeError('ARCHIVE_STREAM_INCOMPLETE')
+    if packed_size != manifest['archive_bytes'] or packed_hash.hexdigest() != manifest['archive_sha256']:
+        raise RuntimeError('ARCHIVE_CHECKSUM_MISMATCH')
+    if source_size != manifest['source_bytes'] or source_hash.hexdigest() != manifest['source_sha256']:
+        raise RuntimeError('RESTORE_CHECKSUM_MISMATCH')
+
 def verify_memory(data, manifest):
     if hashlib.sha256(data).hexdigest() != manifest['archive_sha256']:
         raise RuntimeError('ARCHIVE_CHECKSUM_MISMATCH')
@@ -221,11 +254,14 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
                         source_mtime_ns=before.st_mtime_ns, source_sha256=digest,
                         archive_bytes=packed.stat().st_size, archive_sha256=archive_digest,
                         object=remote, object_revision=revision, archived_utc=utc())
-        if shutil.disk_usage(work).free < RESERVE + packed.stat().st_size + 32 * 1024**2:
-            raise RuntimeError('VERIFY_WAITING_DISK_RESERVE')
-        uncompressed_temporary(temp / 'download', directory=True)
-        downloaded = hub.download(remote, revision, temp / 'download')
-        verify_archive(downloaded, manifest)
+        if hasattr(hub, 'verify_stream'):
+            hub.verify_stream(remote, revision, manifest)
+        else:
+            if shutil.disk_usage(work).free < RESERVE + packed.stat().st_size + 32 * 1024**2:
+                raise RuntimeError('VERIFY_WAITING_DISK_RESERVE')
+            uncompressed_temporary(temp / 'download', directory=True)
+            downloaded = hub.download(remote, revision, temp / 'download')
+            verify_archive(downloaded, manifest)
         if sha_file(source) != digest or source.stat().st_mtime_ns != before.st_mtime_ns:
             raise RuntimeError('SOURCE_CHANGED_AFTER_UPLOAD')
         manifest['restore_verified_utc'] = utc()
@@ -285,13 +321,16 @@ def backup_database(source, target):
     # Hold the normal reserve while creating a consistent SQLite backup.
     if shutil.disk_usage(source).free < RESERVE + 64 * 1024**2:
         raise RuntimeError('BACKUP_WAITING_DISK_RESERVE')
-    deadline = time.monotonic() + 120
+    deadline = time.monotonic() + 300
     def progress(*args):
         if time.monotonic() > deadline:
             raise RuntimeError('BACKUP_TIME_LIMIT')
         if shutil.disk_usage(target.parent).free < RESERVE + 32 * 1024**2:
             raise RuntimeError('BACKUP_WAITING_DISK_RESERVE')
+    uncompressed_temporary(target)
     with contextlib.closing(sqlite3.connect(source.as_uri() + '?mode=ro', uri=True, timeout=5)) as src:
+        src.execute('BEGIN')
+        src.execute('SELECT count(*) FROM sqlite_master').fetchone()
         with contextlib.closing(sqlite3.connect(target, timeout=5)) as dst:
             src.backup(dst, pages=1024, progress=progress, sleep=.1)
             if dst.execute('pragma quick_check').fetchone()[0] != 'ok':

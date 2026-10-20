@@ -108,5 +108,27 @@ class ArchiveTests(unittest.TestCase):
             with patch.object(Path,'read_bytes',side_effect=[FileNotFoundError(),b'{"valid":true}']),patch.object(mod.time,'sleep'):
                 with mod.capture_json_file(work/'status.json',work) as snapshot:
                     self.assertEqual(snapshot.stat().st_size,len(b'{"valid":true}'))
+    def test_stream_verification_checks_content_and_rejects_truncation(self):
+        payload=b'{"synthetic":true}\n'*10000
+        packed=gzip.compress(payload)
+        manifest={'archive_bytes':len(packed),'archive_sha256':hashlib.sha256(packed).hexdigest(),
+                  'source_bytes':len(payload),'source_sha256':hashlib.sha256(payload).hexdigest()}
+        mod.verify_chunks((packed[i:i+17] for i in range(0,len(packed),17)),manifest)
+        with self.assertRaises(RuntimeError):mod.verify_chunks([packed[:-1]],manifest)
+        corrupt=dict(manifest,source_sha256='0'*64)
+        with self.assertRaises(RuntimeError):mod.verify_chunks([packed],corrupt)
+    def test_sqlite_snapshot_is_integral_and_preserves_source_rows(self):
+        import sqlite3
+        from contextlib import closing
+        with tempfile.TemporaryDirectory() as d:
+            d=Path(d);source=d/'source.sqlite3';target=d/'copy.sqlite3'
+            with closing(sqlite3.connect(source)) as db,db:
+                db.execute('create table evidence(id integer primary key, value text)')
+                db.executemany('insert into evidence(value) values(?)',[('preserve',)]*100)
+            mod.backup_database(source,target)
+            for path in (source,target):
+                with closing(sqlite3.connect(path)) as db:
+                    self.assertEqual(db.execute('pragma quick_check').fetchone()[0],'ok')
+                    self.assertEqual(db.execute('select count(*) from evidence').fetchone()[0],100)
 if __name__=='__main__':unittest.main()
 
