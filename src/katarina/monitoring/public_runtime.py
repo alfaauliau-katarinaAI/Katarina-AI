@@ -17,8 +17,10 @@ def build_public_runtime(root):
     activity=read_activity(root)
     pid=status.get('pid')
     board['current_process_pid']=pid
-    board['snapshot_process_matches']=bool(type(pid) is int and activity.get('pid')==pid
-        and evidence.get('operational',{}).get('snapshot_pid')==pid and activity.get('fresh'))
+    market_process_matches=evidence.get('operational',{}).get('snapshot_pid')==pid
+    board['snapshot_process_matches']=bool(type(pid) is int and activity.get('pid')==pid and activity.get('fresh'))
+    if not market_process_matches:
+        board['result']='BLOCKED'
     if status.get('status') in ('STOPPED','BLOCKED'):
         board['result']='BLOCKED'
     board['model']={'configured':status.get('model_configured') is True,
@@ -26,17 +28,48 @@ def build_public_runtime(root):
     board['activity']=activity
     public = public_dashboard_snapshot({'agent_board':board})
     from katarina.monitoring.learning_evidence import read_learning
-    public['agent_board']['learning'] = (
-        read_learning(root, observation_utc=evidence.get('operational', {}).get('observation_utc'))
-        if board['snapshot_process_matches'] and board.get('result') == 'SNAPSHOT_PASS'
-        else {'status': 'NOT_ATTESTED', 'source': 'CANONICAL_RESEARCH_SNAPSHOT'})
     from katarina.monitoring.public_research import read_public_research
     allowed = board['snapshot_process_matches'] and board.get('result') == 'SNAPSHOT_PASS'
-    graph, entries = read_public_research(root,evidence.get('operational',{}).get('observation_utc')) if allowed else (
+    research_allowed = bool(board['snapshot_process_matches'] and status.get('delivery') == 'DISABLED'
+        and status.get('live_execution_authorized') is False and status.get('orders_submitted') == 0
+        and status.get('status') in ('WAITING','OBSERVING','DEGRADED'))
+    # Sensor completeness and persisted research provenance are separate attestations.
+    try:
+        with (root/'latest.json').open('rb') as stream:
+            raw=stream.read(2_000_001)
+        observation_stamp=json.loads(raw)['observed_at_utc'] if len(raw)<=2_000_000 else None
+    except (OSError,ValueError,KeyError):
+        observation_stamp=None
+    graph, entries = read_public_research(root,observation_stamp) if research_allowed else (
         {'schema_version':1,'nodes':[],'edges':[],'status':'NOT_ATTESTED'},
         {'status':'NOT_ATTESTED','positions':[]})
+    if research_allowed and graph.get('status')=='NOT_ATTESTED':
+        from katarina.monitoring.public_research import worker_research_runs,graph_from_report
+        runs=worker_research_runs(root)
+        if runs:graph=graph_from_report({'continuous_research_lab':{'recent':runs}})
     public_board=public['agent_board']
+    # Process activity, market completeness and learning are distinct evidence scopes.
+    from datetime import datetime, timezone
+    try:
+        heartbeat_age=(datetime.now(timezone.utc)-datetime.fromisoformat(status['heartbeat_utc'])).total_seconds()
+    except (KeyError,ValueError,TypeError):
+        heartbeat_age=float('inf')
+    public_board['telemetry_verified']=bool(research_allowed and status.get('production_execution') is False
+                                           and (-30<=heartbeat_age<=180 or activity.get('fresh') is True))
+    public_board['market_snapshot_verified']=board.get('result')=='SNAPSHOT_PASS'
+    public_board['sensor_blockers']=evidence.get('blockers',[])
+    public_board['learning']=(read_learning(root,observation_utc=observation_stamp)
+                              if public_board['telemetry_verified'] else {'status':'NOT_ATTESTED'})
+    from katarina.monitoring.research_growth import read_growth
+    public_board['research_growth']=read_growth(root,pid) if research_allowed else {'status':'NOT_ATTESTED'}
     public_board['research_graph']=graph
+    from katarina.intelligence.research_reports import read_reports
+    public_board['research_reports']=read_reports(root,pid) if research_allowed else {'status':'NOT_ATTESTED'}
+    from katarina.monitoring.research_lab_status import read_lab_status
+    public_board['research_lab'] = read_lab_status(root) if research_allowed else {'status':'NOT_ATTESTED'}
+    from katarina.intelligence.data_recovery import read_recovery
+    public_board['research_lab']['recovery']=read_recovery(root,pid) if research_allowed else {'status':'NOT_ATTESTED'}
+    public_board['research_source_verified'] = research_allowed and graph.get('status') != 'NOT_ATTESTED'
     public_board['entries']=entries
     public_board['market_symbols']=None
     public_board['operational']={}
@@ -44,5 +77,15 @@ def build_public_runtime(root):
     trace=public_board['activity']
     trace['events']=[{k:e[k] for k in ('seq','at_utc','phase','state')} for e in trace['events']]
     trace['current']=trace['events'][-1] if trace['events'] else None
-    public_board['public_scope']='RESEARCH_GRAPH_AND_ENTRY_ONLY'
+    from katarina.monitoring.worker_runtime import read_worker_runtime
+    public_board['worker_runtime']=read_worker_runtime(root,pid)
+    public_board['public_scope']='RESEARCH_ENTRY_AND_PNL'
+    from katarina.monitoring.pair_activity import read_pair_activity
+    public_board['pair_activity']=read_pair_activity(root,pid,allowed=public_board.get('telemetry_verified') is True and board['snapshot_process_matches'])
+    from katarina.monitoring.entry_feed import read_entry_feed
+    public_board['entry_feed']=read_entry_feed(root,allowed=research_allowed)
+    from katarina.monitoring.position_feed import read_position_feed
+    public_board['position_feed']=read_position_feed(root,allowed=research_allowed)
+    from katarina.monitoring.research_health import read_research_health
+    public_board['research_health']=read_research_health(root,pid,allowed=research_allowed)
     return public

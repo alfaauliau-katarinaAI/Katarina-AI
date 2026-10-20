@@ -40,7 +40,10 @@ def main():
     parser.add_argument('--owner-port', type=int, default=8765)
     parser.add_argument('--owner-cert')
     parser.add_argument('--owner-key')
+    parser.add_argument("--all-market-research", action="store_true", help="Rotate full eligible broker catalog and run bounded research; LIVE OFF")
     args=parser.parse_args()
+    if args.all_market_research:
+        os.environ["KATARINA_ALL_MARKET_RESEARCH"]="1"
     if args.owner_public_status and not (args.continuous and args.owner_status_ui):
         parser.error('public status requires --continuous --owner-status-ui')
     if args.extended_news_research:

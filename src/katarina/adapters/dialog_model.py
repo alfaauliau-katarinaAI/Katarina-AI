@@ -4,10 +4,15 @@ import ipaddress
 import json
 import os
 import time
+import threading
+from urllib.error import HTTPError
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler, HTTPSHandler
 import ssl
+
+
+MODEL_HTTP_LOCK = threading.Lock()
 
 
 class ModelUnavailable(RuntimeError):
@@ -81,6 +86,11 @@ class JSONDialogModel:
         return dict(self._telemetry)
 
     def _http(self, payload):
+        # Public-news review and background hypotheses share one provider channel.
+        with MODEL_HTTP_LOCK:
+            return self._http_serial(payload)
+
+    def _http_serial(self, payload):
         token = os.environ.get(self.config.token_env, '')
         if not token and self.config.token_file:
             try:
@@ -108,6 +118,12 @@ class JSONDialogModel:
             if len(raw) > 131072:
                 raise ValueError()
             return json.loads(raw)
+        except HTTPError as exc:
+            raise ModelUnavailable('MODEL_HTTP_'+str(exc.code)) from None
+        except ModelUnavailable:
+            raise
+        except TimeoutError:
+            raise ModelUnavailable('MODEL_REQUEST_TIMEOUT') from None
         except Exception:
             raise ModelUnavailable('MODEL_REQUEST_FAILED') from None
 
@@ -142,12 +158,16 @@ class JSONDialogModel:
             result = json.loads(raw)
             if not isinstance(result, dict):
                 raise ValueError()
+            self._telemetry['last_error'] = None
             self._telemetry['successful_calls'] += 1
             return result
-        except ModelUnavailable:
+        except ModelUnavailable as exc:
             self._telemetry['failed_calls'] += 1
+            import re
+            self._telemetry['last_error'] = str(exc) if re.fullmatch(r'MODEL_[A-Z0-9_]{1,64}',str(exc)) else 'MODEL_REQUEST_FAILED'
             raise
         except Exception:
+            self._telemetry['last_error'] = 'MODEL_RESPONSE_INVALID'
             self._telemetry['failed_calls'] += 1
             raise ModelUnavailable('MODEL_RESPONSE_INVALID') from None
         finally:

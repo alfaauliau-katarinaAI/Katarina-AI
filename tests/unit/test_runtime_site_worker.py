@@ -34,17 +34,26 @@ async function request(path,body,key){
 }
 const now=new Date().toISOString();
 const packet={captured_at_utc:now,private:'PRIVATE_SENTINEL',agent_board:{
- result:'SNAPSHOT_PASS',market_symbols:1,cycles:2,delivery:'DISABLED',
+ result:'SNAPSHOT_PASS',research_source_verified:true,market_symbols:1,cycles:2,delivery:'DISABLED',
  observed_at_utc:now,current_process_pid:42,snapshot_process_matches:true,model:{configured:false,endpoint:'PRIVATE_SENTINEL'},
  operational:{account_login:'PRIVATE_SENTINEL',positions_count:123,
  technical_evaluations:[{symbol:'XAUUSD',method:'PULLBACK',market_state:'TREND_UP',action:'WAIT',secret:'PRIVATE_SENTINEL'}]},
  activity:{pid:42,cycle:2,events:[{seq:1,at_utc:now,phase:'TECHNICAL',state:'DONE',symbol:'XAUUSD',secret:'PRIVATE_SENTINEL'}]}}};
+packet.agent_board.pair_activity={status:'OBSERVED',pid:42,as_of_utc:now,scan_observation_utc:now,symbols:['EURUSD.vx'],events:[{symbol:'EURUSD.vx',phase:'TECHNICAL',state:'DONE',seq:1,at_utc:now,bid:999,login:'PRIVATE_SENTINEL'}],active:[],secret:'PRIVATE_SENTINEL'};
+packet.agent_board.worker_runtime={status:'OBSERVED',pid:42,as_of_utc:now,mt5_algo_enabled:true,demo_permission:true,demo_status:'PROTECTED_VARIANT_NOT_QUALIFIED',private:'PRIVATE_SENTINEL',workers:[{fresh:true,autonomous:true,status:'PAUSED_STORAGE_BUDGET',completed:4,secret:'PRIVATE_SENTINEL'}],executor:{pid:99,independent:true,audit_only:false,cycles:2,status:'RUNNING',as_of_utc:now,login:'PRIVATE_SENTINEL'}};
 packet.agent_board.learning={status:'NO_NEW_MATURED_EVIDENCE',observation_utc:now,cognitive_as_of_utc:now,
  ledger_status:'ALREADY_LEARNED_NO_REWRITE',matured_observations:0,memory_records_inserted:0,
  shadow_rows_read:1,external_models_invoked:0,account_login:'PRIVATE_SENTINEL',improvement_verified:true};
 packet.agent_board.operational.technical_evaluations[0].symbol='PRIVATE_MARKET_SYMBOL';
 packet.agent_board.activity.events[0].symbol='PRIVATE_MARKET_SYMBOL';
 packet.agent_board.entries={status:'OBSERVED',positions:[{symbol:'EURUSD',side:'BUY',entry_price:1.2,opened_utc:now,lot:88,profit:'PRIVATE_SENTINEL',ticket:'PRIVATE_SENTINEL'}]};
+packet.agent_board.telemetry_verified=true;
+packet.agent_board.entry_feed={status:'OBSERVED',mode:'DEMO',executor_pid:99,as_of_utc:now,history_status:'OBSERVED',plans_status:'OBSERVED',history_total:1,history:[{id:'a'.repeat(24),symbol:'XAUUSD.vx',side:'BUY',state:'CLOSED',decision_utc:now,requested_price:4000,stop_loss:3990,take_profit:4020,login:'PRIVATE_SENTINEL',volume:99},{id:'c'.repeat(24),symbol:'XAUUSD.vx',side:'BUY',state:'ACCEPTED',decision_utc:now}],plans:[{id:'b'.repeat(24),symbol:'EURUSD.vx',side:'SELL',method:'BREAKOUT',state:'AWAITING_SIGNAL_REVIEW',lookback:24,horizon:4,threshold:.5,last_reviewed_utc:now,checks:[{multiplier:1,passed:true}],executable:true,login:'PRIVATE_SENTINEL'}]};
+packet.agent_board.entry_feed.realized_summary={status:'OBSERVED',currency:'USC',net_pnl:-123.45,closed_count:3,scope:'forged',account:'PRIVATE_SENTINEL'};
+packet.agent_board.entry_feed.history[0].realized_pnl=-123.45;packet.agent_board.entry_feed.history[0].currency='USC';
+packet.agent_board.position_feed={status:'OBSERVED',as_of_utc:now,currency:'USC',mode:'DEMO',total_count:2,floating_total:999,katarina_floating:1,positions:[{id:'d'.repeat(24),symbol:'XAUUSD.vx',side:'BUY',opened_utc:null,owner:'KATARINA_DEMO',entry_price:4000,current_price:4001,stop_loss:3990,take_profit:4020,profit:100,swap:-2,floating:999,login:'PRIVATE_SENTINEL'},{id:'e'.repeat(24),symbol:'EURUSD.vx',side:'SELL',opened_utc:now,entry_price:1.1,current_price:1.2,stop_loss:0,take_profit:0,profit:-20,swap:-1,volume:999}]};
+packet.agent_board.research_health={status:'OBSERVED',pid:42,as_of_utc:now,policy:'BASELINE_ELIGIBLE_ONLY',review_interval_seconds:15,capacity:{status:'READY',disk_free_bytes:3000000000},eligible_candidates:207,pending_cost2:0,pending_cost3:0,latest_hypothesis_utc:now,support:[{phase:'VALIDATE',fresh:true,status:'WAITING_ELIGIBLE_CANDIDATE',secret:'PRIVATE_SENTINEL'}],secret:'PRIVATE_SENTINEL'};
+packet.agent_board.learning.new_matured_observations=0;
 const docId='document:'+ 'a'.repeat(24),partId='paragraph:'+ 'b'.repeat(24);
 packet.agent_board.research_graph={nodes:[{id:docId,kind:'document',label:'DOC / aaaaaaaa',known_utc:now,body:'PRIVATE_SENTINEL'},{id:partId,kind:'paragraph',label:'TEXT / bbbbbbbb'}],edges:[{a:docId,b:partId,relation:'PART_OF_DOCUMENT'}],total_documents:1};
 assert.equal((await request('/public-status')).status,503);
@@ -54,14 +63,19 @@ assert.equal((await request('/turn',{},token)).status,403);
 assert.equal((await request('/status',{},token)).status,403);
 assert.equal((await request('/ingest',packet,token)).status,202);
 const response=await request('/public-status'),body=await response.text();
+const etag=response.headers.get('ETag');assert.ok(etag);const unchanged=await worker.fetch(new Request('https://example.chatgpt.site/public-status',{headers:{'If-None-Match':etag}}),env);assert.equal(unchanged.status,304);assert.equal(await unchanged.text(),'');
 assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
 assert.ok(!body.includes('PRIVATE_SENTINEL'));assert.ok(!body.includes('positions_count'));
-assert.equal(JSON.parse(body).agent_board.activity.current.phase,'TECHNICAL');
+assert.equal(JSON.parse(body).agent_board.activity.current.phase,'TECHNICAL');assert.equal(JSON.parse(body).agent_board.pair_activity.events[0].symbol,'EURUSD.vx');assert.ok(!body.includes('\"bid\"'));assert.equal(JSON.parse(body).agent_board.pair_activity.events[0].login,undefined);
+assert.equal(JSON.parse(body).agent_board.worker_runtime.mt5_algo_enabled,true);assert.equal(JSON.parse(body).agent_board.worker_runtime.paused_workers,1);assert.equal(JSON.parse(body).agent_board.worker_runtime.executor.pid,99);assert.equal(JSON.parse(body).agent_board.worker_runtime.live_authorized,false);
+assert.equal(JSON.parse(body).agent_board.research_health.pending_cost2,0);assert.equal(JSON.parse(body).agent_board.research_health.capacity.status,'READY');assert.equal(JSON.parse(body).agent_board.learning.new_matured_observations,0);
 assert.equal(JSON.parse(body).agent_board.learning.status,'NO_NEW_MATURED_EVIDENCE');
 assert.equal(JSON.parse(body).agent_board.learning.memory_records_inserted,0);
 assert.equal(JSON.parse(body).agent_board.learning.improvement_verified,false);
 assert.deepEqual(JSON.parse(body).agent_board.operational,{});
 assert.ok(!body.includes('PRIVATE_MARKET_SYMBOL'));assert.ok(!body.includes('"lot"'));assert.ok(!body.includes('"ticket"'));
+assert.equal(JSON.parse(body).agent_board.position_feed.positions[0].opened_utc,null);assert.equal(JSON.parse(body).agent_board.position_feed.floating_total,77);assert.equal(JSON.parse(body).agent_board.position_feed.katarina_floating,98);assert.equal(JSON.parse(body).agent_board.position_feed.currency,'USC');assert.equal(JSON.parse(body).agent_board.position_feed.positions[0].floating,98);assert.equal(JSON.parse(body).agent_board.position_feed.positions[1].owner,'UNATTRIBUTED');assert.equal(JSON.parse(body).agent_board.entry_feed.realized_summary.net_pnl,-123.45);assert.equal(JSON.parse(body).agent_board.entry_feed.realized_summary.scope,'KATARINA_DEMO_LEDGER_ALL_CLOSED');
+assert.equal(JSON.parse(body).agent_board.entry_feed.history.length,1);assert.equal(JSON.parse(body).agent_board.entry_feed.history[0].requested_price,4000);assert.equal(JSON.parse(body).agent_board.entry_feed.plans[0].executable,false);assert.equal(JSON.parse(body).agent_board.entry_feed.plans[0].signal_verified,false);
 assert.equal(JSON.parse(body).agent_board.entries.positions[0].symbol,'EURUSD');
 assert.equal(JSON.parse(body).agent_board.entries.positions[0].entry_price,1.2);
 assert.equal(JSON.parse(body).agent_board.research_graph.nodes.length,2);
@@ -70,7 +84,7 @@ assert.equal((await request('/ingest',packet,token)).status,409);
 const stale=structuredClone(packet);stale.captured_at_utc=new Date(Date.now()-121000).toISOString();
 assert.equal((await request('/ingest',stale,token)).status,400);
 stored.raw=JSON.stringify(stale);
-assert.equal((await request('/public-status')).status,503);
+assert.equal((await request('/public-status')).status,503);assert.equal((await worker.fetch(new Request('https://example.chatgpt.site/public-status',{headers:{'If-None-Match':etag}}),env)).status,503);
 console.log('PASS_WORKER_AUTH_PRIVACY_ACTIVITY_EXPIRY');
 """
         result=subprocess.run([shutil.which('node'),'--input-type=module'],

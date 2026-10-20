@@ -1,0 +1,21 @@
+{
+  "schema_version": 2,
+  "base_dir": "/srv/katarina/private/hf",
+  "state_dir": "/srv/katarina/state",
+  "repo": "REPLACE_ACCOUNT/katarina-research-archive",
+  "expected_account": "REPLACE_ACCOUNT",
+  "token_env": "HF_TOKEN",
+  "token_file": "/srv/katarina/private/hf/token.secret",
+  "interval_minutes": 10,
+  "cold_files": [],
+  "sync_files": [
+    "/srv/katarina/state/research-reports.json",
+    "/srv/katarina/state/research-growth.json",
+    "/srv/katarina/state/research-lab.json"
+  ],
+  "backup_databases": [
+    "/srv/katarina/state/experiment-jobs.sqlite3",
+    "/srv/katarina/state/context.sqlite3",
+    "/srv/katarina/state/cognitive-memory.sqlite3"
+  ]
+}

@@ -32,6 +32,13 @@ class LearningEvidenceTests(unittest.TestCase):
         self.assertFalse(result['neural_activation_measured'])
         self.assertNotIn('SECRET_SENTINEL', json.dumps(result))
 
+    def test_cumulative_matured_count_does_not_become_new_learning(self):
+        report=self.fixture();report['unified_cognitive_cycle']['matured_observations']=15
+        result=summarize_learning(report)
+        self.assertEqual(result['status'],'NO_NEW_MATURED_EVIDENCE')
+        self.assertEqual(result['matured_observations'],15)
+        self.assertEqual(result['new_matured_observations'],0)
+
     def test_snapshot_must_match_validated_observation_and_remain_fresh(self):
         with tempfile.TemporaryDirectory() as root:
             report = self.fixture()

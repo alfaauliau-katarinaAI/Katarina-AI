@@ -1,0 +1,17 @@
+[Unit]
+Description=Katarina private archive synchronization
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+TimeoutStartSec=2h
+User=katarina
+Group=katarina
+UMask=0077
+ExecStart=/srv/katarina/hf-venv/bin/python /srv/katarina/code/scripts/ai/run_hf_archive_sync.py --config /srv/katarina/private/hf/config.json
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/katarina/private/hf /srv/katarina/state

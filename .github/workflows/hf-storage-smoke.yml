@@ -1,0 +1,25 @@
+name: Hugging Face private storage smoke test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hf-storage-smoke-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  private-round-trip:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Install Hub client
+        run: python -m pip install --disable-pip-version-check 'huggingface_hub==1.0.0'
+      - name: Verify authentication and private synthetic round trip
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_HUB_DISABLE_TELEMETRY: '1'
+          HF_HUB_DISABLE_PROGRESS_BARS: '1'
+        run: python scripts/ai/hf_storage_smoke.py

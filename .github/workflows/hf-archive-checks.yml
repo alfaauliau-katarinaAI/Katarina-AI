@@ -1,0 +1,15 @@
+name: Verify private archive integrity guards
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archive-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: python -m unittest discover -s tests/unit -p test_hf_archive_sync.py -v
+      - run: python -m py_compile scripts/ai/hf_archive_sync.py scripts/ai/install_hf_archive_test.py scripts/ai/run_hf_archive_sync.py

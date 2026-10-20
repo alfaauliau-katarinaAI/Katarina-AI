@@ -8,6 +8,7 @@ Never uses the live/order gateway, never writes to GitHub, and never
 automatically promotes signals. Legacy observers must remain disabled.
 """
 from __future__ import annotations
+from katarina.monitoring.snapshot_io import replace_snapshot
 from dataclasses import replace
 from datetime import datetime,timedelta,timezone
 from hashlib import sha256
@@ -203,7 +204,7 @@ def publish(root,data):
     raw=(json.dumps(data,ensure_ascii=False,indent=2,allow_nan=False)+"\n").encode()
     temp.write_bytes(raw)
     # Do not fallback to overwriting ACL-locked files owned by legacy observers.
-    temp.replace(target)
+    replace_snapshot(temp,target)
 
 class BrainObserver:
     """Internal observer capability. The brain owns resources and lifecycle."""
@@ -229,7 +230,11 @@ class BrainObserver:
         media_analysis,media_status=collect_market_articles(
             store.db,datetime.now(timezone.utc)) if fetch_news else ([],("disabled",))
         from katarina.intelligence.research_news_collection import collect as collect_research_news, event_study
+        if fetch_news and os.environ.get('KATARINA_EXTENDED_NEWS_RESEARCH')=='1':
+            emit('RESEARCH','STARTED')
         research_news=collect_research_news(store.db,datetime.now(timezone.utc)) if fetch_news and os.environ.get('KATARINA_EXTENDED_NEWS_RESEARCH')=='1' else {'status':'DISABLED','new_documents':[]}
+        if fetch_news and os.environ.get('KATARINA_EXTENDED_NEWS_RESEARCH')=='1':
+            emit('RESEARCH','DONE',count=len(research_news['new_documents']))
         for document in research_news['new_documents']:
             brain.memory.append_operational_event('research_news_body_v1',document,event_id='research-news:'+document['id'])
         language_research = {'status': 'MODEL_NOT_CONFIGURED', 'live_execution_authorized': False}
@@ -249,7 +254,12 @@ class BrainObserver:
         if catalog is None:raise RuntimeError("BROKER_CATALOG_NOT_FOUND")
         selection=resolve_broker_symbols(catalog)
         symbols=list(selection.symbols)[:max_symbols]
+        full_research = os.environ.get('KATARINA_ALL_MARKET_RESEARCH') == '1'
+        if full_research:
+            from katarina.intelligence.continuous_research_lab import select_batch
+            symbols = select_batch(store.db, catalog, max_symbols, now)
         if not symbols:raise RuntimeError("NO_ELIGIBLE_BROKER_SYMBOLS")
+        for sym in symbols:mt5.symbol_select(sym,True)
         ticks={sym:mt5.symbol_info_tick(sym) for sym in symbols}
         clock=infer_clock_shift({
             sym:int(t.time) for sym,t in ticks.items()
@@ -343,6 +353,7 @@ class BrainObserver:
                     macro_evidence=macro,resolved_experience=[],
                     risk_situation=risk)
                 card=decision.to_dict()
+                card["sensor_quality"]={"quote_fresh":quote_fresh,"closed_bars_recent":recent,"trade_mode":int(info.trade_mode)}
                 card["broker_quote_age_seconds"]=round(quote_age,2)
                 card["market_timestamp_utc"]=market_at.isoformat()
                 card["broker_wall_time_display_only"]=(
@@ -400,10 +411,12 @@ class BrainObserver:
                     except (ValueError,TypeError):
                         card["journal_status"]="REJECTED_INVALID_TIMESTAMP_OR_QUOTE"
             except Exception as ex:
-                emit('TECHNICAL','FAILED',symbol=symbol)
+                from katarina.intelligence.data_recovery import reason_code
+                emit('TECHNICAL','FAILED',symbol=symbol,action=reason_code(ex))
                 report["symbols"][symbol]={
                     "action":"WAIT","conditional_side":"WAIT",
                     "market_state":"UNKNOWN","blocking_reasons":["sensor_error:"+type(ex).__name__],
+                    "sensor_reason":reason_code(ex),
                     "live_execution_authorized":False,
                 }
         # Scheduled run may occur 1-5 minutes AFTER a 15-minute markout
@@ -440,6 +453,11 @@ class BrainObserver:
         brain.memory.append_operational_event('observational_associations_v1', association,
             event_id='associations:'+sha256(json.dumps(association,sort_keys=True).encode()).hexdigest())
         emit('ASSOCIATION','DONE')
+        if full_research:
+            from katarina.intelligence.data_recovery import record_gaps
+            report["data_recovery"]=record_gaps(store.db,report["symbols"],latest_quotes,datetime.now(timezone.utc),root)
+            from katarina.intelligence.continuous_research_lab import step
+            report['continuous_research_lab'] = step(store.db, mt5, root, datetime.now(timezone.utc), emit=emit)
         emit('RISK_AUDIT','STARTED')
         report.update(brain.inspect_foundation(
             mt5, report, expected_symbols=len(symbols)))

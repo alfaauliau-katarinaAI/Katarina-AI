@@ -1,4 +1,5 @@
 """Outbound test telemetry only. Reads snapshots; never opens MT5 or mutates AI memory."""
+from katarina.monitoring.snapshot_io import replace_snapshot
 from datetime import datetime,timezone
 import json
 from pathlib import Path
@@ -37,6 +38,15 @@ def publish_once(root,config):
     report['captured_at_utc']=datetime.now(timezone.utc).isoformat()
     raw=json.dumps(report,allow_nan=False).encode()
     if len(raw)>131072:
+        # Keep result reports deliverable as provenance grows; the graph is a bounded view.
+        graph=report.get('agent_board',{}).get('research_graph',{})
+        priority={'experiment':0,'dataset':1,'instrument':2,'source':3,'topic':4}
+        graph['nodes']=sorted(graph.get('nodes',[]),key=lambda n:priority.get(n.get('kind'),5))[:256]
+        ids={n['id'] for n in graph['nodes']}
+        graph['edges']=[e for e in graph.get('edges',[]) if e['a'] in ids and e['b'] in ids][:384]
+        graph['truncated']=True
+        raw=json.dumps(report,allow_nan=False).encode()
+    if len(raw)>131072:
         raise ValueError('monitor_snapshot_too_large')
     context=ssl.create_default_context(cafile=config.get('ca_file'))
     request=Request(endpoint,data=raw,method='POST',
@@ -49,20 +59,20 @@ def publish_once(root,config):
 def _source_version(root):
     try:
         root=Path(root)
-        return tuple((root/name).stat().st_mtime_ns
-                     for name in ('runtime-activity.json','continuous-status.json'))
+        return tuple((root/name).stat().st_mtime_ns if (root/name).exists() else 0
+                     for name in ('runtime-activity.json','continuous-status.json','research-reports.json','data-recovery.json'))
     except OSError:
         return None
 
 
 def _wait_for_publication(root,version,started,interval_seconds,*,sleep=time.sleep,clock=time.monotonic):
-    """Coalesce changed lifecycle files; no broker/DB access and at most one upload per 2s."""
+    """Coalesce changed lifecycle files; no broker/DB access and at most two uploads per second."""
     deadline=started+interval_seconds
     while True:
         now=clock()
-        if now>=deadline or (now-started>=2 and _source_version(root)!=version):
+        if now>=deadline or (now-started>=0.5 and _source_version(root)!=version):
             return
-        sleep(min(1,max(0,deadline-now)))
+        sleep(min(0.25,max(0,deadline-now)))
 
 
 def run(root,config_path,*,interval_seconds=15,once=False):
@@ -82,7 +92,7 @@ def run(root,config_path,*,interval_seconds=15,once=False):
                     'checked_at_utc':datetime.now(timezone.utc).isoformat()}
         temp=Path(root)/'monitor-publisher.tmp'
         temp.write_text(json.dumps(health)+'\n',encoding='utf-8')
-        temp.replace(Path(root)/'monitor-publisher-health.json')
+        replace_snapshot(temp,Path(root)/'monitor-publisher-health.json')
         if once:
             return health
         if failures:

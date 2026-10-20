@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Katarina archive synchronization after each ten-minute idle interval
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=10min
+AccuracySec=15s
+Unit=katarina-hf-storage.service
+
+[Install]
+WantedBy=timers.target
