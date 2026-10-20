@@ -21,6 +21,8 @@ STATE = Path(r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer')
 REPO = 'alfaaulia/katarina-research-archive'
 RESERVE = 2 * 1024**3
 def safe_error(error):
+    if isinstance(error, sqlite3.Error):
+        return 'SQLITE_' + getattr(error, 'sqlite_errorname', type(error).__name__)
     text = str(error)
     return text if re.fullmatch(r'[A-Z][A-Z0-9_]{2,79}', text) else type(error).__name__
 
@@ -410,11 +412,23 @@ def sync(config, hub):
             print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
     last_backup = BASE / 'backup-clock.json'
     clock = json.loads(last_backup.read_text()) if last_backup.exists() else {}
-    if time.time() - clock.get('last_success_epoch', 0) >= 86400:
+    completed = clock.setdefault('databases', {})
+    # Adopt already verified backups from older all-or-nothing clock versions.
+    if status_path.exists():
+        previous = json.loads(status_path.read_text())
+        for result in previous.get('results', []):
+            name = result.get('database_source')
+            if name and result.get('restore_verified'):
+                completed.setdefault(name, dict(last_success_epoch=datetime.fromisoformat(previous['as_of_utc']).timestamp()))
+    if config.get('backup_databases'):
         backups_ok = True
         for name in config.get('backup_databases', []):
             source = Path(name)
             if not source.is_file():
+                backups_ok = False
+                continue
+            if time.time() - completed.get(name, {}).get('last_success_epoch', clock.get('last_success_epoch', 0)) < 86400:
+                results.append(dict(status='BACKUP_CURRENT', database_source=name))
                 continue
             try:
                 with tempfile.TemporaryDirectory(prefix='snapshot-', dir=work) as d:
@@ -423,6 +437,8 @@ def sync(config, hub):
                     result = archive_file(snapshot, hub, ledger, work)
                     result['database_source'] = str(source)
                     results.append(result)
+                    completed[name] = dict(last_success_epoch=time.time(), sha256=result['sha256'])
+                    atomic_json(last_backup, clock)
                     print(json.dumps(result), flush=True)
             except Exception as e:
                 backups_ok = False
@@ -430,7 +446,8 @@ def sync(config, hub):
                 errors.append(record)
                 print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
         if backups_ok:
-            atomic_json(last_backup, dict(last_success_epoch=time.time(), as_of_utc=utc()))
+            clock.update(last_success_epoch=time.time(), as_of_utc=utc())
+        atomic_json(last_backup, clock)
     report = dict(schema_version=1, status='SYNCED' if not errors else 'PARTIAL_RETRY_PENDING',
                   repo=REPO, as_of_utc=utc(), free_before=free_before,
                   free_after=shutil.disk_usage(STATE).free, results=results, errors=errors,

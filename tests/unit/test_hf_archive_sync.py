@@ -25,6 +25,24 @@ class FakeHub:
         if self.mutate and name.startswith('objects/'):self.mutate.write_bytes(b'new source content')
         return p
 class ArchiveTests(unittest.TestCase):
+    def test_partial_backup_retries_only_failed_database(self):
+        with tempfile.TemporaryDirectory() as d:
+            base=Path(d);state=base/'state';state.mkdir()
+            sources=[base/'failed.sqlite3',base/'ready.sqlite3']
+            for p in sources:p.touch()
+            hub=SimpleNamespace(stored_bytes=lambda:0)
+            config={'backup_databases':[str(p) for p in sources]}
+            def backup(source,target):
+                if source==sources[0]:raise RuntimeError('BACKUP_BUSY')
+                target.write_bytes(b'fixture')
+            archived={'sha256':'abc','restore_verified':True}
+            with patch.object(mod,'BASE',base),patch.object(mod,'STATE',state),patch.object(mod,'backup_database',side_effect=backup) as copy,patch.object(mod,'archive_file',return_value=archived.copy()):
+                mod.sync(config,hub)
+                self.assertEqual(copy.call_count,2)
+                copy.reset_mock();mod.sync(config,hub)
+                self.assertEqual(copy.call_count,1)
+                self.assertEqual(copy.call_args.args[0],sources[0])
+            self.assertIn(str(sources[1]),json.loads((base/'backup-clock.json').read_text())['databases'])
     def setUp(self):
         disk=patch.object(mod.shutil,'disk_usage',return_value=SimpleNamespace(free=10*1024**3))
         disk.start();self.addCleanup(disk.stop)
@@ -142,4 +160,3 @@ class ArchiveTests(unittest.TestCase):
             self.assertEqual(result.name,'payload.download')
             self.assertEqual(result.read_bytes(),payload)
 if __name__=='__main__':unittest.main()
-
