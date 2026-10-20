@@ -8,16 +8,16 @@ import unittest
 
 @unittest.skipUnless(shutil.which("node"), "Node required for terminal client verification")
 class TerminalNetworkClientTests(unittest.TestCase):
-    def test_real_events_touch_zoom_inspection_pulses_and_expiry(self):
+    def test_real_events_locked_view_pair_orbit_and_expiry(self):
         source = (Path(__file__).resolve().parents[2] / "sites/runtime-monitor/worker/index.js").read_text(encoding="utf-8")
         harness = r"""
 const assert=require('node:assert/strict'),vm=require('node:vm');
 const source=WORKER_SOURCE;
 const page=JSON.parse(source.slice(source.indexOf('const PAGE=')+11,source.indexOf(';\nconst phases=')));
 const script=page.split('<script>')[1].split('</script>')[0];
-assert.match(page,/touch-action:none/);
+assert.match(page,/touch-action:pan-y/);assert.ok(!page.includes('id="pair-focus"'));assert.ok(!page.includes('id="pause-pulse"'));assert.ok(!page.includes('id="reset-view"'));assert.ok(!page.includes('class="controls"'));
 assert.match(page,/max-width:420px/);
-assert.match(page,/id="network"/);assert.ok(!page.includes('class="parallel-board"'));assert.ok(!page.includes('id="parallel-grid"'));assert.match(page,/animasi penunggu/);
+assert.match(page,/id="network"/);assert.ok(!page.includes('class="parallel-board"'));assert.ok(!page.includes('id="parallel-grid"'));assert.match(page,/Orbit visual/);
 assert.ok(!page.includes('type="password"'));
 const nodes=new Map(),intervals=[],requests=[],frames=[],draws=[];
 const context=new Proxy({}, {get:(target,key)=>target[key]||((...args)=>draws.push([key,...args])),set:(t,k,v)=>(t[k]=v,true)});
@@ -56,7 +56,7 @@ sandbox.packet=packet;
 run('render(packet)');
 assert.equal(get('symbols').textContent,'1');
 assert.equal(get('execution').textContent,'LIVE KATARINA / OFF');
-assert.ok(run('graph.nodes.length')>2);assert.equal(run('graph.nodes.filter(n=>n.kind==="pair").length'),2);assert.ok(run('graph.edges.some(e=>e.relation==="PAIR_WORK"&&e.a==="pair:XAUUSD.vx")'));assert.equal(run('nodeCode({kind:"pair",symbol:"EURUSD.vx"})'),'EURUSD.vx');assert.match(get('pair-summary').textContent,/2 \/ 2/);
+assert.ok(run('graph.nodes.length')>2);assert.equal(run('graph.nodes.filter(n=>n.kind==="pair").length'),2);assert.ok(run('graph.edges.some(e=>e.relation==="PAIR_WORK"&&e.a==="pair:XAUUSD.vx")'));assert.equal(run('nodeCode({kind:"pair",symbol:"EURUSD.vx"})'),'EURUSD.vx');
 assert.ok(run('graph.edges.every(e=>nodeMap.has(e.a)&&nodeMap.has(e.b))'));
 const firstGraph=run('graph');run('render(packet)');assert.equal(run('graph'),firstGraph);
 assert.equal(run('nodeCode({kind:"phase",phase:"TEST_MOMENTUM_H4",id:"p:test"})'),'W01');
@@ -70,15 +70,15 @@ const count=draws.length;run('resize()');assert.equal(draws.slice(count).filter(
 const older=JSON.parse(JSON.stringify(packet));older.captured_at_utc=new Date(fixed-1000).toISOString();older.agent_board.research_graph.nodes=[];
 sandbox.older=older;run('render(older)');assert.equal(run('graph'),firstGraph);
 run('orbitOn=false;draw(0)');
-const coordinates=run('JSON.stringify(projected.map(p=>[p.node.id,p.x,p.y]))');run('draw(100)');
-assert.equal(run('JSON.stringify(projected.map(p=>[p.node.id,p.x,p.y]))'),coordinates);
+const coordinates=run('JSON.stringify(projected.filter(p=>p.node.kind!=="pair").map(p=>[p.node.id,p.x,p.y]))');run('draw(100)');
+assert.equal(run('JSON.stringify(projected.filter(p=>p.node.kind!=="pair").map(p=>[p.node.id,p.x,p.y]))'),coordinates);
 sandbox.growth={status:'PERSISTED_RESEARCH_COUNTS',as_of_utc:stamp,experiments:12,hypotheses:3,documents:4,reports:8};
 run('renderLearning({status:"NOT_ATTESTED"},{research_growth:growth,model:{telemetry:{successful_calls:2}}})');
 assert.ok(get('learning-proof').children.some(c=>c.textContent.includes('12 eksperimen')));
 assert.ok(get('learning-proof').children.some(c=>c.textContent==='CHECKPOINT KOGNITIF BELUM SINKRON'));
 assert.ok(draws.some(d=>d[0]==='lineTo'));assert.ok(draws.some(d=>d[0]==='drawImage'));
 assert.equal(run('ambientAllowed()'),true);const ambientDraws=draws.length;run('draw(150)');assert.ok(draws.slice(ambientDraws).some(d=>d[0]==='arc'));
-const cachedDraws=draws.length;run('draw(200)');assert.equal(draws.slice(cachedDraws).filter(d=>d[0]==='fillText').length,0);
+const pairBefore=run('JSON.stringify(projected.filter(p=>p.node.kind==="pair").map(p=>[p.x,p.y]))');const cachedDraws=draws.length;run('draw(200)');assert.notEqual(run('JSON.stringify(projected.filter(p=>p.node.kind==="pair").map(p=>[p.x,p.y]))'),pairBefore);assert.ok(draws.slice(cachedDraws).filter(d=>d[0]==='fillText').every(d=>String(d[1]).endsWith('.vx')));
 assert.equal(run('orbitOn'),false);
 run('acceptPulseEvents([packet.agent_board.activity.current,packet.agent_board.activity.current],200,false)');assert.equal(run('eventPulses.filter(e=>e.phase==="TECHNICAL").length'),1);
 run('selectNode("k:"+packet.agent_board.research_graph.nodes[0].id)');assert.ok(get('selection').children[1].textContent.includes('DOC / aaaaaaaa'));
@@ -100,13 +100,8 @@ run('acceptPulseEvents([{phase:"TECHNICAL",seq:102,state:"DONE",at_utc:new Date(
 run('acceptPulseEvents([{phase:"TECHNICAL",seq:104,state:"DONE",at_utc:new Date(Date.now()-25000).toISOString()}],400,false)');assert.equal(run('eventPulses.length'),3);
 
 assert.ok(run('graph.nodes.some(n=>n.kind==="event")'));assert.ok(run('graph.edges.some(e=>e.relation==="EVENT_REPORT")'));
-get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),false);assert.equal(run('ambientAllowed()'),false);
-get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),true);
-get('reset-view').listeners.click();assert.equal(run('cameraInput.zoom'),1);
-get('network').listeners.pointerdown({pointerId:1,clientX:20,clientY:20});
-get('network').listeners.pointermove({pointerId:1,clientX:60,clientY:25});
-get('network').listeners.pointercancel({pointerId:1});
-run('pairFocus="EURUSD.vx";buildGraph(boardNow,Date.now())');assert.equal(run('graph.nodes.filter(n=>n.kind==="pair").length'),1);assert.ok(run('nodeMap.has("pair:EURUSD.vx")'));
+assert.equal(get('network').listeners.pointerdown,undefined);assert.equal(get('network').listeners.pointermove,undefined);assert.equal(get('network').listeners.wheel,undefined);assert.equal(get('network').listeners.keydown,undefined);assert.equal(typeof get('network').listeners.click,'function');
+run('pulseOn=false');assert.equal(run('ambientAllowed()'),false);run('pulseOn=true');
 clock=fixed+121000;run('checkFreshness()');assert.equal(run('graph.nodes.length'),0);assert.equal(run('graphFresh'),false);
 console.log('PASS_CURRENT_HOSTED_CODES_RESIZE_ORDER_PROVENANCE_EXPIRY');
 

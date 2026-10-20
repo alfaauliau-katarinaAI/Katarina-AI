@@ -13,8 +13,10 @@ const sandbox={Date:Clock,performance:{now:()=>perf},console,window:{innerWidth:
 vm.createContext(sandbox);const run=s=>vm.runInContext(s,sandbox);vm.runInContext(script,sandbox);sandbox.packet=packet;run('render(packet)');
 const step=t=>{perf=t;clock=epoch+t;run('draw('+t+')')};
 step(0);fs.writeFileSync(path.join(outputPath,'canvas-start.png'),get('network').toBuffer('image/png'));
-const coords=()=>run('JSON.stringify(projected.map(p=>[p.node.id,p.x,p.y]))');const before=coords();
+const coords=()=>run('JSON.stringify(projected.filter(p=>p.node.kind!=="pair").map(p=>[p.node.id,p.x,p.y]))');const before=coords();
+const pairCoords=()=>run('JSON.stringify(projected.filter(p=>p.node.kind==="pair").map(p=>[p.node.id,p.x,p.y]))');const initialPairs=pairCoords();
 const times=[];for(let t=34;t<=16000;t+=34){let begin=process.hrtime.bigint();step(t);times.push(Number(process.hrtime.bigint()-begin)/1e6);assert.equal(coords(),before,'Topology shifted while only event effects advanced')}
+if(run('projected.some(p=>p.node.kind==="pair")'))assert.notEqual(pairCoords(),initialPairs,'Pair orbit did not advance');
 fs.writeFileSync(path.join(outputPath,'canvas-end.png'),get('network').toBuffer('image/png'));
 // Between VPS events, presentation shimmer must advance without moving topology or inventing events.
 run('eventPulses=[];boardNow.activity.active=[];corePulseAt=-10000;nodeBirths.clear()');step(16020);
@@ -22,11 +24,11 @@ const ambient=get('network').toBuffer('image/png');step(16080);assert.notDeepEqu
 assert.equal(run('eventPulses.length'),0);assert.equal(coords(),before);
 // With motion paused, a changing clock must not alter a single pixel.
 run('pulseOn=false');step(16100);const still=get('network').toBuffer('image/png');step(16200);assert.deepEqual(get('network').toBuffer('image/png'),still);
-// Camera controls must stay finite at minimum/maximum zoom and after a resize.
+// Internal projection stress test; interactive camera controls are absent.
 run('zoom=2.6;panX=0;panY=0;yaw=.8;pitch=.3;cameraInput=null');step(16300);assert.ok(run('projected.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))'));
 fs.writeFileSync(path.join(outputPath,'canvas-zoom.png'),get('network').toBuffer('image/png'));
 viewport={width:360,height:385};run('resize();resetView()');for(let t=16400;t<18000;t+=34)step(t);
 fs.writeFileSync(path.join(outputPath,'canvas-resized.png'),get('network').toBuffer('image/png'));
 assert.equal(get('network').width,540);assert.equal(get('network').height,578);
 const pixels=get('network').getContext('2d').getImageData(0,0,540,578).data;assert.ok(pixels.every((v,i)=>i%4!==3||v===255),'Canvas background is not opaque');
-times.sort((a,b)=>a-b);const result={passed:true,nodes:run('graph.nodes.length'),drawnEdges:run('displayScene.edges.length'),frames:times.length,render_ms_p50:times[Math.floor(times.length*.5)],render_ms_p95:times[Math.floor(times.length*.95)],coordinate_shift:false,paused_pixels_identical:true,opaque_canvas:true,native_canvas_test:true,waiting_animation_verified:true,browser_test:false};fs.writeFileSync(path.join(outputPath,'result.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
+times.sort((a,b)=>a-b);const result={passed:true,nodes:run('graph.nodes.length'),drawnEdges:run('displayScene.edges.length'),frames:times.length,render_ms_p50:times[Math.floor(times.length*.5)],render_ms_p95:times[Math.floor(times.length*.95)],research_coordinate_shift:false,pair_orbit_verified:true,paused_pixels_identical:true,opaque_canvas:true,native_canvas_test:true,waiting_animation_verified:true,browser_test:false};fs.writeFileSync(path.join(outputPath,'result.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
