@@ -37,6 +37,8 @@ The scheduled action points directly to the canonical checkout runner with `--co
 
 The installer configures only the archive task. It does not start an observer/executor or enable LIVE trading.
 
+Apply the destination service account's private ACL to broker, relay and model configuration as well. For the current SYSTEM/Administrators Windows test profile, use `icacls BROKER_PRIVATE_CONFIG /inheritance:r /grant:r "*S-1-5-18:F" "*S-1-5-32-544:F"` on the broker private JSON and verify that no other explicit read grants remain. This removes the inherited Users read grant found during the test-VPS audit. A different service identity needs its own explicitly reviewed ACL.
+
 ## Linux archive host
 
 Use Python 3.11+ and the archive requirements in a dedicated environment. Run the same installer as the intended service user, with Linux paths, omitting `--schedule`. Use `--provision-credential` with an injected environment token, or mount an owner-readable `HF_TOKEN_FILE`. The private base must be mode 0700 and a token file mode 0600; symlink/world-readable credentials are refused.
