@@ -8,7 +8,7 @@ class ResearchCapacityTests(unittest.TestCase):
     def test_resumes_above_old_cap_only_with_disk_reserve(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'experiment-jobs.sqlite3'
-            with p.open('wb') as f:f.truncate(300*1024**2)
+            with p.open('wb') as f:f.truncate(600*1024**2)
             result=research_capacity(d,disk_usage=lambda _:SimpleNamespace(free=3*1024**3))
             self.assertEqual(result['status'],'READY')
             self.assertEqual(research_capacity(d,disk_usage=lambda _:SimpleNamespace(free=MIN_FREE))['status'],'PAUSED_LOW_DISK')

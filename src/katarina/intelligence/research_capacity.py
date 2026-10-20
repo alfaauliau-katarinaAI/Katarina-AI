@@ -3,7 +3,9 @@ from pathlib import Path
 import shutil
 
 MIN_FREE = 2 * 1024**3
-MAX_DATABASE = 512 * 1024**2
+# Verified cold archive migration recovered more than this extra 256 MiB.
+# The independent free-space guard still applies to every research write.
+MAX_DATABASE = 768 * 1024**2
 WRITE_RESERVE = 8 * 1024**2
 
 
