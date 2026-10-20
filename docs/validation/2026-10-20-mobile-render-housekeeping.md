@@ -35,3 +35,55 @@ at 06:42:36 UTC: zero eligible files, zero moves, zero errors. This is an actual
 same-process check, not a synthetic successful-move count. Existing datasets and
 memory were not relocated. The doctor still reports REVIEW_REQUIRED for other
 operational issues; housekeeping does not override those diagnostics.
+
+## Final canvas and live runtime verification, 06:58–07:04 UTC
+
+A native Canvas 2D rasterizer was available in the managed runtime, so the actual
+production page JavaScript could be exercised with a real canvas, public
+production data and a minimal DOM harness. This is not a browser or CSS-layout
+test. The diagnostic found three remaining boundary cases: offscreen labels
+clamped onto viewport edges at high zoom, event capsules overlapping the center
+letter, and a partially covered final pixel row at fractional device scale.
+The final source culls labels belonging to offscreen points, starts/ends signals
+outside node disks, and paints the entire backing canvas boundary.
+
+The reproducible diagnostic is `scripts/validation/verify_network_canvas.cjs`
+and accepts a saved public HTML page, saved public JSON status and output folder.
+It needs the installed `@napi-rs/canvas` runtime package and emits four PNGs plus a
+result JSON. Native execution with 183 actual nodes passed 470 frames: coordinates
+were unchanged while event effects advanced, paused images were pixel-identical,
+zoom and resize retained finite coordinates, and every canvas pixel was opaque.
+The final output images were inspected. Local timing is diagnostic only and is
+not a measurement of browser/phone FPS. Browser and owner-phone QA remain
+unavailable in this environment. Client regression assertions also cover label
+culling and minimum signal clearances.
+
+Actual same-PID live observation from 06:58:43 to 07:03:59 UTC:
+
+| Persisted measurement | Start | End | Change |
+| --- | ---: | ---: | ---: |
+| Experiments | 54,001 | 54,324 | +323 |
+| Datasets | 469 | 471 | +2 |
+| Hypotheses | 108 | 109 | +1 |
+| Report records | 67,570 | 67,634 | +64 |
+| Reviewed experiments | 53,617 | 53,681 | +64 |
+| Successful Gemini calls this process | 6 | 7 | +1 |
+| Failed Gemini calls this process | 0 | 0 | 0 |
+
+PID 6848 remained verified, with LIVE/production OFF. All nine worker status files
+showed EXPERIMENT_COMPLETED at 07:00:49–07:00:56 UTC. An earlier transient FAILED
+event recovered; the later retained activity sample contained no failed events.
+The doctor still reports DATA_GAPS_PENDING, so complete broker data, model
+quality, trained model weights and trading profitability are not attested.
+
+A new, known-content 76-byte verification report was placed in the managed inbox
+and aged to satisfy the settled-file gate. The autonomous doctor moved it at
+06:59:37 UTC, without a Codex invocation of organize(). The journal contained
+INTENT then MOVED, the source was absent, destination SHA-256 matched the intent,
+and status recorded one move and zero errors. The verification artifact was
+retained in the managed reports folder. No user datasets or AI memory were moved.
+
+Checks after the final changes: actual client regression, Worker privacy and
+expiry, five housekeeping tests, and three durable-report tests pass. Build,
+artifact ESM validation and diff whitespace checks pass. The final site artifact
+was pushed from source commit 93c27f71fa371bf5d6bd38deb1eb4dedcf1066da.

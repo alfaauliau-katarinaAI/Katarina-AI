@@ -76,6 +76,13 @@ const cachedDraws=draws.length;run('draw(200)');assert.equal(draws.slice(cachedD
 assert.equal(run('orbitOn'),false);
 run('acceptPulseEvents([packet.agent_board.activity.current,packet.agent_board.activity.current],200,false)');assert.equal(run('eventPulses.filter(e=>e.phase==="TECHNICAL").length'),1);
 run('selectNode("k:"+packet.agent_board.research_graph.nodes[0].id)');assert.ok(get('selection').children[1].textContent.includes('DOC / aaaaaaaa'));
+const actualProjected=run('projected');
+run('projected=[{x:-20,y:100,node:{id:"p:TEST_MOMENTUM_H4",kind:"phase",phase:"TEST_MOMENTUM_H4"}},{x:100,y:100,node:{id:"p:TEST_MOMENTUM_H12",kind:"phase",phase:"TEST_MOMENTUM_H12"}}]');
+assert.equal(run('labelCandidates().length'),1);assert.equal(run('labelCandidates()[0].node.phase'),'TEST_MOMENTUM_H12');
+sandbox.actualProjected=actualProjected;run('projected=actualProjected');
+assert.equal(run('signalSegment({x:0,y:0},{x:100,y:0}).a.x'),15);
+assert.equal(run('signalSegment({x:0,y:0},{x:100,y:0}).b.x'),89);
+assert.equal(run('signalSegment({x:0,y:0},{x:10,y:0})'),null);
 // Rendering budgets are enforced regardless of server graph density.
 sandbox.edges=Array.from({length:512},(_,i)=>({a:'k:a'+i,b:'k:b'+i,relation:'PART_OF_DOCUMENT'}));
 assert.equal(run('visibleEdges(edges).length'),160);
