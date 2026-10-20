@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import shutil
 import sqlite3
+import subprocess
 import tempfile
 import time
 
@@ -89,6 +90,18 @@ class Hub:
     def stored_bytes(self):
         info = self.api.repo_info(REPO, repo_type='dataset', files_metadata=True)
         return sum(s.size or 0 for s in info.siblings)
+def uncompressed_temporary(path, *, directory=False):
+    """Avoid double-compressing gzip payloads on the compressed Windows staging volume."""
+    path = Path(path)
+    if directory:
+        path.mkdir(parents=True, exist_ok=True)
+    else:
+        path.touch()
+    if os.name == 'nt':
+        subprocess.run(['compact.exe', '/U', '/I', '/Q', str(path)],
+                       capture_output=True, check=True, timeout=10)
+    return path
+
 def verify_archive(path, manifest):
     if sha_file(path) != manifest['archive_sha256']:
         raise RuntimeError('ARCHIVE_CHECKSUM_MISMATCH')
@@ -175,7 +188,7 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
     receipt = ledger / (key + '.json')
     if evict and receipt.exists() and json.loads(receipt.read_text()).get('evicted') is True:
         return dict(status='RESTORED_CACHE_PROTECTED', source=str(source), source_bytes=before.st_size)
-    if evict and shutil.disk_usage(work).free < RESERVE + 96 * 1024**2:
+    if evict:
         return archive_memory(source, hub, receipt, before, key)
     if not evict and receipt.exists():
         old = json.loads(receipt.read_text())
@@ -183,7 +196,7 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
             return dict(status='UNCHANGED', source=str(source), source_bytes=before.st_size)
     with tempfile.TemporaryDirectory(prefix='archive-', dir=work) as temporary:
         temp = Path(temporary)
-        packed = temp / 'payload.gz'
+        packed = uncompressed_temporary(temp / 'payload.gz')
         h = hashlib.sha256()
         with source.open('rb') as src, packed.open('wb') as dst:
             with gzip.GzipFile(filename='', fileobj=dst, mode='wb', compresslevel=3, mtime=0) as out:
@@ -205,6 +218,7 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
                         object=remote, object_revision=revision, archived_utc=utc())
         if shutil.disk_usage(work).free < RESERVE + packed.stat().st_size + 32 * 1024**2:
             raise RuntimeError('VERIFY_WAITING_DISK_RESERVE')
+        uncompressed_temporary(temp / 'download', directory=True)
         downloaded = hub.download(remote, revision, temp / 'download')
         verify_archive(downloaded, manifest)
         if sha_file(source) != digest or source.stat().st_mtime_ns != before.st_mtime_ns:
