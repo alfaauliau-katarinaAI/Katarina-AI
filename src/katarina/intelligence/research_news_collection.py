@@ -97,6 +97,7 @@ def describe_body(body):
 
 
 def collect(db, now, *, exchange=None):
+    from katarina.intelligence.research_agenda import prioritize, record_leads, status as agenda_status
     exchange=exchange or fetch
     db.execute('''CREATE TABLE IF NOT EXISTS research_news_fetches(source TEXT PRIMARY KEY,
         attempted_epoch REAL NOT NULL,status TEXT NOT NULL)''')
@@ -135,7 +136,7 @@ def collect(db, now, *, exchange=None):
         _,source=min(candidates)
         url,host=SOURCES[source]
         try:
-            stories=parse_feed(exchange(url,host),host,now)
+            stories=prioritize(db,parse_feed(exchange(url,host),host,now))
             status='NO_NEW_ARTICLE'
             for story in stories:
                 ident=sha256(story['url'].encode()).hexdigest()
@@ -152,6 +153,7 @@ def collect(db, now, *, exchange=None):
                 new.append(dict(id=ident,source=source,url=story['url'],published_utc=story['published'],
                     known_utc=known.isoformat(),body_sha256=digest,extractive_summary=summary,
                     topics=describe_body(body)['topics'],semantic_interpretation_verified=False))
+                record_leads(db,ident,body,known.isoformat())
                 status='FULL_BODY_STORED'
                 break
         except HTTPError as exc:
@@ -162,6 +164,7 @@ def collect(db, now, *, exchange=None):
             db.execute('INSERT OR REPLACE INTO research_news_fetches VALUES(?,?,?)',(source,now.timestamp(),status))
     total=db.execute('SELECT COUNT(*) FROM research_news_documents').fetchone()[0]
     return dict(source_checked=source,status=status,new_documents=new,total_documents=total,
+                autonomous_agenda=agenda_status(db),
                 source_count=len(SOURCES),source_statuses={r[0]:r[1] for r in db.execute(
                     'SELECT source,status FROM research_news_fetches')},
                 document_contexts=[dict(id=ident,source=src,known_utc=known,**describe_body(body),

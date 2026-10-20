@@ -229,7 +229,11 @@ class BrainObserver:
         media_analysis,media_status=collect_market_articles(
             store.db,datetime.now(timezone.utc)) if fetch_news else ([],("disabled",))
         from katarina.intelligence.research_news_collection import collect as collect_research_news, event_study
+        if fetch_news and os.environ.get('KATARINA_EXTENDED_NEWS_RESEARCH')=='1':
+            emit('RESEARCH','STARTED')
         research_news=collect_research_news(store.db,datetime.now(timezone.utc)) if fetch_news and os.environ.get('KATARINA_EXTENDED_NEWS_RESEARCH')=='1' else {'status':'DISABLED','new_documents':[]}
+        if fetch_news and os.environ.get('KATARINA_EXTENDED_NEWS_RESEARCH')=='1':
+            emit('RESEARCH','DONE',count=len(research_news['new_documents']))
         for document in research_news['new_documents']:
             brain.memory.append_operational_event('research_news_body_v1',document,event_id='research-news:'+document['id'])
         language_research = {'status': 'MODEL_NOT_CONFIGURED', 'live_execution_authorized': False}

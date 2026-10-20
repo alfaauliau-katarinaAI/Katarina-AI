@@ -71,9 +71,11 @@ def review_one(db, now, *, model):
         return report
     model_name = model.config.fast_model
     from katarina.intelligence.research_news_collection import allowed
+    from katarina.intelligence.research_agenda import prepare
+    prepare(db)
     for ident, source, url, published, known, body, digest in db.execute(
             'SELECT id,source,url,published,known_utc,body,body_sha256 FROM research_news_documents '
-            'ORDER BY known_utc DESC,id LIMIT 48'):
+            'ORDER BY EXISTS(SELECT 1 FROM public_research_leads l WHERE l.document_id=research_news_documents.id) DESC,known_utc DESC,id LIMIT 48'):
         try:
             p, k = datetime.fromisoformat(published), datetime.fromisoformat(known)
             if (source not in HOSTS or not allowed(url, HOSTS[source])
@@ -113,6 +115,8 @@ def review_one(db, now, *, model):
                         json.dumps(candidate, ensure_ascii=False, allow_nan=False)))
             db.execute('UPDATE public_language_attempts SET status=? WHERE id=?',
                        ('CANDIDATE_RECORDED', attempt_id))
+        from katarina.intelligence.research_agenda import remember_questions
+        remember_questions(db, review_id, candidate['questions'], stamp)
         return dict(report, status='CANDIDATE_RECORDED', review_id=review_id,
                     document_id=ident, body_sha256=digest, model=model_name, candidate=candidate)
     return report

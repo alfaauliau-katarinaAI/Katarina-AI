@@ -65,6 +65,10 @@ assert.ok(page.includes('Mengapa alamatnya memakai chatgpt.site?'));assert.equal
 assert.equal(run('pulseKeys.size'),0); // first load is historical, not new work
 assert.ok(run('graph.nodes.length')>2);
 assert.ok(run('graph.edges.every(e=>nodeMap.has(e.a)&&nodeMap.has(e.b))'));
+const code=run('nodeCode(graph.nodes.find(n=>n.kind==="topic")||graph.nodes[0])');
+assert.ok(code.length<=12);assert.equal(run('nodeCode(graph.nodes[0])'),run('nodeCode(graph.nodes[0])'));
+const drawCount=draws.length;run('resize()');
+assert.equal(draws.slice(drawCount).filter(d=>d[0]==='setTransform').length,0);
 run('draw(0)');assert.ok(draws.some(d=>d[0]==='quadraticCurveTo'));
 const graphBefore=run('graph'),tableRowBefore=get('events').children[0],watchBefore=get('watch').children[0];
 run('render(packet)');assert.equal(run('pulseKeys.size'),0);
@@ -123,6 +127,9 @@ packet.agent_board.research_graph.nodes.push({id:newId,kind:'document',label:'DO
 await run('refresh()');assert.ok(run('nodeMap.has("k:"+packet.agent_board.research_graph.nodes.at(-1).id)'));
 assert.ok(run('pulseKeys.has("knowledge:"+packet.agent_board.research_graph.nodes.at(-1).id)'));
 const retainedNew=run('graph');
+const older=JSON.parse(JSON.stringify(packet));older.captured_at_utc=stamp;older.agent_board.research_graph.nodes=[];
+sandbox.older=older;run('render(older)');assert.equal(run('graph'),retainedNew);
+
  sandbox.fetch=async()=>{throw new TypeError('temporary network loss')};clock=fixed+1000;
  await run('refresh()');assert.equal(run('graph'),retainedNew);assert.ok(get('notice').textContent.includes('snapshot terakhir'));
  clock=fixed+122000;await run('refresh()');assert.equal(run('graph.nodes.length'),0);
