@@ -79,9 +79,11 @@ def build_public_runtime(root):
     trace['current']=trace['events'][-1] if trace['events'] else None
     from katarina.monitoring.worker_runtime import read_worker_runtime
     public_board['worker_runtime']=read_worker_runtime(root,pid)
-    public_board['public_scope']='RESEARCH_GRAPH_AND_ENTRY_ONLY'
+    public_board['public_scope']='RESEARCH_ENTRY_AND_PNL'
     from katarina.monitoring.pair_activity import read_pair_activity
     public_board['pair_activity']=read_pair_activity(root,pid,allowed=public_board.get('telemetry_verified') is True and board['snapshot_process_matches'])
     from katarina.monitoring.entry_feed import read_entry_feed
     public_board['entry_feed']=read_entry_feed(root,allowed=research_allowed)
+    from katarina.monitoring.position_feed import read_position_feed
+    public_board['position_feed']=read_position_feed(root,allowed=research_allowed)
     return public

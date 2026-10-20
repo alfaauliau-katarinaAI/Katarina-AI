@@ -66,6 +66,12 @@ def read_entry_feed(root, *, allowed, now=None):
                 if state == 'CLOSED':
                     closed = json.loads(outcome or '{}')
                     row['closed_observed_utc'] = _stamp(closed.get('closed_observed_at'))
+                    currency=(intent.get('risk') or {}).get('account_currency')
+                    net=closed.get('net_profit_native')
+                    if (closed.get('prospective_broker_outcome') is True and isinstance(currency,str)
+                            and re.fullmatch(r'[A-Z][A-Z0-9]{2,7}',currency) and type(net) in (int,float)
+                            and math.isfinite(net) and abs(net)<1e12):
+                        row['realized_pnl']=net;row['currency']=currency
                 try:
                     with closing(_db(root/'demo-forward/experiment.sqlite3')) as cache:
                         variant = cache.execute('SELECT report_json FROM demo_variants WHERE id=?',(intent.get('experiment_id'),)).fetchone()
@@ -80,7 +86,22 @@ def read_entry_feed(root, *, allowed, now=None):
             except (ValueError, TypeError, AttributeError):
                 continue
         out['history_status'] = 'OBSERVED'
-    except (sqlite3.Error, OSError):
+        out['realized_summary']={'status':'NOT_ATTESTED'}
+        with closing(_db(root/'demo-forward/orders.sqlite3')) as orders:
+            closed_count=orders.execute("SELECT COUNT(*) FROM demo_outbox WHERE state='CLOSED'").fetchone()[0]
+            closed_rows=orders.execute("SELECT intent_json,outcome_json FROM demo_outbox WHERE state='CLOSED' LIMIT 10000").fetchall()
+        nets=[];currencies=set()
+        for raw,done in closed_rows:
+            i=json.loads(raw);c=json.loads(done or '{}');currency=(i.get('risk') or {}).get('account_currency');net=c.get('net_profit_native')
+            if (c.get('prospective_broker_outcome') is not True or not isinstance(currency,str)
+                    or not re.fullmatch(r'[A-Z][A-Z0-9]{2,7}',currency) or type(net) not in (int,float)
+                    or not math.isfinite(net) or abs(net)>=1e12):
+                break
+            currencies.add(currency);nets.append(net)
+        if len(nets)==closed_count and len(currencies)==1:
+            out['realized_summary']=dict(status='OBSERVED',currency=next(iter(currencies)),net_pnl=math.fsum(nets),
+                closed_count=closed_count,scope='KATARINA_DEMO_LEDGER_ALL_CLOSED',basis='PROFIT_COMMISSION_SWAP_FEE')
+    except (sqlite3.Error, OSError, ValueError, TypeError, AttributeError):
         pass
     try:
         with closing(_db(root/'demo-forward/experiment.sqlite3')) as cache, closing(_db(root/'experiment-jobs.sqlite3')) as research:

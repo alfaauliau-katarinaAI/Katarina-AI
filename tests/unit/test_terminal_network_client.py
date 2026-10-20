@@ -107,6 +107,10 @@ assert.equal(row.tag,'details');assert.equal(row.open,false);assert.equal(planRo
 row.open=true;row.listeners.toggle();sandbox.entryFixture.history[0].state='OPEN';run('renderEntries(null,entryFixture)');assert.equal(get('methods').children[0].open,true,'Selection lost on refresh');
 assert.match(run('planTrigger(entryFixture.plans[0])'),/low terendah/);
 run('renderEntries(null,null)');assert.ok(get('methods').children.every(r=>r.tag!=='details'));assert.ok(get('entry-plans').children.every(r=>r.tag!=='details'));
+sandbox.positionsFixture={status:'OBSERVED',as_of_utc:stamp,currency:'USC',total_count:1,floating_total:-12.5,katarina_floating:-12.5,positions:[{id:'d'.repeat(24),symbol:'XAUUSD.vx',side:'BUY',owner:'KATARINA_DEMO',entry_price:4000,current_price:3999,opened_utc:stamp,profit:-12,swap:-.5,floating:-12.5,stop_loss:0,take_profit:4020}]};
+run('renderPositions(positionsFixture,{status:"OBSERVED",currency:"USC",net_pnl:25})');assert.match(get('floating-total').textContent,/-12.50 USC/);assert.equal(get('floating-total').className,'pnl-negative');assert.match(get('realized-total').textContent,/\+25.00 USC/);assert.equal(get('open-positions').children[0].open,false);
+get('open-positions').children[0].open=true;get('open-positions').children[0].listeners.toggle();sandbox.positionsFixture.positions[0].profit=-13;run('renderPositions(positionsFixture,null)');assert.equal(get('open-positions').children[0].open,true);
+run('renderPositions(null,null)');assert.equal(get('floating-total').textContent,'Belum tersedia');assert.ok(get('open-positions').children.every(r=>r.tag!=='details'));
 // Exercise actual registered controls: drag, simultaneous pinch/pan, cancellation and resume.
 const controls=get('network').listeners;
 const pointer=(id,x,y)=>({pointerId:id,clientX:x,clientY:y,button:0,preventDefault(){}});

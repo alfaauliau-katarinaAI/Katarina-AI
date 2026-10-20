@@ -45,3 +45,20 @@ class EntryFeedTests(unittest.TestCase):
             feed=read_entry_feed(root,allowed=True,now=now)
             self.assertEqual(feed['history_status'],'NOT_ATTESTED');self.assertEqual(feed['plans_status'],'NOT_ATTESTED')
             self.assertFalse((p/'orders.sqlite3').exists())
+
+    def test_realized_pnl_covers_entire_closed_ledger_not_visible_page(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);p=root/'demo-forward';p.mkdir();now=datetime.now(timezone.utc)
+            (p/'executor.json').write_text(json.dumps(dict(pid=1,independent=True,mode='DEMO',as_of_utc=now.isoformat())))
+            (p/'status.json').write_text(json.dumps(dict(pid=1,live_authorized=False,as_of_utc=now.isoformat())))
+            with closing(sqlite3.connect(p/'orders.sqlite3')) as db,db:
+                db.execute('CREATE TABLE demo_outbox(intent_id,state,updated_at,intent_json,outcome_json)')
+                for i in range(22):
+                    intent=dict(symbol='EURUSD.vx',side='SELL',created_at=now.timestamp()-60,price=1.1,risk=dict(account_currency='USC'))
+                    outcome=dict(net_profit_native=-3 if i==0 else 2,prospective_broker_outcome=True,closed_observed_at=now.timestamp())
+                    db.execute('INSERT INTO demo_outbox VALUES(?,?,?,?,?)',(str(i),'CLOSED',now.timestamp(),json.dumps(intent),json.dumps(outcome)))
+            feed=read_entry_feed(root,allowed=True,now=now)
+            self.assertEqual(len(feed['history']),20)
+            self.assertEqual(feed['realized_summary']['closed_count'],22)
+            self.assertEqual(feed['realized_summary']['net_pnl'],39)
+            self.assertEqual(feed['realized_summary']['currency'],'USC')
