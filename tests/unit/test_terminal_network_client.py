@@ -8,7 +8,7 @@ import unittest
 
 @unittest.skipUnless(shutil.which("node"), "Node required for terminal client verification")
 class TerminalNetworkClientTests(unittest.TestCase):
-    def test_real_events_locked_view_pair_orbit_and_expiry(self):
+    def test_real_events_spherical_rotation_and_expiry(self):
         source = (Path(__file__).resolve().parents[2] / "sites/runtime-monitor/worker/index.js").read_text(encoding="utf-8")
         harness = r"""
 const assert=require('node:assert/strict'),vm=require('node:vm');
@@ -17,7 +17,7 @@ const page=JSON.parse(source.slice(source.indexOf('const PAGE=')+11,source.index
 const script=page.split('<script>')[1].split('</script>')[0];
 assert.match(page,/touch-action:pan-y/);assert.ok(!page.includes('id="pair-focus"'));assert.ok(!page.includes('id="pause-pulse"'));assert.ok(!page.includes('id="reset-view"'));assert.ok(!page.includes('class="controls"'));
 assert.match(page,/max-width:420px/);
-assert.match(page,/id="network"/);assert.ok(!page.includes('class="parallel-board"'));assert.ok(!page.includes('id="parallel-grid"'));assert.match(page,/Orbit visual/);
+assert.match(page,/id="network"/);assert.ok(!page.includes('class="parallel-board"'));assert.ok(!page.includes('id="parallel-grid"'));assert.match(page,/Rotasi visual/);
 assert.ok(!page.includes('type="password"'));
 const nodes=new Map(),intervals=[],requests=[],frames=[],draws=[];
 const context=new Proxy({}, {get:(target,key)=>target[key]||((...args)=>draws.push([key,...args])),set:(t,k,v)=>(t[k]=v,true)});
@@ -71,14 +71,14 @@ const older=JSON.parse(JSON.stringify(packet));older.captured_at_utc=new Date(fi
 sandbox.older=older;run('render(older)');assert.equal(run('graph'),firstGraph);
 run('orbitOn=false;draw(0)');
 const coordinates=run('JSON.stringify(projected.filter(p=>p.node.kind!=="pair").map(p=>[p.node.id,p.x,p.y]))');run('draw(100)');
-assert.equal(run('JSON.stringify(projected.filter(p=>p.node.kind!=="pair").map(p=>[p.node.id,p.x,p.y]))'),coordinates);
+assert.notEqual(run('JSON.stringify(projected.filter(p=>p.node.kind!=="pair").map(p=>[p.node.id,p.x,p.y]))'),coordinates);assert.ok(run('networkRotation>0'));assert.ok(run('Array.from({length:12},(_,slot)=>orbitPair({node:{slot}})).every(p=>Math.abs(Math.hypot(p.x,p.y,p.z)-1.16)<1e-9)'));assert.equal(run('new Set(Array.from({length:12},(_,slot)=>orbitPair({node:{slot}}).y)).size'),12);
 sandbox.growth={status:'PERSISTED_RESEARCH_COUNTS',as_of_utc:stamp,experiments:12,hypotheses:3,documents:4,reports:8};
 run('renderLearning({status:"NOT_ATTESTED"},{research_growth:growth,model:{telemetry:{successful_calls:2}}})');
 assert.ok(get('learning-proof').children.some(c=>c.textContent.includes('12 eksperimen')));
 assert.ok(get('learning-proof').children.some(c=>c.textContent==='CHECKPOINT KOGNITIF BELUM SINKRON'));
 assert.ok(draws.some(d=>d[0]==='lineTo'));assert.ok(draws.some(d=>d[0]==='drawImage'));
 assert.equal(run('ambientAllowed()'),true);const ambientDraws=draws.length;run('draw(150)');assert.ok(draws.slice(ambientDraws).some(d=>d[0]==='arc'));
-const pairBefore=run('JSON.stringify(projected.filter(p=>p.node.kind==="pair").map(p=>[p.x,p.y]))');const cachedDraws=draws.length;run('draw(200)');assert.notEqual(run('JSON.stringify(projected.filter(p=>p.node.kind==="pair").map(p=>[p.x,p.y]))'),pairBefore);assert.ok(draws.slice(cachedDraws).filter(d=>d[0]==='fillText').every(d=>String(d[1]).endsWith('.vx')));
+const pairBefore=run('JSON.stringify(projected.filter(p=>p.node.kind==="pair").map(p=>[p.x,p.y]))');const cachedDraws=draws.length;run('draw(200)');assert.notEqual(run('JSON.stringify(projected.filter(p=>p.node.kind==="pair").map(p=>[p.x,p.y]))'),pairBefore);assert.ok(draws.slice(cachedDraws).some(d=>d[0]==='lineTo'));
 assert.equal(run('orbitOn'),false);
 run('acceptPulseEvents([packet.agent_board.activity.current,packet.agent_board.activity.current],200,false)');assert.equal(run('eventPulses.filter(e=>e.phase==="TECHNICAL").length'),1);
 run('selectNode("k:"+packet.agent_board.research_graph.nodes[0].id)');assert.ok(get('selection').children[1].textContent.includes('DOC / aaaaaaaa'));
