@@ -20,6 +20,25 @@ BASE = Path(r'C:\KatarinaDev\config\hf-storage')
 STATE = Path(r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer')
 REPO = 'alfaaulia/katarina-research-archive'
 RESERVE = 2 * 1024**3
+def cooldown():
+    path = BASE / 'cooldown.json'
+    if path.exists():
+        value = json.loads(path.read_text())
+        if value.get('retry_epoch', 0) > time.time():
+            return value
+    return None
+
+def publish_cooldown(results=(), errors=()):
+    value = cooldown()
+    if value:
+        report = dict(status='WAITING_CLOUD_RATE_LIMIT', repo=REPO,
+                      as_of_utc=utc(), next_retry_utc=datetime.fromtimestamp(value['retry_epoch'], timezone.utc).isoformat(),
+                      results=list(results), errors=list(errors), free_after=shutil.disk_usage(STATE).free)
+        atomic_json(STATE / 'hf-storage-status.json', report)
+        print(json.dumps(report), flush=True)
+        return True
+    return False
+
 def safe_error(error):
     if isinstance(error, sqlite3.Error):
         return getattr(error, 'sqlite_errorname', 'SQLITE_' + type(error).__name__)
@@ -74,8 +93,21 @@ class Hub:
         if self.api.repo_info(REPO, repo_type='dataset').private is not True:
             raise RuntimeError('PRIVATE_REPOSITORY_REQUIRED')
     def upload(self, local, name):
-        info = self.api.upload_file(path_or_fileobj=str(local) if isinstance(local, (str, Path)) else local, path_in_repo=name,
-                repo_id=REPO, repo_type='dataset', commit_message='Preserve verified Katarina research archive')
+        if cooldown():
+            raise RuntimeError('CLOUD_RATE_LIMITED')
+        try:
+            info = self.api.upload_file(path_or_fileobj=str(local) if isinstance(local, (str, Path)) else local, path_in_repo=name,
+                    repo_id=REPO, repo_type='dataset', commit_message='Preserve verified Katarina research archive')
+        except Exception as error:
+            response = getattr(error, 'response', None)
+            if getattr(response, 'status_code', None) == 429:
+                try:
+                    delay = max(60, min(86400, int(response.headers.get('retry-after', '3600'))))
+                except ValueError:
+                    delay = 3600
+                atomic_json(BASE / 'cooldown.json', dict(retry_epoch=time.time()+delay+60, reason='HTTP_429'))
+                raise RuntimeError('CLOUD_RATE_LIMITED') from None
+            raise
         return info.oid
     def download(self, name, revision, cache):
         import httpx
@@ -335,7 +367,7 @@ def backup_database(source, target):
     # Hold the normal reserve while creating a consistent SQLite backup.
     if shutil.disk_usage(source).free < RESERVE + 64 * 1024**2:
         raise RuntimeError('BACKUP_WAITING_DISK_RESERVE')
-    deadline = time.monotonic() + 900
+    deadline = time.monotonic() + 1800
     def interrupted():
         return int(time.monotonic() > deadline or
                    shutil.disk_usage(target.parent).free < RESERVE + 32 * 1024**2)
@@ -386,6 +418,8 @@ def sync(config, hub):
     status_path = STATE / 'hf-storage-status.json'
     free_before = shutil.disk_usage(STATE).free
     results, errors = [], []
+    if publish_cooldown():
+        return
     # Leave 20 GB headroom within the currently documented private free allowance.
     used = hub.stored_bytes()
     if used > 80 * 1000**3:
@@ -403,6 +437,8 @@ def sync(config, hub):
             record = dict(source=str(source), error=safe_error(e))
             errors.append(record)
             print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
+            if publish_cooldown(results, errors):
+                return
     for name in config.get('sync_files', []):
         source = Path(name)
         if not source.is_file():
@@ -416,6 +452,8 @@ def sync(config, hub):
             record = dict(source=str(source), error=safe_error(e))
             errors.append(record)
             print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
+            if publish_cooldown(results, errors):
+                return
     last_backup = BASE / 'backup-clock.json'
     clock = json.loads(last_backup.read_text()) if last_backup.exists() else {}
     completed = clock.setdefault('databases', {})
@@ -451,6 +489,8 @@ def sync(config, hub):
                 record = dict(source=str(source), error=safe_error(e))
                 errors.append(record)
                 print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
+                if publish_cooldown(results, errors):
+                    return
         if backups_ok:
             clock.update(last_success_epoch=time.time(), as_of_utc=utc())
         atomic_json(last_backup, clock)
@@ -473,6 +513,8 @@ def main():
     os.environ['HF_HUB_DISABLE_XET'] = '1'
     os.environ['HF_HUB_DISABLE_PROGRESS_BARS'] = '1'
     os.environ['HF_HUB_DISABLE_TELEMETRY'] = '1'
+    if publish_cooldown():
+        return
     token = dpapi((BASE / 'token.dpapi').read_bytes(), decrypt=True).decode('ascii')
     hub = Hub(token)
     from filelock import FileLock

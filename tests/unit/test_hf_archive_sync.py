@@ -1,7 +1,7 @@
 import gzip,hashlib,importlib.util,json,os
 from pathlib import Path
 import tempfile
-from unittest.mock import patch
+from unittest.mock import patch,Mock
 from types import SimpleNamespace
 import unittest
 spec=importlib.util.spec_from_file_location('archive',Path(__file__).parents[2]/'scripts/ai/hf_archive_sync.py')
@@ -25,6 +25,25 @@ class FakeHub:
         if self.mutate and name.startswith('objects/'):self.mutate.write_bytes(b'new source content')
         return p
 class ArchiveTests(unittest.TestCase):
+    def test_upload_rate_limit_honors_retry_after_without_repeating_requests(self):
+        with tempfile.TemporaryDirectory() as d,patch.object(mod,'BASE',Path(d)):
+            failure=RuntimeError('do not log server body')
+            failure.response=SimpleNamespace(status_code=429,headers={'retry-after':'3474'})
+            hub=mod.Hub.__new__(mod.Hub);hub.api=SimpleNamespace(upload_file=Mock(side_effect=failure))
+            for _ in range(2):
+                with self.assertRaisesRegex(RuntimeError,'CLOUD_RATE_LIMITED'):
+                    hub.upload(b'synthetic','test')
+            self.assertEqual(hub.api.upload_file.call_count,1)
+            self.assertGreater(mod.cooldown()['retry_epoch'],mod.time.time()+3470)
+    def test_cooldown_skips_cloud_requests_and_database_copy(self):
+        with tempfile.TemporaryDirectory() as d:
+            base=Path(d);state=base/'state';state.mkdir()
+            mod.atomic_json(base/'cooldown.json',dict(retry_epoch=mod.time.time()+3600))
+            hub=SimpleNamespace(stored_bytes=Mock())
+            with patch.object(mod,'BASE',base),patch.object(mod,'STATE',state),patch.object(mod,'backup_database') as backup:
+                mod.sync({'backup_databases':['unused.sqlite3']},hub)
+                backup.assert_not_called();hub.stored_bytes.assert_not_called()
+            self.assertEqual(json.loads((state/'hf-storage-status.json').read_text())['status'],'WAITING_CLOUD_RATE_LIMIT')
     def test_partial_backup_retries_only_failed_database(self):
         with tempfile.TemporaryDirectory() as d:
             base=Path(d);state=base/'state';state.mkdir()
