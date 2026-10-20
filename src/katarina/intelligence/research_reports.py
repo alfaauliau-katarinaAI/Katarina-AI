@@ -1,4 +1,5 @@
 """Durable rule-based experiment decisions. No broker, model, orders or promotion."""
+from katarina.monitoring.snapshot_io import replace_snapshot
 from contextlib import closing
 from datetime import datetime, timezone
 from hashlib import sha256
@@ -60,12 +61,11 @@ def publish_reports(root, trace=None, batch=64):
     with closing(sqlite3.connect(root/'experiment-jobs.sqlite3',timeout=2)) as db:
         db.execute('CREATE TABLE IF NOT EXISTS research_reports(id TEXT PRIMARY KEY,trial_id TEXT,created_utc TEXT,decision TEXT,report_json TEXT)')
         db.execute('CREATE TABLE IF NOT EXISTS research_report_heads(trial_id TEXT PRIMARY KEY,signature TEXT,report_id TEXT)')
-        prepare_report_indexes(db)
         tables={r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         if not {'trials','stress_reviews'}<=tables:return 0
         fields=('status','development.n','review.n','development.mean_range_units','review.mean_range_units')
         signature="||'|'||".join(f"coalesce(CAST(json_extract({alias}.result_json,'$.{field}') AS TEXT),'MISSING')" for alias in ('t','s2','s3') for field in fields)
-        rows=db.execute(f"SELECT t.id,t.symbol,t.created_utc,t.result_json,s2.result_json,s3.result_json,{signature} FROM trials t LEFT JOIN stress_reviews s2 ON s2.trial_id=t.id LEFT JOIN stress_reviews s3 ON s3.trial_id='COST3:'||t.id LEFT JOIN research_report_heads h ON h.trial_id=t.id WHERE h.trial_id IS NULL OR h.signature!=({signature}) ORDER BY CASE WHEN json_extract(t.result_json,'$.status')='NEEDS_FORWARD_VALIDATION' THEN 0 ELSE 1 END,t.created_utc DESC LIMIT ?",(batch,)).fetchall()
+        rows=db.execute(f"WITH recent_trials AS (SELECT id FROM trials ORDER BY rowid DESC LIMIT 256), recent_reviews AS (SELECT trial_id FROM stress_reviews ORDER BY rowid DESC LIMIT 256), missing AS (SELECT t.id FROM trials t WHERE NOT EXISTS(SELECT 1 FROM research_report_heads h WHERE h.trial_id=t.id) ORDER BY t.rowid LIMIT 64), pending AS (SELECT id FROM recent_trials UNION SELECT CASE WHEN trial_id LIKE 'COST3:%' THEN substr(trial_id,7) ELSE trial_id END FROM recent_reviews UNION SELECT id FROM missing) SELECT t.id,t.symbol,t.created_utc,t.result_json,s2.result_json,s3.result_json,{signature} FROM pending p JOIN trials t ON t.id=p.id LEFT JOIN stress_reviews s2 ON s2.trial_id=t.id LEFT JOIN stress_reviews s3 ON s3.trial_id='COST3:'||t.id LEFT JOIN research_report_heads h ON h.trial_id=t.id WHERE h.trial_id IS NULL OR h.signature!=({signature}) ORDER BY CASE WHEN json_extract(t.result_json,'$.status')='NEEDS_FORWARD_VALIDATION' THEN 0 ELSE 1 END,t.created_utc DESC LIMIT ?",(batch,)).fetchall()
         if rows and trace:trace.emit('REPORT','STARTED',action='EVIDENCE_DECISION_REPORT')
         with db:
             for ident,symbol,created,raw,r2,r3,version in rows:
@@ -84,7 +84,8 @@ def publish_reports(root, trace=None, batch=64):
         value=dict(schema_version=1,status='RESEARCH_REPORTS',source='PERSISTED_RULE_BASED_RESEARCH_REPORTS',pid=os.getpid(),as_of_utc=stamp,
                    reviewed_experiments=sum(counts.values()),unreported_experiments=max(0,total-sum(counts.values())),counts=counts,
                    recent=recent,candidates=candidates,live_authorized=False,production_approved=False)
-        temporary=root/'research-reports.tmp';temporary.write_text(json.dumps(value,allow_nan=False)+'\n',encoding='utf-8');temporary.replace(root/'research-reports.json')
+        value['as_of_utc']=datetime.now(timezone.utc).isoformat()
+        temporary=root/'research-reports.tmp';temporary.write_text(json.dumps(value,allow_nan=False)+'\n',encoding='utf-8');replace_snapshot(temporary,root/'research-reports.json')
         return len(rows)
 
 
