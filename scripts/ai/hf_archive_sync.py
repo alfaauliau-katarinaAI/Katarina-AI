@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import sqlite3
@@ -18,6 +19,10 @@ BASE = Path(r'C:\KatarinaDev\config\hf-storage')
 STATE = Path(r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer')
 REPO = 'alfaaulia/katarina-research-archive'
 RESERVE = 2 * 1024**3
+def safe_error(error):
+    text = str(error)
+    return text if re.fullmatch(r'[A-Z][A-Z0-9_]{2,79}', text) else type(error).__name__
+
 def utc():
     return datetime.now(timezone.utc).isoformat()
 def sha_file(path):
@@ -312,7 +317,9 @@ def sync(config, hub):
                                         allowed_cold=config['cold_files']))
             print(json.dumps(results[-1]), flush=True)
         except Exception as e:
-            errors.append(dict(source=str(source), error=type(e).__name__))
+            record = dict(source=str(source), error=safe_error(e))
+            errors.append(record)
+            print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
     for name in config.get('sync_files', []):
         source = Path(name)
         if not source.is_file() or source.stat().st_size > 2 * 1024**2:
@@ -320,7 +327,9 @@ def sync(config, hub):
         try:
             results.append(archive_file(source, hub, ledger, work))
         except Exception as e:
-            errors.append(dict(source=str(source), error=type(e).__name__))
+            record = dict(source=str(source), error=safe_error(e))
+            errors.append(record)
+            print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
     last_backup = BASE / 'backup-clock.json'
     clock = json.loads(last_backup.read_text()) if last_backup.exists() else {}
     if time.time() - clock.get('last_success_epoch', 0) >= 86400:
@@ -339,7 +348,9 @@ def sync(config, hub):
                     print(json.dumps(result), flush=True)
             except Exception as e:
                 backups_ok = False
-                errors.append(dict(source=str(source), error=type(e).__name__))
+                record = dict(source=str(source), error=safe_error(e))
+                errors.append(record)
+                print(json.dumps(dict(status='RETRY_PENDING', **record)), flush=True)
         if backups_ok:
             atomic_json(last_backup, dict(last_success_epoch=time.time(), as_of_utc=utc()))
     report = dict(schema_version=1, status='SYNCED' if not errors else 'PARTIAL_RETRY_PENDING',
