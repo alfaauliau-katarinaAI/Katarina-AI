@@ -51,11 +51,12 @@ const packet={captured_at_utc:stamp,agent_board:{schema_version:1,result:'SNAPSH
 const docId='document:'+ 'a'.repeat(24),partId='paragraph:'+ 'b'.repeat(24);
 packet.agent_board.research_graph={nodes:[{id:docId,kind:'document',label:'DOC / aaaaaaaa',known_utc:stamp},{id:partId,kind:'paragraph',label:'TEXT / bbbbbbbb',known_utc:stamp}],edges:[{a:docId,b:partId,relation:'PART_OF_DOCUMENT'}],total_documents:1};
 packet.agent_board.entries={status:'OBSERVED',positions:[]};
+packet.agent_board.pair_activity={status:'OBSERVED',pid:42,as_of_utc:stamp,scan_observation_utc:stamp,symbols:['XAUUSD.vx','EURUSD.vx'],events:[event(3,'TEST_MOMENTUM_H4','STARTED',{symbol:'XAUUSD.vx'}),event(4,'TEST_BREAKOUT_H4','DONE',{symbol:'EURUSD.vx'})],active:[event(3,'TEST_MOMENTUM_H4','STARTED',{symbol:'XAUUSD.vx'})]};
 sandbox.packet=packet;
 run('render(packet)');
 assert.equal(get('symbols').textContent,'1');
 assert.equal(get('execution').textContent,'LIVE KATARINA / OFF');
-assert.ok(run('graph.nodes.length')>2);
+assert.ok(run('graph.nodes.length')>2);assert.equal(run('graph.nodes.filter(n=>n.kind==="pair").length'),2);assert.ok(run('graph.edges.some(e=>e.relation==="PAIR_WORK"&&e.a==="pair:XAUUSD.vx")'));assert.equal(run('nodeCode({kind:"pair",symbol:"EURUSD.vx"})'),'EURUSD.vx');assert.match(get('pair-summary').textContent,/2 \/ 2/);
 assert.ok(run('graph.edges.every(e=>nodeMap.has(e.a)&&nodeMap.has(e.b))'));
 const firstGraph=run('graph');run('render(packet)');assert.equal(run('graph'),firstGraph);
 assert.equal(run('nodeCode({kind:"phase",phase:"TEST_MOMENTUM_H4",id:"p:test"})'),'W01');
@@ -105,6 +106,7 @@ get('reset-view').listeners.click();assert.equal(run('cameraInput.zoom'),1);
 get('network').listeners.pointerdown({pointerId:1,clientX:20,clientY:20});
 get('network').listeners.pointermove({pointerId:1,clientX:60,clientY:25});
 get('network').listeners.pointercancel({pointerId:1});
+run('pairFocus="EURUSD.vx";buildGraph(boardNow,Date.now())');assert.equal(run('graph.nodes.filter(n=>n.kind==="pair").length'),1);assert.ok(run('nodeMap.has("pair:EURUSD.vx")'));
 clock=fixed+121000;run('checkFreshness()');assert.equal(run('graph.nodes.length'),0);assert.equal(run('graphFresh'),false);
 console.log('PASS_CURRENT_HOSTED_CODES_RESIZE_ORDER_PROVENANCE_EXPIRY');
 
