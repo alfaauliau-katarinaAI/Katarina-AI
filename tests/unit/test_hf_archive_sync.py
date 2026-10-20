@@ -32,6 +32,8 @@ class ArchiveTests(unittest.TestCase):
             mod.restore_file(m,h,p);self.assertEqual(p.read_bytes(),original)
             # Second worker reuses the already verified local file.
             self.assertEqual(mod.restore_file(m,h,p),p)
+            cached=mod.archive_file(p,h,l,w,evict=True,allowed_cold=[p])
+            self.assertEqual(cached['status'],'RESTORED_CACHE_PROTECTED');self.assertTrue(p.exists())
     def test_corrupt_download_never_evicts(self):
         with tempfile.TemporaryDirectory() as d:
             p,l,w=self.fixture(d);original=p.read_bytes()

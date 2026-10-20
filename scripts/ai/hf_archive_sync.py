@@ -103,6 +103,8 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
     work.mkdir(parents=True, exist_ok=True)
     ledger.mkdir(parents=True, exist_ok=True)
     receipt = ledger / (key + '.json')
+    if evict and receipt.exists() and json.loads(receipt.read_text()).get('evicted') is True:
+        return dict(status='RESTORED_CACHE_PROTECTED', source=str(source), source_bytes=before.st_size)
     if not evict and receipt.exists():
         old = json.loads(receipt.read_text())
         if old.get('source_bytes') == before.st_size and old.get('source_mtime_ns') == before.st_mtime_ns:
