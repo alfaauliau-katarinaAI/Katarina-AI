@@ -1,6 +1,8 @@
 import gzip,hashlib,importlib.util,json,os
 from pathlib import Path
 import tempfile
+from unittest.mock import patch
+from types import SimpleNamespace
 import unittest
 spec=importlib.util.spec_from_file_location('archive',Path(__file__).parents[2]/'scripts/ai/hf_archive_sync.py')
 mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
@@ -8,8 +10,13 @@ class FakeHub:
     def __init__(self,corrupt=False,mutate=None):
         self.objects={};self.corrupt=corrupt;self.mutate=mutate
     def upload(self,local,name):
-        self.objects[name]=Path(local).read_bytes()
+        self.objects[name]=Path(local).read_bytes() if isinstance(local,(str,Path)) else local.read()
         return 'a'*40
+    def download_memory(self,name,revision):
+        data=self.objects[name]
+        if self.corrupt and name.startswith('objects/'):return b'corrupt'
+        if self.mutate and name.startswith('objects/'):self.mutate.write_bytes(b'new source content')
+        return data
     def download(self,name,revision,cache):
         cache=Path(cache);cache.mkdir(parents=True,exist_ok=True);p=cache/'object'
         data=self.objects[name]
@@ -60,4 +67,19 @@ class ArchiveTests(unittest.TestCase):
             m=json.loads(next(l.glob('*.json')).read_text());p.write_bytes(b'keep me')
             with self.assertRaises(RuntimeError):mod.restore_file(m,h,p)
             self.assertEqual(p.read_bytes(),b'keep me')
+    def test_low_disk_bootstrap_verifies_and_restores_without_disk_staging(self):
+        with tempfile.TemporaryDirectory() as d:
+            p,l,w=self.fixture(d);original=p.read_bytes();h=FakeHub()
+            with patch.object(mod.shutil,'disk_usage',return_value=SimpleNamespace(free=mod.RESERVE-100)):
+                result=mod.archive_file(p,h,l,w,evict=True,allowed_cold=[p])
+            self.assertTrue(result['memory_bootstrap']);self.assertFalse(p.exists())
+            manifest=json.loads(next(l.glob('*.json')).read_text())
+            mod.restore_file(manifest,h,p);self.assertEqual(p.read_bytes(),original)
+    def test_low_disk_bootstrap_rejects_corrupt_remote(self):
+        with tempfile.TemporaryDirectory() as d:
+            p,l,w=self.fixture(d);original=p.read_bytes()
+            with patch.object(mod.shutil,'disk_usage',return_value=SimpleNamespace(free=mod.RESERVE-100)):
+                with self.assertRaises(RuntimeError):
+                    mod.archive_file(p,FakeHub(corrupt=True),l,w,evict=True,allowed_cold=[p])
+            self.assertEqual(p.read_bytes(),original)
 if __name__=='__main__':unittest.main()

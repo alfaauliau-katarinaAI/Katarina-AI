@@ -4,6 +4,7 @@ import contextlib
 from datetime import datetime, timezone
 import gzip
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -64,13 +65,27 @@ class Hub:
         if self.api.repo_info(REPO, repo_type='dataset').private is not True:
             raise RuntimeError('PRIVATE_REPOSITORY_REQUIRED')
     def upload(self, local, name):
-        info = self.api.upload_file(path_or_fileobj=str(local), path_in_repo=name,
+        info = self.api.upload_file(path_or_fileobj=str(local) if isinstance(local, (str, Path)) else local, path_in_repo=name,
                 repo_id=REPO, repo_type='dataset', commit_message='Preserve verified Katarina research archive')
         return info.oid
     def download(self, name, revision, cache):
         from huggingface_hub import hf_hub_download
         return Path(hf_hub_download(REPO, name, repo_type='dataset', revision=revision,
                     token=self.token, cache_dir=str(cache), force_download=True))
+    def download_memory(self, name, revision, limit=32*1024**2):
+        import httpx
+        url = 'https://huggingface.co/datasets/' + REPO + '/resolve/' + revision + '/' + name
+        parts, size = [], 0
+        # httpx drops Authorization on cross-origin redirects to signed storage URLs.
+        with httpx.Client(follow_redirects=True, timeout=60) as client:
+            with client.stream('GET', url, headers={'Authorization': 'Bearer ' + self.token}) as response:
+                response.raise_for_status()
+                for block in response.iter_bytes(1024**2):
+                    size += len(block)
+                    if size > limit:
+                        raise RuntimeError('MEMORY_ARCHIVE_LIMIT')
+                    parts.append(block)
+        return b''.join(parts)
     def stored_bytes(self):
         info = self.api.repo_info(REPO, repo_type='dataset', files_metadata=True)
         return sum(s.size or 0 for s in info.siblings)
@@ -87,6 +102,61 @@ def verify_archive(path, manifest):
                 raise RuntimeError('RESTORE_SIZE_EXCEEDED')
     if h.hexdigest() != manifest['source_sha256'] or size != manifest['source_bytes']:
         raise RuntimeError('RESTORE_CHECKSUM_MISMATCH')
+def verify_memory(data, manifest):
+    if hashlib.sha256(data).hexdigest() != manifest['archive_sha256']:
+        raise RuntimeError('ARCHIVE_CHECKSUM_MISMATCH')
+    h, size = hashlib.sha256(), 0
+    with gzip.GzipFile(fileobj=io.BytesIO(data), mode='rb') as stream:
+        for block in iter(lambda: stream.read(1024**2), b''):
+            h.update(block)
+            size += len(block)
+            if size > manifest['source_bytes']:
+                raise RuntimeError('RESTORE_SIZE_EXCEEDED')
+    if size != manifest['source_bytes'] or h.hexdigest() != manifest['source_sha256']:
+        raise RuntimeError('RESTORE_CHECKSUM_MISMATCH')
+def archive_memory(source, hub, receipt, before, key):
+    """Bootstrap low disk migration without writing a temporary dataset to disk."""
+    stream, digest = io.BytesIO(), hashlib.sha256()
+    with source.open('rb') as src, gzip.GzipFile(filename='', fileobj=stream, mode='wb', compresslevel=3, mtime=0) as zipped:
+        for block in iter(lambda: src.read(1024**2), b''):
+            digest.update(block)
+            zipped.write(block)
+            if stream.tell() > 31*1024**2:
+                raise RuntimeError('MEMORY_ARCHIVE_LIMIT')
+    payload = stream.getvalue()
+    if len(payload) > 32*1024**2:
+        raise RuntimeError('MEMORY_ARCHIVE_LIMIT')
+    if source.stat().st_mtime_ns != before.st_mtime_ns or source.stat().st_size != before.st_size:
+        raise RuntimeError('SOURCE_CHANGED')
+    packed_hash = hashlib.sha256(payload).hexdigest()
+    remote = 'objects/' + packed_hash[:2] + '/' + packed_hash + '.gz'
+    revision = hub.upload(io.BytesIO(payload), remote)
+    manifest = dict(schema_version=1, repo=REPO, source=str(source), source_bytes=before.st_size,
+                    source_mtime_ns=before.st_mtime_ns, source_sha256=digest.hexdigest(),
+                    archive_bytes=len(payload), archive_sha256=packed_hash, object=remote,
+                    object_revision=revision, archived_utc=utc(), restore_verified_utc=utc())
+    verify_memory(hub.download_memory(remote, revision), manifest)
+    if sha_file(source) != manifest['source_sha256'] or source.stat().st_mtime_ns != before.st_mtime_ns:
+        raise RuntimeError('SOURCE_CHANGED_AFTER_UPLOAD')
+    remote_manifest = 'manifests/' + key + '/' + manifest['source_sha256'] + '.json'
+    encoded = (json.dumps(manifest, sort_keys=True) + '\n').encode()
+    manifest_revision = hub.upload(io.BytesIO(encoded), remote_manifest)
+    if hub.download_memory(remote_manifest, manifest_revision) != encoded:
+        raise RuntimeError('MANIFEST_CHECKSUM_MISMATCH')
+    manifest.update(manifest_object=remote_manifest, manifest_revision=manifest_revision, evicted=False)
+    atomic_json(receipt, manifest)
+    marker = source.with_name(source.name + '.hf-cloud.json')
+    atomic_json(marker, manifest)
+    if source.stat().st_mtime_ns != before.st_mtime_ns or sha_file(source) != manifest['source_sha256']:
+        raise RuntimeError('SOURCE_CHANGED_BEFORE_EVICTION')
+    source.unlink()
+    manifest['evicted'] = True
+    atomic_json(receipt, manifest)
+    atomic_json(marker, manifest)
+    return dict(status='ARCHIVED', source=str(source), source_bytes=before.st_size,
+                archive_bytes=len(payload), sha256=manifest['source_sha256'], evicted=True,
+                restore_verified=True, memory_bootstrap=True)
+
 def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
     source = Path(source)
     if source.is_symlink():
@@ -105,6 +175,8 @@ def archive_file(source, hub, ledger, work, *, evict=False, allowed_cold=()):
     receipt = ledger / (key + '.json')
     if evict and receipt.exists() and json.loads(receipt.read_text()).get('evicted') is True:
         return dict(status='RESTORED_CACHE_PROTECTED', source=str(source), source_bytes=before.st_size)
+    if evict and shutil.disk_usage(work).free < RESERVE + 96 * 1024**2:
+        return archive_memory(source, hub, receipt, before, key)
     if not evict and receipt.exists():
         old = json.loads(receipt.read_text())
         if old.get('source_bytes') == before.st_size and old.get('source_mtime_ns') == before.st_mtime_ns:
