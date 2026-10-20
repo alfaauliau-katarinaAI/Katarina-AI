@@ -17,7 +17,7 @@ const page=JSON.parse(source.slice(source.indexOf('const PAGE=')+11,source.index
 const script=page.split('<script>')[1].split('</script>')[0];
 assert.match(page,/touch-action:none/);
 assert.match(page,/max-width:420px/);
-assert.match(page,/id="network"/);
+assert.match(page,/id="network"/);assert.ok(!page.includes('class="parallel-board"'));assert.ok(!page.includes('id="parallel-grid"'));assert.match(page,/animasi penunggu/);
 assert.ok(!page.includes('type="password"'));
 const nodes=new Map(),intervals=[],requests=[],frames=[],draws=[];
 const context=new Proxy({}, {get:(target,key)=>target[key]||((...args)=>draws.push([key,...args])),set:(t,k,v)=>(t[k]=v,true)});
@@ -76,6 +76,7 @@ run('renderLearning({status:"NOT_ATTESTED"},{research_growth:growth,model:{telem
 assert.ok(get('learning-proof').children.some(c=>c.textContent.includes('12 eksperimen')));
 assert.ok(get('learning-proof').children.some(c=>c.textContent==='CHECKPOINT KOGNITIF BELUM SINKRON'));
 assert.ok(draws.some(d=>d[0]==='lineTo'));assert.ok(draws.some(d=>d[0]==='drawImage'));
+assert.equal(run('ambientAllowed()'),true);const ambientDraws=draws.length;run('draw(150)');assert.ok(draws.slice(ambientDraws).some(d=>d[0]==='arc'));
 const cachedDraws=draws.length;run('draw(200)');assert.equal(draws.slice(cachedDraws).filter(d=>d[0]==='fillText').length,0);
 assert.equal(run('orbitOn'),false);
 run('acceptPulseEvents([packet.agent_board.activity.current,packet.agent_board.activity.current],200,false)');assert.equal(run('eventPulses.filter(e=>e.phase==="TECHNICAL").length'),1);
@@ -96,9 +97,9 @@ run('eventPulses=[];acceptPulseEvents([{phase:"TECHNICAL",seq:101,state:"STARTED
 assert.equal(run('eventPulses.length'),3);assert.equal(run('new Set(eventPulses.map(p=>p.start)).size'),1);
 run('acceptPulseEvents([{phase:"TECHNICAL",seq:102,state:"DONE",at_utc:new Date().toISOString()}],400,false)');assert.equal(run('eventPulses.length'),3);
 run('acceptPulseEvents([{phase:"TECHNICAL",seq:104,state:"DONE",at_utc:new Date(Date.now()-25000).toISOString()}],400,false)');assert.equal(run('eventPulses.length'),3);
-run('renderParallelBoard({worker_runtime:{status:"OBSERVED",workers:[{status:"PAUSED_LOW_DISK",fresh:true,completed:9}]},activity:{events:[]}})');assert.equal(get('parallel-grid').children[0].dataset.state,'paused');assert.match(get('parallel-count').textContent,/1 JEDA/);
+
 assert.ok(run('graph.nodes.some(n=>n.kind==="event")'));assert.ok(run('graph.edges.some(e=>e.relation==="EVENT_REPORT")'));
-get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),false);
+get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),false);assert.equal(run('ambientAllowed()'),false);
 get('pause-pulse').listeners.click();assert.equal(run('pulseOn'),true);
 get('reset-view').listeners.click();assert.equal(run('cameraInput.zoom'),1);
 get('network').listeners.pointerdown({pointerId:1,clientX:20,clientY:20});

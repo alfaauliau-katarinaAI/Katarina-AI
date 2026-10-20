@@ -55,6 +55,7 @@ assert.equal((await request('/turn',{},token)).status,403);
 assert.equal((await request('/status',{},token)).status,403);
 assert.equal((await request('/ingest',packet,token)).status,202);
 const response=await request('/public-status'),body=await response.text();
+const etag=response.headers.get('ETag');assert.ok(etag);const unchanged=await worker.fetch(new Request('https://example.chatgpt.site/public-status',{headers:{'If-None-Match':etag}}),env);assert.equal(unchanged.status,304);assert.equal(await unchanged.text(),'');
 assert.equal(response.status,200);assert.equal(response.headers.get('Cache-Control'),'no-store');
 assert.ok(!body.includes('PRIVATE_SENTINEL'));assert.ok(!body.includes('positions_count'));
 assert.equal(JSON.parse(body).agent_board.activity.current.phase,'TECHNICAL');
@@ -72,7 +73,7 @@ assert.equal((await request('/ingest',packet,token)).status,409);
 const stale=structuredClone(packet);stale.captured_at_utc=new Date(Date.now()-121000).toISOString();
 assert.equal((await request('/ingest',stale,token)).status,400);
 stored.raw=JSON.stringify(stale);
-assert.equal((await request('/public-status')).status,503);
+assert.equal((await request('/public-status')).status,503);assert.equal((await worker.fetch(new Request('https://example.chatgpt.site/public-status',{headers:{'If-None-Match':etag}}),env)).status,503);
 console.log('PASS_WORKER_AUTH_PRIVACY_ACTIVITY_EXPIRY');
 """
         result=subprocess.run([shutil.which('node'),'--input-type=module'],
