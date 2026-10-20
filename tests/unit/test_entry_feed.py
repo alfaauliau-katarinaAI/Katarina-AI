@@ -62,3 +62,14 @@ class EntryFeedTests(unittest.TestCase):
             self.assertEqual(feed['realized_summary']['closed_count'],22)
             self.assertEqual(feed['realized_summary']['net_pnl'],39)
             self.assertEqual(feed['realized_summary']['currency'],'USC')
+
+    def test_legacy_currency_requires_same_account_binding(self):
+        from katarina.monitoring.entry_feed import _attested_currency
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);p=root/'demo-forward';p.mkdir();now=datetime.now(timezone.utc);binding='a'*64
+            with closing(sqlite3.connect(p/'experiment.sqlite3')) as db,db:
+                db.execute('CREATE TABLE demo_account_state(id,payload)');db.execute('INSERT INTO demo_account_state VALUES(1,?)',(json.dumps(dict(binding=binding)),))
+            snapshot=dict(status='OBSERVED',mode='DEMO',currency='USC',private_account_binding=binding,as_of_utc=now.isoformat())
+            latest=dict(observed_at_utc=now.isoformat(),broker_account_monitor=dict(position_snapshot=snapshot))
+            (root/'latest.json').write_text(json.dumps(latest));self.assertEqual(_attested_currency(root,now),'USC')
+            snapshot['private_account_binding']='b'*64;(root/'latest.json').write_text(json.dumps(latest));self.assertIsNone(_attested_currency(root,now))

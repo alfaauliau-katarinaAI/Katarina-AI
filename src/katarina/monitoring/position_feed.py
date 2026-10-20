@@ -22,7 +22,7 @@ def read_position_feed(root,*,allowed,now=None):
     snapshot=monitor.get('position_snapshot') or {}
     if not (allowed and _fresh(latest,now,90,'observed_at_utc') and monitor.get('connected') is True
             and monitor.get('positions_read_success') is True and snapshot.get('status')=='OBSERVED'
-            and snapshot.get('as_of_utc')==latest.get('observed_at_utc')
+            and snapshot.get('as_of_utc')==monitor.get('observed_at_utc',snapshot.get('as_of_utc')) and _fresh(snapshot,now)
             and isinstance(snapshot.get('currency'),str) and re.fullmatch(r'[A-Z][A-Z0-9]{2,7}',snapshot['currency'])):
         return empty
     owned={};ownership=False
@@ -42,8 +42,8 @@ def read_position_feed(root,*,allowed,now=None):
         if not isinstance(p,dict) or not re.fullmatch('[a-f0-9]{24}',str(p.get('id',''))) or not _symbol(p.get('symbol')) or p.get('side') not in ('BUY','SELL'):
             continue
         try:
-            stamp=datetime.fromisoformat(p['opened_utc'])
-            if stamp.tzinfo is None or stamp>now:continue
+            stamp=datetime.fromisoformat(p['opened_utc']) if p.get('opened_utc') else None
+            if stamp is not None and (stamp.tzinfo is None or stamp>now):continue
         except (ValueError,TypeError,KeyError):continue
         row=dict(id=p['id'],symbol=p['symbol'],side=p['side'],opened_utc=p['opened_utc'],
                  owner='KATARINA_DEMO' if ownership and owned.get(p['id'])==(p['symbol'],p['side']) else 'UNATTRIBUTED')

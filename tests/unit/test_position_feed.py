@@ -14,7 +14,7 @@ class PositionFeedTests(unittest.TestCase):
             ACCOUNT_TRADE_MODE_DEMO=0
             def terminal_info(self):return S(connected=True,trade_allowed=True)
             def account_info(self):return S(currency='USC',trade_mode=0,balance=9999,equity=10000,margin=0,margin_free=9999,login=123)
-            def positions_get(self):return [S(ticket=7,symbol='XAUUSD.vx',type=0,price_open=4000,time=now.timestamp()-50,price_current=4001,sl=3990,tp=4020,profit=100,swap=-2),S(ticket=8,symbol='EURUSD.vx',type=1,price_open=1.1,time=now.timestamp()-40,price_current=1.2,sl=0,tp=0,profit=-20,swap=-1)]
+            def positions_get(self):return [S(ticket=7,symbol='XAUUSD.vx',type=0,price_open=4000,time=now.timestamp()-50,price_current=4001,sl=3990,tp=4020,profit=100,swap=-2),S(ticket=8,symbol='EURUSD.vx',type=1,price_open=1.1,time=now.timestamp()+10800,price_current=1.2,sl=0,tp=0,profit=-20,swap=-1)]
             def orders_get(self):return []
         broker=Broker();broker.demo_observation_enabled=True
         monitor=inspect_broker_account(broker,observed_at_utc=now)
@@ -27,7 +27,7 @@ class PositionFeedTests(unittest.TestCase):
                 db.execute('CREATE TABLE demo_outbox(state,position_id,intent_json)');db.execute('INSERT INTO demo_outbox VALUES(?,?,?)',('OPEN',7,json.dumps(dict(symbol='XAUUSD.vx',side='BUY'))))
             feed=read_position_feed(root,allowed=True,now=now)
             self.assertEqual(feed['floating_total'],77);self.assertEqual(feed['currency'],'USC');self.assertEqual(feed['katarina_floating'],98)
-            self.assertEqual(feed['positions'][0]['owner'],'KATARINA_DEMO');self.assertEqual(feed['positions'][1]['owner'],'UNATTRIBUTED')
+            self.assertEqual(feed['positions'][0]['owner'],'KATARINA_DEMO');self.assertEqual(feed['positions'][1]['owner'],'UNATTRIBUTED');self.assertIsNone(feed['positions'][1]['opened_utc'])
             for key in ('ticket','balance','equity','login','volume'):self.assertNotIn('"'+key+'"',json.dumps(feed))
             self.assertEqual(read_position_feed(root,allowed=False,now=now)['status'],'NOT_ATTESTED')
             self.assertEqual(read_position_feed(root,allowed=True,now=now+timedelta(seconds=91))['status'],'NOT_ATTESTED')

@@ -34,6 +34,27 @@ def _db(path):
     return db
 
 
+def _attested_currency(root,now):
+    # Legacy intents did not persist currency. Bind current currency to the same
+    # immutable enrolment account hash; never infer USD from a symbol or amount.
+    try:
+        latest=_read(root/'latest.json');snapshot=latest.get('broker_account_monitor',{}).get('position_snapshot',{})
+        if not (_fresh(latest,now,180,'observed_at_utc') and _fresh(snapshot,now)
+                and snapshot.get('status')=='OBSERVED' and snapshot.get('mode')=='DEMO'):
+            return None
+        with closing(_db(root/'demo-forward/experiment.sqlite3')) as db:
+            row=db.execute('SELECT payload FROM demo_account_state WHERE id=1').fetchone()
+        binding=json.loads(row[0]).get('binding') if row else None
+        currency=snapshot.get('currency')
+        if (isinstance(binding,str) and re.fullmatch('[a-f0-9]{64}',binding)
+                and binding==snapshot.get('private_account_binding') and isinstance(currency,str)
+                and re.fullmatch(r'[A-Z][A-Z0-9]{2,7}',currency)):
+            return currency
+    except (OSError,sqlite3.Error,ValueError,TypeError,AttributeError):
+        pass
+    return None
+
+
 def read_entry_feed(root, *, allowed, now=None):
     now = now or datetime.now(timezone.utc)
     root = Path(root)
@@ -45,6 +66,7 @@ def read_entry_feed(root, *, allowed, now=None):
             and decision.get('pid') == executor['pid'] and _fresh(decision, now)
             and decision.get('live_authorized') is False):
         return empty
+    attested_currency=_attested_currency(root,now)
     out = dict(status='OBSERVED', as_of_utc=decision['as_of_utc'], executor_pid=executor['pid'],
                source='KATARINA_DEMO_LEDGER', mode='DEMO', history=[], plans=[],
                history_status='NOT_ATTESTED', plans_status='NOT_ATTESTED', live_authorized=False)
@@ -66,7 +88,7 @@ def read_entry_feed(root, *, allowed, now=None):
                 if state == 'CLOSED':
                     closed = json.loads(outcome or '{}')
                     row['closed_observed_utc'] = _stamp(closed.get('closed_observed_at'))
-                    currency=(intent.get('risk') or {}).get('account_currency')
+                    currency=(intent.get('risk') or {}).get('account_currency') or attested_currency
                     net=closed.get('net_profit_native')
                     if (closed.get('prospective_broker_outcome') is True and isinstance(currency,str)
                             and re.fullmatch(r'[A-Z][A-Z0-9]{2,7}',currency) and type(net) in (int,float)
@@ -92,7 +114,7 @@ def read_entry_feed(root, *, allowed, now=None):
             closed_rows=orders.execute("SELECT intent_json,outcome_json FROM demo_outbox WHERE state='CLOSED' LIMIT 10000").fetchall()
         nets=[];currencies=set()
         for raw,done in closed_rows:
-            i=json.loads(raw);c=json.loads(done or '{}');currency=(i.get('risk') or {}).get('account_currency');net=c.get('net_profit_native')
+            i=json.loads(raw);c=json.loads(done or '{}');currency=(i.get('risk') or {}).get('account_currency') or attested_currency;net=c.get('net_profit_native')
             if (c.get('prospective_broker_outcome') is not True or not isinstance(currency,str)
                     or not re.fullmatch(r'[A-Z][A-Z0-9]{2,7}',currency) or type(net) not in (int,float)
                     or not math.isfinite(net) or abs(net)>=1e12):
