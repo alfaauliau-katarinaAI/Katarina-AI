@@ -7,8 +7,8 @@ decision engine, and a separate quote-only observation journal.
 Never uses the live/order gateway, never writes to GitHub, and never
 automatically promotes signals. Legacy observers must remain disabled.
 """
-from katarina.monitoring.snapshot_io import replace_snapshot
 from __future__ import annotations
+from katarina.monitoring.snapshot_io import replace_snapshot
 from dataclasses import replace
 from datetime import datetime,timedelta,timezone
 from hashlib import sha256

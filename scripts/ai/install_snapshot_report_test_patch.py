@@ -9,14 +9,17 @@ patches=['intelligence/brain_observer.py','intelligence/continuous_observation.p
 for name in patches:
  p=root/'src/katarina'/name
  s=p.read_text(encoding='utf-8')
+ s=s.replace('from katarina.monitoring.snapshot_io import replace_snapshot\n','')
  changed,count=re.subn(r'\b(temp|tmp)\.replace\(([^\n]+?)\)',lambda m:'replace_snapshot('+m[1]+','+m[2]+')',s)
- if count:
+ if count or 'replace_snapshot' in changed:
   if 'from katarina.monitoring.snapshot_io import replace_snapshot' not in changed:
-   pos=changed.index('\nfrom ');changed=changed[:pos]+'\nfrom katarina.monitoring.snapshot_io import replace_snapshot'+changed[pos:]
+   futures=list(re.finditer(r'^from __future__ import .+$',changed,re.M));pos=futures[-1].end() if futures else changed.index('\nfrom ');changed=changed[:pos]+'\nfrom katarina.monitoring.snapshot_io import replace_snapshot'+changed[pos:]
   payload[str(p.relative_to(root)).replace('\\','/')]=changed
  elif 'replace_snapshot' not in s:raise RuntimeError('UNEXPECTED_SNAPSHOT_SOURCE:'+name)
+for relative,content in payload.items():compile(content,relative,'exec')
 for relative,content in payload.items():
  p=root/relative
- if p.exists():shutil.copy2(p,backup/relative.replace('/','_'))
+ saved=backup/relative.replace('/','_')
+ if p.exists() and not saved.exists():shutil.copy2(p,saved)
  p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content,encoding='utf-8');py_compile.compile(str(p),doraise=True)
 print('SNAPSHOT_REPORT_TEST_PATCH_INSTALLED')
