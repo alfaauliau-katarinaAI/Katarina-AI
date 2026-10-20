@@ -4,6 +4,7 @@ on:
     paths:
       - 'scripts/ai/hf_archive_sync.py'
       - 'scripts/ai/install_hf_archive_test.py'
+      - 'scripts/ai/run_hf_archive_sync.py'
       - 'tests/unit/test_hf_archive_sync.py'
       - '.github/workflows/hf-archive-checks.yml'
   workflow_dispatch:
@@ -18,4 +19,4 @@ jobs:
         with:
           persist-credentials: false
       - run: python -m unittest discover -s tests/unit -p test_hf_archive_sync.py -v
-      - run: python -m py_compile scripts/ai/hf_archive_sync.py scripts/ai/install_hf_archive_test.py
+      - run: python -m py_compile scripts/ai/hf_archive_sync.py scripts/ai/install_hf_archive_test.py scripts/ai/run_hf_archive_sync.py

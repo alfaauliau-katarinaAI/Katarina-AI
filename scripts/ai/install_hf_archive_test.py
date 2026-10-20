@@ -67,9 +67,14 @@ def main():
     mod.atomic_json(BASE/'config.json',config)
     work=BASE/'work';work.mkdir(exist_ok=True)
     subprocess.run(['compact.exe','/C','/I','/Q',str(work)],capture_output=True,check=True)
-    for filename in ('run-hf-sync.ps1',):
-        (BASE/filename).write_text("$ErrorActionPreference='Stop'\n& '"+sys.executable+"' '"+str(target)+"' >> '"+str(BASE/'sync.log')+"' 2>&1\nexit $LASTEXITCODE\n",encoding='utf-8')
-    command='powershell.exe -NoProfile -ExecutionPolicy Bypass -File "'+str(BASE/'run-hf-sync.ps1')+'"'
+    runner=BASE/'run-hf-sync.py'
+    runner_url='https://raw.githubusercontent.com/alfaauliau-katarinaAI/Katarina-AI/'+a.commit+'/scripts/ai/run_hf_archive_sync.py'
+    with urllib.request.urlopen(runner_url,context=ssl.create_default_context(cafile=certifi.where()),timeout=30) as response:
+        runner_source=response.read(10001)
+    if len(runner_source)>10000:raise RuntimeError('RUNNER_TOO_LARGE')
+    compile(runner_source,runner_url,'exec')
+    runner.write_bytes(runner_source)
+    command='"'+sys.executable+'" "'+str(runner)+'"'
     subprocess.run(['schtasks','/Create','/TN','KatarinaHFResearchArchiveSync','/SC','MINUTE','/MO','10','/RU','SYSTEM','/RL','HIGHEST','/TR',command,'/F'],capture_output=True,check=True)
     print(json.dumps(dict(installed=True,repo=mod.REPO,authenticated=True,private=True,
                          cold_files=len(cold),cold_bytes=sum(q.stat().st_size for q in cold),
