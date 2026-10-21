@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — biaya riset memakai spread tipikal
+
+- Memori riset VPS 19 Oktober (11.516 eksperimen) menunjukkan instrumen menjelaskan 99% variasi
+  hasil dan biaya tersirat ~1,26 range H1 per trade: spread diambil dari satu kutipan saat
+  rollover/kutipan basi.
+- Lab riset (`broker-lab-v2`) kini memakai median spread per candle H1 dari broker (minimal 100
+  sampel); kutipan saat ini hanya cadangan. Sumber, jumlah sampel, kutipan saat ini, dan rasio
+  spread/median range dicatat di setiap run.
+- Instrumen dengan spread tipikal > 20% median range H1 ditandai `COST_PROHIBITIVE` dan tidak
+  diuji worker. Cadangan slippage 0,2 range dan kriteria lolos tidak berubah.
+
 ## 2026-10-21 — perapian repositori (tanpa perubahan perilaku)
 
 - 45 skrip riset sekali pakai dan 27 output riset 12 Oktober yang tidak dirujuk lagi

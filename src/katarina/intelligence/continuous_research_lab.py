@@ -9,9 +9,17 @@ import math
 from pathlib import Path
 import shutil
 
-VERSION = 'broker-lab-v1'
+VERSION = 'broker-lab-v2'
 CHUNK = 2048
 MAX_HISTORY = 65536
+# Cost proxy: one live quote taken at rollover or on a stale market made the
+# implied cost ~1 H1 range per trade (2026-10-19 memory: instrument explained
+# 99% of results). Use the median of per-bar broker spreads instead.
+MIN_SPREAD_SAMPLES = 100
+# A typical spread above this share of the median H1 range leaves no room for
+# any H1-horizon edge; such instruments are skipped, not tested and rejected.
+MAX_SPREAD_TO_RANGE = 0.20
+RANGE_WINDOW = 512
 
 
 def catalog_symbols(catalog):
@@ -19,6 +27,53 @@ def catalog_symbols(catalog):
     return sorted({s.name for s in catalog if isinstance(getattr(s, 'name', None), str)
                    and re.fullmatch(r'[A-Za-z0-9_.#-]{1,40}', s.name)
                    and getattr(s, 'trade_mode', 0) in (1, 2, 4)})
+
+
+def _field(row, key):
+    try:
+        return float(row[key])
+    except (KeyError, IndexError, ValueError, TypeError):
+        return None
+
+
+def typical_spread(broker, symbol, block):
+    """Median per-bar broker spread in price units; current quote only as fallback."""
+    point = None
+    try:
+        info = broker.symbol_info(symbol)
+        point = float(info.point) if info is not None else None
+    except (AttributeError, TypeError, ValueError):
+        point = None
+    samples = []
+    if point and math.isfinite(point) and point > 0 and block is not None:
+        for row in block:
+            value = _field(row, 'spread')
+            if value is not None and math.isfinite(value) and value > 0:
+                samples.append(value * point)
+    tick = None
+    try:
+        quote = broker.symbol_info_tick(symbol)
+        if quote and 0 < quote.bid <= quote.ask:
+            tick = float(quote.ask - quote.bid)
+    except (AttributeError, TypeError, ValueError):
+        tick = None
+    if len(samples) >= MIN_SPREAD_SAMPLES:
+        samples.sort()
+        middle = len(samples) // 2
+        median = samples[middle] if len(samples) % 2 else (samples[middle - 1] + samples[middle]) / 2
+        return dict(price=median, source='MEDIAN_H1_BAR_SPREAD', samples=len(samples), current_quote=tick)
+    if tick is not None:
+        return dict(price=tick, source='CURRENT_QUOTE_FALLBACK', samples=0, current_quote=tick)
+    return None
+
+
+def cost_gate(rows, spread):
+    """Typical spread as a share of the median recent H1 range."""
+    ranges = sorted(r[2] - r[3] for r in rows[-RANGE_WINDOW:] if r[2] - r[3] > 0)
+    if not ranges:
+        return None, True
+    ratio = spread / ranges[len(ranges) // 2]
+    return ratio, ratio > MAX_SPREAD_TO_RANGE
 
 
 def setup(db):
@@ -126,14 +181,20 @@ def step(db, broker, root, now, *, emit=lambda *a,**k:None):
             ident=sha256((VERSION+symbol+digest).encode()).hexdigest()
             if not db.execute('SELECT 1 FROM lab_runs WHERE id=?',(ident,)).fetchone():
                 emit('EXPERIMENT','STARTED',symbol=symbol)
-                info=broker.symbol_info_tick(symbol)
-                spread=float(info.ask-info.bid) if info and 0<info.bid<=info.ask else None
-                if spread is not None:
+                cost=typical_spread(broker,symbol,blocks[0])
+                if cost is not None:
+                    spread=cost['price']
+                    ratio,prohibitive=cost_gate(rows,spread)
                     result=evaluate(rows,spread)
+                    result.update(spread_source=cost['source'],spread_samples=cost['samples'],
+                                  current_quote_spread=cost['current_quote'],
+                                  spread_to_median_range=round(ratio,6) if ratio is not None else None,
+                                  cost_prohibitive=prohibitive)
                     result.update(version=VERSION,spread_proxy_price=spread,gap_intervals=sum(b[0]-a[0]!=3600 for a,b in zip(rows,rows[1:])),bars=len(rows),first_raw_broker_stamp=rows[0][0],last_raw_broker_stamp=rows[-1][0],data_sha256=digest)
                     with db:
                         db.execute('INSERT INTO lab_runs VALUES(?,?,?,?,?)',(ident,symbol,now.isoformat(),digest,json.dumps(result,allow_nan=False)))
-                        db.execute("UPDATE lab_universe SET status='EXPLORATORY_ONLY' WHERE symbol=?",(symbol,))
+                        db.execute('UPDATE lab_universe SET status=? WHERE symbol=?',
+                                   ('COST_PROHIBITIVE' if prohibitive else 'EXPLORATORY_ONLY',symbol))
                     emit('EXPERIMENT','DONE',symbol=symbol,count=6)
                 else: emit('EXPERIMENT','FAILED',symbol=symbol)
     except Exception:

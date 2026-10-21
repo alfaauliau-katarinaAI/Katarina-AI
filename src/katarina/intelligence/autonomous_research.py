@@ -124,7 +124,10 @@ class ResearchWorker:
                     if len(rows)<512: continue
                     last=data.execute('SELECT result_json FROM lab_runs WHERE symbol=? ORDER BY created_utc DESC LIMIT 1',(symbol,)).fetchone()
                     if not last: continue
-                    spread=json.loads(last[0]).get('spread_proxy_price')
+                    lab=json.loads(last[0])
+                    # Instruments whose typical spread exceeds the cost gate are not tested.
+                    if lab.get('cost_prohibitive') is True: continue
+                    spread=lab.get('spread_proxy_price')
                     if not isinstance(spread,(int,float)) or spread<0: continue
                     digest=sha256(json.dumps(rows,separators=(',',':')).encode()).hexdigest()
                     for config in GRID:
@@ -138,6 +141,7 @@ class ResearchWorker:
                         try:
                             result=evaluate(rows,config,spread)
                             result["spread_proxy_price"]=spread
+                            result["spread_source"]=lab.get('spread_source','LEGACY_CURRENT_QUOTE')
                             # Two short write transactions instead of one long one.
                             with jobs:
                                 preserve_dataset(jobs,digest,rows)
