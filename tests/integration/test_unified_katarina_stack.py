@@ -8,7 +8,7 @@ import sqlite3
 import tempfile
 import unittest
 
-from scripts.ai.verify_unified_katarina import (
+from katarina.governance.unified_verification import (
     verify,build_stage3_evidence_backlog,
 )
 from katarina.intelligence.shadow.prospective_shadow_book import ProspectiveShadowBook

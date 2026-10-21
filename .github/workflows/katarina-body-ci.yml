@@ -199,7 +199,7 @@ jobs:
           PYTHONPATH=src python - <<'PY'
           import json,os
           from pathlib import Path
-          from scripts.ai.audit_self_evolution_runner import AS_OF,simulated_history
+          from katarina.governance.self_evolution_audit import AS_OF,simulated_history
           from katarina.intelligence.cognition.self_evolution_lab import evaluate_shadow_self_evolution
           from katarina.governance.external_model_bridge import verdict_from_text
           from katarina.governance.multi_model_evolution_review import review_candidate

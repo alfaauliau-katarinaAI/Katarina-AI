@@ -311,9 +311,9 @@
       "sha256": "6fb11cdf4da537fdd75e516da7d5d154d3522c57b6ed86395b4aff07c2a452aa"
     },
     "scripts/ai/audit_self_evolution_runner.py": {
-      "bytes": 7224,
-      "normalized_sha256": "effd53d00a34b7736bc95151923fb21b639ad361f6702876cd13b9fe094bad89",
-      "sha256": "effd53d00a34b7736bc95151923fb21b639ad361f6702876cd13b9fe094bad89"
+      "bytes": 1890,
+      "normalized_sha256": "162d8a25b76e1ca42f8d0fd23e59e97b8d77dfcab5faf9acfaf12bfc25a91cdb",
+      "sha256": "162d8a25b76e1ca42f8d0fd23e59e97b8d77dfcab5faf9acfaf12bfc25a91cdb"
     },
     "scripts/ai/compress_research_storage_test.py": {
       "bytes": 2629,
@@ -461,14 +461,14 @@
       "sha256": "f7b573eb94e5463e49ed27bbd13516baf8d462336fa4034979d78ec0079be4c8"
     },
     "scripts/ai/verify_master_design_traceability.py": {
-      "bytes": 6044,
-      "normalized_sha256": "6ae23da453fc5c9fb52ab1c03cfd3b44bab1f7e5010fbf9b2067aa61e161e477",
-      "sha256": "6ae23da453fc5c9fb52ab1c03cfd3b44bab1f7e5010fbf9b2067aa61e161e477"
+      "bytes": 6050,
+      "normalized_sha256": "5be8494e49b92dbfae20210806845766b31b1a8870ed0855ce162a5dfb38359c",
+      "sha256": "5be8494e49b92dbfae20210806845766b31b1a8870ed0855ce162a5dfb38359c"
     },
     "scripts/ai/verify_unified_katarina.py": {
-      "bytes": 15745,
-      "normalized_sha256": "b944572a10b1d26fde5592558b986b42056554d2dbdb7dea3654f9be7d2e3d27",
-      "sha256": "b944572a10b1d26fde5592558b986b42056554d2dbdb7dea3654f9be7d2e3d27"
+      "bytes": 1132,
+      "normalized_sha256": "dc744cf5e5439fe8c826607d9e057af5fa26db8a74ca4fac7942b899e66c4845",
+      "sha256": "dc744cf5e5439fe8c826607d9e057af5fa26db8a74ca4fac7942b899e66c4845"
     },
     "scripts/ai/verify_virtual_broker_specs.py": {
       "bytes": 5381,
@@ -1174,6 +1174,16 @@
       "bytes": 4965,
       "normalized_sha256": "1a150ad5f82b2caf1bca6b8a8b4f6e35b6c32f588c3db0cb52d3d00652d73925",
       "sha256": "1a150ad5f82b2caf1bca6b8a8b4f6e35b6c32f588c3db0cb52d3d00652d73925"
+    },
+    "src/katarina/governance/self_evolution_audit.py": {
+      "bytes": 5798,
+      "normalized_sha256": "0ebe6f06ab93687c017b48f87879be86635a0e43219d57bd5fb26ebd702c14fe",
+      "sha256": "0ebe6f06ab93687c017b48f87879be86635a0e43219d57bd5fb26ebd702c14fe"
+    },
+    "src/katarina/governance/unified_verification.py": {
+      "bytes": 15228,
+      "normalized_sha256": "cb3fd021a2c0537b577d86bbf9f557ecb50bc77cf7c05920b9fc577ed3bd021c",
+      "sha256": "cb3fd021a2c0537b577d86bbf9f557ecb50bc77cf7c05920b9fc577ed3bd021c"
     },
     "src/katarina/health/__init__.py": {
       "bytes": 270,
