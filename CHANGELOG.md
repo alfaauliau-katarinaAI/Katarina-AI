@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — sinkronisasi stop drawdown harian 35% dan status proyek
+
+- Stop entry baru di drawdown harian **35%** (keputusan Owner) kini sama di semua tempat: `config/risk_governor_v2.json`,
+  `RiskGovernor`, `DailyDrawdownTracker`, `EvidenceRiskGate` (riset; sebelumnya 2%), manifest tahap 01–40 dan dokumen
+  operational hardening (sebelumnya menulis 10% harian / 20% total; config sebenarnya 35% / 35%).
+- Tes baru `tests/unit/engines/test_daily_drawdown_sync.py` menggagalkan CI jika salah satu tempat berbeda.
+- `docs/PROJECT_STATUS.md` dan README ditulis ulang sesuai kondisi nyata: observer VPS belum berjalan (menunggu login
+  akun demo), DEMO forward tidak berjalan, edge belum terbukti, VPS dan repo setelah perampingan. LIVE tetap OFF.
+
 ## 2026-10-22 — rampingkan repo (E): sisa yang tidak terpakai
 
 - Dihapus modul yang yatim setelah A–D: lab riset (replay kausal, rekonsiliasi tick, forensik bar, scalp

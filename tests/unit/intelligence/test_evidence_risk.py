@@ -91,7 +91,7 @@ class EvidenceRiskTests(unittest.TestCase):
                                                   self.state).level, "WAIT")
 
     def test_drawdown_stop_and_reduction(self):
-        for fields, reason in (({"day_drawdown": .02}, "daily_drawdown_stop"),
+        for fields, reason in (({"day_drawdown": .35}, "daily_drawdown_stop"),
                                ({"peak_drawdown": .10}, "peak_drawdown_stop")):
             d = self.gate.assess(self.evidence, replace(self.state, **fields))
             self.assertEqual(d.level, "WAIT")

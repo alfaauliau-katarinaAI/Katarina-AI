@@ -72,7 +72,8 @@ class EvidenceRiskGate:
     """
     MAX_OPEN = .02
     MAX_CORRELATED = .015
-    DAILY_STOP = .02
+    # Owner daily stop-new-entries threshold, same as config/risk_governor_v2.json.
+    DAILY_STOP = .35
     PEAK_STOP = .10
     PEAK_REDUCE = .05
 

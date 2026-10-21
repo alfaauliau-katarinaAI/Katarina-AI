@@ -6,8 +6,8 @@ Implemented:
 - account-wide position + pending-order + in-flight reservation risk;
 - manual/foreign pending exposure included in the same 8% open-risk budget;
 - 5% per-entry ceiling preserved;
-- stateful 10% daily drawdown with deposit/withdrawal neutrality and day reset;
-- 20% total drawdown tracking;
+- stateful 35% daily drawdown (Owner stop for new entries) with deposit/withdrawal neutrality and day reset;
+- 35% total drawdown tracking;
 - broker-native OrderCalcProfit evidence book;
 - append-only restart persistence for reservations, pending risk, RR peak-R, broker-risk evidence and execution recovery;
 - partial-close / SL execution recovery with no duplicate command while in-flight and remainder retry after partial fills;

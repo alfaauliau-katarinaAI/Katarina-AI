@@ -42,7 +42,7 @@ python scripts/governance/audit_repo_hygiene.py --repo-root . --output build/rep
 python scripts/governance/audit_dependency_links.py --repo-root . --output build/validation/dependency-links.json
 ```
 
-Hasil 22 Oktober 2026 (setelah perampingan A–E): unit 1.136 OK, static 69 OK (4 skip), integration 204 OK,
+Hasil 22 Oktober 2026 (setelah perampingan A–E dan sinkronisasi DD 35%): unit 1.139 OK, static 69 OK (4 skip), integration 204 OK,
 hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah

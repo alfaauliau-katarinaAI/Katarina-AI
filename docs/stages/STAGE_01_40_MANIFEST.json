@@ -9,7 +9,7 @@
     "Stages 01-09 remain frozen.",
     "Stage 10-40 have implementation baselines and automated tests on the VPS.",
     "Stage 36 paper/demo harness is implemented but real broker demo evidence is still required.",
-    "Backtest, demo and real use one unified numeric risk profile: max 5% per entry, 10% daily drawdown, 8% aggregate open risk, 20% total drawdown.",
+    "Backtest, demo and real use one unified numeric risk profile: max 5% per entry, 35% daily drawdown (Owner stop for new entries), 8% aggregate open risk, 35% total drawdown.",
     "Stage 38 remains an execution-authorization gate; it no longer applies a smaller live-only risk cap."
   ],
   "records": [
