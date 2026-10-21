@@ -1,7 +1,6 @@
 import unittest
 from dataclasses import replace
 from katarina.intelligence.strategy_selector import StrategySelectionBrain,StrategyObservation
-from katarina.intelligence.brain import KatarinaAIBrain
 D=86_400_000_000_000
 
 class SelectorTests(unittest.TestCase):
@@ -51,8 +50,3 @@ class SelectorTests(unittest.TestCase):
         report=s.audit_final([],final_start_ns=140*D,final_end_ns=160*D)
         self.assertEqual(report["cells"][0]["result"],"REJECTED")
         self.assertFalse(report["validated_strategy"])
-    def test_brain_integration_is_research_only(self):
-        selector,evidence=KatarinaAIBrain().train_strategy_selector(self.rows(),
-            train_cutoff_ns=70*D,selection_end_ns=140*D)
-        self.assertTrue(evidence["research_only"])
-        self.assertFalse(evidence["live_risk_authorized"])

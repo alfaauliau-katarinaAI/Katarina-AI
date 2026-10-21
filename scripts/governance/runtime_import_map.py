@@ -147,7 +147,8 @@ class Graph:
             target = self._resolve(name)
             if target is None and name and "." not in name:
                 sibling = str(here / f"{name}.py")
-                target = sibling if sibling in self.by_module.values() else None
+                # Scripts and tests put script folders on sys.path and import by bare name.
+                target = sibling if sibling in self.by_module.values() else self.unique_basenames.get(f"{name}.py")
             if target and target != path:
                 out |= self._with_parents(target)
         if dynamic and path.startswith("src/"):
