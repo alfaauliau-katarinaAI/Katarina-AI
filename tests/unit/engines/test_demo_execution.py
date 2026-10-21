@@ -20,6 +20,10 @@ class Broker:
     TRADE_ACTION_DEAL = 1
     TRADE_RETCODE_DONE = 10009
     TRADE_RETCODE_DONE_PARTIAL = 10010
+    TRADE_RETCODE_REQUOTE = 10004
+    TRADE_RETCODE_TIMEOUT = 10012
+    DEAL_ENTRY_IN = 0
+    DEAL_ENTRY_OUT = 1
 
     def __init__(self):
         self.account = NS(login=123, server='TEST-DEMO', trade_mode=0,
@@ -29,6 +33,7 @@ class Broker:
         self.check_hook = lambda: None
         self.fail = False
         self.code = self.TRADE_RETCODE_DONE
+        self.deals, self.orders, self.positions = [], [], []
 
     def terminal_info(self): return self.terminal
     def account_info(self): return self.account
@@ -40,6 +45,12 @@ class Broker:
         self.sent.append(request)
         if self.fail: raise TimeoutError('private broker details')
         return NS(retcode=self.code, order=456, deal=789)
+    def history_deals_get(self, *args, **kwargs):
+        if 'position' in kwargs: return [d for d in self.deals if d.position_id == kwargs['position']]
+        if 'ticket' in kwargs: return [d for d in self.deals if d.ticket == kwargs['ticket']]
+        return list(self.deals)
+    def orders_get(self): return list(self.orders)
+    def positions_get(self, ticket=None): return [p for p in self.positions if p.ticket == ticket]
 
 
 class DemoExecutionTests(unittest.TestCase):
@@ -145,6 +156,61 @@ class DemoExecutionTests(unittest.TestCase):
         self.send()
         self.assertEqual(self.send(replace(self.intent, volume=.02))['status'], 'INTENT_ID_CONFLICT')
         self.assertEqual(len(self.broker.sent), 1)
+
+
+    def test_definitive_broker_rejection_is_terminal_and_unblocks(self):
+        self.broker.code = self.broker.TRADE_RETCODE_REQUOTE
+        self.assertEqual(self.send()['status'], 'DEMO_REJECTED')
+        self.broker.code = self.broker.TRADE_RETCODE_DONE
+        self.assertEqual(self.send(replace(self.intent, intent_id='next'))['status'], 'DEMO_ACCEPTED')
+        self.assertEqual(len(self.broker.sent), 2)
+
+    def test_ambiguous_timeout_still_blocks(self):
+        self.broker.code = self.broker.TRADE_RETCODE_TIMEOUT
+        self.assertEqual(self.send()['status'], 'DEMO_UNKNOWN')
+        self.assertEqual(self.send(replace(self.intent, intent_id='next'))['status'], 'DEMO_RECONCILIATION_REQUIRED')
+
+    def boundary_at(self, now):
+        clock = [now]
+        boundary = DemoExecutionBoundary(self.broker, self.gov, self.path, expected_login=123,
+            expected_server='TEST-DEMO', stop_requested=lambda: self.stop, clock=lambda: clock[0])
+        return boundary, clock
+
+    def test_unknown_without_deal_or_order_resolves_not_filled_after_grace(self):
+        self.broker.fail = True
+        self.send()
+        boundary, clock = self.boundary_at(1000. + 600)
+        boundary.reconcile()   # too early: stays blocking
+        self.assertEqual(self.send(replace(self.intent, intent_id='early'), boundary=self.boundary)['status'],
+                         'DEMO_RECONCILIATION_REQUIRED')
+        self.broker.orders = [NS(comment='KD:other')]
+        clock[0] = 1000. + 901
+        boundary.reconcile()
+        self.broker.fail = False
+        self.assertEqual(self.send(replace(self.intent, intent_id='after'))['status'], 'DEMO_ACCEPTED')
+
+    def test_pending_order_keeps_unknown_send_blocking(self):
+        from hashlib import sha256
+        self.broker.fail = True
+        self.send()
+        self.broker.orders = [NS(comment='KD:'+sha256(b'intent1').hexdigest()[:20])]
+        boundary, clock = self.boundary_at(1000. + 5000)
+        boundary.reconcile()
+        self.assertEqual(self.send(replace(self.intent, intent_id='next'))['status'], 'DEMO_RECONCILIATION_REQUIRED')
+
+    def test_closed_outcome_records_slippage_and_cost_split(self):
+        self.send()
+        deal = lambda **k: NS(magic=20261020, symbol='TEST', position_id=55, ticket=k.pop('ticket'), **k)
+        self.broker.deals = [deal(ticket=789, entry=0, type=0, volume=.01, price=100.4, profit=0., commission=-.07, swap=0., fee=0.),
+                             deal(ticket=790, entry=1, type=1, volume=.01, price=110., profit=9.6, commission=-.07, swap=-.2, fee=0.)]
+        result = self.boundary.reconcile()
+        self.assertEqual(result['closed'], 1)
+        import sqlite3, json
+        outcome = json.loads(sqlite3.connect(self.path).execute('SELECT outcome_json FROM demo_outbox').fetchone()[0])
+        self.assertAlmostEqual(outcome['entry_slippage_price'], .4)
+        self.assertAlmostEqual(outcome['commission_native'], -.14)
+        self.assertAlmostEqual(outcome['swap_native'], -.2)
+        self.assertFalse(outcome['live_authorized'])
 
 
 if __name__ == '__main__': unittest.main()

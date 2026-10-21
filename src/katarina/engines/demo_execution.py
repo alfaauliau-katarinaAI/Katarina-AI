@@ -18,6 +18,16 @@ import time
 
 from katarina.engines.risk import RiskAction, RiskRequest
 
+# Broker retcodes that state the request was not executed. Such a send is
+# terminal (REJECTED) instead of UNKNOWN, so it no longer blocks later intents.
+NOT_EXECUTED_RETCODES = ('TRADE_RETCODE_REQUOTE', 'TRADE_RETCODE_REJECT', 'TRADE_RETCODE_CANCEL',
+                         'TRADE_RETCODE_INVALID', 'TRADE_RETCODE_INVALID_VOLUME', 'TRADE_RETCODE_INVALID_PRICE',
+                         'TRADE_RETCODE_INVALID_STOPS', 'TRADE_RETCODE_TRADE_DISABLED',
+                         'TRADE_RETCODE_MARKET_CLOSED', 'TRADE_RETCODE_NO_MONEY',
+                         'TRADE_RETCODE_PRICE_CHANGED', 'TRADE_RETCODE_PRICE_OFF', 'TRADE_RETCODE_INVALID_FILL')
+# An UNKNOWN send with no matching deal or pending order after this long is NOT_FILLED.
+UNFILLED_AFTER_SECONDS = 900
+
 
 @dataclass(frozen=True)
 class DemoIntent:
@@ -201,8 +211,10 @@ class DemoExecutionBoundary:
             attempted = True
             result = b.order_send(request)
             code = getattr(result, 'retcode', None)
+            rejected = {getattr(b, name, None) for name in NOT_EXECUTED_RETCODES} - {None}
             state = ('ACCEPTED' if code == b.TRADE_RETCODE_DONE else
-                     'PARTIAL' if code == b.TRADE_RETCODE_DONE_PARTIAL else 'UNKNOWN')
+                     'PARTIAL' if code == b.TRADE_RETCODE_DONE_PARTIAL else
+                     'REJECTED' if type(code) is int and code in rejected else 'UNKNOWN')
             self._mark(i.intent_id, state, result)
             return receipt('DEMO_'+state, 1)
         except Exception:
@@ -228,6 +240,11 @@ class DemoExecutionBoundary:
                                                           datetime.fromtimestamp(self.clock(),timezone.utc)+timedelta(days=1))
                             comment='KD:'+sha256(ident.encode()).hexdigest()[:20]
                             candidates=None if candidates is None or len(candidates)>10000 else [d for d in candidates if getattr(d,'comment',None)==comment]
+                            if (candidates==[] and state in ('SUBMITTING','UNKNOWN')
+                                    and self.clock()-at>UNFILLED_AFTER_SECONDS and self._no_pending(comment)):
+                                # Old enough, no deal and no pending order: the send never executed.
+                                with db:db.execute("UPDATE demo_outbox SET state='NOT_FILLED',updated_at=? WHERE intent_id=?",(self.clock(),ident))
+                                continue
                         if candidates is None or len(candidates)!=1:continue
                         entry=candidates[0]
                         if (getattr(entry,'magic',None)!=self.magic or getattr(entry,'symbol',None)!=intent['symbol']
@@ -261,7 +278,16 @@ class DemoExecutionBoundary:
                             or abs(sum(d.volume for d in entries)-sum(d.volume for d in exits))>1e-8):continue
                     values=[getattr(d,k,None) for d in deals for k in ('profit','commission','swap','fee')]
                     if any(type(v) not in (int,float) or not isfinite(v) for v in values):continue
+                    sign=1 if intent['side']=='BUY' else -1
+                    filled=sum(d.volume for d in entries)
+                    prices=[getattr(d,'price',None) for d in entries]
+                    entry_price=(sum(p*d.volume for p,d in zip(prices,entries))/filled
+                                 if filled>0 and all(type(p) in (int,float) and isfinite(p) and p>0 for p in prices) else None)
+                    costs={k:sum(getattr(d,k) for d in deals) for k in ('commission','swap','fee')}
                     outcome=dict(net_profit_native=sum(values),closed_observed_at=self.clock(),
+                                 # Positive slippage is adverse: paid above (BUY) or sold below (SELL) the intent price.
+                                 entry_slippage_price=(entry_price-intent['price'])*sign if entry_price is not None else None,
+                                 commission_native=costs['commission'],swap_native=costs['swap'],fee_native=costs['fee'],
                                  entry_volume=sum(d.volume for d in entries),deal_count=len(deals),
                                  prospective_broker_outcome=True,live_authorized=False)
                     with db:
@@ -269,6 +295,10 @@ class DemoExecutionBoundary:
                                    (position_id,json.dumps(outcome,allow_nan=False),ident))
                     closed+=1
             return dict(status='DEMO_BOOK_RECONCILED',opened=opened,closed=closed)
+
+    def _no_pending(self, comment):
+        orders = getattr(self.broker, 'orders_get', lambda: None)()
+        return orders is not None and not any(getattr(o, 'comment', None) == comment for o in orders)
 
     def close_owned(self, position_id, *, price, observed_at, filling_mode):
         """One durable risk-reducing close attempt, bound to a proven owned fill."""
