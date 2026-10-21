@@ -1,8 +1,0 @@
-{
-  "version": "INTRADAY_BRAIN_V6",
-  "created_utc": "2026-10-12T01:44:05.087731+00:00",
-  "never_pretend_previously_inspected_data_are_oos": true,
-  "evaluation": "no-order paper only; full M5, Brain+Semantics+Quality",
-  "minimum_future_observations_before_decision": 150,
-  "independent_unseen_holdout_ready": false
-}

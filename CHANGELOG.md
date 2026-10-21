@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — rampingkan repo (B): dokumen bertanggal dan usang
+
+- Dihapus 116 dokumen yang tidak dirujuk kode, config, tes, workflow, maupun dokumen inti: laporan riset,
+  validasi, dan review bertanggal 10–21 Oktober beserta output-nya, catatan operasi bertanggal/usang, dan
+  dokumen root lama (roadmap, runtime HP, akses gratis, dll.). Riwayatnya tetap di Git.
+- Dipertahankan: arsitektur + ADR (identitas desain), freeze record stage yang dibaca audit, bukti yang
+  dirujuk config/tes, status proyek, quickstart, panduan GitHub/deployment.
+
 ## 2026-10-22 — rampingkan repo (A): pensiunkan tooling VPS lama
 
 - Dihapus: agent/remote-lab VPS lama (`scripts/vps`, `scripts/vps2012`, `ops/vps`, `ops/github-vps`,
