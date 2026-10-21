@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
-from math import ceil, floor, isfinite
-from typing import Any, Iterable, Mapping
+from math import isfinite
+from typing import Any, Mapping
 
 from katarina.engines.manual_risk import (
     AccountRiskAssessment,
     PositionOrigin,
-    SharedAccountRiskEngine,
     SymbolRiskSpec,
 )
 

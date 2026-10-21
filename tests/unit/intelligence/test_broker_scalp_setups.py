@@ -6,7 +6,7 @@ from pathlib import Path
 SCRIPTS=Path(__file__).resolve().parents[3]/"scripts"/"research"
 sys.path.insert(0,str(SCRIPTS))
 from benchmark_broker_scalp_setups import (
-    quick_prefilter,ema_series,slip_ticks_and_replay,make_summary)
+    ema_series,slip_ticks_and_replay,make_summary)
 from katarina.intelligence.scalp_pattern_candidates import propose_family
 
 UTC=timezone.utc

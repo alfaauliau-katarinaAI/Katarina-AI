@@ -1,12 +1,11 @@
 """Native contextual market reasoning: fail-closed, resolved-experience only."""
 import unittest
 from dataclasses import replace
-from datetime import datetime,timedelta,timezone
+from datetime import timedelta
 
 from katarina.intelligence.market_decision_brain_v3 import (
     MarketDecisionBrain, DecisionCard,
 )
-from katarina.intelligence.market_decision_pipeline import SensorCandle
 from katarina.intelligence.news_intelligence import NewsContext
 from katarina.intelligence.contextual_decision_intelligence import (
     ContextualDecisionIntelligence, MacroEvidence, ResolvedExperience, RiskSituation,

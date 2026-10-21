@@ -1,5 +1,4 @@
 """Prevent multi-pair metric inflation and duplicate historical samples."""
-from copy import deepcopy
 import unittest
 from scripts.research.aggregate_directional_brain_replay import aggregate_batches
 

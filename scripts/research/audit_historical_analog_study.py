@@ -5,7 +5,6 @@ from collections import defaultdict
 from datetime import datetime
 from hashlib import sha256
 from pathlib import Path
-from statistics import mean
 from evaluate_regime_prediction_ml import (
     select_samples,chronological_split,FOLDS,scores,EMBARGO_SECONDS)
 from katarina.intelligence.historical_analog_memory import (

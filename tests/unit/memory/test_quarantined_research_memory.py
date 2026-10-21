@@ -1,8 +1,6 @@
 """Safe persistence/learning quarantine of untrusted Entry/Exit research."""
-from contextlib import closing
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
-import json
 from pathlib import Path
 import sqlite3
 import tempfile

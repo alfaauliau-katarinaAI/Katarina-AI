@@ -1,5 +1,5 @@
 """Install committed private archive synchronizer on owner's Windows testing VPS."""
-import argparse,base64,hashlib,importlib.util,json,os,re,shutil,subprocess,sys,time,urllib.request,ssl
+import argparse,base64,hashlib,importlib.util,json,os,re,subprocess,sys,time,urllib.request,ssl
 from pathlib import Path
 BASE=Path(r'C:\KatarinaDev\config\hf-storage')
 ROOT=Path(r'C:\KatarinaGitTest-4e14b098')

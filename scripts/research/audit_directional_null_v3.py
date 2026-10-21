@@ -6,8 +6,7 @@ optimizer. Because 2025/2026 history has been viewed, results are diagnostics,
 not independent statistical evidence of a profitable strategy.
 """
 from __future__ import annotations
-import csv,json,sys,collections,statistics,math
-from datetime import datetime,timezone
+import json,sys,collections,statistics,math
 from pathlib import Path
 import numpy as np
 import MetaTrader5 as mt5

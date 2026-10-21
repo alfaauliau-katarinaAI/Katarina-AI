@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
-from math import isfinite
 import json
 
 

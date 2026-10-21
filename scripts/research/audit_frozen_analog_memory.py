@@ -4,7 +4,6 @@ import argparse,json
 from datetime import datetime
 from hashlib import sha256
 from pathlib import Path
-from math import isfinite
 import numpy as np
 from evaluate_regime_prediction_ml import select_samples,make_features
 from katarina.intelligence.historical_analog_memory import EMBARGO_SECONDS,FEATURE_LAYOUT

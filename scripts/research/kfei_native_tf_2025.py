@@ -5,7 +5,7 @@ spread + 1tick each side + assumed 0.03R commission. No live trading.
 KFEI is descriptive directional efficiency/energy, NOT a win probability.
 """
 from __future__ import annotations
-import json,sys,math,hashlib
+import json
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime,timezone,timedelta

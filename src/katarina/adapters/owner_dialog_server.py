@@ -6,7 +6,6 @@ import json
 import os
 import ssl
 
-from katarina.adapters.agent_dashboard_page import AGENT_PAGE
 
 PAGE = '''<!doctype html><html lang="id"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Katarina AI</title><style>body{font:17px system-ui;background:#101826;color:#e4eefb;max-width:820px;margin:30px auto;padding:20px}

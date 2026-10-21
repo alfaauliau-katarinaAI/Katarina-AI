@@ -1,6 +1,5 @@
 from contextlib import closing
 from datetime import datetime,timezone,timedelta
-from hashlib import sha256
 from pathlib import Path
 import json,sqlite3,tempfile,unittest
 from types import SimpleNamespace as S

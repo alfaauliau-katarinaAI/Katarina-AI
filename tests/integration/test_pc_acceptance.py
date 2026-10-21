@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 
 from scripts.pc.run_pc_acceptance import run
-from katarina.adapters.automatic_connection import ConnectionConfig, run_connected
+from katarina.adapters.automatic_connection import run_connected
 from katarina.adapters.pc_simulation import PCSimulationBroker
 
 ROOT=Path(__file__).resolve().parents[2]

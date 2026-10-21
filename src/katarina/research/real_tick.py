@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isfinite
 from typing import Sequence
 
 from katarina.engines.position import RRPositionState, RRProfitTracker

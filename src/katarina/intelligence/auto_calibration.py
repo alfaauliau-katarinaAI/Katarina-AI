@@ -3,7 +3,7 @@ from katarina.monitoring.snapshot_io import replace_snapshot
 from contextlib import closing
 from datetime import datetime,timezone
 from hashlib import sha256
-import json,math,os,shutil,sqlite3,time,zlib
+import json,math,os,shutil,sqlite3,zlib
 from pathlib import Path
 
 

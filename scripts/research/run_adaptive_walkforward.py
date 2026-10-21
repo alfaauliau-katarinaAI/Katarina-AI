@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from bisect import bisect_right
 from collections import Counter,defaultdict
-from datetime import datetime,timezone
+from datetime import datetime
 from math import isfinite
 from statistics import mean
 from typing import Mapping,Sequence
@@ -87,7 +87,6 @@ def _propose(frame, spread):
 
     # A real sweep must breach and reclaim THE PRIOR channel in one M5
     # close, with a rejection wick; direction-independent geometry.
-    prev_range=previous20
     midpoint=(ceiling+floor)/2
     h1_delta=abs(h1[-1].close-h1[-8].close)
     # Do not fade a powerful H1 directional impulse.

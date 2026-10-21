@@ -7,7 +7,7 @@ No article/body => no verified policy claim; no LLM-generated facts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
 import re

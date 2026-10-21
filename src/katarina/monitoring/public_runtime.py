@@ -29,7 +29,6 @@ def build_public_runtime(root):
     public = public_dashboard_snapshot({'agent_board':board})
     from katarina.monitoring.learning_evidence import read_learning
     from katarina.monitoring.public_research import read_public_research
-    allowed = board['snapshot_process_matches'] and board.get('result') == 'SNAPSHOT_PASS'
     research_allowed = bool(board['snapshot_process_matches'] and status.get('delivery') == 'DISABLED'
         and status.get('live_execution_authorized') is False and status.get('orders_submitted') == 0
         and status.get('status') in ('WAITING','OBSERVING','DEGRADED'))

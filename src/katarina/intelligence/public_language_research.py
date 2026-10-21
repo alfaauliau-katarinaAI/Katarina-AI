@@ -2,7 +2,6 @@
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
-import re
 
 HOSTS = {
     'fed': 'www.federalreserve.gov', 'ecb': 'www.ecb.europa.eu',

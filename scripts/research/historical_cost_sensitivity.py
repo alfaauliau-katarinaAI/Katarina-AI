@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
-from datetime import datetime
 from hashlib import sha256
 import json
 from math import isfinite

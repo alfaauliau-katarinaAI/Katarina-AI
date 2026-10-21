@@ -6,7 +6,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import sqlite3
-from typing import Any, Iterable
+from typing import Any
 
 
 class IdempotencyConflict(RuntimeError):

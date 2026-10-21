@@ -7,7 +7,6 @@ from __future__ import annotations
 import json,argparse
 from pathlib import Path
 from hashlib import sha256
-from statistics import mean
 
 SOURCES=[
 dict(id="aqr_century_trend",

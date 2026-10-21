@@ -9,7 +9,7 @@ Chronological selection uses 2025. 2026 diagnostic is REUSED/INSPECTED, not
 an untouched future holdout. No broker orders or changes to Risk Governor.
 """
 from __future__ import annotations
-import json,sys,math,hashlib
+import json,sys,hashlib
 from pathlib import Path
 from datetime import datetime,timezone
 from collections import defaultdict,Counter

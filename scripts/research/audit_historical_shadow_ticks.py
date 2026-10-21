@@ -1,5 +1,5 @@
 """Audit historical KATARINA tick-quote evidence across immutable windows."""
-from collections import defaultdict,Counter
+from collections import defaultdict
 from datetime import datetime
 from hashlib import sha256
 from pathlib import Path

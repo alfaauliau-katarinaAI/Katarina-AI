@@ -4,7 +4,7 @@ M5 high/low cannot resolve exact intrabar stop/target -> stop-first.
 No trading; no alteration of the existing Risk Governor or live settings.
 """
 from __future__ import annotations
-import csv,json,sys,statistics,math,hashlib
+import csv,json,sys
 from bisect import bisect_right
 from collections import Counter,defaultdict
 from datetime import datetime,timezone,timedelta
@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.adaptive_regime import AdaptiveRegimeEngine, ClosedFrame, MarketState
+from katarina.intelligence.adaptive_regime import AdaptiveRegimeEngine, ClosedFrame
 from katarina.intelligence.closed_swing_structure import ClosedSwingStructure, ClosedBar
 from katarina.engines.adaptive_scalper import AdaptiveScalpRouter,ClosedPriceContext,ScalpSide
 import MetaTrader5 as mt5

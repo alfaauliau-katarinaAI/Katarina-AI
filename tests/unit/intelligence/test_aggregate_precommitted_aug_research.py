@@ -1,6 +1,5 @@
 """Aggregate all frozen proposals and preserve missing broker tick quotes."""
 import unittest
-from copy import deepcopy
 from katarina.intelligence.precommitted_setup_research import (
     FROZEN_RULE_VERSION,
 )

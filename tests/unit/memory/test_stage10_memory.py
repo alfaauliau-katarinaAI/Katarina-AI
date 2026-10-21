@@ -1,5 +1,4 @@
 import sqlite3
-import json
 from hashlib import sha256
 from contextlib import closing
 import tempfile

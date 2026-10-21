@@ -8,7 +8,7 @@ bars here. Signals outside the chosen UTC window are WAIT.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from math import isfinite
 
 from katarina.adapters.mt5_shadow_read_only import ClosedBar, ShadowMarketSnapshot

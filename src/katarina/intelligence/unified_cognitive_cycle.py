@@ -171,7 +171,7 @@ def _hypotheses(report: dict) -> tuple[list[dict], list[dict]]:
             "UNSTABLE_OR_NEGATIVE_QUOTE_EDGE":"NEGATIVE_OR_UNSTABLE_HELDOUT",
             "RESEARCH_CANDIDATE_REVIEW_REQUIRED":"POSITIVE_VIRTUAL_DIAGNOSTIC_NEEDS_REPLICATION",
         }.get(status,"UNRECOGNIZED_RESEARCH_STATUS")
-        baseline = c["baseline"]
+        c["baseline"]  # required field: a malformed candidate is rejected with KeyError
         training = c.get("training") or {}
         holdout = c.get("holdout") or {}
         if ((training.get("mean_modelled_r") or 0)>0

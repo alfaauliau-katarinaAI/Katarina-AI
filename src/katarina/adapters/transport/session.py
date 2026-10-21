@@ -6,7 +6,6 @@ from enum import Enum
 from katarina.adapters.transport.kat1_codec import (
     Kat1Codec,
     Kat1Frame,
-    Kat1ProtocolError,
     WIRE_MAJOR,
     WIRE_MINOR,
 )

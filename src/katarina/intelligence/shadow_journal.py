@@ -13,7 +13,6 @@ from hashlib import sha256
 from math import isfinite
 from pathlib import Path
 from threading import RLock
-from typing import Iterable
 import json
 import os
 

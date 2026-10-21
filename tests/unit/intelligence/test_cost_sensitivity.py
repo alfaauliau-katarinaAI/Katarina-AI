@@ -1,5 +1,4 @@
 import json
-import math
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,7 +7,7 @@ import sys
 from katarina.intelligence.cost_expectancy import hypothetical_trade_budget
 SCRIPTS=Path(__file__).resolve().parents[3]/"scripts"/"research"
 sys.path.insert(0,str(SCRIPTS))
-from historical_cost_sensitivity import analyze,load,stats
+from historical_cost_sensitivity import analyze,load
 
 
 def shadow(side="BUY",ratio=.25):

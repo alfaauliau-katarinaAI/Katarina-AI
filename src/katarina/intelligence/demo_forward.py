@@ -6,7 +6,7 @@ exits; unqualified variants and missing signals do not create demonstration trad
 """
 from contextlib import closing
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from hashlib import sha256
 import importlib
 import json

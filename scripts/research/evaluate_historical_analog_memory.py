@@ -6,12 +6,9 @@ and the already audited logistic + regime predictions.
 """
 from __future__ import annotations
 import argparse,json
-from collections import Counter,defaultdict
 from datetime import datetime,timezone
 from hashlib import sha256
 from pathlib import Path
-from statistics import mean
-import numpy as np
 
 from evaluate_regime_prediction_ml import (
     FOLDS,chronological_split,select_samples,scores)

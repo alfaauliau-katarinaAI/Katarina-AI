@@ -5,7 +5,7 @@ Test predeclared drive class without optimizing its numeric thresholds.
 2026 has previously been inspected, so not untouched OOS.
 """
 from __future__ import annotations
-import json,math,sys
+import json,sys
 from collections import defaultdict
 from datetime import datetime,timezone
 from pathlib import Path

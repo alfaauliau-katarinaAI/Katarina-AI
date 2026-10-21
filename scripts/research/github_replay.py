@@ -11,7 +11,6 @@ import json
 import math
 import random
 from collections import defaultdict
-from datetime import datetime, timezone
 from pathlib import Path
 
 FIELDS = ("symbol","time","open","high","low","close","spread","point","volume")

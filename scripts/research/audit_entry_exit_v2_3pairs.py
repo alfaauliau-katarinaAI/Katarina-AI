@@ -8,8 +8,8 @@ No intrabar claims; stop-first, approximate bar spread, extra 0.03R cost.
 2025/2026 history has ALREADY been viewed, NOT independent holdout.
 """
 from __future__ import annotations
-import csv, json, math, sys, time
-from collections import Counter,defaultdict
+import csv, json, sys, time
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 import numpy as np

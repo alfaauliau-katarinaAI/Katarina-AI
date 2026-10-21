@@ -42,7 +42,6 @@ class PortableHostTests(unittest.TestCase):
             self.assertFalse(budget.live_authorized)
 
     def test_cgroup_limits_override_large_host(self):
-        from unittest.mock import mock_open
         with patch('katarina.host.platform.system',return_value='Linux'), \
              patch('katarina.host.os.cpu_count',return_value=64), \
              patch('katarina.host.os.sched_getaffinity',return_value=set(range(64)),create=True), \

@@ -7,7 +7,6 @@ import argparse,json
 from datetime import datetime,timezone
 from hashlib import sha256
 from pathlib import Path
-from collections import Counter
 
 from evaluate_regime_prediction_ml import select_samples
 from katarina.intelligence.historical_analog_memory import (

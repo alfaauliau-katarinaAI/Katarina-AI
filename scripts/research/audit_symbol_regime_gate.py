@@ -5,7 +5,6 @@ from collections import defaultdict
 from datetime import datetime
 from hashlib import sha256
 from pathlib import Path
-from statistics import mean
 from compare_regime_gate_to_raw_setups import CONTRACT,gate,metric,MAX_AGE_SECONDS
 
 def stamp(iso):

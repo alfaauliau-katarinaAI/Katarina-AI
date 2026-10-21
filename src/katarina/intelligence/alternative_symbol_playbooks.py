@@ -11,8 +11,7 @@ No NAS100 model is reused. This module is *research alternatives only*.
 from __future__ import annotations
 from statistics import mean
 from katarina.intelligence.symbol_playbooks import (
-    _bull,_bear,_ema,_make,_ny_open_utc_minutes,_session)
-from katarina.intelligence.multi_market_brain import features
+    _bull,_bear,_ny_open_utc_minutes,_session)
 
 SYMBOLS={
  "XAUUSD.vx":"gold_sweep_rejection_30m_structural_v2",

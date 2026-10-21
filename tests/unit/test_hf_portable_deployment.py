@@ -1,6 +1,5 @@
 import argparse
 import contextlib
-import hashlib
 import importlib.util
 import io
 import json

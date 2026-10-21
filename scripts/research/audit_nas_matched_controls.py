@@ -10,7 +10,6 @@ from hashlib import sha256
 from math import isfinite
 from pathlib import Path
 from statistics import mean
-from collections import Counter
 import re
 from nas_matched_controls import (ATR_TOLERANCE,COST_RATIO_TOLERANCE,
     DISTANCE_LIMIT,MIN_SEPARATION,CONTROLS_PER_ANCHOR,SEED,bootstrap_pair)

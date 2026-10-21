@@ -5,7 +5,6 @@ UTC trading-day log returns 2025/2026 (not session-local; holidays missing).
 """
 from __future__ import annotations
 import sys, json, math, statistics
-from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 REPO=Path(__file__).resolve().parents[2]

@@ -2,7 +2,7 @@
 from contextlib import closing
 from datetime import datetime,timezone
 from pathlib import Path
-import json,sqlite3,time
+import sqlite3,time
 
 _cache={}
 def read_growth(root,pid):

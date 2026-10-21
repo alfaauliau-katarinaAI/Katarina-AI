@@ -2,7 +2,7 @@
 Inputs are MT5-private local NPZ; exports summary only, no broker data.
 Not a broker execution backtest. Strictly research-only.
 """
-import sys,json,csv,heapq,itertools,math,hashlib
+import sys,json,csv,heapq,itertools,hashlib
 from datetime import datetime,timezone
 from pathlib import Path
 from collections import Counter,defaultdict

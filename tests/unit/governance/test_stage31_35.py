@@ -1,6 +1,6 @@
 import tempfile,unittest
 from pathlib import Path
-from katarina.engines.exposure import CorrelationExposureEngine,pearson
+from katarina.engines.exposure import CorrelationExposureEngine
 from katarina.monitoring.dashboard import Dashboard,DashboardSnapshot
 from katarina.monitoring.operational_dashboard import OperationalDashboardSnapshot
 from katarina.governance.ci import AutomatedTestingPolicy

@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime,timedelta,timezone
+from datetime import datetime,timezone
 import json
 
 from katarina.intelligence.economic_feed import EconomicFeedGate, JsonEconomicCalendarAdapter

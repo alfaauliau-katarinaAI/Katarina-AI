@@ -9,7 +9,6 @@ import argparse,json
 from collections import defaultdict,Counter
 from datetime import datetime,timezone
 from hashlib import sha256
-from math import sqrt,isfinite
 from pathlib import Path
 from random import Random
 from statistics import mean

@@ -8,7 +8,6 @@ import math
 import os
 from pathlib import Path
 import sqlite3
-import shutil
 
 DECISIONS=('CANDIDATE_FORWARD','AWAITING_COST_REVIEWS','REJECTED','INSUFFICIENT_EVIDENCE','REVIEW_BLOCKED')
 CHECKS=('PASSED','PENDING','REJECTED','INSUFFICIENT','BLOCKED')
@@ -136,7 +135,6 @@ def read_reports(root, pid):
             deadline=time.monotonic()+2
             db.set_progress_handler(lambda: int(time.monotonic()>deadline),10000)
             db.execute('BEGIN')
-            join='FROM research_report_heads h JOIN research_reports r ON r.id=h.report_id'
             recent=[json.loads(r[0]) for r in db.execute('SELECT r.report_json FROM research_reports r INDEXED BY research_reports_created WHERE EXISTS(SELECT 1 FROM research_report_heads h WHERE h.report_id=r.id) ORDER BY r.created_utc DESC,r.id DESC LIMIT 8')]
             candidates=[json.loads(r[0]) for r in db.execute("SELECT r.report_json FROM research_reports r INDEXED BY research_reports_decision_created WHERE r.decision IN ('CANDIDATE_FORWARD','AWAITING_COST_REVIEWS') AND EXISTS(SELECT 1 FROM research_report_heads h WHERE h.report_id=r.id) ORDER BY r.created_utc DESC,r.id DESC LIMIT 3")]
             counts={k:0 for k in DECISIONS}

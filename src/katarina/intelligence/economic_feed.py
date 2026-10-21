@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
-from typing import Any, Mapping, Sequence
 
 from katarina.intelligence.economics import EconomicEvent
 

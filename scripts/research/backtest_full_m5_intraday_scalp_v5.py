@@ -9,7 +9,6 @@ import argparse,csv,json,time,sys
 from collections import Counter,defaultdict
 from datetime import datetime,timezone
 from pathlib import Path
-from math import isfinite
 import numpy as np
 import MetaTrader5 as mt5
 ROOT=Path(__file__).resolve().parents[2]

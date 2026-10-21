@@ -12,7 +12,6 @@ from datetime import datetime, timedelta, timezone
 from math import isfinite
 from typing import Mapping, Sequence
 
-from katarina.engines.adaptive_scalper import ScalpSide
 from katarina.engines.adaptive_risk import AdaptiveRiskProfile
 from katarina.intelligence.adaptive_brain_v2 import KatarinaAdaptiveBrainV2
 from katarina.intelligence.closed_swing_structure import ClosedBar
@@ -184,7 +183,6 @@ class MarketDecisionPipeline:
                     (as_of_utc - rows[-1].closed_at_utc) > _PERIOD[tf]*2):
                     return self._wait(symbol, "stale_" + tf + "_data")
                 frames[tf] = _frame(rows)
-            from katarina.intelligence.adaptive_regime import ClosedFrame
             observations = self.brain.observe(
                 symbol=symbol, frames=frames,
                 closed_bars=[x.to_bar() for x in candles["M5"]],

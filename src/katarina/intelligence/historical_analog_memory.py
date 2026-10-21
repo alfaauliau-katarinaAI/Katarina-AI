@@ -9,8 +9,7 @@ are NOT probabilities of profitable executable broker trades.
 Fixed hyperparameters chosen before seeing this research output.
 """
 from __future__ import annotations
-from datetime import datetime,timezone
-from math import isfinite
+from datetime import datetime
 from statistics import mean
 import numpy as np
 

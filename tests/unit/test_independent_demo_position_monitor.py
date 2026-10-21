@@ -16,7 +16,6 @@ from katarina.intelligence.broker_account_monitor import inspect_broker_account
 from katarina.intelligence.demo_forward import DemoForwardRuntime
 from katarina.monitoring.entry_feed import _attested_currency
 from katarina.monitoring.position_feed import read_position_feed
-from katarina.monitoring.worker_runtime import read_independent_demo_monitor
 
 
 class DemoIndependentTelemetryTests(unittest.TestCase):

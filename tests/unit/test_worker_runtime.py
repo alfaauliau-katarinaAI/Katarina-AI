@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from datetime import datetime,timezone,timedelta
-from katarina.monitoring.worker_runtime import read_worker_runtime,PHASES
+from katarina.monitoring.worker_runtime import read_worker_runtime
 
 class WorkerRuntimeTests(unittest.TestCase):
     def test_permission_scope_redaction_and_stale_workers(self):

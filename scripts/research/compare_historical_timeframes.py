@@ -1,7 +1,6 @@
 """Compare M1/M5 research costs on the same dates, never select a winner."""
 from __future__ import annotations
 import argparse,json
-from collections import defaultdict
 from math import isfinite
 from pathlib import Path
 from statistics import mean

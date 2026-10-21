@@ -10,7 +10,6 @@ from bisect import bisect_right
 from collections import Counter
 from datetime import datetime,timedelta,timezone
 import json
-from math import isfinite
 from pathlib import Path
 from statistics import mean
 import sys

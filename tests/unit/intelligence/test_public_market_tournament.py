@@ -4,10 +4,9 @@ Network mocked in tests; data-dependent job separately downloads genuine
 public BID/ASK candles from Dukascopy.
 """
 from __future__ import annotations
-from datetime import date, datetime, timezone
+from datetime import date
 import lzma
 from pathlib import Path
-import struct
 import sys
 import tempfile
 import unittest
@@ -16,7 +15,7 @@ ROOT=Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(ROOT/"scripts"/"research"))
 from public_market_tournament import (
     QuoteCandle, aggregate, calculate_fill, parse_minute_file, load_public_minutes,
-    run, metrics, RECORD, SCALE)
+    run, metrics, RECORD)
 from katarina.intelligence.adaptive_strategy_library import StrategyHypothesis
 
 

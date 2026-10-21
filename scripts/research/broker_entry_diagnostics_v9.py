@@ -11,7 +11,6 @@ from collections import Counter, defaultdict, namedtuple
 from datetime import datetime, timezone
 import argparse
 import json
-import math
 import statistics
 
 B = namedtuple("B", "time o h l c spread")

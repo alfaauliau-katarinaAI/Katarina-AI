@@ -7,10 +7,9 @@ TRANSITION, UNKNOWN. No order routing and no model promotion.
 """
 from __future__ import annotations
 
-from datetime import datetime,timezone
+from datetime import timezone
 from math import isfinite
 from statistics import mean
-from typing import Mapping
 from katarina.intelligence.multi_market_brain import features
 from katarina.intelligence.technical_regime import classify_market_regime
 

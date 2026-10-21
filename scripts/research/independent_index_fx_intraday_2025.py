@@ -6,8 +6,8 @@ Predefined two variants per asset family; RR2, SL 0.8x H1 ATR, 3h hold,
 closed M5 signals and completed H1/H4/D1 only. Research, not execution.
 """
 from __future__ import annotations
-import sys,json,hashlib
-from datetime import datetime,timezone,timedelta
+import sys,json
+from datetime import datetime,timezone
 from collections import defaultdict
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]

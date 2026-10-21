@@ -1,7 +1,6 @@
 """Regression checks for honest Master Design traceability and release gates."""
 from copy import deepcopy
 import json
-from pathlib import Path
 import unittest
 from unittest.mock import patch
 
