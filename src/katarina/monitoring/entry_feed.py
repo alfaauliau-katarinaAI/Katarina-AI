@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import sqlite3
 
-from katarina.monitoring.worker_runtime import _read, _fresh
+from katarina.monitoring.worker_runtime import _read, _fresh, read_independent_demo_monitor
 
 
 def _stamp(value):
@@ -39,7 +39,12 @@ def _attested_currency(root,now):
     # immutable enrolment account hash; never infer USD from a symbol or amount.
     try:
         latest=_read(root/'latest.json');snapshot=latest.get('broker_account_monitor',{}).get('position_snapshot',{})
-        if not (_fresh(latest,now,180,'observed_at_utc') and _fresh(snapshot,now)
+        source_fresh=_fresh(latest,now,180,'observed_at_utc')
+        independent=read_independent_demo_monitor(root,now=now)
+        if independent:
+            snapshot=independent.get('position_snapshot',{})
+            source_fresh=True
+        if not (source_fresh and _fresh(snapshot,now)
                 and snapshot.get('status')=='OBSERVED' and snapshot.get('mode')=='DEMO'):
             return None
         with closing(_db(root/'demo-forward/experiment.sqlite3')) as db:
