@@ -45,6 +45,8 @@ def read_independent_demo_monitor(root, *, now=None):
     if not isinstance(monitor,dict):
         return {}
     snapshot=monitor.get('position_snapshot') or {}
+    if not isinstance(snapshot,dict):
+        return {}
     if (monitor.get('account_mode')!='DEMO'
             or monitor.get('connected') is not True
             or monitor.get('positions_read_success') is not True
