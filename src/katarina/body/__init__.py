@@ -10,7 +10,7 @@ from katarina.body.registry import BodyRegistry, BodyRegistryError
 from katarina.body.runtime import BodyRuntimeSnapshot, KatarinaBodyRuntime
 
 # Stage number -> implementation module. config/stages/stageNN.json keeps the number as
-# its file name; the old katarina.body.stageNN modules are deprecated aliases.
+# its file name; the old katarina.body.stageNN aliases were removed on 21 Oct 2026.
 STAGE_MODULES = {
     11: "katarina.body.market_intelligence",
     12: "katarina.body.multi_timeframe",

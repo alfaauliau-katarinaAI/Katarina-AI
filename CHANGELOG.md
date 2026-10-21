@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — hapus 231 berkas tak terpakai (atas persetujuan Owner)
+
+- Dihapus: seluruh `archive/` (168 berkas), 30 alias `katarina.body.stage11–40`, 8 modul yang hanya dipakai
+  test beserta test-nya (`engines.setup_quality`, `news.news_consensus`, `lab.regime_research_router`,
+  `lab.strategy_selector`, `perception.flow_efficiency_index`, `research.experimental_strategy_evidence_portfolio`,
+  `research.owner_structure_candidate`, `research.real_tick`), dan 17 script riset yang tidak dirujuk di mana pun.
+- Dipertahankan: tooling VPS (`scripts/ai/install_*`, `scripts/vps*`), `config/`, Risk Governor, dan
+  `adapters.transport.kat1_execution` (fondasi jalur kirim order).
+- Release manifest dan `RUNTIME_MODULE_MAP.md` dibuat ulang (B=13, D=2). Semua berkas tetap ada di riwayat Git.
+- Tidak ada perubahan perilaku runtime, strategi, atau flag live.
+
 ## 2026-10-21 — penjaga konektivitas antar file
 
 - Audit jalur: 305 modul `katarina` ter-import tanpa error, dan semua import `katarina.*` di `scripts/`

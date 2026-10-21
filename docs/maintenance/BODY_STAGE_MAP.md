@@ -6,14 +6,13 @@ nomor, dan freeze record/dokumen riset tetap memakai nomor. Sumber kebenaran pem
 `katarina.body.STAGE_MODULES`; `tests/unit/body/test_stage_modules.py` memastikan konstanta itu,
 `implementation_module` di manifest, dan `SPEC` modul selalu sama.
 
-Modul `katarina.body.stageNN` lama masih ada sebagai alias (`sys.modules` + `DeprecationWarning`)
-selama satu rilis, lalu dihapus. Generator `scripts/body/upgrade_functional_body.py` menulis berkas
+Alias lama `katarina.body.stageNN` sudah dihapus pada 21 Oktober 2026; import memakai nama fungsi. Generator `scripts/body/upgrade_functional_body.py` menulis berkas
 sesuai `implementation_module` di manifest.
 
 Stage 01–10 bukan modul body (konstitusi, workflow, arsitektur, protokol, core, bridge MT5, transport,
 validasi, health/safety, memori); lihat `docs/stages/STAGE_01_40_MANIFEST.json` dan `docs/reviews/`.
 
-| Stage | Nama | Modul | Alias lama | Manifest | Referensi |
+| Stage | Nama | Modul | Alias lama (dihapus) | Manifest | Referensi |
 |---|---|---|---|---|---|
 | 11 | Market Intelligence Engine | `katarina.body.market_intelligence` | `katarina.body.stage11` | `config/stages/stage11.json` | `docs/research/stages/STAGE_11_GITHUB_REFERENCES.md` |
 | 12 | Multi-Timeframe Engine | `katarina.body.multi_timeframe` | `katarina.body.stage12` | `config/stages/stage12.json` | `docs/research/stages/STAGE_12_GITHUB_REFERENCES.md` |

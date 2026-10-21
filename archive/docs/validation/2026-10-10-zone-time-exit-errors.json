@@ -1,8 +1,0 @@
-{
-  "captured_count": 65,
-  "first": "CS\t0\t20:34:29.202\tKatarinaResearchScalperEA (XAUUSD.vx,M1)\t2026.03.19 00:00:00   KAT_ZONE_TIMECLOSE_FAIL ticket=48 retcode=10018 detail=market closed",
-  "last": "CS\t0\t20:34:29.264\tKatarinaResearchScalperEA (XAUUSD.vx,M1)\t2026.03.19 01:04:05   KAT_ZONE_TIMECLOSE_FAIL ticket=48 retcode=10018 detail=market closed",
-  "return_code": 10018,
-  "reason": "market closed",
-  "source_sha256": "3C18935C8F7CC13670EEFD97470B81C86D4403ED0B3BB8E8D553AA51D10A86ED"
-}
