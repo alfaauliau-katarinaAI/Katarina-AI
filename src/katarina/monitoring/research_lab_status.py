@@ -5,7 +5,7 @@ import math
 from katarina.monitoring.activity_trace import RESEARCH_PHASES
 from pathlib import Path
 
-COUNTERS=('universe_count','scanned_count','history_symbols','history_bars','experiments','strategy_candidates')
+COUNTERS=('universe_count','scanned_count','history_symbols','history_bars','experiments','strategy_candidates','forward_nominations')
 def clean_lab_status(value):
     if not isinstance(value,dict) or value.get('status') not in ('RUNNING','EMPTY_UNIVERSE','PAUSED_LOW_DISK','PAUSED_STORAGE_BUDGET'):
         return {'status':'NOT_ATTESTED'}
@@ -18,10 +18,13 @@ def clean_lab_status(value):
         choice=result.get('selected')
         if not isinstance(choice,dict) or choice.get('method') not in ('MOMENTUM','MEAN_REVERSION','BREAKOUT') or choice.get('side') not in ('BUY','SELL'): continue
         row={k:choice[k] for k in ('method','side')}
+        row['exit']=choice.get('exit') if choice.get('exit') in ('CLOSE_12','ATR_BRACKET') else None
         for key in ('development_n','review_n','development_mean_r','review_mean_r','development_t','review_t'):
             v=choice.get(key);row[key]=round(v,6) if type(v) in (int,float) and math.isfinite(v) and abs(v)<1000000 else None
         verdict=(result.get('verdict') or {}).get('result') if isinstance(result.get('verdict'),dict) else None
         row['verdict']=verdict if verdict in ('PASSED_PRECOMMITTED_RULE','REJECTED','INSUFFICIENT_SAMPLES') else None
+        forward=result.get('forward') if isinstance(result.get('forward'),dict) else {}
+        row['forward_state']=forward.get('state') if forward.get('state') in ('FORWARD_PENDING','FORWARD_CONFIRMED','FORWARD_FAILED') else None
         out['results'].append(row)
     return out
 

@@ -13,6 +13,21 @@
 - Tidak ada retry otomatis. Setelah `REJECTED`, produsen boleh mengirim intent baru dengan harga segar
   lewat Risk Governor seperti biasa. Hanya untuk akun demo; live tetap OFF.
 
+## 2026-10-21 — lab riset: holdout prospektif, exit SL/TP, dan swap
+
+- **Holdout prospektif.** Kandidat pertama yang lolos aturan untuk suatu instrumen dicatat sekali di
+  `lab_nominations` (metode, sisi, exit, dan stempel bar terakhir saat lolos). Setelah itu, kandidat itu
+  hanya dinilai dengan trade yang sinyalnya muncul *sesudah* stempel tersebut: `FORWARD_PENDING` (< 30 trade),
+  `FORWARD_CONFIRMED` (rata-rata positif, t ≥ 1,65), atau `FORWARD_FAILED`. Nominasi tidak pernah diganti.
+  Hanya `FORWARD_CONFIRMED` yang memberi `next_step=DEMO_FORWARD_TEST`; `live_authorized` tetap false.
+- **Exit kedua.** Selain tutup di bar ke-12, setiap pola juga diuji dengan bracket ATR (SL 1 ATR, TP 1,5 ATR,
+  maksimal 12 bar). Kalau satu bar menyentuh SL dan TP sekaligus, dicatat sebagai SL (asumsi konservatif).
+- **Swap.** Kalau broker memakai swap dalam poin (`swap_mode=1`), setiap malam broker yang dilewati dihitung
+  sebagai biaya (atau kredit). Mode swap lain belum dimodelkan, begitu juga komisi dan swap tiga kali lipat.
+- Karena kandidat kini 12 per run, ambang t pengembangan dinaikkan ke 2,65 (Bonferroni satu sisi 5% untuk 12).
+  Perubahan ini dilakukan sebelum ada hasil v3 di VPS, jadi aturannya tetap terkunci sebelum hasil keluar.
+- Status publik menampilkan jenis exit, status forward, dan jumlah nominasi.
+
 ## 2026-10-21 — lab riset: aturan lolos dikunci sebelum hasil (`broker-lab-v3`)
 
 - Setiap kandidat kini mencatat t-stat pengembangan dan review. Kandidat terpilih diberi `verdict`
