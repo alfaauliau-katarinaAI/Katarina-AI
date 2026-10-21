@@ -7,7 +7,7 @@ from katarina.engines.broker_aware_sizing import (
     AccountFacts, BrokerFacts, TradingCosts, EvidenceQualifiedResearchSizing,
 )
 from katarina.engines.risk import RiskGovernor
-from katarina.intelligence.evidence_risk import StrategyEvidence, VerifiedRiskState
+from katarina.intelligence.lab.evidence_risk import StrategyEvidence, VerifiedRiskState
 
 
 CONFIG = Path(__file__).resolve().parents[3] / "config" / "risk_governor_v2.json"

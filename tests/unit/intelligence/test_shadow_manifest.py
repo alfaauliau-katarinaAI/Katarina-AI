@@ -3,7 +3,7 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 
-from katarina.intelligence.shadow_manifest import (
+from katarina.intelligence.shadow.shadow_manifest import (
     ShadowStudyIdentity,verify_or_create_manifest,broker_fingerprint,config_sha256
 )
 

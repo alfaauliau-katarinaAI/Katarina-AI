@@ -6,15 +6,15 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 from katarina.engines.adaptive_scalper import ResearchEntryPlan, ScalpSide
-from katarina.intelligence.adaptive_regime import MarketRead, MarketState, Playbook
-from katarina.intelligence.adaptive_brain_v2 import BrainV2Observation
-from katarina.intelligence.prospective_shadow_book import ProspectiveShadowBook
-from katarina.intelligence.unified_cognitive_cycle import (
+from katarina.intelligence.perception.adaptive_regime import MarketRead, MarketState, Playbook
+from katarina.intelligence.cognition.adaptive_observation import BrainV2Observation
+from katarina.intelligence.shadow.prospective_shadow_book import ProspectiveShadowBook
+from katarina.intelligence.cognition.unified_cognitive_cycle import (
     run_unified_cognitive_cycle, rollback_cognitive_research,
     verify_cognitive_history,
 )
-from katarina.intelligence.structure_exit_plan import StructuralExitPlan
-from katarina.intelligence.unified_adaptive_research_cycle import (
+from katarina.intelligence.perception.structure_exit_plan import StructuralExitPlan
+from katarina.intelligence.cognition.unified_adaptive_research_cycle import (
     synthesize_offline_research,
 )
 
@@ -101,7 +101,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
         ).fetchone())
 
     def test_matching_favorable_virtual_cohort_only_allows_research_review(self):
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle",
                    return_value=mock_report()) as read:
             r = self.synthesize()
@@ -125,7 +125,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
             ("RESEARCH_CANDIDATE_REVIEW_REQUIRED", 2),
         ):
             with self.subTest(status=status, gaps=gaps):
-                with patch("katarina.intelligence.unified_adaptive_research_cycle."
+                with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                            "run_unified_cognitive_cycle",
                            return_value=mock_report(status=status, gaps=gaps)):
                     r = self.synthesize()
@@ -147,7 +147,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
                              "exit_plan": exit_plan("SELL", 2010., 1970.)}),
         ):
             with self.subTest(overrides=overrides):
-                with patch("katarina.intelligence.unified_adaptive_research_cycle."
+                with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                            "run_unified_cognitive_cycle", return_value=data):
                     r = self.synthesize(**overrides)
                 self.assertEqual(r.action, "WAIT")
@@ -155,7 +155,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
                               r.quarantine_reasons)
 
     def test_adaptive_entry_and_exit_geometry_still_gate_research(self):
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle", return_value=mock_report()):
             for updates in (
                 {"brain": brain(ready=False)},
@@ -169,7 +169,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
                                   r.quarantine_reasons)
 
     def test_same_evidence_is_deterministic_and_causal_sources_are_bound(self):
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle", return_value=mock_report()):
             a, b = self.synthesize(), self.synthesize()
             c = self.synthesize(source_digest="f" * 64)
@@ -199,14 +199,14 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
         ):
             with self.subTest(change=change):
                 data = dict(mock_report(), **change)
-                with patch("katarina.intelligence.unified_adaptive_research_cycle."
+                with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                            "run_unified_cognitive_cycle", return_value=data):
                     with self.assertRaisesRegex(ValueError,
                                                 "cognitive_research_proof_invalid"):
                         self.synthesize()
 
     def test_conflicting_duplicate_semantic_cohorts_are_not_consensus(self):
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle",
                    return_value=mock_report(duplicate=True)):
             with self.assertRaisesRegex(ValueError,
@@ -216,7 +216,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
     def test_mismatched_metacognitive_status_is_not_evidence(self):
         source = mock_report()
         source["curiosity_hypotheses"][0]["status"] = "INSUFFICIENT_EVIDENCE"
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle", return_value=source):
             with self.assertRaisesRegex(ValueError,
                                         "cognitive_research_status_contradiction"):
@@ -231,7 +231,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
         self.assertEqual(summary["last_event_kind"], "LEARN")
         snapshot = {**mock_report(),
                     "observation_sha256":saved["observation_sha256"]}
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle", return_value=snapshot):
             item=self.synthesize()
         self.assertEqual(item.action, "VIRTUAL_EXPERIMENT_REVIEW_ONLY")
@@ -244,7 +244,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
     def test_stale_saved_learning_checkpoint_blocks_positive_virtual_review(self):
         saved = run_unified_cognitive_cycle(
             self.db, as_of_utc=CLOCK-timedelta(minutes=10))
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle", return_value=mock_report()):
             item=self.synthesize()
         self.assertEqual(item.action, "WAIT")
@@ -284,7 +284,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
                          first["observation_sha256"])
         snapshot = {**mock_report(),
                     "observation_sha256":second["observation_sha256"]}
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle", return_value=snapshot):
             item=self.synthesize(as_of_utc=CLOCK+timedelta(minutes=1))
         self.assertEqual(item.action, "WAIT")
@@ -303,7 +303,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
         data = mock_report()
         data["observation_sha256"] = verify_cognitive_history(
             self.db)["active_observation_sha256"]
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle", return_value=data):
             item=self.synthesize()
         self.assertEqual(item.action, "WAIT")
@@ -317,7 +317,7 @@ class UnifiedAdaptiveResearchCycleTests(unittest.TestCase):
             self.db.execute(
                 "UPDATE katarina_cognitive_ledger "
                 "SET payload_json='{}' WHERE seq=1")
-        with patch("katarina.intelligence.unified_adaptive_research_cycle."
+        with patch("katarina.intelligence.cognition.unified_adaptive_research_cycle."
                    "run_unified_cognitive_cycle", return_value=mock_report()):
             with self.assertRaisesRegex(ValueError,
                                         "cognitive_ledger_chain_tampered"):

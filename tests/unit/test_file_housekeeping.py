@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from katarina.intelligence.file_housekeeping import organize, restore
+from katarina.intelligence.operations.file_housekeeping import organize, restore
 
 
 class FileHousekeepingTests(unittest.TestCase):

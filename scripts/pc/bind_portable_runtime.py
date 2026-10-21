@@ -14,7 +14,7 @@ def bind_runtime(runtime_root, source_root):
         if not site.is_dir():
             raise ValueError('portable_runtime_and_source_required')
         target = site/'katarina-canonical.pth'
-    if (not (source/'src/katarina/intelligence/unified_brain.py').is_file()
+    if (not (source/'src/katarina/intelligence/cognition/unified_brain.py').is_file()
             or any(c in str(source) for c in '\r\n')):
         raise ValueError('portable_runtime_and_source_required')
     original = target.read_bytes() if target.exists() else b''

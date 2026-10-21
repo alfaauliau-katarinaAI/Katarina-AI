@@ -2,7 +2,7 @@
 import unittest
 from dataclasses import replace
 
-from katarina.intelligence.evidence_risk import (
+from katarina.intelligence.lab.evidence_risk import (
     EvidenceRiskGate, StrategyEvidence, VerifiedRiskState,
     assess_legacy_august_audit,
 )

@@ -12,7 +12,7 @@ from pathlib import Path
 
 import MetaTrader5 as mt5
 from smoke_closed_market_decision import SYMBOLS, TFS, candles_for
-from katarina.intelligence.market_decision_pipeline import MarketDecisionPipeline
+from katarina.intelligence.cognition.market_decision_pipeline import MarketDecisionPipeline
 
 OUT = Path(r"C:\KatarinaDev\artifacts\decision-observer")
 TERMINAL = r"C:\Program Files\MetaTrader 5 ALFA\terminal64.exe"

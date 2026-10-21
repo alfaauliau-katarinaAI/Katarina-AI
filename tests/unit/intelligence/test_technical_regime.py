@@ -3,10 +3,10 @@ import json
 import unittest
 from datetime import datetime, timezone
 
-from katarina.intelligence.technical_regime import (
+from katarina.intelligence.perception.technical_regime import (
     classify_market_regime, wilder_adx,
 )
-from katarina.intelligence.multi_market_brain import features, screen
+from katarina.intelligence.perception.screening import features, screen
 
 NOW = datetime(2026, 10, 6, 12, tzinfo=timezone.utc)
 

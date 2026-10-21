@@ -5,10 +5,10 @@ from unittest.mock import patch
 import tempfile
 import unittest
 from katarina.adapters.automatic_connection import BoundLocalBroker
-from katarina.intelligence.continuous_observation import run_continuous
+from katarina.intelligence.cognition.continuous_observation import run_continuous
 from katarina.monitoring.activity_trace import read_activity
 from katarina.monitoring.public_runtime import build_public_runtime
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from tests.integration.test_automatic_connection import AccountBroker,config
 
 class ObserverActivityTests(unittest.TestCase):
@@ -83,7 +83,7 @@ class ObserverActivityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             broker=AccountBroker();root=Path(tmp)
             # Force this engineering branch, not a profitable strategy or live permission.
-            with patch('katarina.intelligence.brain_observer.calendar_status',
+            with patch('katarina.intelligence.cognition.observer.calendar_status',
                        return_value=(True,False,'fixture_calendar')):
                 result=run_continuous(root,config=config(priority=('local',),attempts=1),
                     factories={'local':lambda c:BoundLocalBroker(broker,c)},brain_type=CandidateBrain,

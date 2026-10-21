@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
-from katarina.intelligence.xauusd import XauusdAssessment
+from katarina.intelligence.perception.xauusd import XauusdAssessment
 from katarina.engines.scalper_entry import EntryProposal, EntrySide
 
 class DecisionAction(str, Enum):

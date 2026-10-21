@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal, ROUND_FLOOR
 from math import isfinite
 from katarina.engines.risk import RiskAction, RiskGovernor, RiskRequest
-from katarina.intelligence.evidence_risk import (
+from katarina.intelligence.lab.evidence_risk import (
     EvidenceRiskGate, StrategyEvidence, VerifiedRiskState,
 )
 

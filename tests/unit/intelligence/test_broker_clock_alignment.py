@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime, timedelta, timezone
-from katarina.intelligence.broker_clock_alignment import (
+from katarina.intelligence.broker.broker_clock_alignment import (
     infer_clock_shift, capture_time_reference, normalize_incoming_time,
 )
 

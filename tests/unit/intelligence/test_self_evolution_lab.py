@@ -3,10 +3,10 @@ from datetime import datetime, timedelta, timezone
 import sqlite3
 import unittest
 
-from katarina.intelligence.self_evolution_lab import (
+from katarina.intelligence.cognition.self_evolution_lab import (
     evaluate_shadow_self_evolution,derive_shadow_research_policy, VERSION,
 )
-from katarina.intelligence.prospective_shadow_book import (
+from katarina.intelligence.shadow.prospective_shadow_book import (
     ProspectiveShadowBook,ResearchHypothesis,
 )
 

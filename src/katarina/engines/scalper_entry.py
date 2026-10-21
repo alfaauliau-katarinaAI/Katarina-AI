@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from katarina.intelligence.regime import Regime, RegimeAssessment
+from katarina.intelligence.perception.regime import Regime, RegimeAssessment
 
 
 class EntryMode(str, Enum):

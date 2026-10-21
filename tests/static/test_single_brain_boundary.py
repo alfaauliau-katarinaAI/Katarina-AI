@@ -13,14 +13,14 @@ class SingleBrainBoundaryTests(unittest.TestCase):
         source = (ROOT/'scripts/ai/run_contextual_market_observer.py').read_text()
         tree = ast.parse(source)
         imports = [n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
-        self.assertIn('katarina.intelligence.unified_brain', imports)
+        self.assertIn('katarina.intelligence.cognition.unified_brain', imports)
         for forbidden in ('MetaTrader5', 'MemoryStore(', 'ContextStore(', 'MarketDecisionBrain(',
                           'virtual_book.', 'order_send(', 'threading', 'subprocess'):
             self.assertNotIn(forbidden, source)
 
     def test_internal_gate_cannot_construct_risk_authority_or_send_to_broker(self):
-        root = ROOT/'src/katarina/intelligence'
-        for name in ('unified_brain.py', 'brain_observer.py', 'brain_runtime_control.py'):
+        root = ROOT/'src/katarina/intelligence/cognition'
+        for name in ('unified_brain.py', 'observer.py', 'brain_runtime_control.py'):
             tree = ast.parse((root/name).read_text())
             for call in (x for x in ast.walk(tree) if isinstance(x, ast.Call)):
                 if isinstance(call.func, ast.Name):
@@ -29,8 +29,8 @@ class SingleBrainBoundaryTests(unittest.TestCase):
                     self.assertNotIn(call.func.attr, ('order_send', 'order_check', 'Popen'), name)
 
     def test_cold_import_requires_no_terminal_and_starts_no_external_worker(self):
-        source = ('import sys; import katarina.intelligence.unified_brain; '
-                  'import katarina.intelligence.brain_observer; '
+        source = ('import sys; import katarina.intelligence.cognition.unified_brain; '
+                  'import katarina.intelligence.cognition.observer; '
                   'assert "MetaTrader5" not in sys.modules')
         result = subprocess.run([sys.executable, '-c', source], cwd=ROOT,
                                 capture_output=True, text=True, timeout=15)

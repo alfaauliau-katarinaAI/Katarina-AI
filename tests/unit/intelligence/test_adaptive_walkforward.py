@@ -5,9 +5,9 @@ import csv
 from pathlib import Path
 import unittest
 
-from katarina.intelligence.adaptive_strategy_library import (
+from katarina.intelligence.lab.adaptive_strategy_library import (
     ClosedBar, classify_closed_regime, propose_closed_candle_strategies)
-from katarina.intelligence.adaptive_walkforward import (
+from katarina.intelligence.lab.adaptive_walkforward import (
     PaperEvent, SimulatedRiskGuard, StrategyPerformanceMemory,
     replay_walk_forward)
 

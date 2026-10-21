@@ -4,10 +4,10 @@ import sqlite3
 import unittest
 from unittest.mock import patch
 
-from katarina.intelligence.self_evolution_lab import (
+from katarina.intelligence.cognition.self_evolution_lab import (
     _read, evaluate_shadow_self_evolution, derive_shadow_research_policy,
 )
-from katarina.intelligence.unified_cognitive_cycle import run_unified_cognitive_cycle
+from katarina.intelligence.cognition.unified_cognitive_cycle import run_unified_cognitive_cycle
 
 CLOCK=datetime(2026,10,14,12,0,tzinfo=timezone.utc)
 
@@ -71,7 +71,7 @@ class StrictShadowIndependenceTests(unittest.TestCase):
         self.insert(0)
         self.insert(1)
         self.insert(2)
-        with patch("katarina.intelligence.self_evolution_lab.MAX_ROWS",2):
+        with patch("katarina.intelligence.cognition.self_evolution_lab.MAX_ROWS",2):
             rows,issue=_read(self.db,CLOCK.timestamp())
             self.assertEqual(rows,[])
             self.assertEqual(issue,"shadow_observation_window_truncated")
@@ -83,7 +83,7 @@ class StrictShadowIndependenceTests(unittest.TestCase):
     def test_exact_capacity_still_permits_research_only_preview(self):
         self.insert(0)
         self.insert(1)
-        with patch("katarina.intelligence.self_evolution_lab.MAX_ROWS",2):
+        with patch("katarina.intelligence.cognition.self_evolution_lab.MAX_ROWS",2):
             rows,issue=_read(self.db,CLOCK.timestamp())
             self.assertIsNone(issue)
             self.assertEqual(len(rows),2)

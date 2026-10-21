@@ -13,8 +13,8 @@ from dataclasses import dataclass
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.adaptive_regime import AdaptiveRegimeEngine, ClosedFrame
-from katarina.intelligence.closed_swing_structure import ClosedSwingStructure, ClosedBar
+from katarina.intelligence.perception.adaptive_regime import AdaptiveRegimeEngine, ClosedFrame
+from katarina.intelligence.perception.closed_swing_structure import ClosedSwingStructure, ClosedBar
 from katarina.engines.adaptive_scalper import AdaptiveScalpRouter,ClosedPriceContext,ScalpSide
 import MetaTrader5 as mt5
 

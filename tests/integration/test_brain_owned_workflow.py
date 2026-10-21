@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
-from katarina.intelligence.brain_runtime_control import CHECKPOINT
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.brain_runtime_control import CHECKPOINT
 from katarina.engines.risk import RiskGovernor, RiskRequest
 from katarina.memory import MemoryStore
 from tests.unit.engines.test_execution_recovery import plan
@@ -101,7 +101,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_failure_is_audited_without_sensitive_message_and_lock_is_released(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
-            with patch('katarina.intelligence.brain_observer.BrainObserver.run',
+            with patch('katarina.intelligence.cognition.observer.BrainObserver.run',
                        side_effect=RuntimeError('sensitive account value')):
                 with self.assertRaises(RuntimeError):
                     UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
@@ -202,7 +202,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
         db.close()
 
     def test_reentrant_observer_is_rejected_before_second_broker_initialization(self):
-        from katarina.intelligence.brain_observer import BrainObserver
+        from katarina.intelligence.cognition.observer import BrainObserver
         original = BrainObserver.run
         first, second = SyntheticBroker(), SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:

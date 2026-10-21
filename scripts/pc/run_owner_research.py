@@ -13,9 +13,9 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'src'))
 from katarina.host import state_directory
-from katarina.intelligence.brain_observer import lock_worker
-from katarina.intelligence.public_context import ContextStore
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.observer import lock_worker
+from katarina.intelligence.news.public_context import ContextStore
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.memory.store import MemoryStore
 
 

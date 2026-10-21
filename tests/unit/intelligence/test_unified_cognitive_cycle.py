@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from katarina.intelligence.prospective_shadow_book import ProspectiveShadowBook
-from katarina.intelligence.unified_cognitive_cycle import (
+from katarina.intelligence.shadow.prospective_shadow_book import ProspectiveShadowBook
+from katarina.intelligence.cognition.unified_cognitive_cycle import (
     run_unified_cognitive_cycle,verify_cognitive_history,
     rollback_cognitive_research,
 )
@@ -118,8 +118,8 @@ class UnifiedCognitionTests(unittest.TestCase):
         self.assertEqual(verify_cognitive_history(self.db)["events"],2)
 
     def test_curiosity_priority_changes_next_virtual_research_choice_only(self):
-        from katarina.intelligence.prospective_shadow_book import ResearchHypothesis
-        from katarina.intelligence.self_evolution_lab import (
+        from katarina.intelligence.shadow.prospective_shadow_book import ResearchHypothesis
+        from katarina.intelligence.cognition.self_evolution_lab import (
             evaluate_shadow_self_evolution,derive_shadow_research_policy,
         )
         lab=run_unified_cognitive_cycle(self.db,as_of_utc=AS_OF)
@@ -208,7 +208,7 @@ class UnifiedCognitionTests(unittest.TestCase):
         self.assertEqual(before,verify_cognitive_history(self.db))
 
     def test_history_rejects_rewritten_backwards_timestamp_even_with_valid_receipt(self):
-        from katarina.intelligence.unified_cognitive_cycle import _digest
+        from katarina.intelligence.cognition.unified_cognitive_cycle import _digest
         run_unified_cognitive_cycle(self.db,as_of_utc=AS_OF)
         self.db.execute(
             "UPDATE prospective_shadow SET virtual_net_r=-.9 WHERE side='BUY'")
@@ -311,7 +311,7 @@ class UnifiedCognitionTests(unittest.TestCase):
     def test_actual_brain_owns_observer_no_second_process(self):
         from pathlib import Path
         root=Path(__file__).resolve().parents[3]
-        source=(root/"src/katarina/intelligence/unified_brain.py").read_text()
+        source=(root/"src/katarina/intelligence/cognition/unified_brain.py").read_text()
         cli=(root/"scripts/ai/run_contextual_market_observer.py").read_text()
         self.assertLess(source.index("self.shadow_book.settle("),
                         source.index("unified = self.run_unified_cognitive_cycle("))

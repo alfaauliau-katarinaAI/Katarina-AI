@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from katarina.intelligence.runtime_evidence import assess_runtime, read_runtime
+from katarina.intelligence.operations.runtime_evidence import assess_runtime, read_runtime
 
 
 class RuntimeEvidenceTest(unittest.TestCase):

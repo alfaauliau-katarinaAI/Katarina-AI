@@ -11,7 +11,7 @@ import unittest
 from scripts.ai.verify_unified_katarina import (
     verify,build_stage3_evidence_backlog,
 )
-from katarina.intelligence.prospective_shadow_book import ProspectiveShadowBook
+from katarina.intelligence.shadow.prospective_shadow_book import ProspectiveShadowBook
 
 ROOT=Path(__file__).resolve().parents[2]
 

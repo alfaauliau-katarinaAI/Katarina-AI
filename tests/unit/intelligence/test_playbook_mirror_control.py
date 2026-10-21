@@ -2,7 +2,7 @@
 import unittest
 import tempfile,json
 from pathlib import Path
-from katarina.intelligence.symbol_playbooks import SYMBOLS
+from katarina.intelligence.perception.symbol_playbooks import SYMBOLS
 import sys
 SCRIPTS=Path(__file__).resolve().parents[3]/"scripts"/"research"
 sys.path.insert(0,str(SCRIPTS))

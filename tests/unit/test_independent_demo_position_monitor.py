@@ -12,8 +12,8 @@ import tempfile
 import unittest
 from types import SimpleNamespace as S
 
-from katarina.intelligence.broker_account_monitor import inspect_broker_account
-from katarina.intelligence.demo_forward import DemoForwardRuntime
+from katarina.intelligence.broker.broker_account_monitor import inspect_broker_account
+from katarina.intelligence.demo.demo_forward import DemoForwardRuntime
 from katarina.monitoring.entry_feed import _attested_currency
 from katarina.monitoring.position_feed import read_position_feed
 

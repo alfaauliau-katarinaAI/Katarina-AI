@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
 from katarina.adapters.automatic_connection import ConnectionConfig
-from katarina.intelligence.independent_demo_worker import run_demo_worker
+from katarina.intelligence.demo.independent_demo_worker import run_demo_worker
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--state-dir',required=True);p.add_argument('--connection-config',required=True)

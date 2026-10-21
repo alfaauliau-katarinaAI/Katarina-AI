@@ -2,8 +2,8 @@ from datetime import datetime,timezone,timedelta
 from hashlib import sha256
 import sqlite3
 import unittest
-from katarina.intelligence.research_news_collection import collect,parse_feed,event_study,allowed,describe_body,SOURCES
-from katarina.intelligence.observational_associations import observe_associations
+from katarina.intelligence.news.research_news_collection import collect,parse_feed,event_study,allowed,describe_body,SOURCES
+from katarina.intelligence.perception.observational_associations import observe_associations
 
 
 class ResearchNewsTests(unittest.TestCase):
@@ -133,10 +133,10 @@ class ResearchNewsTests(unittest.TestCase):
 
     def test_public_http_request_declares_supported_feed_and_article_formats(self):
         from unittest.mock import patch,MagicMock
-        from katarina.intelligence.research_news_collection import fetch
+        from katarina.intelligence.news.research_news_collection import fetch
         response=MagicMock();response.__enter__.return_value.read.return_value=b'<rss/>'
         opener=MagicMock();opener.open.return_value=response
-        with patch('katarina.intelligence.research_news_collection.build_opener',return_value=opener):
+        with patch('katarina.intelligence.news.research_news_collection.build_opener',return_value=opener):
             self.assertEqual(fetch('https://www.rba.gov.au/rss/a.xml','www.rba.gov.au'),b'<rss/>')
         request=opener.open.call_args.args[0]
         self.assertIn('application/rss+xml',request.get_header('Accept'))

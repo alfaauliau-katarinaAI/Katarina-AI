@@ -1,6 +1,6 @@
 """Offline causal candidate research gate does not authorize broker trades."""
 import unittest
-from katarina.intelligence.research_signal_ablation import eligible_for_research as pass_gate
+from katarina.intelligence.lab.research_signal_ablation import eligible_for_research as pass_gate
 
 
 class ResearchSignalAblationTests(unittest.TestCase):

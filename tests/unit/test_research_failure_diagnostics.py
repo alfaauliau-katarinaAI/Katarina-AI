@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from katarina.intelligence.autonomous_research import REPORT_INTERVAL_SECONDS, ResearchWorker
-from katarina.intelligence.research_capacity import DB_TIMEOUT
+from katarina.intelligence.lab.autonomous_research import REPORT_INTERVAL_SECONDS, ResearchWorker
+from katarina.intelligence.lab.research_capacity import DB_TIMEOUT
 from katarina.monitoring.activity_trace import clean_activity, error_code
 
 
@@ -66,7 +66,7 @@ class WorkerFailureEventTest(unittest.TestCase):
                 data.execute("INSERT INTO lab_runs VALUES('r','XAUUSD','2026-10-21','d','{\"spread_proxy_price\": 0.1}')")
             trace = Trace()
             worker = ResearchWorker(root, trace, 'MOMENTUM', 4)
-            import katarina.intelligence.autonomous_research as module
+            import katarina.intelligence.lab.autonomous_research as module
             original = module.evaluate
             module.evaluate = lambda *a, **k: (_ for _ in ()).throw(sqlite3.OperationalError('database is locked'))
             try:

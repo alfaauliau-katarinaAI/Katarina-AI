@@ -1,6 +1,6 @@
 import unittest
 from dataclasses import replace
-from katarina.intelligence.strategy_selector import StrategySelectionBrain,StrategyObservation
+from katarina.intelligence.lab.strategy_selector import StrategySelectionBrain,StrategyObservation
 D=86_400_000_000_000
 
 class SelectorTests(unittest.TestCase):

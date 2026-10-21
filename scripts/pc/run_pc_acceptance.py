@@ -11,7 +11,7 @@ import uuid
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
 from katarina.host import inspect_host, state_directory
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.adapters.automatic_connection import ConnectionConfig, run_connected
 from katarina.adapters.pc_simulation import PCSimulationBroker
 

@@ -9,7 +9,7 @@ from hashlib import sha256
 from pathlib import Path
 
 from evaluate_regime_prediction_ml import select_samples
-from katarina.intelligence.historical_analog_memory import (
+from katarina.intelligence.perception.historical_analog_memory import (
     fit_history,EMBARGO_SECONDS,FEATURE_LAYOUT)
 
 FREEZE_TIME="2026-10-10T12:00:00+00:00"

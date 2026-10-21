@@ -3,10 +3,10 @@ import sqlite3
 import unittest
 from datetime import datetime,timedelta,timezone
 
-from katarina.intelligence.prospective_shadow_book import (
+from katarina.intelligence.shadow.prospective_shadow_book import (
     ProspectiveShadowBook,ResearchHypothesis,
 )
-from katarina.intelligence.prospective_shadow_review import (
+from katarina.intelligence.shadow.prospective_shadow_review import (
     summarize,pause_due_to_losses,
 )
 NOW=datetime(2026,10,13,10,0,tzinfo=timezone.utc)

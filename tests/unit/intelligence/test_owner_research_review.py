@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from katarina.intelligence.owner_research_review import OwnerResearchReview, EVENT
+from katarina.intelligence.cognition.owner_research_review import OwnerResearchReview, EVENT
 from katarina.memory.store import MemoryStore
 
 NOW = datetime(2026, 10, 16, 0, 0, tzinfo=timezone.utc)
@@ -103,7 +103,7 @@ class OwnerResearchReviewTests(unittest.TestCase):
         self.assertEqual(len(self.memory.load_recent_operational_events_of_type(EVENT)), 1)
 
     def test_existing_brain_owns_same_memory_and_control_scope(self):
-        from katarina.intelligence.brain_runtime_control import BrainRuntimeControl
+        from katarina.intelligence.cognition.brain_runtime_control import BrainRuntimeControl
         control = BrainRuntimeControl(self.memory)
         self.assertIs(control.research_review.memory, self.memory)
         self.assertFalse(control.snapshot()['live_execution_authorized'])

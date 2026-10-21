@@ -15,7 +15,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
 sys.path.insert(0,str(ROOT/"scripts"/"research"))
 from backtest_explainable_55_pairs import OUT,get_bars,TIMEFRAME,stats
-from katarina.intelligence.intraday_scalp_research import (
+from katarina.intelligence.lab.intraday_scalp_research import (
     Candidate,vector_prefilter,fill_next_open)
 
 DEST=OUT/"intraday_scalp_full_m5_v5"

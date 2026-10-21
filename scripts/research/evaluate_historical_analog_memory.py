@@ -12,7 +12,7 @@ from pathlib import Path
 
 from evaluate_regime_prediction_ml import (
     FOLDS,chronological_split,select_samples,scores)
-from katarina.intelligence.historical_analog_memory import (
+from katarina.intelligence.perception.historical_analog_memory import (
     fit_history,score_rows,ANALOG_K,PRIOR_PSEUDOCOUNT,EMBARGO_SECONDS)
 
 def run(source,logistic,horizon):

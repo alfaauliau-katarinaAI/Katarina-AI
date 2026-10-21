@@ -2,7 +2,7 @@
 import unittest
 from datetime import datetime,timezone
 from types import SimpleNamespace
-from katarina.intelligence.broker_history_coverage import (
+from katarina.intelligence.broker.broker_history_coverage import (
     analyze_deal_coverage,inspect_history,
 )
 

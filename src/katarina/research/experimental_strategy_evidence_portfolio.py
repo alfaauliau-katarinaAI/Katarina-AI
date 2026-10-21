@@ -13,8 +13,8 @@ from katarina.engines.execution import ExecutionEngine, ExecutionIntent
 from katarina.engines.exposure import CorrelationExposureEngine
 from katarina.engines.manual_risk import AccountRiskAssessment
 from katarina.engines.opportunity import RankedOpportunity
-from katarina.intelligence.strategy_evidence import StrategyEvidenceDecision
-from katarina.intelligence.strategy_drift import StrategyDriftDecision
+from katarina.intelligence.shadow.strategy_evidence import StrategyEvidenceDecision
+from katarina.intelligence.shadow.strategy_drift import StrategyDriftDecision
 
 
 @dataclass(frozen=True, slots=True)

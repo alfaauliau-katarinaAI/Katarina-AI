@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace as S
 import unittest
 from katarina.monitoring.public_research import graph_from_report,public_entries,read_public_research
-from katarina.intelligence.broker_account_monitor import inspect_broker_account
+from katarina.intelligence.broker.broker_account_monitor import inspect_broker_account
 
 class PublicResearchTests(unittest.TestCase):
     def report(self):

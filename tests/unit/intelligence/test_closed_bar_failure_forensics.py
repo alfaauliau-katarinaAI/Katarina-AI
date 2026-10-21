@@ -2,9 +2,9 @@
 import unittest
 from datetime import datetime,timedelta,timezone
 
-from katarina.intelligence.market_decision_pipeline import SensorCandle
-from katarina.intelligence.causal_market_replay import simulate_ohlc_proxy
-from katarina.intelligence.closed_bar_failure_forensics import (
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+from katarina.intelligence.lab.causal_market_replay import simulate_ohlc_proxy
+from katarina.intelligence.lab.closed_bar_failure_forensics import (
     diagnose_frozen_replay,
 )
 

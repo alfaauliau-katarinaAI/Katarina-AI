@@ -16,19 +16,19 @@ import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
 
-from katarina.intelligence.broker_clock_alignment import infer_clock_shift
-from katarina.intelligence.market_decision_pipeline import SensorCandle
-from katarina.intelligence.causal_market_replay import (
+from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+from katarina.intelligence.lab.causal_market_replay import (
     replay_native_brain,purged_chronological_splits
 )
-from katarina.intelligence.adaptive_walkforward import PaperEvent
-from katarina.intelligence.replay_cost_diagnostics import describe_candidates
-from katarina.intelligence.closed_bar_failure_forensics import (
+from katarina.intelligence.lab.adaptive_walkforward import PaperEvent
+from katarina.intelligence.lab.replay_cost_diagnostics import describe_candidates
+from katarina.intelligence.lab.closed_bar_failure_forensics import (
     diagnose_frozen_replay,
 )
 
 # Dynamically verify the 17 broker-supported canonical names, not hardcode five.
-from katarina.intelligence.broker_scan_universe import resolve_broker_symbols
+from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
 
 
 def requested_history_depth(now_utc,window_end_utc,max_cuts):

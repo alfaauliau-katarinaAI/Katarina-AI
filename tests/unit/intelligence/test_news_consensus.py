@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime,timezone
 
-from katarina.intelligence.news_consensus import NewsConsensusEngine
-from katarina.intelligence.news_intelligence import NewsItem
+from katarina.intelligence.news.news_consensus import NewsConsensusEngine
+from katarina.intelligence.news.news_intelligence import NewsItem
 
 
 NOW=datetime(2026,10,6,12,0,tzinfo=timezone.utc)

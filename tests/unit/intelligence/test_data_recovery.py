@@ -3,8 +3,8 @@ import json,sqlite3,unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import SimpleNamespace as S
-from katarina.intelligence.data_recovery import record_gaps,recover_due,read_recovery
-from katarina.intelligence.causal_broker_quotes import last_past_quote
+from katarina.intelligence.broker.data_recovery import record_gaps,recover_due,read_recovery
+from katarina.intelligence.broker.causal_broker_quotes import last_past_quote
 
 class Broker:
     TIMEFRAME_M5=5;TIMEFRAME_M15=15;TIMEFRAME_H1=60;COPY_TICKS_INFO=1
@@ -65,7 +65,7 @@ class RecoveryTests(unittest.TestCase):
         self.assertLessEqual((calls[1][1]-calls[1][0]).total_seconds(),30)
 
     def test_old_diagnostics_seed_requests_without_becoming_live_data(self):
-        from katarina.intelligence.data_recovery import seed_existing_gaps
+        from katarina.intelligence.broker.data_recovery import seed_existing_gaps
         (self.root/'latest.json').write_text(json.dumps({'symbols':{'missing':{'blocking_reasons':['sensor_error:ValueError']},'valid':{'market_state':'TREND_UP'}}}))
         out=seed_existing_gaps(self.db,self.root,self.now)
         self.assertEqual(out['missing'],1);self.assertEqual(out['verified'],0)

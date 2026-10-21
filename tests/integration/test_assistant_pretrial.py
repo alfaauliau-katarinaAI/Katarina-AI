@@ -12,7 +12,7 @@ from katarina.adapters.brain_feedback import FeedbackInbox
 from katarina.adapters.dialog_model import JSONDialogModel, ModelConfig
 from katarina.adapters.pc_simulation import PCSimulationBroker
 from katarina.adapters.readonly_cloud import CloudReadOnlyBroker, ReadOnlySensorBridge
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.memory.store import MemoryStore
 
 
@@ -43,7 +43,7 @@ class AssistantPretrialTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
-        from katarina.intelligence.public_context import ContextStore
+        from katarina.intelligence.news.public_context import ContextStore
         self.db = ContextStore(self.root/'context.sqlite3').db
         self.memory = MemoryStore(self.root/'memory.sqlite3')
         self.brain = UnifiedKatarinaBrain(self.db, self.memory)
@@ -185,7 +185,7 @@ class AssistantPretrialTests(unittest.TestCase):
             self.brain.acknowledge_observation(broker, {'symbols':{'EURUSD':{'action':'WAIT'}}})
 
     def test_dialog_observer_reuses_same_brain_and_memory(self):
-        from katarina.intelligence.public_context import ContextStore
+        from katarina.intelligence.news.public_context import ContextStore
         context = ContextStore(self.root/'owned-context.sqlite3')
         self.brain.context_store = context
         self.brain.shadow_db = context.db
@@ -280,7 +280,7 @@ class AssistantPretrialTests(unittest.TestCase):
     def test_dialog_respects_owner_research_rollback(self):
         from datetime import timedelta
         from tests.unit.intelligence.test_unified_cognitive_cycle import populate, START, AS_OF
-        from katarina.intelligence.unified_cognitive_cycle import rollback_cognitive_research
+        from katarina.intelligence.cognition.unified_cognitive_cycle import rollback_cognitive_research
         populate(self.db)
         first = self.brain.run_unified_cognitive_cycle(as_of_utc=START+timedelta(days=10))
         self.brain.run_unified_cognitive_cycle(as_of_utc=AS_OF)

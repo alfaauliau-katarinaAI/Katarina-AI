@@ -1,7 +1,7 @@
 """Reconstruct a technical-only, freshness-checked view without opening broker or memory."""
 from pathlib import Path
 import json
-from katarina.intelligence.runtime_evidence import read_runtime
+from katarina.intelligence.operations.runtime_evidence import read_runtime
 from katarina.monitoring.agent_projection import project_agent_board
 from katarina.monitoring.activity_trace import read_activity
 from katarina.adapters.owner_dialog_server import public_dashboard_snapshot
@@ -62,11 +62,11 @@ def build_public_runtime(root):
     from katarina.monitoring.research_growth import read_growth
     public_board['research_growth']=read_growth(root,pid) if research_allowed else {'status':'NOT_ATTESTED'}
     public_board['research_graph']=graph
-    from katarina.intelligence.research_reports import read_reports
+    from katarina.intelligence.lab.research_reports import read_reports
     public_board['research_reports']=read_reports(root,pid) if research_allowed else {'status':'NOT_ATTESTED'}
     from katarina.monitoring.research_lab_status import read_lab_status
     public_board['research_lab'] = read_lab_status(root) if research_allowed else {'status':'NOT_ATTESTED'}
-    from katarina.intelligence.data_recovery import read_recovery
+    from katarina.intelligence.broker.data_recovery import read_recovery
     public_board['research_lab']['recovery']=read_recovery(root,pid) if research_allowed else {'status':'NOT_ATTESTED'}
     public_board['research_source_verified'] = research_allowed and graph.get('status') != 'NOT_ATTESTED'
     public_board['entries']=entries

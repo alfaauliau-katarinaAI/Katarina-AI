@@ -1,6 +1,6 @@
 """Aggregate all frozen proposals and preserve missing broker tick quotes."""
 import unittest
-from katarina.intelligence.precommitted_setup_research import (
+from katarina.intelligence.lab.precommitted_setup_research import (
     FROZEN_RULE_VERSION,
 )
 from scripts.research.aggregate_precommitted_aug_research import aggregate

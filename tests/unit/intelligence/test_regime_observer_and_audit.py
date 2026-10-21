@@ -1,7 +1,7 @@
 """Observer coupling and tamper tests for the new regime layer."""
 import unittest
 from datetime import datetime,timezone
-from katarina.intelligence.multi_market_brain import features,screen
+from katarina.intelligence.perception.screening import features,screen
 from tests.unit.intelligence.test_market_regime_intelligence import fixture
 from backtest_market_regime_labels import groups
 from audit_market_regime_labels import audit

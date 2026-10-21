@@ -3,11 +3,11 @@ import unittest
 from datetime import datetime,timedelta,timezone
 from dataclasses import replace
 
-from katarina.intelligence.market_decision_pipeline import SensorCandle
-from katarina.intelligence.causal_market_replay import (
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+from katarina.intelligence.lab.causal_market_replay import (
     validate_bars,simulate_ohlc_proxy,replay_native_brain,purged_chronological_splits
 )
-from katarina.intelligence.adaptive_walkforward import PaperEvent
+from katarina.intelligence.lab.adaptive_walkforward import PaperEvent
 
 UTC=timezone.utc
 END=datetime(2026,10,9,12,tzinfo=UTC)
@@ -65,9 +65,9 @@ class NativeMarketReplayTests(unittest.TestCase):
             rr_after_spread_estimate=2.,invalidation_level=90.,
             primary_target=130.,strategy="TREND_PULLBACK",
             evidence_score=.8,market_state="TREND_UP")
-        with patch("katarina.intelligence.causal_market_replay.MarketDecisionBrain.evaluate",
+        with patch("katarina.intelligence.lab.causal_market_replay.MarketDecisionBrain.evaluate",
                    return_value=fake), patch(
-            "katarina.intelligence.causal_market_replay.simulate_ohlc_proxy",
+            "katarina.intelligence.lab.causal_market_replay.simulate_ohlc_proxy",
             return_value=None):
             result=replay_native_brain({"TEST.vx":self.frames},
                 max_m5_cuts_per_symbol=150)
@@ -85,7 +85,7 @@ class NativeMarketReplayTests(unittest.TestCase):
         snapshots[int((END+timedelta(minutes=5)).timestamp())]=900.0
         fake=SimpleNamespace(technical_signal="WAIT")
         with patch(
-                "katarina.intelligence.causal_market_replay.MarketDecisionBrain.evaluate",
+                "katarina.intelligence.lab.causal_market_replay.MarketDecisionBrain.evaluate",
                 return_value=fake) as calc:
             result=replay_native_brain(
                 {"TEST.vx":self.frames},
@@ -102,7 +102,7 @@ class NativeMarketReplayTests(unittest.TestCase):
     def test_missing_historical_spread_skips_not_fabricates(self):
         from unittest.mock import patch
         with patch(
-                "katarina.intelligence.causal_market_replay.MarketDecisionBrain.evaluate"
+                "katarina.intelligence.lab.causal_market_replay.MarketDecisionBrain.evaluate"
                 ) as calc:
             result=replay_native_brain(
                 {"TEST.vx":self.frames},

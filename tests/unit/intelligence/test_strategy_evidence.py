@@ -2,7 +2,7 @@ import unittest
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
-from katarina.intelligence.strategy_evidence import (
+from katarina.intelligence.shadow.strategy_evidence import (
     ClosedStrategyTrade, ForwardStrategyEvidenceGate,
 )
 

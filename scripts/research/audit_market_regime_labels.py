@@ -10,7 +10,7 @@ from datetime import datetime
 from hashlib import sha256
 from math import isfinite
 from pathlib import Path
-from katarina.intelligence.market_regime_intelligence import STATES,PROFILES
+from katarina.intelligence.perception.market_regime_intelligence import STATES,PROFILES
 from backtest_market_regime_labels import groups,EVAL_HOURS
 
 def time(iso):

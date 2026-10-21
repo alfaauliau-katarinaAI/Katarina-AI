@@ -13,8 +13,8 @@ from katarina.adapters.automatic_connection import BoundLocalBroker
 from katarina.adapters.continuous_owner_surface import owner_surface
 from katarina.adapters.owner_access import authenticate, load_access, scoped_session
 from katarina.adapters.owner_dialog_server import create_server
-from katarina.intelligence.continuous_observation import run_continuous
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.continuous_observation import run_continuous
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.memory.store import MemoryStore
 from tests.integration.test_automatic_connection import AccountBroker, config
 
@@ -155,7 +155,7 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
 
     def test_analyst_cannot_acquire_research_tool(self):
         from scripts.pc.run_pretrial_acceptance import FixtureModel
-        from katarina.intelligence.public_context import ContextStore
+        from katarina.intelligence.news.public_context import ContextStore
         class Server:
             def handle_request(self):
                 pass

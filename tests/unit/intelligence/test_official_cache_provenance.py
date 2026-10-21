@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime,timedelta,timezone
 from hashlib import sha256
 import json,sqlite3
-from katarina.intelligence.official_cache_provenance import inspect_cached_official_sources
+from katarina.intelligence.news.official_cache_provenance import inspect_cached_official_sources
 
 NOW=datetime(2026,10,15,9,tzinfo=timezone.utc)
 

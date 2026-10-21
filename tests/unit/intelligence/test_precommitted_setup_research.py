@@ -2,8 +2,8 @@
 import unittest
 from dataclasses import replace
 from datetime import datetime,timedelta,timezone
-from katarina.intelligence.market_decision_pipeline import SensorCandle
-from katarina.intelligence.precommitted_setup_research import (
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+from katarina.intelligence.lab.precommitted_setup_research import (
     _propose,research_alternatives,FROZEN_RULE_VERSION,
 )
 

@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — `intelligence/` dikelompokkan ke 8 subpaket (perapian tahap 3a, tanpa perubahan perilaku)
+
+- 104 modul dipindah ke `cognition/`, `perception/`, `broker/`, `news/`, `demo/`, `shadow/`, `lab/`,
+  `operations/`. Empat modul berversi diberi nama kemampuan: `brain_observer` → `cognition.observer`,
+  `market_decision_brain_v3` → `cognition.market_decision`, `adaptive_brain_v2` →
+  `cognition.adaptive_observation`, `multi_market_brain` → `perception.screening`. Isi modul tidak berubah
+  kecuali `demo_forward`: pencarian `config/risk_governor_v2.json` kini `parents[4]` karena satu level lebih dalam.
+- Semua import, string patch tes, path di config, workflow, launcher dan dokumen aktif diganti ke lokasi baru.
+- Lokasi lama berisi shim (`sys.modules` alias + `DeprecationWarning`) untuk pemanggil di luar repo;
+  dihapus di tahap 3b. Dokumen bertanggal, arsip, dan payload `scripts/ai/install_*` tidak diubah.
+
 ## 2026-10-21 — pensiun `KatarinaAIBrain` lama (perapian tahap 2a, tanpa perubahan perilaku)
 
 - `intelligence/brain.py` beserta seluruh dependennya dipindah ke `archive/`: modul riset

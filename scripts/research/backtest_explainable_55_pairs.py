@@ -18,7 +18,7 @@ import MetaTrader5 as mt5
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.market_decision_pipeline import MarketDecisionPipeline, SensorCandle
+from katarina.intelligence.cognition.market_decision_pipeline import MarketDecisionPipeline, SensorCandle
 OUT=Path(r"C:\KatarinaDev\decision-backtest-20261012")
 OUT.mkdir(parents=True,exist_ok=True)
 SAMPLES_EVERY=36 # observed snapshots spaced by roughly 3 hours (NOT every bar)

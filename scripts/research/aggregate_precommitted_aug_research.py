@@ -12,7 +12,7 @@ from pathlib import Path
 from statistics import mean
 import argparse,json
 
-from katarina.intelligence.precommitted_setup_research import (
+from katarina.intelligence.lab.precommitted_setup_research import (
     FROZEN_RULE_VERSION,_metrics,
 )
 

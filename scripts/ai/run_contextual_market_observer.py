@@ -6,7 +6,7 @@ import os
 import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.host import inspect_host, state_directory
 from katarina.adapters.automatic_connection import ConnectionConfig, run_connected
 
@@ -81,7 +81,7 @@ def main():
     except ValueError as exc:
         parser.error(str(exc))
     if args.continuous:
-        from katarina.intelligence.continuous_observation import run_continuous
+        from katarina.intelligence.cognition.continuous_observation import run_continuous
         try:
             surface = None
             if args.owner_model_config or args.owner_status_ui:

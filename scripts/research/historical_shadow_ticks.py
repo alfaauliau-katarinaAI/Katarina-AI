@@ -17,9 +17,9 @@ from statistics import mean
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from katarina.intelligence.multi_market_brain import features
-from katarina.intelligence.shadow_hypotheses import propose
-from katarina.intelligence.technical_regime import classify_market_regime
+from katarina.intelligence.perception.screening import features
+from katarina.intelligence.shadow.shadow_hypotheses import propose
+from katarina.intelligence.perception.technical_regime import classify_market_regime
 
 UTC = timezone.utc
 HORIZON = 900

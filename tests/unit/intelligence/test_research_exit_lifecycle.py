@@ -6,11 +6,11 @@ import json
 import unittest
 
 from katarina.engines.adaptive_scalper import ResearchEntryPlan, ScalpSide
-from katarina.intelligence.adaptive_regime import MarketRead, MarketState, Playbook
-from katarina.intelligence.adaptive_brain_v2 import BrainV2Observation
-from katarina.intelligence.structure_exit_plan import StructuralExitPlan
-from katarina.intelligence.unified_research_handoff import research_handoff
-from katarina.intelligence.research_exit_lifecycle import review_offline_exit_lifecycle
+from katarina.intelligence.perception.adaptive_regime import MarketRead, MarketState, Playbook
+from katarina.intelligence.cognition.adaptive_observation import BrainV2Observation
+from katarina.intelligence.perception.structure_exit_plan import StructuralExitPlan
+from katarina.intelligence.cognition.unified_research_handoff import research_handoff
+from katarina.intelligence.lab.research_exit_lifecycle import review_offline_exit_lifecycle
 
 CLOCK=datetime(2026,10,14,13,30,tzinfo=timezone.utc)
 

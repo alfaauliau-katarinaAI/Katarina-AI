@@ -12,7 +12,7 @@ import public_github_sample_tournament as tournament_module
 from public_github_sample_tournament import (
     load_public_sample,h1_from_m5,tournament,PUBLIC_SAMPLES)
 from public_market_tournament import QuoteCandle
-from katarina.intelligence.adaptive_strategy_library import StrategyHypothesis
+from katarina.intelligence.lab.adaptive_strategy_library import StrategyHypothesis
 
 
 class Response:

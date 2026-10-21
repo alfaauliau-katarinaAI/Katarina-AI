@@ -37,7 +37,7 @@ def stamp(iso):
     if x.tzinfo is None:raise ValueError("no_timezone")
     return x.timestamp()
 
-from katarina.intelligence.analog_feature_schema import make_features
+from katarina.intelligence.perception.analog_feature_schema import make_features
 
 def select_samples(report,symbol,horizon_hours=1):
     rows=[]

@@ -2,7 +2,7 @@
 import unittest
 from datetime import datetime,timezone
 from types import SimpleNamespace
-from katarina.intelligence.broker_account_monitor import inspect_broker_account
+from katarina.intelligence.broker.broker_account_monitor import inspect_broker_account
 
 NOW=datetime(2026,10,15,5,tzinfo=timezone.utc)
 

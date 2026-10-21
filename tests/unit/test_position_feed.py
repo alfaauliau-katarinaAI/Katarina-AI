@@ -3,7 +3,7 @@ from datetime import datetime,timezone,timedelta
 from pathlib import Path
 import json,sqlite3,tempfile,unittest
 from types import SimpleNamespace as S
-from katarina.intelligence.broker_account_monitor import inspect_broker_account
+from katarina.intelligence.broker.broker_account_monitor import inspect_broker_account
 from katarina.monitoring.position_feed import read_position_feed
 
 class PositionFeedTests(unittest.TestCase):

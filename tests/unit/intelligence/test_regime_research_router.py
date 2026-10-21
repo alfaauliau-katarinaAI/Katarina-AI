@@ -3,7 +3,7 @@ import unittest
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
-from katarina.intelligence.regime_research_router import (
+from katarina.intelligence.lab.regime_research_router import (
     ObservedMarketContext, select_shadow_context,
 )
 

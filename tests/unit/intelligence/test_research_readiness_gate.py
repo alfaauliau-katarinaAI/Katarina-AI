@@ -1,7 +1,7 @@
 """No strategy promotion based solely on historically attractive samples."""
 import unittest
 from dataclasses import replace
-from katarina.intelligence.research_readiness_gate import Evidence,evaluate_readiness
+from katarina.intelligence.lab.research_readiness_gate import Evidence,evaluate_readiness
 
 class TestReadiness(unittest.TestCase):
     def setUp(self):

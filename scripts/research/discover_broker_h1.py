@@ -3,8 +3,8 @@ import argparse,json,sys
 from datetime import datetime,timezone
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
-from katarina.intelligence.calendar_history import load_calendar_history
-from katarina.intelligence.autonomous_strategy_discovery import Candle,discover
+from katarina.intelligence.perception.calendar_history import load_calendar_history
+from katarina.intelligence.lab.autonomous_strategy_discovery import Candle,discover
 
 
 def main():

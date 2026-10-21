@@ -30,10 +30,10 @@ sys.path.insert(0,str(ROOT/"src"))
 
 from katarina.adapters.mt5_shadow_read_only import MT5ShadowReadOnly
 from katarina.engines.risk import RiskGovernor
-from katarina.intelligence.mt5_shadow_cycle import MT5ShadowCycle
-from katarina.intelligence.shadow_journal import ShadowJournal
-from katarina.intelligence.shadow_paper_book import ShadowPaperBook
-from katarina.intelligence.shadow_manifest import (
+from katarina.intelligence.broker.mt5_shadow_cycle import MT5ShadowCycle
+from katarina.intelligence.shadow.shadow_journal import ShadowJournal
+from katarina.intelligence.shadow.shadow_paper_book import ShadowPaperBook
+from katarina.intelligence.shadow.shadow_manifest import (
     ShadowStudyIdentity,broker_fingerprint,config_sha256,
     verify_or_create_manifest,
 )

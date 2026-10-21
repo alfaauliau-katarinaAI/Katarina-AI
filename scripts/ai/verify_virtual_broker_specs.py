@@ -13,8 +13,8 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
-from katarina.intelligence.broker_scan_universe import resolve_broker_symbols
-from katarina.intelligence.broker_clock_alignment import infer_clock_shift
+from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
+from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift
 
 
 def run():

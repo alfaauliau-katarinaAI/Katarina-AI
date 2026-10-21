@@ -3,7 +3,7 @@ from datetime import datetime,timezone
 import json,sqlite3,tempfile,unittest
 from pathlib import Path
 from types import SimpleNamespace as S
-from katarina.intelligence.auto_calibration import compare_window,calibrate_due,_db,verified_window_offset
+from katarina.intelligence.broker.auto_calibration import compare_window,calibrate_due,_db,verified_window_offset
 
 class Broker:
     TIMEFRAME_M5=5;COPY_TICKS_INFO=1

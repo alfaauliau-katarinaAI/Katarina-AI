@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from katarina.intelligence.autonomous_research import GRID, ResearchWorker
-from katarina.intelligence.continuous_research_lab import (
+from katarina.intelligence.lab.autonomous_research import GRID, ResearchWorker
+from katarina.intelligence.lab.continuous_research_lab import (
     MAX_SPREAD_TO_RANGE, cost_gate, select_batch, setup, step, typical_spread)
 from katarina.monitoring.activity_trace import ActivityTrace
 
@@ -114,8 +114,8 @@ class LabAndWorkerTests(unittest.TestCase):
                     db.executemany('INSERT INTO lab_bars VALUES(?,?,?,?,?,?)', [('FIXTURE', *r) for r in rows])
                     db.execute('INSERT INTO lab_runs VALUES(?,?,?,?,?)', ('src', 'FIXTURE', '2026-01-01', 'x', json.dumps(
                         {'spread_proxy_price': .01, 'spread_source': 'MEDIAN_H1_BAR_SPREAD', 'cost_prohibitive': prohibitive})))
-                with patch('katarina.intelligence.autonomous_research.GRID', GRID[:1]), \
-                        patch('katarina.intelligence.research_capacity.research_capacity', return_value={'status': 'READY'}):
+                with patch('katarina.intelligence.lab.autonomous_research.GRID', GRID[:1]), \
+                        patch('katarina.intelligence.lab.research_capacity.research_capacity', return_value={'status': 'READY'}):
                     ResearchWorker(root, ActivityTrace(root)).tick()
                 with closing(sqlite3.connect(root / 'experiment-jobs.sqlite3')) as db:
                     trials = db.execute('SELECT result_json FROM trials').fetchall()

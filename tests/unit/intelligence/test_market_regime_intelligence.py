@@ -1,7 +1,7 @@
 """Deterministic causal behavior and no-trading guarantees for regime v1."""
 import json,unittest
 from datetime import datetime,timezone
-from katarina.intelligence.market_regime_intelligence import (
+from katarina.intelligence.perception.market_regime_intelligence import (
     classify_regime,PROFILES,_reversal_structure)
 
 NOW=datetime(2026,10,9,12,tzinfo=timezone.utc)

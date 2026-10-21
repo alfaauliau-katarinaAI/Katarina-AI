@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from katarina.adapters.dialog_model import JSONDialogModel, ModelConfig, ModelUnavailable
-from katarina.intelligence.public_language_research import review_one
+from katarina.intelligence.news.public_language_research import review_one
 from katarina.adapters.continuous_owner_surface import owner_surface
 
 NOW = datetime(2026,10,20,0,tzinfo=timezone.utc)

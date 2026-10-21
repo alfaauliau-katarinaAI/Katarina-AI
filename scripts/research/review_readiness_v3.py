@@ -5,7 +5,7 @@ from collections import Counter
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.research_readiness_gate import Evidence,evaluate_readiness
+from katarina.intelligence.lab.research_readiness_gate import Evidence,evaluate_readiness
 BASE=Path(r"C:\KatarinaDev\decision-backtest-20261012")
 OUT=BASE/"semantic_v3_full_55"
 def main():

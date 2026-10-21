@@ -14,7 +14,7 @@ import argparse
 import json
 from pathlib import Path
 
-from katarina.intelligence.closed_bar_failure_forensics import _summarize
+from katarina.intelligence.lab.closed_bar_failure_forensics import _summarize
 
 
 def aggregate(september,october):

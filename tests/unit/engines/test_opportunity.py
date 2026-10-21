@@ -2,8 +2,8 @@ import unittest
 
 from katarina.engines.opportunity import MarketCandidate, MultiMarketOpportunityEngine
 from katarina.engines.scalper_entry import EntryMode, EntryProposal, EntrySide
-from katarina.intelligence.market_universe import AssetClass, TradableInstrument
-from katarina.intelligence.news_intelligence import NewsContext
+from katarina.intelligence.perception.market_universe import AssetClass, TradableInstrument
+from katarina.intelligence.news.news_intelligence import NewsContext
 
 
 def inst(i,symbol,asset):

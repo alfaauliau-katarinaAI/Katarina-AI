@@ -19,7 +19,7 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.symbol_playbooks import SYMBOLS,CAPS,propose
+from katarina.intelligence.perception.symbol_playbooks import SYMBOLS,CAPS,propose
 from historical_shadow_ticks import first_quote,intact,bars
 from replay_historical_tick_stops import normalized_ticks
 UTC=timezone.utc
@@ -270,7 +270,7 @@ def main():
     else:
         periods=PERIODS
     if args.research_playbook_arm=="alternatives":
-        from katarina.intelligence import alternative_symbol_playbooks as arm
+        from katarina.intelligence.perception import alternative_symbol_playbooks as arm
         registry,caps,rule_fn=arm.SYMBOLS,arm.CAPS,arm.propose
     else:
         registry,caps,rule_fn=SYMBOLS,CAPS,propose

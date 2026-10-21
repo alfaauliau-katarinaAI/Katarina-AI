@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from math import sin
 import unittest
 
-from katarina.intelligence.autonomous_strategy_discovery import (
+from katarina.intelligence.lab.autonomous_strategy_discovery import (
     Candle, Genome, Rule, _features, _simulate, discover, validate_bars,
 )
 

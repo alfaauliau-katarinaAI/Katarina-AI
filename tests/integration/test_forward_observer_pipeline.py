@@ -3,9 +3,9 @@ import runpy
 import tempfile
 import unittest
 from pathlib import Path
-from katarina.intelligence.public_context import ContextStore
-from katarina.intelligence.multi_market_brain import save_observation
-from katarina.intelligence.forward_outcomes import ForwardOutcomes
+from katarina.intelligence.news.public_context import ContextStore
+from katarina.intelligence.perception.screening import save_observation
+from katarina.intelligence.demo.forward_outcomes import ForwardOutcomes
 from tests.unit.intelligence.test_forward_outcomes import observation
 
 class ForwardPipelineTests(unittest.TestCase):

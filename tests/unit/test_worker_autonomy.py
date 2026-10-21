@@ -7,7 +7,7 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch
-from katarina.intelligence.autonomous_research import ResearchWorker
+from katarina.intelligence.lab.autonomous_research import ResearchWorker
 
 class WorkerAutonomyTests(unittest.TestCase):
     def test_research_worker_persists_without_a_coordinator_command(self):
@@ -34,7 +34,7 @@ class WorkerAutonomyTests(unittest.TestCase):
             class Trace:
                 def emit(self,*_,**__):pass
             worker=ResearchWorker(Path(d),Trace(),'MOMENTUM',4)
-            with patch('katarina.intelligence.research_capacity.research_capacity',return_value={'status':'PAUSED_LOW_DISK'}) as capacity:
+            with patch('katarina.intelligence.lab.research_capacity.research_capacity',return_value={'status':'PAUSED_LOW_DISK'}) as capacity:
                 self.assertFalse(worker.tick());capacity.assert_called_once_with(Path(d))
                 self.assertEqual(worker.state['status'],'PAUSED_LOW_DISK')
                 self.assertFalse((Path(d)/'experiment-jobs.sqlite3').exists())

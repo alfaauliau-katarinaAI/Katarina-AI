@@ -1,8 +1,8 @@
 """Semantic strategy labels must imply observable causal structure."""
 import unittest
 from datetime import datetime,timedelta,timezone
-from katarina.intelligence.market_decision_pipeline import SensorCandle
-from katarina.intelligence.semantic_setup_truth import CausalSetupValidator
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+from katarina.intelligence.perception.semantic_setup_truth import CausalSetupValidator
 NOW=datetime(2026,10,9,16,0,tzinfo=timezone.utc)
 
 def candles(minutes=5):

@@ -8,8 +8,8 @@ class PortableRuntimeBindingTests(unittest.TestCase):
     def test_binding_precedes_stale_workspace_and_preserves_original_backup(self):
         with tempfile.TemporaryDirectory(prefix='source with spaces ') as tmp:
             root=Path(tmp).resolve(); runtime=root/'runtime';runtime.mkdir()
-            source=root/'canonical'; (source/'src/katarina/intelligence').mkdir(parents=True)
-            (source/'src/katarina/intelligence/unified_brain.py').touch()
+            source=root/'canonical'; (source/'src/katarina/intelligence/cognition').mkdir(parents=True)
+            (source/'src/katarina/intelligence/cognition/unified_brain.py').touch()
             target=runtime/'python312._pth'
             original=b'python312.zip\n.\n../../workspace/src\nLib/site-packages\nimport site\n'
             target.write_bytes(original)
@@ -38,8 +38,8 @@ class PortableRuntimeBindingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp).resolve();runtime=root/'runtime'
             (runtime/'Lib/site-packages').mkdir(parents=True)
-            source=root/'source';(source/'src/katarina/intelligence').mkdir(parents=True)
-            (source/'src/katarina/intelligence/unified_brain.py').touch()
+            source=root/'source';(source/'src/katarina/intelligence/cognition').mkdir(parents=True)
+            (source/'src/katarina/intelligence/cognition/unified_brain.py').touch()
             result=bind_runtime(runtime,source)
             self.assertEqual(result['runtime_kind'],'FULL')
             target=runtime/'Lib/site-packages/katarina-canonical.pth'

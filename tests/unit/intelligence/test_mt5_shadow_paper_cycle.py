@@ -9,12 +9,12 @@ from types import SimpleNamespace
 from katarina.adapters.mt5_shadow_read_only import (
     MT5ShadowReadOnly,ShadowMarketSnapshot,ClosedBar)
 from katarina.engines.risk import RiskGovernor
-from katarina.intelligence.shadow_journal import ShadowJournal,ShadowSignal
-from katarina.intelligence.shadow_paper_book import (
+from katarina.intelligence.shadow.shadow_journal import ShadowJournal,ShadowSignal
+from katarina.intelligence.shadow.shadow_paper_book import (
     ShadowPaperBook,ObservedQuote,PaperPosition)
-from katarina.intelligence.shadow_gold_intraday import (
+from katarina.intelligence.shadow.shadow_gold_intraday import (
     ShadowSetup)
-from katarina.intelligence.mt5_shadow_cycle import MT5ShadowCycle
+from katarina.intelligence.broker.mt5_shadow_cycle import MT5ShadowCycle
 
 UTC=timezone.utc
 FREEZE=datetime(2026,10,1,tzinfo=UTC)

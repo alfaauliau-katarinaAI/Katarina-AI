@@ -11,9 +11,9 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 
-from katarina.intelligence.adaptive_regime import (
+from katarina.intelligence.perception.adaptive_regime import (
     AdaptiveRegimeEngine, MarketState, from_archived_frames)
-from katarina.intelligence.causal_seasonality import (
+from katarina.intelligence.perception.causal_seasonality import (
     CausalSeasonality, HistoricalOutcome)
 
 def load(path: Path):

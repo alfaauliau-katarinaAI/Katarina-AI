@@ -5,11 +5,11 @@ from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from katarina.intelligence.shadow_journal import (
+from katarina.intelligence.shadow.shadow_journal import (
     ShadowJournal, ShadowSignal, ShadowTradeClose,
 )
-from katarina.intelligence.strategy_drift import StrategyDriftMonitor
-from katarina.intelligence.strategy_evidence import ForwardStrategyEvidenceGate
+from katarina.intelligence.shadow.strategy_drift import StrategyDriftMonitor
+from katarina.intelligence.shadow.strategy_evidence import ForwardStrategyEvidenceGate
 
 UTC = timezone.utc
 FREEZE = datetime(2026, 5, 31, tzinfo=UTC)

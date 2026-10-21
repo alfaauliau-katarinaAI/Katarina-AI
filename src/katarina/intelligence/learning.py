@@ -1,19 +1,9 @@
-from __future__ import annotations
-from dataclasses import dataclass
-from statistics import mean
+"""Deprecated location; use ``katarina.intelligence.perception.learning``. Removed after cleanup stage 3."""
+import sys
+import warnings
 
-@dataclass(frozen=True, slots=True)
-class DriftAssessment:
-    detected: bool
-    baseline_mean: float
-    recent_mean: float
-    delta: float
-    action: str
+from katarina.intelligence.perception import learning as _module
 
-class LearningEngine:
-    def detect_drift(self, baseline: list[float], recent: list[float], *, threshold: float) -> DriftAssessment:
-        if not baseline or not recent: return DriftAssessment(True,0.0,0.0,0.0,"RESEARCH_ONLY")
-        b=mean(baseline); r=mean(recent); d=abs(r-b)
-        return DriftAssessment(d>=threshold,b,r,d,"CREATE_CANDIDATE" if d>=threshold else "NO_CHANGE")
-    def production_mutation_allowed(self) -> bool:
-        return False
+warnings.warn("katarina.intelligence.learning moved to katarina.intelligence.perception.learning",
+              DeprecationWarning, stacklevel=2)
+sys.modules[__name__] = _module
