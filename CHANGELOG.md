@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — rampingkan repo (D): pensiunkan transport KAT1/ZMQ
+
+- Dihapus: `adapters/transport` (codec, sesi, ZMQ, TCP, recovery), `ports/transport`, `scripts/stage07`,
+  `scripts/protocol`, vektor golden, workflow `stage07-transport`, jembatan MT5 Stage07 + multi-symbol extension
+  (EA, include, tes MQL5), config draft komunikasi/bridge, ADR 0009/0011/0012, dan dokumen/tes khusus transport.
+- Dipertahankan: skema pesan `protocol/` (kontrak validation & health engine), EA status dashboard, EA bridge Stage 06,
+  audit stage 08–10. Observer tetap memakai paket MetaTrader5 Python; tidak ada perubahan perilaku. LIVE tetap OFF.
+
 ## 2026-10-22 — rampingkan repo (C): skrip riset sekali pakai
 
 - Dihapus 62 skrip `scripts/research` yang hanya dirujuk tesnya sendiri, `research/safety/reselection_guard.py`,

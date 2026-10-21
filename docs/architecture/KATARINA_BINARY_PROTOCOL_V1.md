@@ -273,11 +273,10 @@ Unknown execution-critical schema versions fail closed.
 
 Golden vectors:
 
-- `protocol/golden/kat1_v1_vectors.json`
 
 Validation contract:
 
-- `docs/architecture/KAT1_CONFORMANCE_V1.md`
-- `scripts/protocol/validate_kat1_vectors.py`
 
 Python and MQL5 implementations must reproduce equivalent logical input as identical canonical bytes before Stage 07 can be considered conformant.
+
+> Catatan 22 Okt 2026: implementasi transport KAT1 (codec, ZMQ/TCP, vektor golden, jembatan MT5 Stage07) dipensiunkan. Skema pesan di `protocol/` tetap menjadi kontrak validation/health engine.

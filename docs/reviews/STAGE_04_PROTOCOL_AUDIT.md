@@ -120,9 +120,6 @@ The golden audit recalculated CRC32C over each canonical fixture and matched bot
 
 ### Conformance
 
-- `docs/architecture/KAT1_CONFORMANCE_V1.md`
-- `protocol/golden/kat1_v1_vectors.json`
-- `scripts/protocol/validate_kat1_vectors.py`
 
 ## Deferred Implementation
 
@@ -196,3 +193,5 @@ latest commit checks: none configured / no failing status reported
 **POST-FREEZE RECHECK: PASS.**
 
 Stage 05 may begin without reopening Stage 04.
+
+> Catatan 22 Okt 2026: implementasi transport KAT1 (codec, ZMQ/TCP, vektor golden, jembatan MT5 Stage07) dipensiunkan. Skema pesan di `protocol/` tetap menjadi kontrak validation/health engine.

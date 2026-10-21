@@ -1,21 +1,6 @@
-"""Application-owned interfaces for transport, persistence, execution and external services."""
+"""Application-owned interfaces for persistence, execution and external services.
 
-from katarina.ports.transport import (
-    ReceivedTransportFrame,
-    TransportBackpressureError,
-    TransportClosedError,
-    TransportError,
-    TransportPeer,
-    TransportPort,
-    TransportState,
-)
+The KAT1 network transport port was retired on 22 October 2026.
+"""
 
-__all__ = (
-    "ReceivedTransportFrame",
-    "TransportBackpressureError",
-    "TransportClosedError",
-    "TransportError",
-    "TransportPeer",
-    "TransportPort",
-    "TransportState",
-)
+__all__: tuple[str, ...] = ()
