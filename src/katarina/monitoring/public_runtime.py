@@ -82,10 +82,17 @@ def build_public_runtime(root):
     public_board['public_scope']='RESEARCH_ENTRY_AND_PNL'
     from katarina.monitoring.pair_activity import read_pair_activity
     public_board['pair_activity']=read_pair_activity(root,pid,allowed=public_board.get('telemetry_verified') is True and board['snapshot_process_matches'])
+    # Independent DEMO telemetry is allowed to stay visible when the slower
+    # research observer is stale. Each feed independently verifies the live
+    # executor heartbeat, broker mode and account binding; no MT5 calls occur.
+    demo_reporting_allowed=(status.get('delivery')=='DISABLED'
+        and status.get('live_execution_authorized') is False
+        and status.get('production_execution') is False
+        and status.get('orders_submitted') == 0)
     from katarina.monitoring.entry_feed import read_entry_feed
-    public_board['entry_feed']=read_entry_feed(root,allowed=research_allowed)
+    public_board['entry_feed']=read_entry_feed(root,allowed=demo_reporting_allowed)
     from katarina.monitoring.position_feed import read_position_feed
-    public_board['position_feed']=read_position_feed(root,allowed=research_allowed)
+    public_board['position_feed']=read_position_feed(root,allowed=demo_reporting_allowed)
     from katarina.monitoring.research_health import read_research_health
     public_board['research_health']=read_research_health(root,pid,allowed=research_allowed)
     return public
