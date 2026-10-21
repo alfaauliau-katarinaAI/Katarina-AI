@@ -1,5 +1,17 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — lab riset: aturan lolos dikunci sebelum hasil (`broker-lab-v3`)
+
+- Setiap kandidat kini mencatat t-stat pengembangan dan review. Kandidat terpilih diberi `verdict`
+  dengan aturan yang ditetapkan sebelum ada hasil v3: minimal 30 trade per bagian, t pengembangan ≥ 2,4
+  (Bonferroni satu sisi 5% untuk 6 kandidat), dan sepertiga terakhir harus positif setelah biaya dengan t ≥ 1,65.
+- Lolos hanya berarti `next_step=DEMO_FORWARD_TEST`; `live_authorized` tetap false.
+- Uji: 200 random walk tanpa drift seluruhnya ditolak; drift persisten lolos.
+- Status publik (`research_lab_status`) kini ikut menampilkan t-stat dan `verdict` (nilai di luar daftar putih dibuang).
+- Label biaya diperbaiki ke `TYPICAL_SPREAD_PLUS_0.20_ATR_PROXY` (sebelumnya masih menyebut kutipan saat ini).
+- Versi naik ke `broker-lab-v3`, sehingga lab VPS menghitung ulang semua dataset dengan biaya spread
+  yang benar dan aturan baru. Hasil v2 tetap tersimpan.
+
 ## 2026-10-21 — hapus 231 berkas tak terpakai (atas persetujuan Owner)
 
 - Dihapus: seluruh `archive/` (168 berkas), 30 alias `katarina.body.stage11–40`, 8 modul yang hanya dipakai

@@ -9,7 +9,7 @@ import math
 from pathlib import Path
 import shutil
 
-VERSION = 'broker-lab-v2'
+VERSION = 'broker-lab-v3'
 CHUNK = 2048
 MAX_HISTORY = 65536
 # Cost proxy: one live quote taken at rollover or on a stale market made the
@@ -20,6 +20,13 @@ MIN_SPREAD_SAMPLES = 100
 # any H1-horizon edge; such instruments are skipped, not tested and rejected.
 MAX_SPREAD_TO_RANGE = 0.20
 RANGE_WINDOW = 512
+# Pass rule fixed before any v3 result exists. Six candidates per run are tried,
+# so the development t-stat must clear a one-sided 5% Bonferroni bar (0.05/6 ->
+# z ~ 2.39); the later third must then agree on its own. A pass only nominates a
+# candidate for demo forward testing; it never authorizes execution.
+MIN_TRADES = 30
+DEVELOPMENT_MIN_T = 2.4
+REVIEW_MIN_T = 1.65
 
 
 def catalog_symbols(catalog):
@@ -103,6 +110,35 @@ def select_batch(db, catalog, budget, now):
     return picked
 
 
+def _stats(values):
+    n = len(values)
+    if not n:
+        return None, None
+    mean = sum(values) / n
+    if n < 2:
+        return mean, None
+    std = math.sqrt(sum((v - mean) ** 2 for v in values) / (n - 1))
+    return mean, (mean / (std / math.sqrt(n)) if std > 0 else None)
+
+
+def verdict(candidate):
+    """Apply the precommitted pass rule to the development-selected candidate."""
+    if candidate is None:
+        return dict(result='INSUFFICIENT_SAMPLES', reasons=['no candidate with enough development trades'])
+    reasons = []
+    if (candidate['development_t'] or 0) < DEVELOPMENT_MIN_T:
+        reasons.append(f'development t below {DEVELOPMENT_MIN_T}')
+    if candidate['review_n'] < MIN_TRADES:
+        reasons.append(f'review trades below {MIN_TRADES}')
+    elif (candidate['review_mean_r'] or 0) <= 0:
+        reasons.append('review mean after cost not positive')
+    elif (candidate['review_t'] or 0) < REVIEW_MIN_T:
+        reasons.append(f'review t below {REVIEW_MIN_T}')
+    return dict(result='REJECTED' if reasons else 'PASSED_PRECOMMITTED_RULE', reasons=reasons,
+                rule=dict(min_trades=MIN_TRADES, development_min_t=DEVELOPMENT_MIN_T, review_min_t=REVIEW_MIN_T,
+                          candidates_per_run=6), next_step=None if reasons else 'DEMO_FORWARD_TEST')
+
+
 def evaluate(rows, spread):
     """Frozen 3-pattern x BUY/SELL, nonoverlap 12-bar close exits; exploratory only."""
     outcomes = []
@@ -126,16 +162,19 @@ def evaluate(rows, spread):
                 if i+12 < cutoff: values[0].append(value)
                 elif i >= cutoff: values[1].append(value)
             train, review = values
+            train_mean, train_t = _stats(train)
+            review_mean, review_t = _stats(review)
             outcomes.append(dict(method=family,side='BUY' if side==1 else 'SELL',
-                development_n=len(train),development_mean_r=sum(train)/len(train) if train else None,
-                review_n=len(review),review_mean_r=sum(review)/len(review) if review else None))
-    qualified = [x for x in outcomes if x['development_n'] >= 30]
+                development_n=len(train),development_mean_r=train_mean,development_t=train_t,
+                review_n=len(review),review_mean_r=review_mean,review_t=review_t))
+    qualified = [x for x in outcomes if x['development_n'] >= MIN_TRADES]
     candidate = max(qualified, key=lambda x:x['development_mean_r']) if qualified else None
     return dict(candidates=outcomes,selected=candidate,status='HYPOTHESIS_ONLY' if candidate else 'INSUFFICIENT_SAMPLES',
-        execution_model='H1_NEXT_OPEN_12_BAR_CLOSE_NO_SL_TP',cost_model='CURRENT_SPREAD_PLUS_0.20_ATR_PROXY',
+        verdict=verdict(candidate),
+        execution_model='H1_NEXT_OPEN_12_BAR_CLOSE_NO_SL_TP',cost_model='TYPICAL_SPREAD_PLUS_0.20_ATR_PROXY',
         independent_holdout=False,history_reused=True,broker_fill_verified=False,
         improvement_verified=False,live_authorized=False,
-        limitations=['Historical exploration; no independent holdout','Current spread is not historical fill cost',
+        limitations=['Historical exploration; no independent holdout','Typical bar spread is not a broker fill cost',
                     'Gaps, commission, swap, slippage and margin unresolved','No automatic promotion'])
 
 
