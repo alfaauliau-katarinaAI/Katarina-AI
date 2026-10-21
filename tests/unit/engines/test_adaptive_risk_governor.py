@@ -72,22 +72,41 @@ class AdaptiveRiskTests(unittest.TestCase):
         self.assertIn(result.action,(RiskAction.APPROVE,RiskAction.REDUCE))
         self.assertGreater(result.approved_fraction,0.)
 
-    def test_owner_caused_dd35_same_day_can_assess_extreme(self):
+    def test_owner_caused_dd35_stops_all_new_entries_without_exception(self):
         tracker=OwnerDrawdownTracker()
         tracker.observe("2026-10-14",.20,hwm_cash=10000,reconciled=True)
         evidence=tracker.observe("2026-10-14",.40,hwm_cash=10000,
                                  owner_loss_cash=2000,reconciled=True)
+        # Attribution is still reported; it no longer permits an entry.
         self.assertEqual(evidence.mode,DrawdownMode.EXTREME_SURVIVAL)
-        req=RiskRequest(.01,0,.40,.1,2,True,True,.40,
-                        risk_capital=6000,risk_reference_capital=10000,
-                        account_currency="USD",entry_kind="EXTREME_RECOVERY",
-                        trading_day_key="2026-10-14",drawdown_authority=evidence)
-        self.assertGreater(self.gov.evaluate(req).approved_fraction,0)
-        req2=RiskRequest(.01,.08,.40,.1,2,True,True,.40,
-                        risk_capital=6000,risk_reference_capital=10000,
-                        account_currency="USD",entry_kind="EXTREME_RECOVERY",
-                        trading_day_key="2026-10-14",drawdown_authority=evidence)
-        self.assertEqual(self.gov.evaluate(req2).approved_fraction,0)
+        for kind in ("NORMAL","RECOVERY_FACTOR","EXTREME_RECOVERY"):
+            with self.subTest(kind=kind):
+                req=RiskRequest(.01,0,.40,.1,2,True,True,.40,
+                                risk_capital=6000,risk_reference_capital=10000,
+                                account_currency="USD",entry_kind=kind,
+                                trading_day_key="2026-10-14",
+                                drawdown_authority=evidence)
+                decision=self.gov.evaluate(req)
+                self.assertEqual(decision.action,RiskAction.PAUSE)
+                self.assertEqual(decision.approved_fraction,0)
+                self.assertEqual(decision.reason,"emergency_drawdown_lock")
+
+    def test_daily_drawdown_peak_stays_locked_after_equity_recovers(self):
+        # The daily value is a peak drawdown, including floating P/L.
+        req=RiskRequest(.01,0,.12,.1,2,True,True,.36,
+                        risk_capital=8800,risk_reference_capital=10000,
+                        account_currency="USD",entry_kind="NORMAL")
+        decision=self.gov.evaluate(req)
+        self.assertEqual(decision.action,RiskAction.PAUSE)
+        self.assertEqual(decision.approved_fraction,0)
+
+    def test_owner_extreme_recovery_not_a_new_entry_escape_hatch(self):
+        req=RiskRequest(.01,0,.10,.1,2,True,True,.10,
+                        risk_capital=9000,risk_reference_capital=10000,
+                        account_currency="USD",entry_kind="EXTREME_RECOVERY")
+        decision=self.gov.evaluate(req)
+        self.assertEqual(decision.action,RiskAction.PAUSE)
+        self.assertEqual(decision.approved_fraction,0)
 
     def test_katarina_caused_dd35_remains_locked_even_after_manual_loss(self):
         tracker=OwnerDrawdownTracker()
