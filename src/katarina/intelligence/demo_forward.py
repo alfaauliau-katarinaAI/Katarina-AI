@@ -68,6 +68,36 @@ class DemoForwardRuntime:
         tmp=self.private/'status.tmp';tmp.write_text(json.dumps(self.status,allow_nan=False)+'\n',encoding='utf-8');replace_snapshot(tmp,self.private/'status.json')
         return self.status
 
+    def _publish_position_telemetry(self):
+        """Best-effort bound DEMO snapshot for the independent public monitor.
+
+        This remains a read-only MT5 projection. Any missing broker evidence
+        leaves the public projection unavailable; it must never delay or alter
+        protective DEMO position management.
+        """
+        try:
+            from katarina.intelligence.broker_account_monitor import inspect_broker_account
+            observed=datetime.fromtimestamp(self.clock(),timezone.utc)
+            monitor=inspect_broker_account(self.native,observed_at_utc=observed)
+            snapshot=monitor.get('position_snapshot') or {}
+            expected=sha256((str(self.config.expected_login)+'|'+self.config.expected_server).encode()).hexdigest()
+            if (monitor.get('connected') is not True
+                    or monitor.get('account_mode')!='DEMO'
+                    or monitor.get('positions_read_success') is not True
+                    or monitor.get('orders_read_success') is not True
+                    or snapshot.get('status')!='OBSERVED'
+                    or snapshot.get('private_account_binding')!=expected
+                    or self.boundary._identity_error()):
+                return
+            report=dict(schema_version=1,pid=os.getpid(),as_of_utc=observed.isoformat(),
+                        mode='DEMO',live_authorized=False,monitor=monitor)
+            path=self.private/'position-monitor.tmp'
+            path.write_text(json.dumps(report,allow_nan=False)+'\n',encoding='utf-8')
+            replace_snapshot(path,self.private/'position-monitor.json')
+        except (OSError,ValueError,TypeError,AttributeError,RuntimeError,sqlite3.Error):
+            # Position telemetry is optional; actual broker protection wins.
+            return
+
     def _candidate(self):
         path=self.root/'experiment-jobs.sqlite3'
         if not path.exists():return None
@@ -182,6 +212,7 @@ class DemoForwardRuntime:
             with closing(self._db()) as db:
                 ledger=DemoAccountLedger(db,login=self.config.expected_login,server=self.config.expected_server,clock=self.clock)
                 facts=ledger.capture(b)
+            self._publish_position_telemetry()
             reconciled=self.boundary.reconcile()
             self._learn()
             self._event('RISK_AUDIT','DONE','DEMO_ACCOUNT_RECONCILIATION')
