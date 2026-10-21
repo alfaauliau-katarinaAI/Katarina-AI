@@ -11,7 +11,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
-from scripts.ai.verify_unified_katarina import verify
+from katarina.governance.unified_verification import verify
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "config" / "master_design_traceability_v1.json"

@@ -17,7 +17,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 |---|---|
 | `src/katarina/` | Paket utama. `intelligence/` (104 modul dalam 8 subpaket: `cognition/` otak canonical `cognition/unified_brain.py` → `UnifiedKatarinaBrain` beserta kemampuannya, `perception/` fitur/regime/playbook, `broker/` sensor read-only, `news/`, `demo/`, `shadow/`, `lab/` riset offline, `operations/`), `engines/` (risk, setup quality, eksekusi riset), `monitoring/` (feed status/PnL/entry untuk website), `adapters/` (MT5, transport ZMQ/KAT1), `body/` (stage 11–40 "body framework", modul bernama fungsi; nomor→modul di `katarina.body.STAGE_MODULES` dan `docs/maintenance/BODY_STAGE_MAP.md`), `core/` (orchestrator), `memory/`, `persistence/`, `governance/`, `research/` |
 | `katarina_pc.py` + `SETUP_/START_KATARINA.bat` | Entry point uji PC (Python 3.12): `setup, repair, test, doctor, observe, chat, ui, pretrial` |
-| `scripts/ai/` | CLI runtime: `run_contextual_market_observer.py` (observer canonical), demo worker, HF archive sync, publisher monitor. `install_*_test*.py` = patch berpayload untuk VPS uji (tercatat di release manifest) |
+| `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical), demo worker, HF archive sync, publisher monitor. `install_*_test*.py` = patch berpayload untuk VPS uji (tercatat di release manifest) |
 | `scripts/research/` | Skrip riset/backtest aktif (dirujuk workflow/dokumen) |
 | `scripts/governance/` | Audit CI: hygiene, dependency links, constitution guard, branch inventory |
 | `scripts/vps/`, `scripts/vps2012/`, `ops/vps/` | Tooling VPS Windows (PowerShell); `scripts/vps/legacy/` masih dipakai tugas recovery |
@@ -73,7 +73,8 @@ tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLA
 | 3. Subpaket `intelligence/` | Selesai: modul dipindah dan semua rujukan aktif diganti (3a); shim lokasi lama dihapus (3b). Import `katarina.intelligence.<nama_lama>` kini gagal — pakai path subpaket |
 | 4. Nama fungsi `body/stageNN` | Selesai: `body/stageNN.py` → nama fungsi (mis. `stage16` → `risk_governor`), manifest `implementation_module` diperbarui, nama file manifest tetap. Alias `katarina.body.stageNN` dipertahankan satu rilis lalu dihapus |
 | 5. Sederhanakan workflow | Selesai: 12 workflow `stage07-*` → `stage07-transport.yml`, 4 workflow stage06/08/09 → `stage06-09-clearance.yml` (pemicu manual, tidak digabung ke Body CI karena pemicunya beda). Lima workflow riset lama tanpa run 30 hari (v9, v10, tournament, replay, frozen-xau) → `archive/.github/workflows/` |
-| 6–8 | Belum dikerjakan |
+| 6. Logika script ke `src` | Selesai: `verify_unified_katarina` → `katarina.governance.unified_verification`, `audit_self_evolution_runner` → `katarina.governance.self_evolution_audit`; script tinggal CLI tipis. Dikecualikan: `hf_archive_sync.py` (layanan mandiri stdlib, dimuat lewat path dari venv HF terpisah, systemd, installer), `mt5_shadow_lab.py` (sudah CLI argparse yang mendelegasikan ke `src`). `scripts/research` tidak diubah logikanya; 3 script dari workflow riset yang diarsipkan ikut diarsipkan |
+| 7–8 | Belum dikerjakan |
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`

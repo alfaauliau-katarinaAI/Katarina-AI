@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — logika verifier dipindah ke `src` (perapian tahap 6, tanpa perubahan perilaku)
+
+- `scripts/ai/verify_unified_katarina.py` → `katarina.governance.unified_verification` dan
+  `scripts/ai/audit_self_evolution_runner.py` → `katarina.governance.self_evolution_audit`. Kedua script
+  kini CLI tipis yang mengekspor ulang nama lama; output verifier identik (selain cap waktu yang memang
+  berubah tiap run). Workflow, tes, dan `verify_master_design_traceability` mengimpor dari `src`.
+- Tidak dipindah: `hf_archive_sync.py` (layanan mandiri stdlib yang dimuat lewat path dari venv HF
+  terpisah, systemd, dan installer) dan `mt5_shadow_lab.py` (sudah CLI yang mendelegasikan ke `src`).
+- Script riset tidak diubah logikanya. `broker_entry_diagnostics_v9`, `broker_multitf_risk_v10`,
+  `frozen_xau_sell_tick_verdict` (hanya dipanggil workflow yang diarsipkan di tahap 5, tanpa tes) diarsipkan.
+
 ## 2026-10-21 — workflow CI disederhanakan (perapian tahap 5, tanpa perubahan perilaku)
 
 - 12 workflow manual `stage07-*` digabung menjadi `stage07-transport.yml`; `stage06-static`,
