@@ -21,8 +21,8 @@ sys.path.insert(0,str(ROOT/"scripts"/"research"))
 from backtest_explainable_55_pairs import (
     OUT, TIMEFRAME, get_bars, sensors, bisected_indices, stats, split,
 )
-from katarina.intelligence.structural_entry_quality import StructuralEntryQuality
-from katarina.intelligence.structure_exit_plan import StructuralExitPlanner
+from katarina.intelligence.perception.structural_entry_quality import StructuralEntryQuality
+from katarina.intelligence.perception.structure_exit_plan import StructuralExitPlanner
 
 SYMBOLS=("XAUUSD.vx","EURUSD.vx","US30.vx")
 DEST=OUT/"entry_exit_v2_diagnostic_3_pairs"

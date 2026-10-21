@@ -7,7 +7,7 @@ from hashlib import sha256
 from pathlib import Path
 from evaluate_regime_prediction_ml import (
     select_samples,chronological_split,FOLDS,scores,EMBARGO_SECONDS)
-from katarina.intelligence.historical_analog_memory import (
+from katarina.intelligence.perception.historical_analog_memory import (
     fit_history,query_analogs)
 
 def clock(text):

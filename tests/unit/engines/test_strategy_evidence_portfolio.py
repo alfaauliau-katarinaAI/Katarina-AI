@@ -8,8 +8,8 @@ from katarina.research.experimental_strategy_evidence_portfolio import MultiSymb
 from katarina.engines.opportunity import RankedOpportunity
 from katarina.engines.risk import RiskGovernor
 from katarina.engines.scalper_entry import EntryMode, EntryProposal, EntrySide
-from katarina.intelligence.strategy_drift import StrategyDriftDecision
-from katarina.intelligence.strategy_evidence import (
+from katarina.intelligence.shadow.strategy_drift import StrategyDriftDecision
+from katarina.intelligence.shadow.strategy_evidence import (
     ClosedStrategyTrade, ForwardStrategyEvidenceGate, StrategyEvidenceDecision,
 )
 

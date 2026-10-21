@@ -1,10 +1,10 @@
 import json,tempfile,unittest
 from datetime import datetime,timedelta,timezone
 from pathlib import Path
-from katarina.intelligence.public_context import ContextStore,parse_news,parse_calendar
-from katarina.intelligence.multi_market_brain import features,screen,correlation,save_observation
-from katarina.intelligence.economic_feed import EconomicFeedGate,EconomicCalendarSnapshot
-from katarina.intelligence.economics import EconomicEvent
+from katarina.intelligence.news.public_context import ContextStore,parse_news,parse_calendar
+from katarina.intelligence.perception.screening import features,screen,correlation,save_observation
+from katarina.intelligence.news.economic_feed import EconomicFeedGate,EconomicCalendarSnapshot
+from katarina.intelligence.perception.economics import EconomicEvent
 
 UTC=timezone.utc
 NOW=datetime(2026,10,6,12,tzinfo=UTC)

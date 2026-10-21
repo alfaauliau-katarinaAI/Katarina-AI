@@ -4,7 +4,7 @@ from datetime import datetime,timedelta,timezone
 from pathlib import Path
 SCRIPTS=Path(__file__).resolve().parents[3]/"scripts"/"research"
 sys.path.insert(0,str(SCRIPTS))
-from katarina.intelligence.historical_analog_memory import (
+from katarina.intelligence.perception.historical_analog_memory import (
     fit_history,query_analogs,load_frozen_symbol_memory)
 from probe_current_market_analogs import evaluate_observer
 

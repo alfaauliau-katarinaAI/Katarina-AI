@@ -29,8 +29,8 @@ jobs:
           python-version: '3.12'
       - name: Compile read-only selector and replay
         run: |
-          python -m compileall -q src/katarina/intelligence/adaptive_walkforward.py
-          python -m compileall -q src/katarina/intelligence/adaptive_strategy_library.py
+          python -m compileall -q src/katarina/intelligence/lab/adaptive_walkforward.py
+          python -m compileall -q src/katarina/intelligence/lab/adaptive_strategy_library.py
           python -m compileall -q scripts/research/run_adaptive_walkforward.py
       - name: Verify no lookahead, bounded risk and strategy isolation
         run: python -m unittest discover -s tests/unit/intelligence -p 'test_adaptive_walkforward.py' -v

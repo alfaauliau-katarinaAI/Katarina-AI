@@ -1,7 +1,7 @@
 """Prove full article reading never turns media into broker order clearance."""
 import unittest
 from datetime import datetime,timezone,timedelta
-from katarina.intelligence.market_article_context import (
+from katarina.intelligence.news.market_article_context import (
     official_url_is_not_implicit,parse_feed,parse_article,interpret_story,
     market_headline_relevant,
 )

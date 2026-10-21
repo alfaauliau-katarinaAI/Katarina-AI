@@ -1,7 +1,7 @@
 import unittest
 
 from katarina.engines.scalper_entry import ScalperEntryEngine, ScalperSnapshot
-from katarina.intelligence.regime import Regime, RegimeAssessment
+from katarina.intelligence.perception.regime import Regime, RegimeAssessment
 
 
 class MultiMarketScalperCompatibilityTests(unittest.TestCase):

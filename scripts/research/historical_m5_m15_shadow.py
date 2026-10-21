@@ -16,9 +16,9 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.multi_market_brain import features
-from katarina.intelligence.technical_regime import classify_market_regime
-from katarina.intelligence.shadow_hypotheses import propose
+from katarina.intelligence.perception.screening import features
+from katarina.intelligence.perception.technical_regime import classify_market_regime
+from katarina.intelligence.shadow.shadow_hypotheses import propose
 from historical_shadow_ticks import bars, intact, first_quote, snapshot_hash
 
 UTC=timezone.utc

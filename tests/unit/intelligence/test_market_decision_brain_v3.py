@@ -2,7 +2,7 @@
 import unittest
 from dataclasses import replace
 from datetime import timedelta
-from katarina.intelligence.market_decision_brain_v3 import MarketDecisionBrain
+from katarina.intelligence.cognition.market_decision import MarketDecisionBrain
 from tests.unit.intelligence.test_market_decision_pipeline import NOW, market
 
 class TestMarketDecisionBrainV3(unittest.TestCase):

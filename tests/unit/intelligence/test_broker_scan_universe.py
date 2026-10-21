@@ -2,7 +2,7 @@
 import unittest
 from types import SimpleNamespace
 
-from katarina.intelligence.broker_scan_universe import (
+from katarina.intelligence.broker.broker_scan_universe import (
     MAJORS, CROSSES, OPTIONAL_MARKETS, MAX_SCAN_SYMBOLS,
     resolve_broker_symbols,
 )

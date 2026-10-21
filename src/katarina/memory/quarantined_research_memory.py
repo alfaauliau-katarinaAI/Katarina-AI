@@ -12,8 +12,8 @@ from hashlib import sha256
 import json
 import sqlite3
 
-from katarina.intelligence.unified_research_handoff import OwnerResearchReceipt
-from katarina.intelligence.offline_hand_telemetry import consolidate_hand_reports
+from katarina.intelligence.cognition.unified_research_handoff import OwnerResearchReceipt
+from katarina.intelligence.lab.offline_hand_telemetry import consolidate_hand_reports
 
 _TABLE = "katarina_quarantined_research_memory"
 _COLUMNS = ("id","hand_id","symbol","observed_utc","source_digest",

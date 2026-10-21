@@ -13,8 +13,8 @@ import sqlite3
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from katarina.intelligence.foundation_readiness import assess_foundation
-from katarina.intelligence.unified_cognitive_cycle import verify_cognitive_history
+from katarina.intelligence.operations.foundation_readiness import assess_foundation
+from katarina.intelligence.cognition.unified_cognitive_cycle import verify_cognitive_history
 
 
 def audit(root: Path, *, now_utc: datetime, max_age_seconds: int = 720) -> dict:

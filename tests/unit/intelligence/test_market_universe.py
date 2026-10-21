@@ -1,7 +1,7 @@
 import unittest
 
 from katarina.contracts.runtime import EventEnvelope
-from katarina.intelligence.market_universe import (
+from katarina.intelligence.perception.market_universe import (
     AssetClass,
     BrokerMarketUniverse,
     MarketTaxonomy,

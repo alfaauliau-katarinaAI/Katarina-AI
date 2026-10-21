@@ -37,7 +37,7 @@ def owner_surface(model=None, *, workspace=None, sources_config=None, state_dir=
             brain.control.checkpoint()
             return result
         def status():
-            from katarina.intelligence.runtime_evidence import read_runtime
+            from katarina.intelligence.operations.runtime_evidence import read_runtime
             evidence = read_runtime(state_dir) if state_dir is not None else dict(
                 result='BLOCKED', blockers=['OBSERVER_STATE_NOT_CONFIGURED'], live_clearance=False)
             from katarina.monitoring.agent_projection import project_agent_board

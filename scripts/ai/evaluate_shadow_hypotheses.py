@@ -6,7 +6,7 @@ import sqlite3
 import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
-from katarina.intelligence.shadow_research_evaluation import evaluate
+from katarina.intelligence.shadow.shadow_research_evaluation import evaluate
 
 
 def main():

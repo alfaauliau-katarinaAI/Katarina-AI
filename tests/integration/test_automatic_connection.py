@@ -14,7 +14,7 @@ from katarina.adapters.automatic_connection import (
 from katarina.adapters.readonly_cloud import (
     CloudReadOnlyBroker, PROTOCOL, ReadOnlySensorBridge, validate_endpoint, pack,
 )
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from tests.integration.test_brain_owned_workflow import SyntheticBroker
 
 TOKEN='test-only-sensor-token-not-for-production-12345678'

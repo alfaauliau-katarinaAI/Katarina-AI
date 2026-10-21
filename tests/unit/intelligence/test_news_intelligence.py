@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime,timedelta,timezone
 
-from katarina.intelligence.news_intelligence import MultiSourceNewsEngine, NewsItem
+from katarina.intelligence.news.news_intelligence import MultiSourceNewsEngine, NewsItem
 
 
 class MultiSourceNewsTests(unittest.TestCase):

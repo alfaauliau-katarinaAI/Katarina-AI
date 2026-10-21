@@ -20,7 +20,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
 from replay_symbol_playbooks import simulate_structure,tick_series
 from historical_shadow_ticks import first_quote,bars
-from katarina.intelligence.symbol_playbooks import _ny_open_utc_minutes
+from katarina.intelligence.perception.symbol_playbooks import _ny_open_utc_minutes
 
 UTC=timezone.utc
 SYMBOL="NAS100.vx"

@@ -16,7 +16,7 @@ sys.path.insert(0,str(ROOT/"scripts"/"research"))
 from public_market_tournament import (
     QuoteCandle, aggregate, calculate_fill, parse_minute_file, load_public_minutes,
     run, metrics, RECORD)
-from katarina.intelligence.adaptive_strategy_library import StrategyHypothesis
+from katarina.intelligence.lab.adaptive_strategy_library import StrategyHypothesis
 
 
 def q(time,*,bid_open=100.,bid_high=101.,bid_low=99.,bid_close=100.,

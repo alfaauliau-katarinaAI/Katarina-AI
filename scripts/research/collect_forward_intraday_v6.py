@@ -15,12 +15,12 @@ sys.path.insert(0,str(ROOT/"src"))
 sys.path.insert(0,str(ROOT/"scripts"/"research"))
 from backtest_explainable_55_pairs import OUT,get_bars,TIMEFRAME
 from backtest_unified_intraday_brain_v6 import check_candidate
-from katarina.intelligence.broker_clock_alignment import infer_clock_shift
-from katarina.intelligence.broker_scan_universe import resolve_broker_symbols
-from katarina.intelligence.intraday_scalp_research import vector_prefilter
-from katarina.intelligence.market_decision_pipeline import MarketDecisionPipeline
-from katarina.intelligence.structural_entry_quality import StructuralEntryQuality
-from katarina.intelligence.semantic_setup_truth import CausalSetupValidator
+from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift
+from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
+from katarina.intelligence.lab.intraday_scalp_research import vector_prefilter
+from katarina.intelligence.cognition.market_decision_pipeline import MarketDecisionPipeline
+from katarina.intelligence.perception.structural_entry_quality import StructuralEntryQuality
+from katarina.intelligence.perception.semantic_setup_truth import CausalSetupValidator
 from collections import Counter
 
 DIR=OUT/"intraday_brain_integrated_v6"/"prospective"

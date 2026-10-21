@@ -1,7 +1,7 @@
 """Different symbols must not share inherited scalping entry/exit rules."""
 import unittest
 from datetime import datetime,timezone
-from katarina.intelligence.symbol_playbooks import (
+from katarina.intelligence.perception.symbol_playbooks import (
     SYMBOLS,FUNCTIONS,CAPS,propose,_make,_ny_open_utc_minutes,_london_start_utc_hour)
 from pathlib import Path
 import sys

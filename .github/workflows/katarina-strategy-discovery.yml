@@ -32,7 +32,7 @@ jobs:
 
       - name: Compile causal evolutionary search
         run: |
-          python -m py_compile src/katarina/intelligence/autonomous_strategy_discovery.py
+          python -m py_compile src/katarina/intelligence/lab/autonomous_strategy_discovery.py
           python -m py_compile scripts/research/run_autonomous_strategy_discovery.py
 
       - name: Reject hindsight, ambiguous fills and unsafe promotion

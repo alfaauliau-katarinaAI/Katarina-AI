@@ -4,8 +4,8 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock
 import numpy as np
-from katarina.intelligence.unified_intraday_gate import check_candidate,min_capital_for_broker
-from katarina.intelligence.intraday_scalp_research import Candidate
+from katarina.intelligence.lab.unified_intraday_gate import check_candidate,min_capital_for_broker
+from katarina.intelligence.lab.intraday_scalp_research import Candidate
 
 class TestIntegratedResearchGate(unittest.TestCase):
     def test_current_broker_min_contract_risk_scenario(self):

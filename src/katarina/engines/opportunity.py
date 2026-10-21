@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from katarina.engines.scalper_entry import EntryProposal
-from katarina.intelligence.market_universe import TradableInstrument
-from katarina.intelligence.news_intelligence import NewsContext
+from katarina.intelligence.perception.market_universe import TradableInstrument
+from katarina.intelligence.news.news_intelligence import NewsContext
 
 
 @dataclass(frozen=True, slots=True)

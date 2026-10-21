@@ -1,8 +1,8 @@
 """Fail-closed tests for conditional, causal structural SL/TP research."""
 import unittest
 from datetime import datetime,timedelta,timezone
-from katarina.intelligence.market_decision_pipeline import SensorCandle
-from katarina.intelligence.structure_exit_plan import StructuralExitPlanner
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+from katarina.intelligence.perception.structure_exit_plan import StructuralExitPlanner
 
 NOW=datetime(2026,10,9,16,0,tzinfo=timezone.utc)
 def bars(minutes, direction=1):

@@ -15,7 +15,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 
 | Lokasi | Isi |
 |---|---|
-| `src/katarina/` | Paket utama. `intelligence/` (107 modul; otak canonical `unified_brain.py` → `UnifiedKatarinaBrain`), `engines/` (risk, setup quality, eksekusi riset), `monitoring/` (feed status/PnL/entry untuk website), `adapters/` (MT5, transport ZMQ/KAT1), `body/` (stage 11–40 "body framework"), `core/` (orchestrator), `memory/`, `persistence/`, `governance/`, `research/` |
+| `src/katarina/` | Paket utama. `intelligence/` (104 modul dalam 8 subpaket: `cognition/` otak canonical `cognition/unified_brain.py` → `UnifiedKatarinaBrain` beserta kemampuannya, `perception/` fitur/regime/playbook, `broker/` sensor read-only, `news/`, `demo/`, `shadow/`, `lab/` riset offline, `operations/`), `engines/` (risk, setup quality, eksekusi riset), `monitoring/` (feed status/PnL/entry untuk website), `adapters/` (MT5, transport ZMQ/KAT1), `body/` (stage 11–40 "body framework"), `core/` (orchestrator), `memory/`, `persistence/`, `governance/`, `research/` |
 | `katarina_pc.py` + `SETUP_/START_KATARINA.bat` | Entry point uji PC (Python 3.12): `setup, repair, test, doctor, observe, chat, ui, pretrial` |
 | `scripts/ai/` | CLI runtime: `run_contextual_market_observer.py` (observer canonical), demo worker, HF archive sync, publisher monitor. `install_*_test*.py` = patch berpayload untuk VPS uji (tercatat di release manifest) |
 | `scripts/research/` | Skrip riset/backtest aktif (dirujuk workflow/dokumen) |
@@ -69,13 +69,18 @@ tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLA
 | Tahap | Status |
 |---|---|
 | 1. Peta modul runtime | Selesai 21 Okt — `docs/maintenance/RUNTIME_MODULE_MAP.md` |
-| 2. Pensiunkan otak lama | 2a selesai: `intelligence/brain.py` (`KatarinaAIBrain`) + dependennya diarsipkan. `multi_market_brain` = library screening (fitur/regime) yang dipakai 40+ berkas, dipertahankan. Tiga otak A diganti nama di Tahap 3 |
-| 3–8 | Belum dikerjakan |
+| 2. Pensiunkan otak lama | Selesai: `intelligence/brain.py` (`KatarinaAIBrain`) + dependennya diarsipkan (2a); otak berversi diganti nama kemampuan di Tahap 3 |
+| 3. Subpaket `intelligence/` | 3a: modul dipindah, semua rujukan aktif diganti, shim `sys.modules` + `DeprecationWarning` di lokasi lama. 3b (PR berikutnya): shim dihapus |
+| 4–8 | Belum dikerjakan |
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`
 (analisis statis; ikut membaca `config/stages` untuk modul body). Hasil setelah Tahap 2a: A=214, B=21, C=28, D=2 (paket kosong `domain`, `entrypoints`).
-`adaptive_brain_v2`, `market_decision_brain_v3`, `brain_observer` masih A (dipakai `unified_brain`).
+Nama baru bekas otak berversi: `brain_observer` → `cognition/observer`, `market_decision_brain_v3` →
+`cognition/market_decision`, `adaptive_brain_v2` → `cognition/adaptive_observation`, `multi_market_brain` →
+`perception/screening`. Modul lain di `intelligence/` mempertahankan nama berkasnya di subpaket barunya.
+Dokumen bertanggal, `CHANGELOG`, arsip, dan payload `scripts/ai/install_*` (patch untuk checkout VPS yang
+dipatok) sengaja masih memakai path lama.
 
 ## Riwayat perapian
 

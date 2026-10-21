@@ -1,6 +1,6 @@
 import sqlite3
 import unittest
-from katarina.intelligence.research_agenda import remember_questions, prioritize, record_leads, status
+from katarina.intelligence.news.research_agenda import remember_questions, prioritize, record_leads, status
 
 class ResearchAgendaTests(unittest.TestCase):
     def test_own_questions_change_selection_and_persist_provenance(self):

@@ -1,5 +1,5 @@
 import unittest
-from katarina.intelligence.flow_efficiency_index import KatarinaFlowEfficiencyIndex
+from katarina.intelligence.perception.flow_efficiency_index import KatarinaFlowEfficiencyIndex
 
 class KFEIUnitTests(unittest.TestCase):
     def setUp(self):self.k=KatarinaFlowEfficiencyIndex()

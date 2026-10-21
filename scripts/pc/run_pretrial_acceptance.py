@@ -15,8 +15,8 @@ from katarina.adapters.pc_simulation import PCSimulationBroker
 from katarina.adapters.dialog_model import JSONDialogModel, ModelConfig
 from katarina.engines.risk import RiskGovernor, RiskRequest
 from katarina.host import state_directory
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
-from katarina.intelligence.public_context import ContextStore
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.news.public_context import ContextStore
 from katarina.memory.store import MemoryStore
 
 

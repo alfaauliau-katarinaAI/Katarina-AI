@@ -7,7 +7,7 @@ from katarina.engines.scalper_entry import (
     ScalperSnapshot,
 )
 from katarina.engines.decision import DecisionAction, DecisionEngine
-from katarina.intelligence.regime import Regime, RegimeAssessment
+from katarina.intelligence.perception.regime import Regime, RegimeAssessment
 
 
 def base_snapshot(**overrides):

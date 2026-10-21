@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import tempfile
 import threading
 import unittest
-from katarina.intelligence.independent_demo_worker import run_demo_worker,ExecutorLease
+from katarina.intelligence.demo.independent_demo_worker import run_demo_worker,ExecutorLease
 
 class IndependentDemoTests(unittest.TestCase):
     def config(self,enabled=True):return SimpleNamespace(demo_experiments=enabled,priority=('local',))

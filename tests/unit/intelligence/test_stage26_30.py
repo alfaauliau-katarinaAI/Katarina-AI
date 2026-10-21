@@ -1,9 +1,9 @@
 import unittest
 from datetime import datetime,timedelta,timezone
-from katarina.intelligence.learning import LearningEngine
-from katarina.intelligence.simple_ml import MachineLearningV1
+from katarina.intelligence.perception.learning import LearningEngine
+from katarina.intelligence.perception.simple_ml import MachineLearningV1
 from katarina.governance.models import ModelPromotionController,PromotionEvidence,ModelState
-from katarina.intelligence.economics import EconomicIntelligenceEngine,EconomicEvent
+from katarina.intelligence.perception.economics import EconomicIntelligenceEngine,EconomicEvent
 from katarina.engines.portfolio import PortfolioEngine
 
 class Stage2630Tests(unittest.TestCase):

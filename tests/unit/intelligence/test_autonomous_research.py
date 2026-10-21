@@ -6,8 +6,8 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch
-from katarina.intelligence.autonomous_research import ResearchWorker, evaluate, GRID
-from katarina.intelligence.continuous_research_lab import setup
+from katarina.intelligence.lab.autonomous_research import ResearchWorker, evaluate, GRID
+from katarina.intelligence.lab.continuous_research_lab import setup
 from katarina.monitoring.activity_trace import ActivityTrace
 
 
@@ -33,7 +33,7 @@ class AutonomousResearchTests(unittest.TestCase):
                 db.executemany('INSERT INTO lab_bars VALUES(?,?,?,?,?,?)',[('FIXTURE',*r) for r in bars()])
                 db.execute('INSERT INTO lab_runs VALUES(?,?,?,?,?)',('source','FIXTURE','2026-01-01','x',json.dumps({'spread_proxy_price':.01})))
             trace=ActivityTrace(root)
-            with patch('katarina.intelligence.autonomous_research.GRID',GRID[:2]),patch('katarina.intelligence.research_capacity.research_capacity',return_value={'status':'READY'}):
+            with patch('katarina.intelligence.lab.autonomous_research.GRID',GRID[:2]),patch('katarina.intelligence.lab.research_capacity.research_capacity',return_value={'status':'READY'}):
                 self.assertTrue(ResearchWorker(root,trace).tick())
                 self.assertTrue(ResearchWorker(root,trace).tick())
                 worker=ResearchWorker(root,trace);self.assertFalse(worker.tick())
@@ -69,7 +69,7 @@ class AutonomousResearchTests(unittest.TestCase):
             self.assertEqual(sum(len([c for c in GRID if c[0]==f]) for f in ('MOMENTUM','MEAN_REVERSION','BREAKOUT')),len(GRID))
 
     def test_gemini_budget_persists_and_hypotheses_never_execute(self):
-        from katarina.intelligence.autonomous_research import ResearchPool
+        from katarina.intelligence.lab.autonomous_research import ResearchPool
         class Model:
             def __init__(self):self.calls=0
             def complete(self,messages,**kwargs):self.calls+=1;return {'hypothesis':'public fixture'}
@@ -84,7 +84,7 @@ class AutonomousResearchTests(unittest.TestCase):
             self.assertFalse(json.loads((Path(directory)/'gemini-research.json').read_text())['live_authorized'])
 
     def test_twelve_research_workers_enter_work_concurrently(self):
-        from katarina.intelligence.autonomous_research import ResearchPool
+        from katarina.intelligence.lab.autonomous_research import ResearchPool
         barrier=threading.Barrier(12);entered=set();guard=threading.Lock();ready=threading.Event();errors=[]
         def work(*args):
             with guard:
@@ -103,7 +103,7 @@ class AutonomousResearchTests(unittest.TestCase):
             self.assertEqual(len(entered),12);self.assertEqual(errors,[])
 
     def test_nine_partitions_and_two_stress_reviews_are_distinct(self):
-        from katarina.intelligence.autonomous_research import ResearchPool
+        from katarina.intelligence.lab.autonomous_research import ResearchPool
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
             with closing(sqlite3.connect(root/'context.sqlite3')) as db,db:
@@ -111,7 +111,7 @@ class AutonomousResearchTests(unittest.TestCase):
                 db.executemany('INSERT INTO lab_bars VALUES(?,?,?,?,?,?)',[('FIXTURE',*r) for r in bars()])
                 db.execute('INSERT INTO lab_runs VALUES(?,?,?,?,?)',('source','FIXTURE','2026-01-01','x',json.dumps({'spread_proxy_price':.01})))
             pool=ResearchPool(root,ActivityTrace(root))
-            with patch('katarina.intelligence.research_capacity.research_capacity',return_value={'status':'READY'}):
+            with patch('katarina.intelligence.lab.research_capacity.research_capacity',return_value={'status':'READY'}):
                 for worker in pool.workers:self.assertTrue(worker.tick())
             with closing(sqlite3.connect(root/'experiment-jobs.sqlite3')) as db:
                 rows=[json.loads(r[0]) for r in db.execute('SELECT result_json FROM trials')]
@@ -123,7 +123,7 @@ class AutonomousResearchTests(unittest.TestCase):
                 self.assertTrue(all(r['live_authorized'] is False for r in reviews))
 
     def test_exact_dataset_survives_cache_changes_and_repairs_legacy_review(self):
-        from katarina.intelligence.autonomous_research import ResearchPool, preserve_dataset
+        from katarina.intelligence.lab.autonomous_research import ResearchPool, preserve_dataset
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);source=bars()
             with closing(sqlite3.connect(root/'context.sqlite3')) as db,db:
@@ -131,7 +131,7 @@ class AutonomousResearchTests(unittest.TestCase):
                 db.executemany('INSERT INTO lab_bars VALUES(?,?,?,?,?,?)',[('FIXTURE',*r) for r in source])
                 db.execute('INSERT INTO lab_runs VALUES(?,?,?,?,?)',('source','FIXTURE','2026-01-01','x',json.dumps({'spread_proxy_price':.01})))
             trace=ActivityTrace(root);pool=ResearchPool(root,trace)
-            with patch('katarina.intelligence.research_capacity.research_capacity',return_value={'status':'READY'}):
+            with patch('katarina.intelligence.lab.research_capacity.research_capacity',return_value={'status':'READY'}):
                 self.assertTrue(ResearchWorker(root,trace).tick())
             with closing(sqlite3.connect(root/'context.sqlite3')) as db,db:
                 db.execute('UPDATE lab_bars SET c=c+10')
@@ -153,7 +153,7 @@ class AutonomousResearchTests(unittest.TestCase):
                 self.assertEqual(db.execute('SELECT COUNT(*) FROM research_repairs').fetchone()[0],1)
 
     def test_gemini_failure_persists_retry_instead_of_started(self):
-        from katarina.intelligence.autonomous_research import ResearchPool
+        from katarina.intelligence.lab.autonomous_research import ResearchPool
         class FailingModel:
             def complete(self,*args,**kwargs):raise RuntimeError('PRIVATE_PROVIDER_BODY')
             def telemetry(self):return {'successful_calls':0,'failed_calls':1}

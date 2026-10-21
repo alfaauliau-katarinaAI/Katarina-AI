@@ -2,7 +2,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import tempfile
 import unittest
-from katarina.intelligence.research_capacity import research_capacity,MIN_FREE,MAX_DATABASE,WRITE_RESERVE
+from katarina.intelligence.lab.research_capacity import research_capacity,MIN_FREE,MAX_DATABASE,WRITE_RESERVE
 
 class ResearchCapacityTests(unittest.TestCase):
     def test_resumes_above_old_cap_only_with_disk_reserve(self):

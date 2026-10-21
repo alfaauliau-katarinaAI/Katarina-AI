@@ -15,11 +15,11 @@ SYMBOLS=("XAUUSD.vx","EURUSD.vx","NAS100.vx")
 
 def run(symbols):
     import MetaTrader5 as mt5
-    from katarina.intelligence.market_decision_brain_v3 import MarketDecisionBrain
-    from katarina.intelligence.market_decision_pipeline import SensorCandle
-    from katarina.intelligence.news_intelligence import NewsContext
-    from katarina.intelligence.contextual_decision_intelligence import RiskSituation
-    from katarina.intelligence.broker_clock_alignment import infer_clock_shift
+    from katarina.intelligence.cognition.market_decision import MarketDecisionBrain
+    from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+    from katarina.intelligence.news.news_intelligence import NewsContext
+    from katarina.intelligence.cognition.contextual_decision_intelligence import RiskSituation
+    from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift
 
     if not mt5.initialize():raise RuntimeError("MT5_TERMINAL_UNAVAILABLE")
     try:

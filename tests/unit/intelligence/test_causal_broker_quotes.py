@@ -5,7 +5,7 @@ No MT5 connection: fake broker exposes actual copy_ticks_range UTC schema.
 import unittest
 from datetime import datetime,timezone,timedelta
 
-from katarina.intelligence.causal_broker_quotes import (
+from katarina.intelligence.broker.causal_broker_quotes import (
     last_past_quote,due_window_quote,MAX_TICKS_PER_QUERY,
     market_event_clock,closed_bars_as_of_market_tick,
 )

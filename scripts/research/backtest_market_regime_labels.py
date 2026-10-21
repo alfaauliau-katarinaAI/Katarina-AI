@@ -16,7 +16,7 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.market_regime_intelligence import (
+from katarina.intelligence.perception.market_regime_intelligence import (
     classify_regime,PROFILES,FRAME_SECONDS,STATES)
 from historical_shadow_ticks import bars
 UTC=timezone.utc

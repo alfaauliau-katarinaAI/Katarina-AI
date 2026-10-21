@@ -17,8 +17,8 @@ from contextlib import redirect_stdout
 
 from katarina.adapters.automatic_connection import ConnectionConfig, verify_identity, ConnectionUnavailable, BoundLocalBroker
 from katarina.adapters.demo_permissions import observation_permission, monitor_permission
-from katarina.intelligence.demo_forward import DemoForwardRuntime
-from katarina.intelligence.demo_strategy import qualify_variant
+from katarina.intelligence.demo.demo_forward import DemoForwardRuntime
+from katarina.intelligence.demo.demo_strategy import qualify_variant
 
 
 class Native:
@@ -200,7 +200,7 @@ class DemoForwardTests(unittest.TestCase):
         self.assertEqual(len(self.native.sent),3)
 
     def test_real_trial_schema_uses_digest_column_and_frozen_dataset(self):
-        from katarina.intelligence.autonomous_research import preserve_dataset
+        from katarina.intelligence.lab.autonomous_research import preserve_dataset
         rows=[]
         for i in range(2400):
             p=100+5*math.sin(i/8);rows.append([1000000+i*3600,p,p+1,p-1,p])
@@ -231,7 +231,7 @@ class DemoForwardTests(unittest.TestCase):
         self.assertEqual(rotated['variant']['qualification_policy'],'DEMO_BASE_COST_GOVERNOR_V2')
 
     def test_demo_cost_stress_is_advisory_and_preserves_identity(self):
-        from katarina.intelligence.demo_strategy import demo_policy
+        from katarina.intelligence.demo.demo_strategy import demo_policy
         old=dict(id='stable-variant',qualified=False,checks=[dict(multiplier=i,passed=i<3) for i in (1,2,3)])
         updated=self.runtime._policy(old)
         self.assertTrue(updated['qualified'])

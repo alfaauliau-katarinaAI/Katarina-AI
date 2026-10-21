@@ -2,8 +2,8 @@ import json
 import sqlite3
 import unittest
 
-from katarina.intelligence.forward_outcomes import ForwardOutcomes
-from katarina.intelligence.shadow_research_evaluation import (
+from katarina.intelligence.demo.forward_outcomes import ForwardOutcomes
+from katarina.intelligence.shadow.shadow_research_evaluation import (
     FAMILY, HORIZON, evaluate,
 )
 

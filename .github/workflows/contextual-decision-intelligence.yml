@@ -24,15 +24,15 @@ jobs:
           python -m pip install --disable-pip-version-check numpy==2.5.3
       - name: Compile isolated decision intelligence
         run: |
-          python -m py_compile src/katarina/intelligence/contextual_decision_intelligence.py
-          python -m py_compile src/katarina/intelligence/market_decision_brain_v3.py
+          python -m py_compile src/katarina/intelligence/cognition/contextual_decision_intelligence.py
+          python -m py_compile src/katarina/intelligence/cognition/market_decision.py
       - name: Verify causal context, hard blockers and real outcomes
         run: PYTHONPATH=src python -m unittest tests.unit.intelligence.test_contextual_decision_intelligence -v
       - name: Verify no new live-order path
         run: |
           python - <<'PY'
           from pathlib import Path
-          code=Path('src/katarina/intelligence/contextual_decision_intelligence.py').read_text()
+          code=Path('src/katarina/intelligence/cognition/contextual_decision_intelligence.py').read_text()
           for banned in ('MetaTrader5', 'order_send(', 'order_check(', 'account_info(',
                          'trade_allowed = True', 'history_deals_get(', 'requests.get('):
               assert banned not in code,banned

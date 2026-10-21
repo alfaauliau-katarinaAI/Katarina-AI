@@ -1,8 +1,8 @@
 """Daily session pauses no longer discard research trades; weekends still do."""
 import unittest
 
-from katarina.intelligence.autonomous_research import evaluate
-from katarina.intelligence.session_gaps import MAX_SESSION_GAP_SECONDS, spans_long_gap
+from katarina.intelligence.lab.autonomous_research import evaluate
+from katarina.intelligence.perception.session_gaps import MAX_SESSION_GAP_SECONDS, spans_long_gap
 
 H = 3600
 MONDAY = 1_704_067_200 + H  # 2024-01-01 01:00 UTC, a Monday

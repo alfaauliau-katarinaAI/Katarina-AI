@@ -2,7 +2,7 @@
 import unittest
 from datetime import datetime,timedelta,timezone
 from dataclasses import replace
-from katarina.intelligence.multi_pair_arbitrator import (
+from katarina.intelligence.perception.multi_pair_arbitrator import (
     Opportunity,RiskLimits,select_at_checkpoint,portfolio_replay)
 NOW=datetime(2026,9,1,12,tzinfo=timezone.utc)
 def opportunity(name,score=.8,when=NOW):

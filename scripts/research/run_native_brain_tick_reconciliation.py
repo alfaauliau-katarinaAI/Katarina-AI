@@ -17,8 +17,8 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
 
 from run_native_brain_causal_broker_replay import load_from_live_terminal
-from katarina.intelligence.causal_market_replay import replay_native_brain
-from katarina.intelligence.causal_tick_reconciliation import (
+from katarina.intelligence.lab.causal_market_replay import replay_native_brain
+from katarina.intelligence.lab.causal_tick_reconciliation import (
     tick_reconcile,summarize_tick_reconciliation,
 )
 

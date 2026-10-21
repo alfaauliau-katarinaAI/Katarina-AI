@@ -1,8 +1,8 @@
 """Structural Entry Quality invariants: purely closed market evidence."""
 import unittest
 from datetime import datetime, timedelta, timezone
-from katarina.intelligence.market_decision_pipeline import SensorCandle
-from katarina.intelligence.structural_entry_quality import StructuralEntryQuality
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+from katarina.intelligence.perception.structural_entry_quality import StructuralEntryQuality
 
 NOW=datetime(2026,10,9,15,0,tzinfo=timezone.utc)
 PERIODS={"M5":5,"M15":15,"H1":60}

@@ -1,7 +1,7 @@
 """Foundation readiness must never promote research to trading."""
 import unittest
 from datetime import datetime,timezone
-from katarina.intelligence.foundation_readiness import assess_foundation
+from katarina.intelligence.operations.foundation_readiness import assess_foundation
 
 STAMP=datetime(2026,10,15,5,tzinfo=timezone.utc).isoformat()
 

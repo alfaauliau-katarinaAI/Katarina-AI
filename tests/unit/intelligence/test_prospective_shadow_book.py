@@ -4,7 +4,7 @@ from dataclasses import replace
 from datetime import datetime,timedelta,timezone
 import sqlite3
 
-from katarina.intelligence.prospective_shadow_book import (
+from katarina.intelligence.shadow.prospective_shadow_book import (
     ResearchHypothesis,ProspectiveShadowBook,COST_STRESS_R
 )
 

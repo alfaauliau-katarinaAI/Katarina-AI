@@ -20,7 +20,7 @@ from urllib.request import Request, urlopen
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.adaptive_strategy_library import (
+from katarina.intelligence.lab.adaptive_strategy_library import (
     propose_closed_candle_strategies)
 from public_market_tournament import (
     QuoteCandle, calculate_fill, metrics, SCALE)

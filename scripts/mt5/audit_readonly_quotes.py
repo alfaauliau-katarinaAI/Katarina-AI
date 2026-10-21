@@ -182,7 +182,7 @@ def main() -> int:
         parser.error("Quote age must be 1..180 seconds with distinct, nonempty symbols")
     try:
         import MetaTrader5 as mt5
-        from katarina.intelligence.causal_broker_quotes import last_past_quote
+        from katarina.intelligence.broker.causal_broker_quotes import last_past_quote
     except ImportError:
         print(json.dumps({"result": "WAIT_INSUFFICIENT_BROKER_EVIDENCE",
                           "reason": "MT5_or_causal_UTC_quote_reader_unavailable",

@@ -12,7 +12,7 @@ import json
 from math import sin
 from pathlib import Path
 
-from katarina.intelligence.autonomous_strategy_discovery import Candle, discover
+from katarina.intelligence.lab.autonomous_strategy_discovery import Candle, discover
 
 
 def deterministic_fixture(count=930) -> tuple[Candle, ...]:

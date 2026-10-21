@@ -7,7 +7,7 @@ from pathlib import Path
 import sqlite3
 from tempfile import TemporaryDirectory
 import unittest
-from katarina.intelligence.research_reports import decision_report,publish_reports,read_reports
+from katarina.intelligence.lab.research_reports import decision_report,publish_reports,read_reports
 
 
 def evidence():

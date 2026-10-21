@@ -1,7 +1,7 @@
 from datetime import datetime,timezone
 import sqlite3
 import unittest
-from katarina.intelligence.observational_associations import observe_associations,pearson
+from katarina.intelligence.perception.observational_associations import observe_associations,pearson
 
 
 class AssociationTests(unittest.TestCase):

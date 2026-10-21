@@ -14,10 +14,10 @@ import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
 
-from katarina.intelligence.prospective_shadow_book import (
+from katarina.intelligence.shadow.prospective_shadow_book import (
     ProspectiveShadowBook,ResearchHypothesis
 )
-from katarina.intelligence.prospective_shadow_review import summarize
+from katarina.intelligence.shadow.prospective_shadow_review import summarize
 
 NOW=datetime(2026,10,13,14,0,tzinfo=timezone.utc)
 
@@ -35,8 +35,8 @@ def hyp(side="BUY",symbol="XAUUSD.vx",t=NOW):
 
 
 def verify(repo_root):
-    from katarina.intelligence.verified_policy_context import _host_ok
-    from katarina.intelligence.market_article_context import market_headline_relevant
+    from katarina.intelligence.news.verified_policy_context import _host_ok
+    from katarina.intelligence.news.market_article_context import market_headline_relevant
     # Test policy source provenance and noisy social headlines.
     assert _host_ok("https://www.federalreserve.gov/newsevents/pressreleases/a.htm","fed")
     assert not _host_ok("https://www.federalreserve.gov.evil.example/a.htm","fed")
@@ -69,8 +69,8 @@ def verify(repo_root):
     finally:
         db.close()
     cli=(repo_root/"scripts/ai/run_contextual_market_observer.py").read_text()
-    brain=(repo_root/"src/katarina/intelligence/unified_brain.py").read_text()
-    observer=(repo_root/"src/katarina/intelligence/brain_observer.py").read_text()
+    brain=(repo_root/"src/katarina/intelligence/cognition/unified_brain.py").read_text()
+    observer=(repo_root/"src/katarina/intelligence/cognition/observer.py").read_text()
     assert "UnifiedKatarinaBrain.observe_once(" in cli
     assert "terminal_info()" in brain and "observation_permission(broker,terminal)" in brain
     assert "FAIL_CLOSED_TRADING_MUST_BE_DISABLED" in brain

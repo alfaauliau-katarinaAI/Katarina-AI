@@ -38,12 +38,12 @@ RUNTIME_ENTRIES = (
 )
 LAUNCHER_SUFFIXES = (".yml", ".yaml", ".bat", ".cmd", ".ps1", ".sh", ".service", ".timer", ".json")
 LAUNCHER_PREFIXES = (".github/", "scripts/", "ops/", "config/", "sites/")
-LEGACY_BRAINS = (
-    "katarina.intelligence.brain",
-    "katarina.intelligence.adaptive_brain_v2",
-    "katarina.intelligence.market_decision_brain_v3",
-    "katarina.intelligence.multi_market_brain",
-    "katarina.intelligence.brain_observer",
+BRAIN_CAPABILITIES = (  # former versioned "brain" modules, renamed in cleanup stage 3
+    "katarina.intelligence.cognition.unified_brain",
+    "katarina.intelligence.cognition.adaptive_observation",
+    "katarina.intelligence.cognition.market_decision",
+    "katarina.intelligence.perception.screening",
+    "katarina.intelligence.cognition.observer",
 )
 CATEGORY_TITLES = {
     "A": "dipakai runtime/operasional atau workflow",
@@ -259,9 +259,9 @@ def render(report) -> str:
               "", "## Root yang dipakai", ""]
     for name, roots in report["roots"].items():
         lines.append(f"- **{name}** ({len(roots)}): " + ", ".join(f"`{r}`" for r in roots))
-    lines += ["", "## Modul otak lama (bahan Tahap 2)", "",
+    lines += ["", "## Otak canonical dan bekas otak berversi", "",
               "| Modul | Kategori | via | Diimpor modul src |", "|---|---|---|---|"]
-    for name in LEGACY_BRAINS:
+    for name in BRAIN_CAPABILITIES:
         row = modules.get(name)
         if row:
             src = ", ".join(f"`{m}`" for m in row["src_importers"]) or "—"

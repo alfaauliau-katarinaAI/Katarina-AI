@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 import MetaTrader5 as mt5
-from katarina.intelligence.market_decision_pipeline import (
+from katarina.intelligence.cognition.market_decision_pipeline import (
     MarketDecisionPipeline, SensorCandle,
 )
 

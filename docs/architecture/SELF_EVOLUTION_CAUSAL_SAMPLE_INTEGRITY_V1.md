@@ -1,7 +1,7 @@
 # Self-evolution causal source integrity — offline research
 
 This change protects the existing quote-only
-`src/katarina/intelligence/self_evolution_lab.py` before it can update any
+`src/katarina/intelligence/cognition/self_evolution_lab.py` before it can update any
 Cognitive Brain learning checkpoint or curiosity research proposals.
 
 - Distinct SQLite row IDs **do not** prove independent market events.

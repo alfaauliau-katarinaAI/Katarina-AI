@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from enum import Enum
 from math import isfinite
 
-from katarina.intelligence.adaptive_regime import MarketRead, MarketState, Playbook
+from katarina.intelligence.perception.adaptive_regime import MarketRead, MarketState, Playbook
 
 
 class ScalpSide(str, Enum):

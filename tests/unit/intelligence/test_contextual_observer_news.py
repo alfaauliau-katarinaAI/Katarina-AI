@@ -5,10 +5,10 @@ from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import sqlite3
 
-from katarina.intelligence.verified_policy_context import (
+from katarina.intelligence.news.verified_policy_context import (
     _host_ok,parse_full_article,_policy_signal,ReadArticle,evidence_from_article,item_from_article,instrument_currencies,
 )
-from katarina.intelligence.contextual_observation_journal import ContextDecisionJournal
+from katarina.intelligence.shadow.contextual_observation_journal import ContextDecisionJournal
 
 NOW=datetime(2026,10,12,8,0,tzinfo=timezone.utc)
 

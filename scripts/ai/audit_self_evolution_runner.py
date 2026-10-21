@@ -12,8 +12,8 @@ from pathlib import Path
 import sqlite3
 
 from katarina.governance.multi_model_evolution_review import review_candidate
-from katarina.intelligence.evidence_risk import EvidenceRiskGate
-from katarina.intelligence.self_evolution_lab import evaluate_shadow_self_evolution
+from katarina.intelligence.lab.evidence_risk import EvidenceRiskGate
+from katarina.intelligence.cognition.self_evolution_lab import evaluate_shadow_self_evolution
 
 START = datetime(2026, 7, 1, tzinfo=timezone.utc)
 AS_OF = datetime(2026, 8, 10, tzinfo=timezone.utc)

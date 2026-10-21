@@ -3,7 +3,7 @@ from contextlib import closing
 from datetime import datetime,timezone
 from pathlib import Path
 import sqlite3,time
-from katarina.intelligence.research_capacity import research_capacity
+from katarina.intelligence.lab.research_capacity import research_capacity
 from katarina.monitoring.worker_runtime import _read,_fresh
 
 _CACHE={}

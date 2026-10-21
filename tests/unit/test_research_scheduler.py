@@ -2,7 +2,7 @@ from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 import json,sqlite3,tempfile,unittest
-from katarina.intelligence.autonomous_research import ResearchPool,preserve_dataset
+from katarina.intelligence.lab.autonomous_research import ResearchPool,preserve_dataset
 from katarina.monitoring.research_health import read_research_health
 
 class Trace:
@@ -24,7 +24,7 @@ class ResearchSchedulerTests(unittest.TestCase):
     def test_only_viable_trials_are_reviewed_once_per_cost_level(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);self.setup_db(root);trace=Trace();pool=ResearchPool(root,trace)
-            with patch('katarina.intelligence.research_capacity.research_capacity',return_value={'status':'READY'}),patch('katarina.intelligence.autonomous_research.cost_review',return_value={'status':'NEEDS_FORWARD_VALIDATION'}) as evaluate:
+            with patch('katarina.intelligence.lab.research_capacity.research_capacity',return_value={'status':'READY'}),patch('katarina.intelligence.lab.autonomous_research.cost_review',return_value={'status':'NEEDS_FORWARD_VALIDATION'}) as evaluate:
                 self.assertTrue(pool.review_one(2));self.assertTrue(pool.review_one(3))
                 self.assertFalse(pool.review_one(2));self.assertFalse(pool.review_one(3));self.assertEqual(evaluate.call_count,2)
             with closing(sqlite3.connect(root/'experiment-jobs.sqlite3')) as db:
@@ -35,7 +35,7 @@ class ResearchSchedulerTests(unittest.TestCase):
     def test_low_disk_blocks_reviews_and_model_calls_before_database_writes(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);model=unittest.mock.Mock();pool=ResearchPool(root,Trace(),model)
-            with patch('katarina.intelligence.research_capacity.research_capacity',return_value={'status':'PAUSED_LOW_DISK'}):
+            with patch('katarina.intelligence.lab.research_capacity.research_capacity',return_value={'status':'PAUSED_LOW_DISK'}):
                 self.assertFalse(pool.review_one(2));self.assertFalse(pool.model_once())
             self.assertFalse((root/'experiment-jobs.sqlite3').exists());model.complete.assert_not_called()
             self.assertEqual(pool.review_states[2]['status'],'PAUSED_LOW_DISK')

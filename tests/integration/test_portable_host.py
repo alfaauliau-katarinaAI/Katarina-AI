@@ -9,8 +9,8 @@ import unittest
 from unittest.mock import patch
 
 from katarina.host import MiB, detect_capacity, inspect_host, observation_budget, state_directory
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
-from katarina.intelligence.brain_observer import lock_worker
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.observer import lock_worker
 
 ROOT = Path(__file__).resolve().parents[2]
 CLI = ROOT / 'scripts/ai/run_contextual_market_observer.py'

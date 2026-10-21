@@ -14,8 +14,8 @@ from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
-from katarina.intelligence.adaptive_walkforward import PaperEvent, replay_walk_forward
-from katarina.intelligence.broker_scan_universe import resolve_broker_symbols
+from katarina.intelligence.lab.adaptive_walkforward import PaperEvent, replay_walk_forward
+from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
 
 INPUT = ROOT / "docs/research/outputs/20261012/brain_unified_intraday_v6_trades.csv"
 OUTPUT = ROOT / "artifacts/adaptive_walkforward"

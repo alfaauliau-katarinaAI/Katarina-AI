@@ -1,9 +1,9 @@
 import unittest
 
-from katarina.intelligence.market import MarketIntelligenceEngine
-from katarina.intelligence.timeframe import MultiTimeframeEngine, TimeframeView
-from katarina.intelligence.regime import MarketRegimeEngine
-from katarina.intelligence.xauusd import XauusdSpecialistV1
+from katarina.intelligence.perception.market import MarketIntelligenceEngine
+from katarina.intelligence.perception.timeframe import MultiTimeframeEngine, TimeframeView
+from katarina.intelligence.perception.regime import MarketRegimeEngine
+from katarina.intelligence.perception.xauusd import XauusdSpecialistV1
 from katarina.engines.decision import DecisionEngine, DecisionAction
 from katarina.engines.risk import RiskGovernor, RiskRequest
 from katarina.engines.sizing import PositionSizingEngine

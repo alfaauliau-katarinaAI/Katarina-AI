@@ -1,6 +1,6 @@
 # Unified offline adaptive learning — Memory / Curiosity / Brain / Entry–Exit
 
-Source: `src/katarina/intelligence/unified_adaptive_research_cycle.py`.
+Source: `src/katarina/intelligence/cognition/unified_adaptive_research_cycle.py`.
 
 **This implements one integration contract, not a profitable production AI.**
 

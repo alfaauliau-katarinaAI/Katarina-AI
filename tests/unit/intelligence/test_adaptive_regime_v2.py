@@ -1,9 +1,9 @@
 import unittest
 from datetime import datetime, timedelta, timezone
 
-from katarina.intelligence.adaptive_regime import (
+from katarina.intelligence.perception.adaptive_regime import (
     AdaptiveRegimeEngine, ClosedFrame, MarketState, Playbook, StructuralEvidence)
-from katarina.intelligence.causal_seasonality import (
+from katarina.intelligence.perception.causal_seasonality import (
     CausalSeasonality, HistoricalOutcome)
 from katarina.engines.adaptive_scalper import (
     AdaptiveScalpRouter, ClosedPriceContext, ScalpSide)
@@ -91,7 +91,7 @@ class CausalSeasonalityTests(unittest.TestCase):
         self.assertRaises(ValueError,s.estimate,"XAUUSD.vx",
                           as_of_utc=T-timedelta(seconds=1))
 
-from katarina.intelligence.closed_swing_structure import ClosedBar, ClosedSwingStructure
+from katarina.intelligence.perception.closed_swing_structure import ClosedBar, ClosedSwingStructure
 
 class ClosedStructureTests(unittest.TestCase):
     def setUp(self):
@@ -113,7 +113,7 @@ class ClosedStructureTests(unittest.TestCase):
             self.engine.extract(self.history+[future],as_of_utc=T,spread=.1)
 
 
-from katarina.intelligence.adaptive_brain_v2 import KatarinaAdaptiveBrainV2
+from katarina.intelligence.cognition.adaptive_observation import KatarinaAdaptiveBrainV2
 
 class BrainV2IntegrationTests(unittest.TestCase):
     def test_closed_breakout_routes_without_orders(self):

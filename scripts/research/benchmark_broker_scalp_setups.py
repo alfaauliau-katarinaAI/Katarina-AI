@@ -18,7 +18,7 @@ import sys
 
 BASE=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(BASE/"src"))
-from katarina.intelligence.scalp_pattern_candidates import propose_family,FAMILIES
+from katarina.intelligence.perception.scalp_pattern_candidates import propose_family,FAMILIES
 from replay_historical_tick_stops import historical_path,simulate
 from historical_shadow_ticks import bars,first_quote,intact
 

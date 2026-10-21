@@ -1,6 +1,6 @@
 import unittest,sqlite3,json,tempfile
 from pathlib import Path
-from katarina.intelligence.research_reports import read_reports,prepare_report_indexes
+from katarina.intelligence.lab.research_reports import read_reports,prepare_report_indexes
 class PersistedReportsTests(unittest.TestCase):
     def test_restart_observes_persisted_reports_without_rewriting_experiment_time(self):
         with tempfile.TemporaryDirectory() as root:
@@ -26,7 +26,7 @@ class PersistedReportsTests(unittest.TestCase):
             self.assertFalse(out['production_approved'])
 
     def test_report_writer_processes_pending_evidence_and_publishes_a_snapshot(self):
-        from katarina.intelligence.research_reports import publish_reports
+        from katarina.intelligence.lab.research_reports import publish_reports
         with tempfile.TemporaryDirectory() as root:
             db=sqlite3.connect(Path(root)/'experiment-jobs.sqlite3')
             db.executescript('CREATE TABLE trials(id TEXT PRIMARY KEY,symbol TEXT,digest TEXT,created_utc TEXT,result_json TEXT); CREATE TABLE stress_reviews(trial_id TEXT PRIMARY KEY,created_utc TEXT,result_json TEXT);')

@@ -12,8 +12,8 @@ from datetime import datetime, timedelta, timezone
 from math import floor, isfinite
 from typing import Any
 
-from katarina.intelligence.shadow_paper_book import ObservedQuote, PaperPosition
-from katarina.intelligence.shadow_journal import ShadowSignal, _utc
+from katarina.intelligence.shadow.shadow_paper_book import ObservedQuote, PaperPosition
+from katarina.intelligence.shadow.shadow_journal import ShadowSignal, _utc
 
 
 @dataclass(frozen=True, slots=True)

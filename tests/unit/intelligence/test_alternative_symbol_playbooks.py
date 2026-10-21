@@ -2,9 +2,9 @@
 from datetime import datetime,timezone
 import unittest
 
-from katarina.intelligence.alternative_symbol_playbooks import (
+from katarina.intelligence.perception.alternative_symbol_playbooks import (
     SYMBOLS,propose as propose_alternative)
-from katarina.intelligence.symbol_playbooks import SYMBOLS as LIVE_RESEARCH
+from katarina.intelligence.perception.symbol_playbooks import SYMBOLS as LIVE_RESEARCH
 
 class AlternativeSymbolTests(unittest.TestCase):
     def setUp(self):

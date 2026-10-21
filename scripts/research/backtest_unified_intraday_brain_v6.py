@@ -23,19 +23,19 @@ sys.path.insert(0,str(ROOT/"src"))
 sys.path.insert(0,str(ROOT/"scripts"/"research"))
 from backtest_explainable_55_pairs import OUT,get_bars,TIMEFRAME
 from backtest_full_m5_intraday_scalp_v5 import replay
-from katarina.intelligence.market_decision_pipeline import MarketDecisionPipeline
-from katarina.intelligence.broker_scan_universe import resolve_broker_symbols
-from katarina.intelligence.research_signal_ablation import eligible_for_research
-from katarina.intelligence.semantic_setup_truth import CausalSetupValidator
-from katarina.intelligence.structural_entry_quality import StructuralEntryQuality
-from katarina.intelligence.calendar_history import load_calendar_history
-from katarina.intelligence.intraday_scalp_research import vector_prefilter,fill_next_open
+from katarina.intelligence.cognition.market_decision_pipeline import MarketDecisionPipeline
+from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
+from katarina.intelligence.lab.research_signal_ablation import eligible_for_research
+from katarina.intelligence.perception.semantic_setup_truth import CausalSetupValidator
+from katarina.intelligence.perception.structural_entry_quality import StructuralEntryQuality
+from katarina.intelligence.perception.calendar_history import load_calendar_history
+from katarina.intelligence.lab.intraday_scalp_research import vector_prefilter,fill_next_open
 
 DEST=OUT/"intraday_brain_integrated_v6"
 DEST.mkdir(parents=True,exist_ok=True)
 RISK=.0025
 
-from katarina.intelligence.unified_intraday_gate import (check_candidate, min_capital_for_broker)
+from katarina.intelligence.lab.unified_intraday_gate import (check_candidate, min_capital_for_broker)
 
 def main():
     global DEST

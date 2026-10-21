@@ -11,11 +11,11 @@
       "status": "OFFLINE_VERIFIED",
       "evidence_paths": [
         "src/katarina/core/orchestrator.py",
-        "src/katarina/intelligence/unified_cognitive_cycle.py",
-        "src/katarina/intelligence/unified_brain.py",
+        "src/katarina/intelligence/cognition/unified_cognitive_cycle.py",
+        "src/katarina/intelligence/cognition/unified_brain.py",
         "src/katarina/memory/neuro_link.py",
-        "src/katarina/intelligence/brain_observer.py",
-        "src/katarina/intelligence/brain_runtime_control.py"
+        "src/katarina/intelligence/cognition/observer.py",
+        "src/katarina/intelligence/cognition/brain_runtime_control.py"
       ],
       "test_paths": [
         "tests/integration/test_unified_katarina_stack.py",
@@ -43,9 +43,9 @@
       "requirement": "Independent alpha research, asymmetric BUY and SELL",
       "status": "PARTIAL",
       "evidence_paths": [
-        "src/katarina/intelligence/self_evolution_lab.py",
-        "src/katarina/intelligence/prospective_shadow_book.py",
-        "src/katarina/intelligence/unified_adaptive_research_cycle.py"
+        "src/katarina/intelligence/cognition/self_evolution_lab.py",
+        "src/katarina/intelligence/shadow/prospective_shadow_book.py",
+        "src/katarina/intelligence/cognition/unified_adaptive_research_cycle.py"
       ],
       "test_paths": [
         "tests/unit/intelligence/test_unified_cognitive_cycle.py",
@@ -58,11 +58,11 @@
       "requirement": "Perception curiosity causal reasoning metacognition regime and Fast/Deep",
       "status": "PARTIAL",
       "evidence_paths": [
-        "src/katarina/intelligence/unified_cognitive_cycle.py",
-        "src/katarina/intelligence/market_regime_intelligence.py",
-        "src/katarina/intelligence/unified_research_handoff.py",
-        "src/katarina/intelligence/unified_adaptive_research_cycle.py",
-        "src/katarina/intelligence/unified_brain.py",
+        "src/katarina/intelligence/cognition/unified_cognitive_cycle.py",
+        "src/katarina/intelligence/perception/market_regime_intelligence.py",
+        "src/katarina/intelligence/cognition/unified_research_handoff.py",
+        "src/katarina/intelligence/cognition/unified_adaptive_research_cycle.py",
+        "src/katarina/intelligence/cognition/unified_brain.py",
         "src/katarina/memory/neuro_link.py"
       ],
       "test_paths": [
@@ -80,14 +80,14 @@
       "evidence_paths": [
         "src/katarina/memory/runtime_state.py",
         "src/katarina/memory/store.py",
-        "src/katarina/intelligence/historical_analog_memory.py",
-        "src/katarina/intelligence/unified_adaptive_research_cycle.py",
+        "src/katarina/intelligence/perception/historical_analog_memory.py",
+        "src/katarina/intelligence/cognition/unified_adaptive_research_cycle.py",
         "src/katarina/memory/quarantined_research_memory.py",
-        "src/katarina/intelligence/self_evolution_lab.py",
-        "src/katarina/intelligence/unified_brain.py",
+        "src/katarina/intelligence/cognition/self_evolution_lab.py",
+        "src/katarina/intelligence/cognition/unified_brain.py",
         "src/katarina/memory/neuro_link.py",
-        "src/katarina/intelligence/brain_observer.py",
-        "src/katarina/intelligence/brain_runtime_control.py"
+        "src/katarina/intelligence/cognition/observer.py",
+        "src/katarina/intelligence/cognition/brain_runtime_control.py"
       ],
       "test_paths": [
         "tests/unit/memory/test_runtime_state_persistence.py",
@@ -106,9 +106,9 @@
       "requirement": "Scientific alpha self-evolution OOS forward canary rollback",
       "status": "PARTIAL",
       "evidence_paths": [
-        "src/katarina/intelligence/self_evolution_lab.py",
-        "src/katarina/intelligence/unified_cognitive_cycle.py",
-        "src/katarina/intelligence/unified_adaptive_research_cycle.py",
+        "src/katarina/intelligence/cognition/self_evolution_lab.py",
+        "src/katarina/intelligence/cognition/unified_cognitive_cycle.py",
+        "src/katarina/intelligence/cognition/unified_adaptive_research_cycle.py",
         "src/katarina/memory/quarantined_research_memory.py"
       ],
       "test_paths": [
@@ -167,11 +167,11 @@
       "evidence_paths": [
         "src/katarina/engines/execution_recovery.py",
         "src/katarina/engines/multi_symbol_execution.py",
-        "src/katarina/intelligence/unified_research_handoff.py",
-        "src/katarina/intelligence/unified_adaptive_research_cycle.py",
-        "src/katarina/intelligence/research_exit_lifecycle.py",
-        "src/katarina/intelligence/brain_observer.py",
-        "src/katarina/intelligence/brain_runtime_control.py"
+        "src/katarina/intelligence/cognition/unified_research_handoff.py",
+        "src/katarina/intelligence/cognition/unified_adaptive_research_cycle.py",
+        "src/katarina/intelligence/lab/research_exit_lifecycle.py",
+        "src/katarina/intelligence/cognition/observer.py",
+        "src/katarina/intelligence/cognition/brain_runtime_control.py"
       ],
       "test_paths": [
         "tests/unit/engines/test_account_risk_state.py",
@@ -188,12 +188,12 @@
       "requirement": "Account and portfolio intelligent HOLD FULL PARTIAL TRAIL exit",
       "status": "PARTIAL",
       "evidence_paths": [
-        "src/katarina/intelligence/structure_exit_plan.py",
-        "src/katarina/intelligence/unified_research_handoff.py",
-        "src/katarina/intelligence/unified_adaptive_research_cycle.py",
-        "src/katarina/intelligence/research_exit_lifecycle.py",
-        "src/katarina/intelligence/brain_observer.py",
-        "src/katarina/intelligence/brain_runtime_control.py"
+        "src/katarina/intelligence/perception/structure_exit_plan.py",
+        "src/katarina/intelligence/cognition/unified_research_handoff.py",
+        "src/katarina/intelligence/cognition/unified_adaptive_research_cycle.py",
+        "src/katarina/intelligence/lab/research_exit_lifecycle.py",
+        "src/katarina/intelligence/cognition/observer.py",
+        "src/katarina/intelligence/cognition/brain_runtime_control.py"
       ],
       "test_paths": [
         "tests/unit/intelligence/test_structure_exit_plan.py",
@@ -224,7 +224,7 @@
       "status": "NOT_INTEGRATED",
       "evidence_paths": [
         "docs/architecture/KATARINA_OWNER_DESIGN_BASELINE_20261014.md",
-        "src/katarina/intelligence/offline_hand_telemetry.py"
+        "src/katarina/intelligence/lab/offline_hand_telemetry.py"
       ],
       "test_paths": [
         "tests/unit/intelligence/test_offline_hand_telemetry.py"
@@ -250,7 +250,7 @@
       "status": "NOT_INTEGRATED",
       "evidence_paths": [
         "docs/architecture/KATARINA_OWNER_DESIGN_BASELINE_20261014.md",
-        "src/katarina/intelligence/offline_hand_telemetry.py"
+        "src/katarina/intelligence/lab/offline_hand_telemetry.py"
       ],
       "test_paths": [
         "tests/unit/intelligence/test_offline_hand_telemetry.py"
@@ -262,8 +262,8 @@
       "requirement": "Post-early-exit immutable counterfactual HOLD PARTIAL TRAIL observation",
       "status": "PARTIAL",
       "evidence_paths": [
-        "src/katarina/intelligence/forward_outcomes.py",
-        "src/katarina/intelligence/structure_exit_plan.py"
+        "src/katarina/intelligence/demo/forward_outcomes.py",
+        "src/katarina/intelligence/perception/structure_exit_plan.py"
       ],
       "test_paths": [],
       "remaining": "Research paths exist; exact post-exit counterfactual broker-cost horizon and lifecycle integration deferred."
@@ -273,14 +273,14 @@
       "requirement": "Neuro-Link bidirectional knowledge shared one brain and dedup",
       "status": "PARTIAL",
       "evidence_paths": [
-        "src/katarina/intelligence/unified_cognitive_cycle.py",
+        "src/katarina/intelligence/cognition/unified_cognitive_cycle.py",
         "src/katarina/memory/runtime_state.py",
         "src/katarina/memory/quarantined_research_memory.py",
-        "src/katarina/intelligence/self_evolution_lab.py",
-        "src/katarina/intelligence/unified_brain.py",
+        "src/katarina/intelligence/cognition/self_evolution_lab.py",
+        "src/katarina/intelligence/cognition/unified_brain.py",
         "src/katarina/memory/neuro_link.py",
-        "src/katarina/intelligence/brain_observer.py",
-        "src/katarina/intelligence/brain_runtime_control.py"
+        "src/katarina/intelligence/cognition/observer.py",
+        "src/katarina/intelligence/cognition/brain_runtime_control.py"
       ],
       "test_paths": [
         "tests/unit/intelligence/test_unified_cognitive_cycle.py",

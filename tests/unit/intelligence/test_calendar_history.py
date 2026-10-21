@@ -1,7 +1,7 @@
 from datetime import datetime,timezone
 import numpy as np
 import unittest
-from katarina.intelligence.calendar_history import load_calendar_history
+from katarina.intelligence.perception.calendar_history import load_calendar_history
 
 DT=[('time','i8'),('open','f8'),('high','f8'),('low','f8'),('close','f8'),('spread','i8')]
 def at(month,day=1):return datetime(2025,month,day,tzinfo=timezone.utc)

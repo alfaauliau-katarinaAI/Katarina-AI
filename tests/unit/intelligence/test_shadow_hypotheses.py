@@ -3,8 +3,8 @@ import json
 import unittest
 from datetime import datetime, timezone
 
-from katarina.intelligence.multi_market_brain import features, screen
-from katarina.intelligence.shadow_hypotheses import FAMILY, propose
+from katarina.intelligence.perception.screening import features, screen
+from katarina.intelligence.shadow.shadow_hypotheses import FAMILY, propose
 
 NOW = datetime(2026, 10, 12, 12, tzinfo=timezone.utc)
 

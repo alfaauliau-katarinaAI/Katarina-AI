@@ -2,7 +2,7 @@ import json
 import sqlite3
 import unittest
 from datetime import datetime, timezone
-from katarina.intelligence.forward_outcomes import ForwardOutcomes
+from katarina.intelligence.demo.forward_outcomes import ForwardOutcomes
 
 START = 1791288000
 

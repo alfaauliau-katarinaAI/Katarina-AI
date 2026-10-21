@@ -7,7 +7,7 @@ import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src'))
 from katarina.adapters.automatic_connection import ConnectionConfig
-from katarina.intelligence.demo_forward import DemoForwardRuntime
+from katarina.intelligence.demo.demo_forward import DemoForwardRuntime
 
 
 def main():

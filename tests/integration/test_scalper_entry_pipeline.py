@@ -3,7 +3,7 @@ import unittest
 from katarina.engines.scalper_entry import ScalperEntryEngine, ScalperSnapshot
 from katarina.engines.decision import DecisionAction, DecisionEngine
 from katarina.engines.risk import RiskAction, RiskGovernor, RiskRequest
-from katarina.intelligence.regime import Regime, RegimeAssessment
+from katarina.intelligence.perception.regime import Regime, RegimeAssessment
 
 
 class ScalperEntryPipelineTests(unittest.TestCase):

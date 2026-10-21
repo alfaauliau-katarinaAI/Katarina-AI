@@ -1,6 +1,6 @@
 """Native-brain BID/ASK reconciliation safety fixtures, not market alpha."""
 import unittest
-from katarina.intelligence.causal_tick_reconciliation import (
+from katarina.intelligence.lab.causal_tick_reconciliation import (
     tick_reconcile,summarize_tick_reconciliation
 )
 

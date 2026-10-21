@@ -200,7 +200,7 @@ jobs:
           import json,os
           from pathlib import Path
           from scripts.ai.audit_self_evolution_runner import AS_OF,simulated_history
-          from katarina.intelligence.self_evolution_lab import evaluate_shadow_self_evolution
+          from katarina.intelligence.cognition.self_evolution_lab import evaluate_shadow_self_evolution
           from katarina.governance.external_model_bridge import verdict_from_text
           from katarina.governance.multi_model_evolution_review import review_candidate
           db=simulated_history(days=30,strong_net_r=2.,weak_net_r=-1.)

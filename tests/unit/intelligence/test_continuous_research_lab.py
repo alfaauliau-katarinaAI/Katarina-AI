@@ -4,7 +4,7 @@ import sqlite3
 import tempfile
 import unittest
 from unittest.mock import patch
-from katarina.intelligence.continuous_research_lab import select_batch, step, evaluate
+from katarina.intelligence.lab.continuous_research_lab import select_batch, step, evaluate
 from katarina.monitoring.research_lab_status import clean_lab_status
 
 class ResearchLabTests(unittest.TestCase):

@@ -10,11 +10,11 @@ from pathlib import Path
 import MetaTrader5 as mt5
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
-from katarina.intelligence.market_decision_pipeline import MarketDecisionPipeline,SensorCandle
-from katarina.intelligence.structural_entry_quality import _atr
-from katarina.intelligence.broker_clock_alignment import infer_clock_shift
-from katarina.intelligence.broker_scan_universe import resolve_broker_symbols
-from katarina.intelligence.multi_pair_arbitrator import (
+from katarina.intelligence.cognition.market_decision_pipeline import MarketDecisionPipeline,SensorCandle
+from katarina.intelligence.perception.structural_entry_quality import _atr
+from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift
+from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
+from katarina.intelligence.perception.multi_pair_arbitrator import (
     Opportunity,select_at_checkpoint)
 OUT=Path(r"C:\KatarinaDev\decision-backtest-20261012\synchronous_multi_pair_daily_v4")
 TIMEFRAME={"M5":(mt5.TIMEFRAME_M5,300),"M15":(mt5.TIMEFRAME_M15,900),

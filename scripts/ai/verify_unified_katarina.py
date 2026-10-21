@@ -97,15 +97,15 @@ def verify(profile: dict, *, root: Path = ROOT, shadow_db: Path | None = None) -
     } or "on_hold" in profile:
         raise ValueError("single_brain_organization_required")
     expected_paths = {
-        "brain":"src/katarina/intelligence/unified_brain.py",
-        "observer":"src/katarina/intelligence/brain_observer.py",
-        "runtime_control":"src/katarina/intelligence/brain_runtime_control.py",
+        "brain":"src/katarina/intelligence/cognition/unified_brain.py",
+        "observer":"src/katarina/intelligence/cognition/observer.py",
+        "runtime_control":"src/katarina/intelligence/cognition/brain_runtime_control.py",
         "market_sensor":"src/katarina/adapters/mt5_readonly_market.py",
         "health":"src/katarina/health/engine.py",
-        "cognition":"src/katarina/intelligence/unified_cognitive_cycle.py",
+        "cognition":"src/katarina/intelligence/cognition/unified_cognitive_cycle.py",
         "knowledge_memory":"src/katarina/memory/neuro_link.py",
-        "market_perception":"src/katarina/intelligence/market_decision_brain_v3.py",
-        "adaptive_research":"src/katarina/intelligence/unified_adaptive_research_cycle.py",
+        "market_perception":"src/katarina/intelligence/cognition/market_decision.py",
+        "adaptive_research":"src/katarina/intelligence/cognition/unified_adaptive_research_cycle.py",
     }
     if any(parts.get(k) != v for k,v in expected_paths.items()):
         raise ValueError("invalid_canonical_single_brain_path")
@@ -171,11 +171,11 @@ def verify(profile: dict, *, root: Path = ROOT, shadow_db: Path | None = None) -
         RiskGovernor, RiskRequest, RiskAction, DrawdownAuthority, DrawdownMode,
     )
     from katarina.engines.capital import CapitalCompoundingEngine
-    from katarina.intelligence.prospective_shadow_book import ProspectiveShadowBook
-    from katarina.intelligence.self_evolution_lab import (
+    from katarina.intelligence.shadow.prospective_shadow_book import ProspectiveShadowBook
+    from katarina.intelligence.cognition.self_evolution_lab import (
         evaluate_shadow_self_evolution,derive_shadow_research_policy,
     )
-    from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+    from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
     from katarina.memory.store import MemoryStore
     from katarina.adapters.mt5_account_pnl import Mt5ReadOnlyPnLAdapter
     core=KatarinaOrchestrator(OrchestratorConfig(RuntimeMode.TESTER,32))

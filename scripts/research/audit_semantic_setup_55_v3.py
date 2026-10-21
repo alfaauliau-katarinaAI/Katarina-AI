@@ -14,8 +14,8 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"src"))
 sys.path.insert(0,str(ROOT/"scripts"/"research"))
 from backtest_explainable_55_pairs import OUT,get_bars,sensors,bisected_indices,stats,split,TIMEFRAME
-from katarina.intelligence.structural_entry_quality import StructuralEntryQuality
-from katarina.intelligence.semantic_setup_truth import CausalSetupValidator
+from katarina.intelligence.perception.structural_entry_quality import StructuralEntryQuality
+from katarina.intelligence.perception.semantic_setup_truth import CausalSetupValidator
 
 DEST=OUT/"semantic_v3_full_55"
 DEST.mkdir(parents=True,exist_ok=True)

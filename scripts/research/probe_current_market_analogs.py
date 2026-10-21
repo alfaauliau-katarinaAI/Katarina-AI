@@ -11,7 +11,7 @@ from hashlib import sha256
 from pathlib import Path
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
-from katarina.intelligence.historical_analog_memory import (
+from katarina.intelligence.perception.historical_analog_memory import (
     query_analogs,load_frozen_symbol_memory)
 
 UTC=timezone.utc

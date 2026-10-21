@@ -50,7 +50,7 @@ class RepoHygieneFilenameTests(unittest.TestCase):
             for rel in (
                 "website/brand-logo.base64.txt",
                 "docs/validation/experiment.json",
-                "src/katarina/intelligence/adaptive_regime.py",
+                "src/katarina/intelligence/perception/adaptive_regime.py",
             ):
                 file = root / rel
                 file.parent.mkdir(parents=True, exist_ok=True)
@@ -60,7 +60,7 @@ class RepoHygieneFilenameTests(unittest.TestCase):
                 [
                     "website/brand-logo.base64.txt",
                     "docs/validation/experiment.json",
-                    "src/katarina/intelligence/adaptive_regime.py",
+                    "src/katarina/intelligence/perception/adaptive_regime.py",
                 ],
             )
             self.assertEqual((junk, empty), ([], []))

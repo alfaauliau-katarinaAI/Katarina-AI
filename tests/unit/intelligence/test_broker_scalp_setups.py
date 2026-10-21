@@ -7,7 +7,7 @@ SCRIPTS=Path(__file__).resolve().parents[3]/"scripts"/"research"
 sys.path.insert(0,str(SCRIPTS))
 from benchmark_broker_scalp_setups import (
     ema_series,slip_ticks_and_replay,make_summary)
-from katarina.intelligence.scalp_pattern_candidates import propose_family
+from katarina.intelligence.perception.scalp_pattern_candidates import propose_family
 
 UTC=timezone.utc
 NOW=datetime(2026,10,8,12,tzinfo=UTC)

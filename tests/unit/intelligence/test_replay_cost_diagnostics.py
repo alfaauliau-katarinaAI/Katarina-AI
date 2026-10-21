@@ -1,7 +1,7 @@
 """Frozen cost-grid tests: must never hide losers or authorize live alpha."""
 import unittest
-from katarina.intelligence.adaptive_walkforward import PaperEvent
-from katarina.intelligence.replay_cost_diagnostics import describe_candidates
+from katarina.intelligence.lab.adaptive_walkforward import PaperEvent
+from katarina.intelligence.lab.replay_cost_diagnostics import describe_candidates
 
 
 def entry(t,r,method="TREND_PULLBACK"):

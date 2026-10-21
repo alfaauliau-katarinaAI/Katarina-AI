@@ -1,7 +1,7 @@
 """External broker sensor adapter, injected; never imports or starts MT5."""
 from datetime import datetime, timezone, timedelta
 
-from katarina.intelligence.market_decision_pipeline import SensorCandle
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
 
 TF = {"M5":("TIMEFRAME_M5",5), "M15":("TIMEFRAME_M15",15), "H1":("TIMEFRAME_H1",60)}
 

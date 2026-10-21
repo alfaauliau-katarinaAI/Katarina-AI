@@ -5,7 +5,7 @@ import sqlite3
 import tempfile
 import unittest
 from types import SimpleNamespace
-from katarina.intelligence.network_doctor import NetworkDoctor
+from katarina.intelligence.operations.network_doctor import NetworkDoctor
 from katarina.memory.store import MemoryStore
 
 class DoctorTests(unittest.TestCase):

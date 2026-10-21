@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime,timezone
 import json
 
-from katarina.intelligence.economic_feed import EconomicFeedGate, JsonEconomicCalendarAdapter
+from katarina.intelligence.news.economic_feed import EconomicFeedGate, JsonEconomicCalendarAdapter
 
 
 class EconomicFeedTests(unittest.TestCase):

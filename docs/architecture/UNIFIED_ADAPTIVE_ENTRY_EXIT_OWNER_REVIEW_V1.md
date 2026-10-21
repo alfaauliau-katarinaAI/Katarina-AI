@@ -2,7 +2,7 @@
 
 This increment joins the existing `KatarinaAdaptiveBrainV2` research proposal
 with `StructuralExitPlan` in
-`src/katarina/intelligence/unified_research_handoff.py`.
+`src/katarina/intelligence/cognition/unified_research_handoff.py`.
 
 The output is a deterministic, immutable, read-only Owner research receipt:
 symbol, BUY/SELL, regime, playbook, structural stop/target (if consistent),

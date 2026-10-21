@@ -1,6 +1,6 @@
 # Smart Exit lifecycle — pure offline feasibility (not an execution engine)
 
-`src/katarina/intelligence/research_exit_lifecycle.py`
+`src/katarina/intelligence/lab/research_exit_lifecycle.py`
 
 This checks a proposed HOLD, FULL, PARTIAL or TRAIL decision against
 **caller-supplied broker constraints**. It does not choose an optimal exit or

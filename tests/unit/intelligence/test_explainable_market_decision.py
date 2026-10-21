@@ -2,7 +2,7 @@
 import unittest
 from datetime import datetime, timedelta, timezone
 
-from katarina.intelligence.market_decision_pipeline import (
+from katarina.intelligence.cognition.market_decision_pipeline import (
     MarketDecisionPipeline, SensorCandle,
 )
 

@@ -3,11 +3,11 @@ import unittest
 from dataclasses import replace
 from datetime import timedelta
 
-from katarina.intelligence.market_decision_brain_v3 import (
+from katarina.intelligence.cognition.market_decision import (
     MarketDecisionBrain, DecisionCard,
 )
-from katarina.intelligence.news_intelligence import NewsContext
-from katarina.intelligence.contextual_decision_intelligence import (
+from katarina.intelligence.news.news_intelligence import NewsContext
+from katarina.intelligence.cognition.contextual_decision_intelligence import (
     ContextualDecisionIntelligence, MacroEvidence, ResolvedExperience, RiskSituation,
 )
 from tests.unit.intelligence.test_market_decision_pipeline import NOW,market

@@ -3,7 +3,7 @@ from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
-from katarina.intelligence.parallel_storage import prepare_parallel_storage
+from katarina.intelligence.operations.parallel_storage import prepare_parallel_storage
 class ParallelStorageTests(unittest.TestCase):
     def test_reader_can_hold_snapshot_while_writer_commits_and_evidence_survives(self):
         with tempfile.TemporaryDirectory() as tmp:

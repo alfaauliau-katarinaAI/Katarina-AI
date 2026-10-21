@@ -6,9 +6,9 @@ import unittest
 from unittest.mock import patch
 
 from katarina.adapters.automatic_connection import ConnectionConfig, ConnectionUnavailable
-from katarina.intelligence.brain_observer import lock_worker
-from katarina.intelligence.continuous_observation import run_continuous
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.observer import lock_worker
+from katarina.intelligence.cognition.continuous_observation import run_continuous
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 
 CONFIG = ConnectionConfig(123, 'Synthetic fixture', priority=('local',), attempts=1)
 
@@ -97,8 +97,8 @@ class ContinuousObservationTests(unittest.TestCase):
         class OfflineSensor(Sensor):
             def initialize(self):return False
         with patch.dict('os.environ',{'KATARINA_ALL_MARKET_RESEARCH':'1'}), \
-             patch('katarina.intelligence.autonomous_research.ResearchPool',return_value=pool), \
-             patch('katarina.intelligence.network_doctor.NetworkDoctor',return_value=doctor):
+             patch('katarina.intelligence.lab.autonomous_research.ResearchPool',return_value=pool), \
+             patch('katarina.intelligence.operations.network_doctor.NetworkDoctor',return_value=doctor):
             result=run_continuous(self.root,config=CONFIG,brain_type=self.Brain,max_cycles=2,
                 factories={'local':lambda _:OfflineSensor()},wait=lambda _:None)
         self.assertEqual(result['successful_cycles'],2)
@@ -124,7 +124,7 @@ class ContinuousObservationTests(unittest.TestCase):
         self.assertNotIn('private-account-and-token', (self.root/'continuous-status.json').read_text())
 
     def test_resource_pressure_blocks_before_sensor_pass(self):
-        with patch('katarina.intelligence.continuous_observation.inspect_host',
+        with patch('katarina.intelligence.cognition.continuous_observation.inspect_host',
                    return_value={'blockers':['STATE_DISK_SPACE_LOW']}):
             with self.assertRaisesRegex(RuntimeError, 'HOST_RESOURCE'):
                 self.run_loop(max_cycles=1)
@@ -147,15 +147,15 @@ class ContinuousObservationTests(unittest.TestCase):
 
     def test_disabled_news_fetch_does_not_fetch_uncached_article_from_cached_feed(self):
         from datetime import datetime, timezone
-        from katarina.intelligence.brain_observer import load_articles
-        from katarina.intelligence.public_context import ContextStore
+        from katarina.intelligence.cognition.observer import load_articles
+        from katarina.intelligence.news.public_context import ContextStore
         store = ContextStore(self.root/'article-test.sqlite3')
         now = datetime.now(timezone.utc)
         try:
             snapshot = dict(ready=True, payload=dict(items=[dict(
                 published_utc=now.isoformat(),url='https://www.federalreserve.gov/example',title='Fixture')]))
             with patch.object(store,'latest',return_value=snapshot), \
-                 patch('katarina.intelligence.brain_observer.fetch_official_article') as fetch:
+                 patch('katarina.intelligence.cognition.observer.fetch_official_article') as fetch:
                 articles, diagnostics = load_articles(store,now,allow_fetch=False)
             fetch.assert_not_called()
             self.assertEqual(articles,[])

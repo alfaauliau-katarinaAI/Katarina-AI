@@ -3,8 +3,8 @@ import unittest
 from datetime import datetime,timedelta,timezone
 from dataclasses import replace
 
-from katarina.intelligence.market_decision_pipeline import SensorCandle
-from katarina.intelligence.directional_consensus import assess_direction
+from katarina.intelligence.cognition.market_decision_pipeline import SensorCandle
+from katarina.intelligence.perception.directional_consensus import assess_direction
 
 NOW=datetime(2026,10,13,0,0,tzinfo=timezone.utc)
 

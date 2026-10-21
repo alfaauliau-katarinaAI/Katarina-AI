@@ -5,8 +5,8 @@ import sqlite3
 import tempfile
 import unittest
 
-from katarina.intelligence.unified_brain import UnifiedKatarinaBrain
-from katarina.intelligence.unified_cognitive_cycle import (
+from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
+from katarina.intelligence.cognition.unified_cognitive_cycle import (
     rollback_cognitive_research, verify_cognitive_history,
 )
 from katarina.memory import MemoryStore

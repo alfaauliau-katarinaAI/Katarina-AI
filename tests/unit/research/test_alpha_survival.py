@@ -93,7 +93,7 @@ class AlphaSurvivalTests(unittest.TestCase):
         self.assertFalse(out["shadow_research_qualified"])
 
     def test_all_market_states_have_explicit_routes(self):
-        from katarina.intelligence.adaptive_regime import MarketState, Playbook
+        from katarina.intelligence.perception.adaptive_regime import MarketState, Playbook
         self.assertEqual(set(REGIME_ROUTES), {state.value for state in MarketState})
         self.assertTrue(all(playbook in {value.value for value in Playbook}
                             for side, playbook in REGIME_ROUTES.values()))

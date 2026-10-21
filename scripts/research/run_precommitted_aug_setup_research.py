@@ -14,11 +14,11 @@ import argparse,json,sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/"src"))
 
 from run_native_brain_causal_broker_replay import load_from_live_terminal
-from katarina.intelligence.precommitted_setup_research import (
+from katarina.intelligence.lab.precommitted_setup_research import (
     research_alternatives,FROZEN_RULE_VERSION,
 )
-from katarina.intelligence.broker_scan_universe import resolve_broker_symbols
-from katarina.intelligence.causal_tick_reconciliation import (
+from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
+from katarina.intelligence.lab.causal_tick_reconciliation import (
     tick_reconcile,summarize_tick_reconciliation,
 )
 

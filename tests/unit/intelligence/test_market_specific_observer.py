@@ -2,8 +2,8 @@
 import unittest
 from unittest.mock import patch
 from tests.unit.intelligence.test_multi_market_brain import market,ClearContext,bars,NOW
-from katarina.intelligence.multi_market_brain import screen
-from katarina.intelligence.symbol_playbooks import SYMBOLS
+from katarina.intelligence.perception.screening import screen
+from katarina.intelligence.perception.symbol_playbooks import SYMBOLS
 
 def record(symbol="NAS100.vx",mode=4):
     row=market(symbol,mode)
@@ -26,7 +26,7 @@ class MarketSpecificObserverTests(unittest.TestCase):
         self.assertFalse(result["live_execution_enabled"])
 
     def test_registered_symbol_uses_named_playbook_only(self):
-        with patch("katarina.intelligence.symbol_playbooks.propose",
+        with patch("katarina.intelligence.perception.symbol_playbooks.propose",
                    side_effect=fake_proposal) as mocked:
             result=screen([record("NAS100.vx")],ClearContext(),NOW)
         self.assertEqual(mocked.call_count,1)
@@ -38,13 +38,13 @@ class MarketSpecificObserverTests(unittest.TestCase):
         self.assertFalse(result["live_execution_enabled"])
 
     def test_session_symbol_needs_intraday_history(self):
-        with patch("katarina.intelligence.symbol_playbooks.propose") as mocked:
+        with patch("katarina.intelligence.perception.symbol_playbooks.propose") as mocked:
             result=screen([record("US30.vx")],ClearContext(),NOW)
         mocked.assert_not_called()
         self.assertEqual(result["shadow_candidate_count"],0)
 
     def test_broker_sell_only_rejects_buy_research_hypothesis(self):
-        with patch("katarina.intelligence.symbol_playbooks.propose",
+        with patch("katarina.intelligence.perception.symbol_playbooks.propose",
                    side_effect=fake_proposal):
             result=screen([record("NAS100.vx",mode=2)],ClearContext(),NOW)
         self.assertEqual(result["shadow_candidate_count"],0)
@@ -54,7 +54,7 @@ class MarketSpecificObserverTests(unittest.TestCase):
             return [dict(family=SYMBOLS[symbol],side="BUY",signal_atr=1.,
                 hypothetical_stop=112.45,hypothetical_target=114.,
                 max_holding_minutes=45)]
-        with patch("katarina.intelligence.symbol_playbooks.propose",
+        with patch("katarina.intelligence.perception.symbol_playbooks.propose",
                    side_effect=wrong_stop):
             result=screen([record("NAS100.vx")],ClearContext(),NOW)
         self.assertEqual(result["shadow_candidate_count"],0)
