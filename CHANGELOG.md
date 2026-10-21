@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — peta modul runtime (perapian tahap 1, tanpa perubahan perilaku)
+
+- `scripts/governance/runtime_import_map.py` menelusuri import secara statis dari entry point runtime,
+  launcher (.bat/.ps1/.sh/service), dan workflow, termasuk modul body yang dimuat dari `config/stages`.
+- Hasilnya `docs/maintenance/RUNTIME_MODULE_MAP.md`: A=214 dipakai runtime/workflow, B=19 hanya tests,
+  C=35 hanya script riset, D=2. Tidak ada berkas yang dipindah atau dihapus.
+- Rencana perapian 8 tahap dicatat di `docs/maintenance/CLEANUP_PLAN.md`.
+
 ## 2026-10-21 — biaya riset memakai spread tipikal
 
 - Memori riset VPS 19 Oktober (11.516 eksperimen) menunjukkan instrumen menjelaskan 99% variasi
