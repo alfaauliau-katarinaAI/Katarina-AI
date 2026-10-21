@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — shim lokasi lama `intelligence/` dihapus (perapian tahap 3b)
+
+- 104 shim `katarina.intelligence.<nama_lama>` dari tahap 3a dihapus; semua rujukan aktif sudah memakai
+  subpaket baru. Pemanggil luar repo (mis. checkout VPS lama) harus memakai path baru atau tetap pada
+  commit sebelum perubahan ini.
+
 ## 2026-10-21 — `intelligence/` dikelompokkan ke 8 subpaket (perapian tahap 3a, tanpa perubahan perilaku)
 
 - 104 modul dipindah ke `cognition/`, `perception/`, `broker/`, `news/`, `demo/`, `shadow/`, `lab/`,

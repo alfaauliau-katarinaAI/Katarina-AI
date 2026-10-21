@@ -19,10 +19,10 @@ kategori D adalah kandidat untuk dicek manual, bukan bukti tidak terpakai.
 |---|---|---|
 | A | dipakai runtime/operasional atau workflow | 222 |
 | B | hanya dipakai tests | 21 |
-| C | hanya dipakai script non-operasional (riset dll.) | 38 |
-| D | tidak terjangkau dari root mana pun | 96 |
+| C | hanya dipakai script non-operasional (riset dll.) | 28 |
+| D | tidak terjangkau dari root mana pun | 2 |
 
-Total modul: 377. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
+Total modul: 273. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
 
 ## Root yang dipakai
 
@@ -34,17 +34,17 @@ Total modul: 377. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset 
 
 | Modul | Kategori | via | Diimpor modul src |
 |---|---|---|---|
-| `katarina.intelligence.cognition.unified_brain` | A | runtime, ops, workflow, scripts, tests | `katarina.intelligence.cognition.continuous_observation`, `katarina.intelligence.unified_brain` |
-| `katarina.intelligence.cognition.adaptive_observation` | A | runtime, ops, workflow, research, scripts, tests | `katarina.intelligence.adaptive_brain_v2`, `katarina.intelligence.cognition.market_decision_pipeline`, `katarina.intelligence.cognition.unified_adaptive_research_cycle`, `katarina.intelligence.cognition.unified_research_handoff` |
-| `katarina.intelligence.cognition.market_decision` | A | runtime, ops, workflow, research, scripts, tests | `katarina.intelligence.cognition.contextual_decision_intelligence`, `katarina.intelligence.cognition.unified_brain`, `katarina.intelligence.lab.causal_market_replay`, `katarina.intelligence.market_decision_brain_v3` |
-| `katarina.intelligence.perception.screening` | C | research, scripts, tests | `katarina.intelligence.multi_market_brain`, `katarina.intelligence.perception.market_regime_intelligence`, `katarina.intelligence.perception.scalp_pattern_candidates`, `katarina.intelligence.perception.symbol_playbooks` |
-| `katarina.intelligence.cognition.observer` | A | runtime, ops, workflow, scripts, tests | `katarina.intelligence.brain_observer`, `katarina.intelligence.cognition.continuous_observation`, `katarina.intelligence.cognition.unified_brain` |
+| `katarina.intelligence.cognition.unified_brain` | A | runtime, ops, workflow, scripts, tests | `katarina.intelligence.cognition.continuous_observation` |
+| `katarina.intelligence.cognition.adaptive_observation` | A | runtime, ops, workflow, research, scripts, tests | `katarina.intelligence.cognition.market_decision_pipeline`, `katarina.intelligence.cognition.unified_adaptive_research_cycle`, `katarina.intelligence.cognition.unified_research_handoff` |
+| `katarina.intelligence.cognition.market_decision` | A | runtime, ops, workflow, research, scripts, tests | `katarina.intelligence.cognition.contextual_decision_intelligence`, `katarina.intelligence.cognition.unified_brain`, `katarina.intelligence.lab.causal_market_replay` |
+| `katarina.intelligence.perception.screening` | C | research, scripts, tests | `katarina.intelligence.perception.market_regime_intelligence`, `katarina.intelligence.perception.scalp_pattern_candidates`, `katarina.intelligence.perception.symbol_playbooks` |
+| `katarina.intelligence.cognition.observer` | A | runtime, ops, workflow, scripts, tests | `katarina.intelligence.cognition.continuous_observation`, `katarina.intelligence.cognition.unified_brain` |
 
 ## A — dipakai runtime/operasional atau workflow (222)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina` | runtime, ops, workflow, research, scripts, tests | 262 | 274 |
+| `katarina` | runtime, ops, workflow, research, scripts, tests | 158 | 274 |
 | `katarina.adapters` | runtime, ops, workflow, scripts, tests | 23 | 38 |
 | `katarina.adapters.agent_dashboard_page` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 14 |
@@ -143,83 +143,83 @@ Total modul: 377. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.health` | runtime, ops, workflow, scripts, tests | 1 | 6 |
 | `katarina.health.engine` | runtime, ops, workflow, scripts, tests | 2 | 6 |
 | `katarina.host` | runtime, ops, workflow, scripts, tests | 2 | 7 |
-| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 164 | 183 |
-| `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 17 | 21 |
-| `katarina.intelligence.broker.auto_calibration` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.broker.broker_account_monitor` | runtime, ops, workflow, scripts, tests | 4 | 4 |
-| `katarina.intelligence.broker.broker_clock_alignment` | runtime, ops, workflow, research, scripts, tests | 2 | 6 |
-| `katarina.intelligence.broker.broker_history_coverage` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.broker.broker_scan_universe` | runtime, ops, workflow, research, scripts, tests | 4 | 8 |
-| `katarina.intelligence.broker.causal_broker_quotes` | runtime, ops, workflow, scripts, tests | 4 | 3 |
-| `katarina.intelligence.broker.data_recovery` | runtime, ops, workflow, scripts, tests | 5 | 1 |
-| `katarina.intelligence.cognition` | runtime, ops, workflow, research, scripts, tests | 37 | 50 |
-| `katarina.intelligence.cognition.adaptive_observation` | runtime, ops, workflow, research, scripts, tests | 4 | 7 |
-| `katarina.intelligence.cognition.assistant_cycle` | runtime, ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.intelligence.cognition.brain_runtime_control` | runtime, ops, workflow, scripts, tests | 2 | 3 |
-| `katarina.intelligence.cognition.contextual_decision_intelligence` | runtime, ops, workflow, research, scripts, tests | 4 | 2 |
-| `katarina.intelligence.cognition.continuous_observation` | runtime, ops, workflow, scripts, tests | 1 | 4 |
-| `katarina.intelligence.cognition.explainable_market_decision` | runtime, ops, workflow, research, scripts, tests | 2 | 0 |
-| `katarina.intelligence.cognition.market_decision` | runtime, ops, workflow, research, scripts, tests | 4 | 5 |
-| `katarina.intelligence.cognition.market_decision_pipeline` | runtime, ops, workflow, research, scripts, tests | 8 | 17 |
-| `katarina.intelligence.cognition.observer` | runtime, ops, workflow, scripts, tests | 3 | 10 |
-| `katarina.intelligence.cognition.owner_research_review` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.cognition.self_evolution_lab` | runtime, ops, workflow, scripts, tests | 4 | 5 |
-| `katarina.intelligence.cognition.unified_adaptive_research_cycle` | runtime, ops, workflow, scripts, tests | 2 | 2 |
-| `katarina.intelligence.cognition.unified_brain` | runtime, ops, workflow, scripts, tests | 2 | 20 |
-| `katarina.intelligence.cognition.unified_cognitive_cycle` | runtime, ops, workflow, scripts, tests | 4 | 7 |
-| `katarina.intelligence.cognition.unified_research_handoff` | runtime, ops, workflow, scripts, tests | 5 | 4 |
-| `katarina.intelligence.demo` | runtime, ops, workflow, scripts, tests | 8 | 8 |
-| `katarina.intelligence.demo.demo_account` | runtime, ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.intelligence.demo.demo_forward` | runtime, ops, workflow, scripts, tests | 3 | 3 |
-| `katarina.intelligence.demo.demo_strategy` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.demo.independent_demo_worker` | runtime, scripts, tests | 1 | 2 |
-| `katarina.intelligence.lab` | runtime, ops, workflow, research, scripts, tests | 33 | 48 |
-| `katarina.intelligence.lab.adaptive_strategy_library` | workflow, research, tests | 1 | 5 |
-| `katarina.intelligence.lab.adaptive_walkforward` | workflow, research, tests | 2 | 5 |
-| `katarina.intelligence.lab.autonomous_research` | runtime, ops, workflow, scripts, tests | 3 | 8 |
-| `katarina.intelligence.lab.autonomous_strategy_discovery` | workflow, research, tests | 1 | 3 |
-| `katarina.intelligence.lab.continuous_research_lab` | runtime, ops, workflow, scripts, tests | 3 | 3 |
-| `katarina.intelligence.lab.evidence_risk` | runtime, ops, workflow, scripts, tests | 3 | 3 |
-| `katarina.intelligence.lab.research_capacity` | runtime, ops, workflow, scripts, tests | 4 | 6 |
-| `katarina.intelligence.lab.research_reports` | runtime, ops, workflow, scripts, tests | 3 | 3 |
-| `katarina.intelligence.news` | runtime, ops, workflow, research, scripts, tests | 22 | 21 |
-| `katarina.intelligence.news.market_article_context` | runtime, ops, workflow, scripts, tests | 2 | 2 |
-| `katarina.intelligence.news.news_intelligence` | runtime, ops, workflow, research, scripts, tests | 7 | 5 |
-| `katarina.intelligence.news.official_cache_provenance` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.news.public_context` | runtime, ops, workflow, scripts, tests | 5 | 8 |
-| `katarina.intelligence.news.public_language_research` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.news.research_agenda` | runtime, ops, workflow, scripts, tests | 3 | 1 |
-| `katarina.intelligence.news.research_news_collection` | runtime, ops, workflow, scripts, tests | 3 | 1 |
-| `katarina.intelligence.news.verified_policy_context` | runtime, ops, workflow, scripts, tests | 4 | 2 |
-| `katarina.intelligence.operations` | runtime, ops, workflow, scripts, tests | 10 | 8 |
-| `katarina.intelligence.operations.file_housekeeping` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.operations.foundation_readiness` | runtime, ops, workflow, scripts, tests | 2 | 2 |
-| `katarina.intelligence.operations.network_doctor` | runtime, ops, workflow, scripts, tests | 2 | 2 |
-| `katarina.intelligence.operations.parallel_storage` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.operations.runtime_evidence` | runtime, ops, workflow, scripts, tests | 3 | 2 |
-| `katarina.intelligence.perception` | runtime, ops, workflow, research, scripts, tests | 52 | 63 |
-| `katarina.intelligence.perception.adaptive_regime` | runtime, ops, workflow, research, scripts, tests | 6 | 10 |
-| `katarina.intelligence.perception.analog_feature_schema` | ops, research, tests | 2 | 1 |
-| `katarina.intelligence.perception.causal_seasonality` | runtime, ops, workflow, research, scripts, tests | 2 | 2 |
-| `katarina.intelligence.perception.closed_swing_structure` | runtime, ops, workflow, research, scripts, tests | 3 | 2 |
-| `katarina.intelligence.perception.directional_consensus` | runtime, ops, workflow, research, scripts, tests | 2 | 1 |
-| `katarina.intelligence.perception.economics` | workflow, scripts, tests | 2 | 4 |
-| `katarina.intelligence.perception.historical_analog_memory` | ops, research, tests | 1 | 6 |
-| `katarina.intelligence.perception.learning` | workflow, scripts, tests | 1 | 3 |
-| `katarina.intelligence.perception.market` | workflow, scripts, tests | 1 | 4 |
-| `katarina.intelligence.perception.observational_associations` | runtime, ops, workflow, scripts, tests | 2 | 2 |
-| `katarina.intelligence.perception.regime` | workflow, scripts, tests | 3 | 7 |
-| `katarina.intelligence.perception.semantic_setup_truth` | runtime, ops, workflow, research, scripts, tests | 3 | 4 |
-| `katarina.intelligence.perception.session_gaps` | runtime, ops, workflow, scripts, tests | 3 | 1 |
-| `katarina.intelligence.perception.simple_ml` | workflow, scripts, tests | 1 | 3 |
-| `katarina.intelligence.perception.structural_entry_quality` | runtime, ops, workflow, research, scripts, tests | 3 | 6 |
-| `katarina.intelligence.perception.structure_exit_plan` | runtime, ops, workflow, research, scripts, tests | 4 | 7 |
-| `katarina.intelligence.perception.timeframe` | workflow, scripts, tests | 1 | 4 |
-| `katarina.intelligence.perception.xauusd` | workflow, scripts, tests | 2 | 4 |
-| `katarina.intelligence.shadow` | runtime, ops, workflow, research, scripts, tests | 21 | 20 |
-| `katarina.intelligence.shadow.contextual_observation_journal` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.shadow.prospective_shadow_book` | runtime, ops, workflow, scripts, tests | 3 | 8 |
-| `katarina.intelligence.shadow.prospective_shadow_review` | runtime, ops, workflow, scripts, tests | 3 | 2 |
+| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 60 | 183 |
+| `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 9 | 21 |
+| `katarina.intelligence.broker.auto_calibration` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.broker.broker_account_monitor` | runtime, ops, workflow, scripts, tests | 3 | 4 |
+| `katarina.intelligence.broker.broker_clock_alignment` | runtime, ops, workflow, research, scripts, tests | 1 | 6 |
+| `katarina.intelligence.broker.broker_history_coverage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.broker.broker_scan_universe` | runtime, ops, workflow, research, scripts, tests | 3 | 8 |
+| `katarina.intelligence.broker.causal_broker_quotes` | runtime, ops, workflow, scripts, tests | 3 | 3 |
+| `katarina.intelligence.broker.data_recovery` | runtime, ops, workflow, scripts, tests | 4 | 1 |
+| `katarina.intelligence.cognition` | runtime, ops, workflow, research, scripts, tests | 22 | 50 |
+| `katarina.intelligence.cognition.adaptive_observation` | runtime, ops, workflow, research, scripts, tests | 3 | 7 |
+| `katarina.intelligence.cognition.assistant_cycle` | runtime, ops, workflow, scripts, tests | 1 | 0 |
+| `katarina.intelligence.cognition.brain_runtime_control` | runtime, ops, workflow, scripts, tests | 1 | 4 |
+| `katarina.intelligence.cognition.contextual_decision_intelligence` | runtime, ops, workflow, research, scripts, tests | 3 | 2 |
+| `katarina.intelligence.cognition.continuous_observation` | runtime, ops, workflow, scripts, tests | 0 | 4 |
+| `katarina.intelligence.cognition.explainable_market_decision` | runtime, ops, workflow, research, scripts, tests | 1 | 0 |
+| `katarina.intelligence.cognition.market_decision` | runtime, ops, workflow, research, scripts, tests | 3 | 5 |
+| `katarina.intelligence.cognition.market_decision_pipeline` | runtime, ops, workflow, research, scripts, tests | 7 | 17 |
+| `katarina.intelligence.cognition.observer` | runtime, ops, workflow, scripts, tests | 2 | 10 |
+| `katarina.intelligence.cognition.owner_research_review` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.cognition.self_evolution_lab` | runtime, ops, workflow, scripts, tests | 3 | 5 |
+| `katarina.intelligence.cognition.unified_adaptive_research_cycle` | runtime, ops, workflow, scripts, tests | 1 | 2 |
+| `katarina.intelligence.cognition.unified_brain` | runtime, ops, workflow, scripts, tests | 1 | 20 |
+| `katarina.intelligence.cognition.unified_cognitive_cycle` | runtime, ops, workflow, scripts, tests | 3 | 7 |
+| `katarina.intelligence.cognition.unified_research_handoff` | runtime, ops, workflow, scripts, tests | 4 | 4 |
+| `katarina.intelligence.demo` | runtime, ops, workflow, scripts, tests | 3 | 8 |
+| `katarina.intelligence.demo.demo_account` | runtime, ops, workflow, scripts, tests | 1 | 0 |
+| `katarina.intelligence.demo.demo_forward` | runtime, ops, workflow, scripts, tests | 2 | 3 |
+| `katarina.intelligence.demo.demo_strategy` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.demo.independent_demo_worker` | runtime, scripts, tests | 0 | 2 |
+| `katarina.intelligence.lab` | runtime, ops, workflow, research, scripts, tests | 12 | 48 |
+| `katarina.intelligence.lab.adaptive_strategy_library` | workflow, research, tests | 0 | 5 |
+| `katarina.intelligence.lab.adaptive_walkforward` | workflow, research, tests | 1 | 5 |
+| `katarina.intelligence.lab.autonomous_research` | runtime, ops, workflow, scripts, tests | 2 | 8 |
+| `katarina.intelligence.lab.autonomous_strategy_discovery` | workflow, research, tests | 0 | 3 |
+| `katarina.intelligence.lab.continuous_research_lab` | runtime, ops, workflow, scripts, tests | 2 | 3 |
+| `katarina.intelligence.lab.evidence_risk` | runtime, ops, workflow, scripts, tests | 2 | 3 |
+| `katarina.intelligence.lab.research_capacity` | runtime, ops, workflow, scripts, tests | 3 | 6 |
+| `katarina.intelligence.lab.research_reports` | runtime, ops, workflow, scripts, tests | 2 | 3 |
+| `katarina.intelligence.news` | runtime, ops, workflow, research, scripts, tests | 12 | 21 |
+| `katarina.intelligence.news.market_article_context` | runtime, ops, workflow, scripts, tests | 1 | 2 |
+| `katarina.intelligence.news.news_intelligence` | runtime, ops, workflow, research, scripts, tests | 6 | 5 |
+| `katarina.intelligence.news.official_cache_provenance` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.news.public_context` | runtime, ops, workflow, scripts, tests | 4 | 8 |
+| `katarina.intelligence.news.public_language_research` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.news.research_agenda` | runtime, ops, workflow, scripts, tests | 2 | 1 |
+| `katarina.intelligence.news.research_news_collection` | runtime, ops, workflow, scripts, tests | 2 | 1 |
+| `katarina.intelligence.news.verified_policy_context` | runtime, ops, workflow, scripts, tests | 3 | 2 |
+| `katarina.intelligence.operations` | runtime, ops, workflow, scripts, tests | 5 | 9 |
+| `katarina.intelligence.operations.file_housekeeping` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.operations.foundation_readiness` | runtime, ops, workflow, scripts, tests | 1 | 2 |
+| `katarina.intelligence.operations.network_doctor` | runtime, ops, workflow, scripts, tests | 1 | 3 |
+| `katarina.intelligence.operations.parallel_storage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.operations.runtime_evidence` | runtime, ops, workflow, scripts, tests | 2 | 2 |
+| `katarina.intelligence.perception` | runtime, ops, workflow, research, scripts, tests | 23 | 63 |
+| `katarina.intelligence.perception.adaptive_regime` | runtime, ops, workflow, research, scripts, tests | 5 | 10 |
+| `katarina.intelligence.perception.analog_feature_schema` | ops, research, tests | 1 | 1 |
+| `katarina.intelligence.perception.causal_seasonality` | runtime, ops, workflow, research, scripts, tests | 1 | 2 |
+| `katarina.intelligence.perception.closed_swing_structure` | runtime, ops, workflow, research, scripts, tests | 2 | 2 |
+| `katarina.intelligence.perception.directional_consensus` | runtime, ops, workflow, research, scripts, tests | 1 | 1 |
+| `katarina.intelligence.perception.economics` | workflow, scripts, tests | 1 | 4 |
+| `katarina.intelligence.perception.historical_analog_memory` | ops, research, tests | 0 | 6 |
+| `katarina.intelligence.perception.learning` | workflow, scripts, tests | 0 | 3 |
+| `katarina.intelligence.perception.market` | workflow, scripts, tests | 0 | 4 |
+| `katarina.intelligence.perception.observational_associations` | runtime, ops, workflow, scripts, tests | 1 | 2 |
+| `katarina.intelligence.perception.regime` | workflow, scripts, tests | 2 | 7 |
+| `katarina.intelligence.perception.semantic_setup_truth` | runtime, ops, workflow, research, scripts, tests | 2 | 4 |
+| `katarina.intelligence.perception.session_gaps` | runtime, ops, workflow, scripts, tests | 2 | 1 |
+| `katarina.intelligence.perception.simple_ml` | workflow, scripts, tests | 0 | 3 |
+| `katarina.intelligence.perception.structural_entry_quality` | runtime, ops, workflow, research, scripts, tests | 2 | 6 |
+| `katarina.intelligence.perception.structure_exit_plan` | runtime, ops, workflow, research, scripts, tests | 3 | 7 |
+| `katarina.intelligence.perception.timeframe` | workflow, scripts, tests | 0 | 4 |
+| `katarina.intelligence.perception.xauusd` | workflow, scripts, tests | 1 | 4 |
+| `katarina.intelligence.shadow` | runtime, ops, workflow, research, scripts, tests | 10 | 20 |
+| `katarina.intelligence.shadow.contextual_observation_journal` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.shadow.prospective_shadow_book` | runtime, ops, workflow, scripts, tests | 2 | 8 |
+| `katarina.intelligence.shadow.prospective_shadow_review` | runtime, ops, workflow, scripts, tests | 2 | 2 |
 | `katarina.memory` | runtime, ops, workflow, scripts, tests | 6 | 16 |
 | `katarina.memory.neuro_link` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.memory.runtime_state` | runtime, ops, workflow, scripts, tests | 1 | 2 |
@@ -277,162 +277,58 @@ Total modul: 377. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.engines.multi_symbol_execution` | tests | 0 | 1 |
 | `katarina.engines.opportunity` | tests | 2 | 3 |
 | `katarina.engines.setup_quality` | tests | 0 | 1 |
-| `katarina.intelligence.demo.forward_outcomes` | tests | 1 | 3 |
-| `katarina.intelligence.lab.offline_hand_telemetry` | tests | 2 | 1 |
-| `katarina.intelligence.lab.regime_research_router` | tests | 1 | 1 |
-| `katarina.intelligence.lab.research_exit_lifecycle` | tests | 1 | 1 |
-| `katarina.intelligence.lab.strategy_selector` | tests | 1 | 1 |
-| `katarina.intelligence.news.economic_feed` | tests | 1 | 2 |
-| `katarina.intelligence.news.news_consensus` | tests | 1 | 1 |
-| `katarina.intelligence.perception.cost_expectancy` | tests | 1 | 1 |
-| `katarina.intelligence.perception.flow_efficiency_index` | tests | 1 | 1 |
-| `katarina.intelligence.shadow.strategy_drift` | tests | 2 | 2 |
+| `katarina.intelligence.demo.forward_outcomes` | tests | 0 | 3 |
+| `katarina.intelligence.lab.offline_hand_telemetry` | tests | 1 | 1 |
+| `katarina.intelligence.lab.regime_research_router` | tests | 0 | 1 |
+| `katarina.intelligence.lab.research_exit_lifecycle` | tests | 0 | 1 |
+| `katarina.intelligence.lab.strategy_selector` | tests | 0 | 1 |
+| `katarina.intelligence.news.economic_feed` | tests | 0 | 2 |
+| `katarina.intelligence.news.news_consensus` | tests | 0 | 1 |
+| `katarina.intelligence.perception.cost_expectancy` | tests | 0 | 1 |
+| `katarina.intelligence.perception.flow_efficiency_index` | tests | 0 | 1 |
+| `katarina.intelligence.shadow.strategy_drift` | tests | 1 | 2 |
 | `katarina.memory.quarantined_research_memory` | tests | 0 | 1 |
 | `katarina.monitoring.operational_dashboard` | tests | 0 | 2 |
 | `katarina.research.experimental_strategy_evidence_portfolio` | tests | 0 | 1 |
 | `katarina.research.owner_structure_candidate` | tests | 0 | 1 |
 | `katarina.research.real_tick` | tests | 0 | 1 |
 
-## C — hanya dipakai script non-operasional (riset dll.) (38)
+## C — hanya dipakai script non-operasional (riset dll.) (28)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
 | `katarina.adapters.mt5_shadow_read_only` | scripts, tests | 2 | 2 |
-| `katarina.intelligence.autonomous_research` | scripts | 0 | 2 |
-| `katarina.intelligence.broker.mt5_shadow_cycle` | scripts, tests | 1 | 2 |
-| `katarina.intelligence.broker_account_monitor` | scripts | 0 | 1 |
-| `katarina.intelligence.continuous_observation` | scripts | 0 | 1 |
-| `katarina.intelligence.data_recovery` | scripts | 0 | 4 |
-| `katarina.intelligence.demo_forward` | scripts | 0 | 1 |
-| `katarina.intelligence.file_housekeeping` | scripts | 0 | 1 |
-| `katarina.intelligence.lab.causal_market_replay` | research, tests | 2 | 4 |
-| `katarina.intelligence.lab.causal_tick_reconciliation` | research, tests | 1 | 3 |
-| `katarina.intelligence.lab.closed_bar_failure_forensics` | research, tests | 1 | 3 |
-| `katarina.intelligence.lab.intraday_scalp_research` | research, tests | 2 | 5 |
-| `katarina.intelligence.lab.precommitted_setup_research` | research, tests | 1 | 4 |
-| `katarina.intelligence.lab.replay_cost_diagnostics` | research, tests | 1 | 2 |
-| `katarina.intelligence.lab.research_readiness_gate` | research, tests | 1 | 2 |
-| `katarina.intelligence.lab.research_signal_ablation` | research, tests | 1 | 2 |
-| `katarina.intelligence.lab.unified_intraday_gate` | research, tests | 1 | 2 |
-| `katarina.intelligence.network_doctor` | scripts | 0 | 1 |
-| `katarina.intelligence.perception.alternative_symbol_playbooks` | research, tests | 1 | 2 |
-| `katarina.intelligence.perception.calendar_history` | research, tests | 1 | 3 |
-| `katarina.intelligence.perception.market_regime_intelligence` | research, scripts, tests | 2 | 3 |
-| `katarina.intelligence.perception.market_universe` | research, scripts, tests | 3 | 2 |
-| `katarina.intelligence.perception.multi_pair_arbitrator` | scripts, tests | 1 | 2 |
-| `katarina.intelligence.perception.scalp_pattern_candidates` | research, tests | 1 | 2 |
-| `katarina.intelligence.perception.screening` | research, scripts, tests | 4 | 9 |
-| `katarina.intelligence.perception.symbol_playbooks` | research, scripts, tests | 3 | 6 |
-| `katarina.intelligence.perception.technical_regime` | research, scripts, tests | 4 | 3 |
-| `katarina.intelligence.research_capacity` | scripts | 0 | 1 |
-| `katarina.intelligence.research_reports` | scripts | 0 | 5 |
-| `katarina.intelligence.runtime_evidence` | scripts | 0 | 4 |
-| `katarina.intelligence.shadow.shadow_gold_intraday` | scripts, tests | 2 | 1 |
-| `katarina.intelligence.shadow.shadow_hypotheses` | research, tests | 2 | 3 |
-| `katarina.intelligence.shadow.shadow_journal` | scripts, tests | 5 | 3 |
-| `katarina.intelligence.shadow.shadow_manifest` | scripts, tests | 1 | 2 |
-| `katarina.intelligence.shadow.shadow_paper_book` | scripts, tests | 3 | 2 |
-| `katarina.intelligence.shadow.shadow_research_evaluation` | scripts, tests | 1 | 2 |
-| `katarina.intelligence.shadow.strategy_evidence` | scripts, tests | 4 | 3 |
+| `katarina.intelligence.broker.mt5_shadow_cycle` | scripts, tests | 0 | 2 |
+| `katarina.intelligence.lab.causal_market_replay` | research, tests | 1 | 4 |
+| `katarina.intelligence.lab.causal_tick_reconciliation` | research, tests | 0 | 3 |
+| `katarina.intelligence.lab.closed_bar_failure_forensics` | research, tests | 0 | 3 |
+| `katarina.intelligence.lab.intraday_scalp_research` | research, tests | 1 | 5 |
+| `katarina.intelligence.lab.precommitted_setup_research` | research, tests | 0 | 4 |
+| `katarina.intelligence.lab.replay_cost_diagnostics` | research, tests | 0 | 2 |
+| `katarina.intelligence.lab.research_readiness_gate` | research, tests | 0 | 2 |
+| `katarina.intelligence.lab.research_signal_ablation` | research, tests | 0 | 2 |
+| `katarina.intelligence.lab.unified_intraday_gate` | research, tests | 0 | 2 |
+| `katarina.intelligence.perception.alternative_symbol_playbooks` | research, tests | 0 | 2 |
+| `katarina.intelligence.perception.calendar_history` | research, tests | 0 | 3 |
+| `katarina.intelligence.perception.market_regime_intelligence` | research, scripts, tests | 1 | 3 |
+| `katarina.intelligence.perception.market_universe` | research, scripts, tests | 2 | 2 |
+| `katarina.intelligence.perception.multi_pair_arbitrator` | scripts, tests | 0 | 2 |
+| `katarina.intelligence.perception.scalp_pattern_candidates` | research, tests | 0 | 2 |
+| `katarina.intelligence.perception.screening` | research, scripts, tests | 3 | 9 |
+| `katarina.intelligence.perception.symbol_playbooks` | research, scripts, tests | 2 | 6 |
+| `katarina.intelligence.perception.technical_regime` | research, scripts, tests | 3 | 3 |
+| `katarina.intelligence.shadow.shadow_gold_intraday` | scripts, tests | 1 | 1 |
+| `katarina.intelligence.shadow.shadow_hypotheses` | research, tests | 1 | 3 |
+| `katarina.intelligence.shadow.shadow_journal` | scripts, tests | 4 | 3 |
+| `katarina.intelligence.shadow.shadow_manifest` | scripts, tests | 0 | 2 |
+| `katarina.intelligence.shadow.shadow_paper_book` | scripts, tests | 2 | 2 |
+| `katarina.intelligence.shadow.shadow_research_evaluation` | scripts, tests | 0 | 2 |
+| `katarina.intelligence.shadow.strategy_evidence` | scripts, tests | 3 | 3 |
 | `katarina.monitoring.monitor_relay` | scripts, tests | 0 | 2 |
 
-## D — tidak terjangkau dari root mana pun (96)
+## D — tidak terjangkau dari root mana pun (2)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
 | `katarina.domain` | — | 0 | 0 |
 | `katarina.entrypoints` | — | 0 | 0 |
-| `katarina.intelligence.adaptive_brain_v2` | — | 0 | 0 |
-| `katarina.intelligence.adaptive_regime` | — | 0 | 0 |
-| `katarina.intelligence.adaptive_strategy_library` | — | 0 | 0 |
-| `katarina.intelligence.adaptive_walkforward` | — | 0 | 0 |
-| `katarina.intelligence.alternative_symbol_playbooks` | — | 0 | 0 |
-| `katarina.intelligence.analog_feature_schema` | — | 0 | 0 |
-| `katarina.intelligence.assistant_cycle` | — | 0 | 0 |
-| `katarina.intelligence.auto_calibration` | — | 0 | 0 |
-| `katarina.intelligence.autonomous_strategy_discovery` | — | 0 | 0 |
-| `katarina.intelligence.brain_observer` | — | 0 | 0 |
-| `katarina.intelligence.brain_runtime_control` | — | 0 | 0 |
-| `katarina.intelligence.broker_clock_alignment` | — | 0 | 0 |
-| `katarina.intelligence.broker_history_coverage` | — | 0 | 0 |
-| `katarina.intelligence.broker_scan_universe` | — | 0 | 0 |
-| `katarina.intelligence.calendar_history` | — | 0 | 0 |
-| `katarina.intelligence.causal_broker_quotes` | — | 0 | 0 |
-| `katarina.intelligence.causal_market_replay` | — | 0 | 0 |
-| `katarina.intelligence.causal_seasonality` | — | 0 | 0 |
-| `katarina.intelligence.causal_tick_reconciliation` | — | 0 | 0 |
-| `katarina.intelligence.closed_bar_failure_forensics` | — | 0 | 0 |
-| `katarina.intelligence.closed_swing_structure` | — | 0 | 0 |
-| `katarina.intelligence.contextual_decision_intelligence` | — | 0 | 0 |
-| `katarina.intelligence.contextual_observation_journal` | — | 0 | 0 |
-| `katarina.intelligence.continuous_research_lab` | — | 0 | 0 |
-| `katarina.intelligence.cost_expectancy` | — | 0 | 0 |
-| `katarina.intelligence.demo_account` | — | 0 | 0 |
-| `katarina.intelligence.demo_strategy` | — | 0 | 0 |
-| `katarina.intelligence.directional_consensus` | — | 0 | 0 |
-| `katarina.intelligence.economic_feed` | — | 0 | 0 |
-| `katarina.intelligence.economics` | — | 0 | 0 |
-| `katarina.intelligence.evidence_risk` | — | 0 | 0 |
-| `katarina.intelligence.explainable_market_decision` | — | 0 | 0 |
-| `katarina.intelligence.flow_efficiency_index` | — | 0 | 0 |
-| `katarina.intelligence.forward_outcomes` | — | 0 | 0 |
-| `katarina.intelligence.foundation_readiness` | — | 0 | 0 |
-| `katarina.intelligence.historical_analog_memory` | — | 0 | 0 |
-| `katarina.intelligence.independent_demo_worker` | — | 0 | 0 |
-| `katarina.intelligence.intraday_scalp_research` | — | 0 | 0 |
-| `katarina.intelligence.learning` | — | 0 | 0 |
-| `katarina.intelligence.market` | — | 0 | 0 |
-| `katarina.intelligence.market_article_context` | — | 0 | 0 |
-| `katarina.intelligence.market_decision_brain_v3` | — | 0 | 0 |
-| `katarina.intelligence.market_decision_pipeline` | — | 0 | 0 |
-| `katarina.intelligence.market_regime_intelligence` | — | 0 | 0 |
-| `katarina.intelligence.market_universe` | — | 0 | 0 |
-| `katarina.intelligence.mt5_shadow_cycle` | — | 0 | 0 |
-| `katarina.intelligence.multi_market_brain` | — | 0 | 0 |
-| `katarina.intelligence.multi_pair_arbitrator` | — | 0 | 0 |
-| `katarina.intelligence.news_consensus` | — | 0 | 0 |
-| `katarina.intelligence.news_intelligence` | — | 0 | 0 |
-| `katarina.intelligence.observational_associations` | — | 0 | 0 |
-| `katarina.intelligence.official_cache_provenance` | — | 0 | 0 |
-| `katarina.intelligence.offline_hand_telemetry` | — | 0 | 0 |
-| `katarina.intelligence.owner_research_review` | — | 0 | 0 |
-| `katarina.intelligence.parallel_storage` | — | 0 | 0 |
-| `katarina.intelligence.precommitted_setup_research` | — | 0 | 0 |
-| `katarina.intelligence.prospective_shadow_book` | — | 0 | 0 |
-| `katarina.intelligence.prospective_shadow_review` | — | 0 | 0 |
-| `katarina.intelligence.public_context` | — | 0 | 0 |
-| `katarina.intelligence.public_language_research` | — | 0 | 0 |
-| `katarina.intelligence.regime` | — | 0 | 0 |
-| `katarina.intelligence.regime_research_router` | — | 0 | 0 |
-| `katarina.intelligence.replay_cost_diagnostics` | — | 0 | 0 |
-| `katarina.intelligence.research_agenda` | — | 0 | 0 |
-| `katarina.intelligence.research_exit_lifecycle` | — | 0 | 0 |
-| `katarina.intelligence.research_news_collection` | — | 0 | 0 |
-| `katarina.intelligence.research_readiness_gate` | — | 0 | 0 |
-| `katarina.intelligence.research_signal_ablation` | — | 0 | 0 |
-| `katarina.intelligence.scalp_pattern_candidates` | — | 0 | 0 |
-| `katarina.intelligence.self_evolution_lab` | — | 0 | 0 |
-| `katarina.intelligence.semantic_setup_truth` | — | 0 | 0 |
-| `katarina.intelligence.session_gaps` | — | 0 | 0 |
-| `katarina.intelligence.shadow_gold_intraday` | — | 0 | 0 |
-| `katarina.intelligence.shadow_hypotheses` | — | 0 | 0 |
-| `katarina.intelligence.shadow_journal` | — | 0 | 0 |
-| `katarina.intelligence.shadow_manifest` | — | 0 | 0 |
-| `katarina.intelligence.shadow_paper_book` | — | 0 | 0 |
-| `katarina.intelligence.shadow_research_evaluation` | — | 0 | 0 |
-| `katarina.intelligence.simple_ml` | — | 0 | 0 |
-| `katarina.intelligence.strategy_drift` | — | 0 | 0 |
-| `katarina.intelligence.strategy_evidence` | — | 0 | 0 |
-| `katarina.intelligence.strategy_selector` | — | 0 | 0 |
-| `katarina.intelligence.structural_entry_quality` | — | 0 | 0 |
-| `katarina.intelligence.structure_exit_plan` | — | 0 | 0 |
-| `katarina.intelligence.symbol_playbooks` | — | 0 | 0 |
-| `katarina.intelligence.technical_regime` | — | 0 | 0 |
-| `katarina.intelligence.timeframe` | — | 0 | 0 |
-| `katarina.intelligence.unified_adaptive_research_cycle` | — | 0 | 0 |
-| `katarina.intelligence.unified_brain` | — | 0 | 0 |
-| `katarina.intelligence.unified_cognitive_cycle` | — | 0 | 0 |
-| `katarina.intelligence.unified_intraday_gate` | — | 0 | 0 |
-| `katarina.intelligence.unified_research_handoff` | — | 0 | 0 |
-| `katarina.intelligence.verified_policy_context` | — | 0 | 0 |
-| `katarina.intelligence.xauusd` | — | 0 | 0 |
