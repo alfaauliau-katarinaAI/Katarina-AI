@@ -2,8 +2,9 @@
 from hashlib import sha256
 import json
 from math import isfinite
+from katarina.intelligence.session_gaps import GAP_POLICY, spans_long_gap
 
-VERSION = 'demo-protected-h1-v1'
+VERSION = 'demo-protected-h1-v2'
 DEMO_POLICY = 'DEMO_BASE_COST_GOVERNOR_V2'
 
 
@@ -71,7 +72,7 @@ def qualify_variant(rows, config, *, spread, original_id):
     horizon=config['horizon'];samples=[[],[]]
     for i in range(max(config['lookback'],14),len(rows)-horizon,horizon+1):
         scale=signal(rows,i,config)
-        if scale is None or any(rows[j+1][0]-rows[j][0]!=3600 for j in range(i,i+horizon)):
+        if scale is None or spans_long_gap(rows,i,horizon):
             continue
         bucket=0 if i+horizon<split else 1 if i>=split else None
         if bucket is None:continue
@@ -95,7 +96,7 @@ def qualify_variant(rows, config, *, spread, original_id):
                            passed=all(g['n']>=30 and g['mean']>0 for g in groups)))
     identity=dict(version=VERSION,original_id=original_id,method=config['method'],side=config['side'],
                   lookback=config['lookback'],horizon=horizon,threshold=config['threshold'],
-                  stop_range=2,target_range=4,bar_ambiguity='ADVERSE_FIRST')
+                  stop_range=2,target_range=4,bar_ambiguity='ADVERSE_FIRST',gap_policy=GAP_POLICY)
     ident=sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
     return demo_policy(dict(id=ident,parameters=identity,checks=checks,
                 independent_holdout=False,prospective_validation=False,live_authorized=False))
