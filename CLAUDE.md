@@ -18,7 +18,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 | `src/katarina/` | Paket utama. `intelligence/` (100 modul dalam 8 subpaket: `cognition/` otak canonical `cognition/unified_brain.py` → `UnifiedKatarinaBrain` beserta kemampuannya, `perception/` fitur/regime/playbook, `broker/` sensor read-only, `news/`, `demo/`, `shadow/`, `lab/` riset offline, `operations/`), `engines/` (risk, setup quality, eksekusi riset), `monitoring/` (feed status/PnL/entry untuk website), `adapters/` (MT5, transport ZMQ/KAT1), `body/` (stage 11–40 "body framework", modul bernama fungsi; nomor→modul di `katarina.body.STAGE_MODULES` dan `docs/maintenance/BODY_STAGE_MAP.md`), `core/` (orchestrator), `memory/`, `persistence/`, `governance/`, `research/` |
 | `katarina_pc.py` + `SETUP_/START_KATARINA.bat` | Entry point uji PC (Python 3.12): `setup, repair, test, doctor, observe, chat, ui, pretrial` |
 | `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical), demo worker, HF archive sync, publisher monitor. `install_*_test*.py` = patch berpayload untuk VPS uji (tercatat di release manifest) |
-| `scripts/research/` | Skrip riset/backtest aktif (dirujuk workflow/dokumen) |
+| `scripts/research/` | Hanya 4 skrip yang dipakai workflow/operasional: `audit_private_alpha_holdout`, `run_adaptive_walkforward`, `run_autonomous_strategy_discovery`, `probe_current_market_analogs` |
 | `scripts/governance/` | Audit CI: hygiene, dependency links, constitution guard, branch inventory |
 | VPS (Windows Server 2012 R2) | Diakses lewat Desktop Commander. Runtime: `C:\Katarina\code` (checkout `main`), Python 3.12 di `C:\Katarina\python312`, peluncur observer `C:\Katarina\run-observer.ps1`. Tooling VPS lama dihapus 22 Okt |
 | `scripts/pc/`, `scripts/deployment/` | Environment privat PC, redeploy + `release_manifest.py` |
@@ -99,3 +99,4 @@ dipatok) sengaja masih memakai path lama.
   yang tersisa hanya `main` dan `claude-vps-bridge`.
 - 22 Okt (rampingkan A): tooling VPS lama (agent remote, runner self-hosted, BAT, workflow, dokumen, tes) dihapus.
 - 22 Okt (rampingkan B): 116 dokumen bertanggal/usang yang tidak dirujuk dihapus.
+- 22 Okt (rampingkan C): 62 skrip riset sekali pakai, `research/safety`, tes replay/research, dan 25 tes khusus skrip riset dihapus.

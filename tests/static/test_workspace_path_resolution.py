@@ -25,29 +25,11 @@ class WorkspacePathContractTests(unittest.TestCase):
                 offenders.append(rel)
         self.assertEqual(offenders, [])
 
-    def test_research_modules_resolve_from_themselves(self):
-        expected = [
-            "audit_adaptive_risk_tiers_2026.py",
-            "audit_pair_correlations_2025.py",
-            "backtest_brain_v2_from_2025.py",
-            "intraday_session_2025.py",
-            "xau_exit_three_way_tick_2025.py",
-        ]
-        for name in expected:
-            with self.subTest(name=name):
-                content = (REPO / "scripts" / "research" / name).read_text(encoding="utf-8-sig")
-                self.assertIn("Path(__file__).resolve().parents[2]", content)
-
     def test_windows_readonly_launcher_uses_its_location(self):
         launcher = (REPO / "scripts" / "ai" / "RUN_READONLY_DECISIONS.cmd").read_text()
         self.assertIn('for %%I in ("%~dp0..\\..")', launcher)
         self.assertIn('%KATARINA_REPO%\\scripts\\ai\\run_readonly_decisions.py', launcher)
         self.assertIn("exit /b %ERRORLEVEL%", launcher)
-
-    def test_analog_scheduler_is_repo_relative(self):
-        scheduler = (REPO / "scripts" / "research" / "register_analog_shadow_task.ps1").read_text()
-        self.assertIn("(Join-Path $PSScriptRoot '..\\..')", scheduler)
-        self.assertIn("New-ScheduledTaskAction", scheduler)
 
 
 if __name__ == "__main__":
