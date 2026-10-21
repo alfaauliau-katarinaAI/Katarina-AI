@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — persiapan pemisahan website (perapian tahap 7, belum selesai)
+
+- `scripts/deployment/export_website_repo.py` (+ tes) mengekspor berkas situs publik ke layout repo mandiri
+  dengan manifest SHA-256. Panduan `docs/deployment/STANDALONE_WEBSITE_EXTRACTION.md` ditulis ulang dengan
+  langkah Owner.
+- Repo baru belum dibuat (integrasi GitHub menolak dengan 403) dan Cloudflare Pages belum dipindah, jadi
+  `website/` dan kawan-kawan tetap di repo ini. Tidak ada perubahan perilaku situs.
+
 ## 2026-10-21 — satu sumber status (perapian tahap 8)
 
 - `docs/PROJECT_STATUS.md` ditulis ulang sebagai satu-satunya dokumen status (per 21 Oktober, mencakup
