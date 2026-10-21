@@ -7,7 +7,6 @@
 
 /docs/KATARINA_FINAL_WORKFLOW.md @alfaauliau-katarinaAI
 /config/execution_workflow.json @alfaauliau-katarinaAI
-/docs/KATARINA_TRANSPORT_PROTOCOL.md @alfaauliau-katarinaAI
 /config/transport_policy.json @alfaauliau-katarinaAI
 /config/execution_reliability.json @alfaauliau-katarinaAI
 
@@ -22,7 +21,6 @@
 /config/core_orchestrator.json @alfaauliau-katarinaAI
 /docs/reviews/STAGE_05_CORE_AUDIT.md @alfaauliau-katarinaAI
 
-/config/mt5_bridge_draft.json @alfaauliau-katarinaAI
 /mt5/ @alfaauliau-katarinaAI
 /scripts/mt5/compile_stage06.ps1 @alfaauliau-katarinaAI
 /config/windows_compatibility_stage06.json @alfaauliau-katarinaAI
@@ -35,12 +33,6 @@
 /scripts/mt5/audit_stage06_final.ps1 @alfaauliau-katarinaAI
 /scripts/mt5/complete_stage06.ps1 @alfaauliau-katarinaAI
 /docs/operations/STAGE_06_FINAL_CLEARANCE.md @alfaauliau-katarinaAI
-/config/mt5_python_communication_draft.json @alfaauliau-katarinaAI
 /src/katarina/ports/transport.py @alfaauliau-katarinaAI
-/src/katarina/adapters/transport/ @alfaauliau-katarinaAI
 /tests/unit/transport/ @alfaauliau-katarinaAI
-/docs/reviews/STAGE_07_COMMUNICATION_RESEARCH.md @alfaauliau-katarinaAI
-/docs/reviews/STAGE_07_INITIAL_IMPLEMENTATION_CHECK.md @alfaauliau-katarinaAI
-/docs/architecture/KATARINA_MT5_PYTHON_COMMUNICATION_DRAFT.md @alfaauliau-katarinaAI
-/docs/adr/0009-stage07-live-communication-topology.md @alfaauliau-katarinaAI
 /tests/static/test_vps_remote_lab.py @alfaauliau-katarinaAI

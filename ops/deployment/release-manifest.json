@@ -10,16 +10,6 @@
       "normalized_sha256": "72f8119e6be502b9175ecd0e0abd97e6cfa717e288922bbb9e688d9ea1b4c7df",
       "sha256": "72f8119e6be502b9175ecd0e0abd97e6cfa717e288922bbb9e688d9ea1b4c7df"
     },
-    "mt5/Experts/KatarinaBridgeMultiSymbolExtensionEA.mq5": {
-      "bytes": 2275,
-      "normalized_sha256": "e233feeab0b57f4d64993afa40d13abd0b336e17844320afae68909418ac29d6",
-      "sha256": "e233feeab0b57f4d64993afa40d13abd0b336e17844320afae68909418ac29d6"
-    },
-    "mt5/Experts/KatarinaBridgeStage07EA.mq5": {
-      "bytes": 15237,
-      "normalized_sha256": "4822da1da57712ff5e86b8cc57f8116078c9ee97c79fff616cdc2e4f46496d67",
-      "sha256": "4822da1da57712ff5e86b8cc57f8116078c9ee97c79fff616cdc2e4f46496d67"
-    },
     "mt5/Experts/KatarinaResearchScalperEA.mq5": {
       "bytes": 71243,
       "normalized_sha256": "303be286be80850cc0aa04f9a253effd41b86deb36a91dfaba969a08293f5715",
@@ -80,21 +70,6 @@
       "normalized_sha256": "8f8696020d134e6b650d2c1c4623c4a9918a1941dde9e690f588cc976da72ec7",
       "sha256": "8f8696020d134e6b650d2c1c4623c4a9918a1941dde9e690f588cc976da72ec7"
     },
-    "mt5/Include/Katarina/MultiSymbolCatalog.mqh": {
-      "bytes": 10650,
-      "normalized_sha256": "d2521dbc2b6eb2561fc1c85aedc4da15e101c67551943516ad3d7db6e8345d8a",
-      "sha256": "d2521dbc2b6eb2561fc1c85aedc4da15e101c67551943516ad3d7db6e8345d8a"
-    },
-    "mt5/Include/Katarina/MultiSymbolExecutionGateway.mqh": {
-      "bytes": 8206,
-      "normalized_sha256": "6214d874d3bcd0d28687a0d3f7a8e3d9ca118a70ab5e9bb3df98e9aeca058fb7",
-      "sha256": "6214d874d3bcd0d28687a0d3f7a8e3d9ca118a70ab5e9bb3df98e9aeca058fb7"
-    },
-    "mt5/Include/Katarina/MultiSymbolMarketSource.mqh": {
-      "bytes": 1437,
-      "normalized_sha256": "4b3a0c3fd2cb0c8896d3c2f97767b852625106cfe3566b70c4adb315b894614b",
-      "sha256": "4b3a0c3fd2cb0c8896d3c2f97767b852625106cfe3566b70c4adb315b894614b"
-    },
     "mt5/Include/Katarina/NativeFacts.mqh": {
       "bytes": 9245,
       "normalized_sha256": "44c90f1145422d4a599d95470e4b1d4f833a5e5003d33637630a8f028f768a59",
@@ -120,56 +95,6 @@
       "normalized_sha256": "a19039b5b9939b640b49ad66dbdc61207f1c46db66eba3e052a0b285dcc935d6",
       "sha256": "a19039b5b9939b640b49ad66dbdc61207f1c46db66eba3e052a0b285dcc935d6"
     },
-    "mt5/Include/Katarina/Stage07/BridgeTransport.mqh": {
-      "bytes": 12544,
-      "normalized_sha256": "221d47f15189894d63f832b656a9466d2ef253066a97ddfa3755914d489808e8",
-      "sha256": "221d47f15189894d63f832b656a9466d2ef253066a97ddfa3755914d489808e8"
-    },
-    "mt5/Include/Katarina/Stage07/IdentityV1.mqh": {
-      "bytes": 3208,
-      "normalized_sha256": "dcc66e1a53e3f8a07c13bb4b27d2f3d37dd136b180006bde560a3e24200522ac",
-      "sha256": "dcc66e1a53e3f8a07c13bb4b27d2f3d37dd136b180006bde560a3e24200522ac"
-    },
-    "mt5/Include/Katarina/Stage07/Kat1Codec.mqh": {
-      "bytes": 8327,
-      "normalized_sha256": "979e50859c91662d3f84140b6ae763c1f11a52d9f0ca8d58640f4e27cf33eb0d",
-      "sha256": "979e50859c91662d3f84140b6ae763c1f11a52d9f0ca8d58640f4e27cf33eb0d"
-    },
-    "mt5/Include/Katarina/Stage07/Kat1ExecutionIntents.mqh": {
-      "bytes": 4387,
-      "normalized_sha256": "36361a479263d9c2cc875867f035d9d169cdbe3a45a71bf5178586e0a733f20e",
-      "sha256": "36361a479263d9c2cc875867f035d9d169cdbe3a45a71bf5178586e0a733f20e"
-    },
-    "mt5/Include/Katarina/Stage07/Kat1NativeRecords.mqh": {
-      "bytes": 28017,
-      "normalized_sha256": "7ba43cfd96fbf06baef684656808acb9c1a372c05cefad96ffdd95b030aef3d1",
-      "sha256": "7ba43cfd96fbf06baef684656808acb9c1a372c05cefad96ffdd95b030aef3d1"
-    },
-    "mt5/Include/Katarina/Stage07/Kat1RecoveryMessages.mqh": {
-      "bytes": 17351,
-      "normalized_sha256": "12eb87e5aaeeae287addd4b1bd9130a14f0c0b6ca112c615a9cb322f2c843884",
-      "sha256": "12eb87e5aaeeae287addd4b1bd9130a14f0c0b6ca112c615a9cb322f2c843884"
-    },
-    "mt5/Include/Katarina/Stage07/Kat1SystemMessages.mqh": {
-      "bytes": 9086,
-      "normalized_sha256": "8cdd830795bcf4eb3e375c95ca756ecade5e09b66cc55433788d30b91d9e0d40",
-      "sha256": "8cdd830795bcf4eb3e375c95ca756ecade5e09b66cc55433788d30b91d9e0d40"
-    },
-    "mt5/Include/Katarina/Stage07/NativeTcpTransport.mqh": {
-      "bytes": 8430,
-      "normalized_sha256": "a61a862d2219286b9785d445cb19125cec7caa69fc82e163ff27a5ab47dc3ca2",
-      "sha256": "a61a862d2219286b9785d445cb19125cec7caa69fc82e163ff27a5ab47dc3ca2"
-    },
-    "mt5/Include/Katarina/Stage07/WireSequence.mqh": {
-      "bytes": 3497,
-      "normalized_sha256": "6a960342b07a66534c4cbde82212e007e71697387678aec99f7b6b7bb5429b8a",
-      "sha256": "6a960342b07a66534c4cbde82212e007e71697387678aec99f7b6b7bb5429b8a"
-    },
-    "mt5/Include/Katarina/Stage07/ZmqDealerTransport.mqh": {
-      "bytes": 5714,
-      "normalized_sha256": "02412490fbc6aa329922f905119b8920eca0aa138df396850e7daa704bf3f2e7",
-      "sha256": "02412490fbc6aa329922f905119b8920eca0aa138df396850e7daa704bf3f2e7"
-    },
     "mt5/Include/Katarina/SymbolRegistry.mqh": {
       "bytes": 2330,
       "normalized_sha256": "e84fec89620d48b214aaf6c3e0da1bbe8a5ab39fcc1dbc668ffe827450900afd",
@@ -194,61 +119,6 @@
       "bytes": 6740,
       "normalized_sha256": "bde3e9e0b7189df463e781344216d9587f1d8c1014af38c47c515cf7021f4a59",
       "sha256": "bde3e9e0b7189df463e781344216d9587f1d8c1014af38c47c515cf7021f4a59"
-    },
-    "mt5/Tests/KatarinaStage07BridgeTransportIntegration.mq5": {
-      "bytes": 2377,
-      "normalized_sha256": "284fa772d1cd0904f69be5f56aa4cf7d2cb6a201d77e0ae0a9b56d848ac0365d",
-      "sha256": "284fa772d1cd0904f69be5f56aa4cf7d2cb6a201d77e0ae0a9b56d848ac0365d"
-    },
-    "mt5/Tests/KatarinaStage07HandshakeIntegration.mq5": {
-      "bytes": 9137,
-      "normalized_sha256": "dd8d665547ee7da377ee457a00df03ecf70a79b5d97ddac61cce84ba12a67617",
-      "sha256": "dd8d665547ee7da377ee457a00df03ecf70a79b5d97ddac61cce84ba12a67617"
-    },
-    "mt5/Tests/KatarinaStage07Kat1CodecTest.mq5": {
-      "bytes": 9649,
-      "normalized_sha256": "25e4419780ae9f0933573dcf580265db8b191e6e6db8f394b6ce524d2e2fe9f5",
-      "sha256": "25e4419780ae9f0933573dcf580265db8b191e6e6db8f394b6ce524d2e2fe9f5"
-    },
-    "mt5/Tests/KatarinaStage07MultiSymbolExtensionTest.mq5": {
-      "bytes": 1870,
-      "normalized_sha256": "cc5cd4fa64a9bec0cb3cdf7aea411506dddc19ddb9b88bf0af45112a8e61ebfc",
-      "sha256": "cc5cd4fa64a9bec0cb3cdf7aea411506dddc19ddb9b88bf0af45112a8e61ebfc"
-    },
-    "mt5/Tests/KatarinaStage07NativeAccountRecordTest.mq5": {
-      "bytes": 2698,
-      "normalized_sha256": "249264d9387aaaa30ebb2615a79662a3e19878d1a694b187381d077eff7679df",
-      "sha256": "249264d9387aaaa30ebb2615a79662a3e19878d1a694b187381d077eff7679df"
-    },
-    "mt5/Tests/KatarinaStage07NativeStateRecordsTest.mq5": {
-      "bytes": 7701,
-      "normalized_sha256": "b8de3a041f92a89038b0f6b1a91f2de8557b60cf1ec54c8b7a62fa351cb3faac",
-      "sha256": "b8de3a041f92a89038b0f6b1a91f2de8557b60cf1ec54c8b7a62fa351cb3faac"
-    },
-    "mt5/Tests/KatarinaStage07ReconnectIntegration.mq5": {
-      "bytes": 17617,
-      "normalized_sha256": "faabc2852374627745ce730e80709f1145aaa9a910920d7d9fdf5399fbf9a27e",
-      "sha256": "faabc2852374627745ce730e80709f1145aaa9a910920d7d9fdf5399fbf9a27e"
-    },
-    "mt5/Tests/KatarinaStage07RecoveryIntegration.mq5": {
-      "bytes": 13940,
-      "normalized_sha256": "e6400178bd939964dcf97b11b6c0e1a5eca8fadecb3684082123b121b6469d83",
-      "sha256": "e6400178bd939964dcf97b11b6c0e1a5eca8fadecb3684082123b121b6469d83"
-    },
-    "mt5/Tests/KatarinaStage07TcpFallbackIntegration.mq5": {
-      "bytes": 4326,
-      "normalized_sha256": "5e597ca7ae17bbc6dc10309e97aa0fea9540918dff5930fe9fc420237d0e9696",
-      "sha256": "5e597ca7ae17bbc6dc10309e97aa0fea9540918dff5930fe9fc420237d0e9696"
-    },
-    "mt5/Tests/KatarinaStage07WireSequenceTest.mq5": {
-      "bytes": 3024,
-      "normalized_sha256": "2bdc1938fe94ce13ce4c217b4fd56e3af73e9430429e3bc0ae830353edab575f",
-      "sha256": "2bdc1938fe94ce13ce4c217b4fd56e3af73e9430429e3bc0ae830353edab575f"
-    },
-    "mt5/Tests/KatarinaStage07ZmqCapability.mq5": {
-      "bytes": 5120,
-      "normalized_sha256": "dad169230c84c4b543fda0a0ff7ce8b7fbb797469caa008e11f3b24d7ef4b5ed",
-      "sha256": "dad169230c84c4b543fda0a0ff7ce8b7fbb797469caa008e11f3b24d7ef4b5ed"
     },
     "mt5/Tests/KatarinaStage36LivePreflight.mq5": {
       "bytes": 3511,
@@ -594,46 +464,6 @@
       "bytes": 816,
       "normalized_sha256": "104c497e22efeb8022789e83a23dd7d38d9dd74319c7514c7e47489cf236b1fc",
       "sha256": "104c497e22efeb8022789e83a23dd7d38d9dd74319c7514c7e47489cf236b1fc"
-    },
-    "src/katarina/adapters/transport/__init__.py": {
-      "bytes": 494,
-      "normalized_sha256": "55630453e8ce821fca7448e88b0c4e94ffe8280c6d46aca42dfec204520d6bff",
-      "sha256": "55630453e8ce821fca7448e88b0c4e94ffe8280c6d46aca42dfec204520d6bff"
-    },
-    "src/katarina/adapters/transport/kat1_codec.py": {
-      "bytes": 18605,
-      "normalized_sha256": "cb92e5cda56e37fd696cd1215f6e0721e03ca261204ad0eb48470cdcd0e032c6",
-      "sha256": "cb92e5cda56e37fd696cd1215f6e0721e03ca261204ad0eb48470cdcd0e032c6"
-    },
-    "src/katarina/adapters/transport/kat1_execution.py": {
-      "bytes": 3805,
-      "normalized_sha256": "a5be5642fa95b1e566b8b971a73be5619f440e5b988b7575ec6da0ad736bca4a",
-      "sha256": "a5be5642fa95b1e566b8b971a73be5619f440e5b988b7575ec6da0ad736bca4a"
-    },
-    "src/katarina/adapters/transport/memory.py": {
-      "bytes": 3077,
-      "normalized_sha256": "388de43888fef9d455c078aa1fbf6d0c112151d4128498c641f50fabb384006e",
-      "sha256": "388de43888fef9d455c078aa1fbf6d0c112151d4128498c641f50fabb384006e"
-    },
-    "src/katarina/adapters/transport/recovery.py": {
-      "bytes": 15064,
-      "normalized_sha256": "c9c65d17db1731b5f90beda4eadf1e1c087a901b7e9ca34b921a7507afd6a687",
-      "sha256": "c9c65d17db1731b5f90beda4eadf1e1c087a901b7e9ca34b921a7507afd6a687"
-    },
-    "src/katarina/adapters/transport/session.py": {
-      "bytes": 13240,
-      "normalized_sha256": "1a9d636fa76d82d645b7f7ac64ceb3af006c4448f5e3d0fbe7fabffa50d7414c",
-      "sha256": "1a9d636fa76d82d645b7f7ac64ceb3af006c4448f5e3d0fbe7fabffa50d7414c"
-    },
-    "src/katarina/adapters/transport/tcp.py": {
-      "bytes": 8115,
-      "normalized_sha256": "de6472d7b18bdbf5951cc16a964fedacd3ba1f398d82a2ad1c3af51b25ddf521",
-      "sha256": "de6472d7b18bdbf5951cc16a964fedacd3ba1f398d82a2ad1c3af51b25ddf521"
-    },
-    "src/katarina/adapters/transport/zmq.py": {
-      "bytes": 5189,
-      "normalized_sha256": "4d9f96f7112ceb06e74002a06a8354433fdaa9dd47410092b5955474bd895dbf",
-      "sha256": "4d9f96f7112ceb06e74002a06a8354433fdaa9dd47410092b5955474bd895dbf"
     },
     "src/katarina/body/__init__.py": {
       "bytes": 1974,
@@ -1786,14 +1616,9 @@
       "sha256": "a56a50c329551100e6f275897288590ff0423615e6678129a3e399fca607b1a6"
     },
     "src/katarina/ports/__init__.py": {
-      "bytes": 495,
-      "normalized_sha256": "7bd0b863758b863475ab5130e56e014a52edd44073167223ba413e639f60565d",
-      "sha256": "7bd0b863758b863475ab5130e56e014a52edd44073167223ba413e639f60565d"
-    },
-    "src/katarina/ports/transport.py": {
-      "bytes": 1750,
-      "normalized_sha256": "43257d08c62444440704ef68480847ff992d837eb6d243bc08ca9ce2f7722686",
-      "sha256": "43257d08c62444440704ef68480847ff992d837eb6d243bc08ca9ce2f7722686"
+      "bytes": 182,
+      "normalized_sha256": "03ea271f210bba721dae5a00d2b991efd8913f12ad0b193fe09c7dd3a230036c",
+      "sha256": "03ea271f210bba721dae5a00d2b991efd8913f12ad0b193fe09c7dd3a230036c"
     },
     "src/katarina/research/__init__.py": {
       "bytes": 59,

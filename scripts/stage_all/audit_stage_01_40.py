@@ -13,7 +13,7 @@ REQUIRED = {
     4: ["protocol/message_registry_v1.json", "protocol/kat1_message_schemas_v1.json"],
     5: ["src/katarina/core/orchestrator.py"],
     6: ["mt5/Experts/KatarinaBridgeEA.mq5"],
-    7: ["src/katarina/adapters/transport/kat1_codec.py"],
+    7: ["protocol/kat1_message_schemas_v1.json"],
     8: ["src/katarina/validation/engine.py"],
     9: ["src/katarina/health/engine.py"],
     10: ["src/katarina/memory/store.py"],

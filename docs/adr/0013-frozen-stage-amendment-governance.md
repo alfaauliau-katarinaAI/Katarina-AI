@@ -50,7 +50,6 @@ Stage 06 already:
 
 Stage 07 extends that contract through:
 
-- `KatarinaBridgeStage07EA.mq5`;
 - `CKatStage07Transport`;
 - localhost ZeroMQ/TCP communication;
 - KAT1 handshake/recovery/sequence logic.
