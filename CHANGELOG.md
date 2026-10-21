@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — arsip branch usang
+
+- Tujuh branch diperiksa per berkas terhadap `main`: isinya sudah ada di `main` (PR #139/#152, pindah ke
+  subpaket baru) atau sengaja dihapus. Commit terakhir dan alasannya dicatat di
+  `docs/maintenance/BRANCH_ARCHIVE_20261022.md` sebelum branch dihapus. `claude-vps-bridge` dipertahankan
+  sebagai kanal pesan GitHub↔VPS. Tidak ada perubahan kode, perilaku, atau risiko; live tetap OFF.
+
 ## 2026-10-21 — jalur order demo: penolakan pasti, pengiriman yang tak pernah terisi, slippage dan biaya
 
 - Retcode broker yang menyatakan order **tidak dieksekusi** (requote, reject, price changed/off, invalid
