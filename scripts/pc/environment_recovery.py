@@ -112,14 +112,12 @@ class EnvironmentManager:
         if not python.is_file():
             return False
         versions=json.loads((self.root/'config/runtime_dependencies_v1.json').read_text())['packages']
-        code=('import sys,importlib.metadata as m; import numpy,zmq,tornado; '
+        code=('import sys,importlib.metadata as m; import numpy; '
               'assert sys.version_info[:2]==(3,12); '
               'assert m.version("numpy")==sys.argv[1]; '
-              'assert m.version("pyzmq")==sys.argv[2]; '
-              'assert (6,1)<=tuple(int(x) for x in m.version("tornado").split(".")[:2])<(7,0); '
-              + ('import MetaTrader5; assert m.version("MetaTrader5")==sys.argv[3]' if mt5 else ''))
+              + ('import MetaTrader5; assert m.version("MetaTrader5")==sys.argv[2]' if mt5 else ''))
         try:
-            return self._run([python,'-c',code,versions['numpy'],versions['pyzmq'],versions['MetaTrader5']],timeout=30).returncode==0
+            return self._run([python,'-c',code,versions['numpy'],versions['MetaTrader5']],timeout=30).returncode==0
         except (OSError,subprocess.TimeoutExpired):
             return False
 
