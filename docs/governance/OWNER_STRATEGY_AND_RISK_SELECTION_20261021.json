@@ -19,7 +19,9 @@
     "effective_live_position_sizing": "DISABLED"
   },
   "governance_missing_inputs": [
-    "MAXIMUM_DAILY_LOSS_PERCENT",
+    "DAILY_35_PERCENT_TRIGGER_MEASUREMENT_AND_RESET_POLICY",
+    "EXISTING_POSITION_RISK_REDUCTION_RULES_AND_EMERGENCY_CLOSE",
+    "DAILY_LOSS_THRESHOLD_NOT_A_HARD_ACCOUNT_LOSS_CAP",
     "MAXIMUM_TOTAL_OPEN_RISK_PERCENT",
     "EXPLICIT_STOP_LOSS_AND_INVALIDATION_RULE",
     "DETERMINISTIC_EVIDENCE_BASED_RISK_SCORING",
@@ -42,6 +44,22 @@
     "Risk 5-10% per transaction is the owner's requested testing range, not a recommendation or an implemented live setting.",
     "Large risk per transaction can cause rapid losses; no strategy edge or confidence-to-risk mapping is yet evidenced.",
     "Stage 38 intentionally continues to reject live authorization even when simulated prerequisites are true.",
-    "No broker orders, account permission changes, or production runtime modifications are introduced by this record."
-  ]
+    "No broker orders, account permission changes, or production runtime modifications are introduced by this record.",
+    "Owner set daily stop-new-trades threshold at 35%, with existing open positions managed rather than blanket-closed. The specified 35% is an exceptionally large potential drawdown.",
+    "Unless unrealized loss is counted and positions are protected/closed under an independent emergency rule, losses may exceed the 35% entry-stop threshold; live exposure still blocked."
+  ],
+  "daily_loss_rule": {
+    "owner_requested_threshold_percent": 35,
+    "basis": "ACCOUNT_EQUITY",
+    "time_window": "DAILY",
+    "trigger_definition": "PENDING_FINAL_VALIDATION_OF_EQUITY_VS_REALIZED_PLUS_FLOATING_LOSS",
+    "proposed_conservative_measurement": "DAILY_PEAK_OR_DAY_START_EQUITY_DRAWDOWN_INCLUDING_FLOATING_PNL",
+    "when_threshold_reached": "BLOCK_NEW_ENTRIES_AND_ANY_EXPOSURE_INCREASING_TRADES",
+    "existing_positions": "CONTINUE_RISK_REDUCING_MANAGEMENT_ONLY_WITHIN_INDEPENDENT_RISK_GOVERNOR",
+    "automatic_close_all_existing_positions": false,
+    "manual_intervention_and_emergency_close": "MUST_REMAIN_AVAILABLE",
+    "new_trading_reset": "NOT_DEFINED_YET",
+    "not_a_guaranteed_loss_cap": true,
+    "runtime_status": "NOT_WIRED_LIVE_OFF"
+  }
 }
