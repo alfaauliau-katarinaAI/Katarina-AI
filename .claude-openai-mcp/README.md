@@ -40,3 +40,25 @@ Request headers are required for MCP tool calls. Store no chat context server-si
 - Input bounded; 65 sec API request timeout; no question or API key in logs.
 - Do not send broker credentials, SSH keys, or proprietary files unless explicitly authorized.
 - This folder is isolated under `claude-vps-bridge`; GitHub main and Windows VPS files remain untouched.
+
+## Windows VPS local staging (2026-10-22)
+
+A test instance is installed at `C:\\ClaudeOpenAIMCP` on the owner's VPS,
+listening **only** on `127.0.0.1:47832/mcp`, started by Windows Task
+Scheduler task `ClaudeOpenAIConnector` (SYSTEM). Tests of initialization,
+tool listing, header authentication, status and explicit API-key-required
+errors passed. This is **not** currently a public remote connector URL.
+
+For this instance, the MCP header token is read from
+`C:\\ClaudeOpenAIMCP\\private\\connector.key` via
+`CONNECTOR_KEY_FILE`. Put the OpenAI API key privately at
+`C:\\ClaudeOpenAIMCP\\private\\openai.key`, with SYSTEM/Administrators
+permissions, and restart the task. Never commit the key. The model has not
+been called because an API key was not provided.
+
+Public hosting needs additional setup: Render rejected service creation with
+HTTP 402 (billing details required), while Vercel rejected creating a project
+with HTTP 403 (permission denied). Recent cloudflared builds could not run on
+the Windows Server 2012 R2 VPS, so no unsupported old tunnel was left in use.
+Claude Web/Mobile therefore cannot access this local endpoint yet. Host the
+service on supported HTTPS hosting with secrets configured before connecting.
