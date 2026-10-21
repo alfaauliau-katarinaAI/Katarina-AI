@@ -55,15 +55,18 @@ def evaluate_structural_candidate(x: StructuralCandidate) -> ResearchCandidateDe
 
     wt=x.wave_pivot_times_ns
     wp=x.wave_pivot_prices
-    if (len(wt)!=6 or any(type(v) is not int or v<=0 for v in wt)
+    if (not isinstance(wt,tuple) or len(wt)!=6 or any(type(v) is not int or v<=0 for v in wt)
             or any(a>=b for a,b in zip(wt,wt[1:]))
             or not isinstance(x.signal_closed_ns,int) or wt[-1]>x.signal_closed_ns):
         blockers.append("wave_pivots_not_causal")
+    if not isinstance(wp,tuple):
+        blockers.append("invalid_wave_prices")
+        return ResearchCandidateDecision(False,tuple(blockers))
     fields=(x.structure_break_level,x.structure_break_close,
             x.zone_low,x.zone_high,x.entry,x.stop_loss,x.target,
             x.estimated_cost_price)+tuple(wp)
     if (len(wp)!=6 or any(type(v) not in (int,float) or not isfinite(v) for v in fields)
-            or any(v<=0 for v in fields[:-1] if v is not x.estimated_cost_price)):
+            or any(v<=0 for v in fields[:7]+fields[8:])):
         blockers.append("invalid_price_evidence")
         return ResearchCandidateDecision(False,tuple(blockers))
     if not 0<=x.estimated_cost_price:
