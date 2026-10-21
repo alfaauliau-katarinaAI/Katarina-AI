@@ -60,7 +60,8 @@ def _source_version(root):
     try:
         root=Path(root)
         return tuple((root/name).stat().st_mtime_ns if (root/name).exists() else 0
-                     for name in ('runtime-activity.json','continuous-status.json','research-reports.json','data-recovery.json'))
+                     for name in ('runtime-activity.json','continuous-status.json','research-reports.json','data-recovery.json',
+                              'demo-forward/position-monitor.json','demo-forward/executor.json','demo-forward/status.json'))
     except OSError:
         return None
 
