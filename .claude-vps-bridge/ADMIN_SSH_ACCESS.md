@@ -1,26 +1,37 @@
-# Claude — Windows VPS administrator access
+# Claude Web & Mobile — Windows VPS access
 
-**Purpose:** deploy and test Katarina on the owner's Windows VPS using **direct SSH**, separate from the public GitHub inbox bridge.
+**Current supported path: Remote Desktop Commander (Remote MCP with OAuth).**
+For Claude used through https://claude.ai or the Claude mobile app, do **not**
+try to upload an SSH private key into a conversation or GitHub repository.
 
-## Configuration on VPS (2026-10-22)
+## Add the connector in Claude
 
-- OpenSSH service is running on port 22.
-- A dedicated Ed25519 public key was added to Windows OpenSSH's administrator authorized-keys file, restricted by ACL to SYSTEM and local Administrators.
-- The associated **private key is NOT in GitHub**. It is stored only on the owner VPS at `C:\ClaudeGitHubBridge\credentials\claude-admin-ssh-ed25519`.
-- Desktop Commander watchdog and existing inbound message polling remain enabled.
-- No Katarina code or GitHub `main` branch was modified to configure this access.
+1. In Claude Web, open **Customize → Connectors → Add → Custom → Web**.
+2. Connector name: `Katarina VPS — Desktop Commander`
+3. MCP URL: `https://mcp.desktopcommander.app/mcp`
+4. Complete OAuth sign-in with the **Desktop Commander Dc 2 account** paired
+   to the VPS (not a generic GitHub account).
+5. Enable the connector in the Claude chat using **+ → Connectors**.
+6. Ask Claude to list connected devices, choose `WIN-4TTT19K3CL8`, and
+   first run harmless checks such as `whoami` and disk space.
 
-## Required secure handoff
+Remote Desktop Commander is already paired with the Windows VPS via Dc 2.
+Full file/terminal access inherits the permissions of its local agent, which
+has been observed as Administrator in this deployment. Do not change the
+Desktop Commander connection or Windows RDP/SSH/network configuration.
 
-The owner must securely provision the private key to the environment actually running **Claude Code or another authorized SSH-capable Claude agent**, and supply the VPS endpoint through a private channel. Do not upload the private key into this public repo, issues, commits, chat transcripts, or public logs.
+## Important
 
-From an authenticated SSH-capable environment, use an SSH client with the securely installed private key and verify the Windows Administrator identity before deployments. Confirm the host SSH fingerprint out of band. External SSH reachability and the Claude-side login **have not yet been verified**.
-
-The public GitHub bridge at `.claude-vps-bridge` is a separate, **limited** data/message transport. Posting `admin_exec` or shell commands to its public inbox **does not grant administrative execution**.
-
-## Operational precautions
-
-- Do not disable Desktop Commander networking, watchdog, Windows SSH/RDP services, or firewall controls supporting owner access.
-- Keep GitHub repository credentials, broker account secrets and SSH private keys out of GitHub commits.
-- Record deployments and test results. Trading LIVE remains disabled unless separately authorized and validated by the owner.
-- Administrator access is intrinsically powerful and cannot technically guarantee immunity of Desktop Commander from intentional or accidental admin changes.
+- The experiment to use an extra self-hosted localhost MCP gateway was
+  removed because the existing Desktop Commander Remote MCP supports
+  Claude Web and Mobile directly.
+- The previously created dedicated Claude SSH administrator key was revoked
+  and deleted when direct SSH was found unnecessary for Claude Web/Mobile.
+- The limited GitHub message transport remains separate in
+  `.claude-vps-bridge/`; **never** submit privileged commands or secrets to
+  that public GitHub repository.
+- Claude-to-VPS connectivity is **not complete** until the user authorizes
+  Desktop Commander in Claude and runs a verification command there.
+- Trading LIVE is NOT authorized by the existence of this connector.
+- References: https://desktopcommander.app/ and
+  https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp .
