@@ -21,6 +21,56 @@ def _fresh(value,now,seconds=90,key='as_of_utc'):
     except (KeyError,ValueError,TypeError):return False
 
 
+def read_independent_demo_monitor(root, *, now=None):
+    """Validate a fast DEMO broker snapshot independently of a long observer cycle.
+
+    Neither the publisher nor this function opens MT5. The executor PID,
+    freshness, enrolled account binding and DEMO mode must all agree.
+    """
+    from contextlib import closing
+    import sqlite3
+    root=Path(root);now=now or datetime.now(timezone.utc)
+    witness=_read(root/'demo-forward/position-monitor.json')
+    executor=_read(root/'demo-forward/executor.json')
+    if (executor.get('mode')!='DEMO' or executor.get('independent') is not True
+            or executor.get('live_authorized') is not False
+            or executor.get('status') not in ('RUNNING','AUDIT_ONLY')
+            or not _fresh(executor,now,90)
+            or witness.get('mode')!='DEMO' or witness.get('live_authorized') is not False
+            or type(witness.get('pid')) is not int
+            or witness.get('pid')!=executor.get('pid')
+            or not _fresh(witness,now,90)):
+        return {}
+    monitor=witness.get('monitor')
+    if not isinstance(monitor,dict):
+        return {}
+    snapshot=monitor.get('position_snapshot') or {}
+    if (monitor.get('account_mode')!='DEMO'
+            or monitor.get('connected') is not True
+            or monitor.get('positions_read_success') is not True
+            or monitor.get('orders_read_success') is not True
+            or snapshot.get('status')!='OBSERVED'
+            or not _fresh(monitor,now,90,key='observed_at_utc')
+            or not _fresh(snapshot,now,90)
+            or witness['as_of_utc']!=monitor.get('observed_at_utc')
+            or snapshot.get('as_of_utc')!=monitor.get('observed_at_utc')):
+        return {}
+    binding=snapshot.get('private_account_binding')
+    if not isinstance(binding,str) or not re.fullmatch('[a-f0-9]{64}',binding):
+        return {}
+    try:
+        path=root/'demo-forward/experiment.sqlite3'
+        with closing(sqlite3.connect(path.resolve().as_uri()+'?mode=ro',uri=True,timeout=.25)) as db:
+            db.execute('PRAGMA query_only=ON')
+            row=db.execute('SELECT payload FROM demo_account_state WHERE id=1').fetchone()
+        enrolled=json.loads(row[0]).get('binding') if row else None
+        if enrolled!=binding:
+            return {}
+    except (OSError,sqlite3.Error,ValueError,TypeError,AttributeError):
+        return {}
+    return monitor
+
+
 def read_worker_runtime(root,pid,*,now=None):
     root=Path(root);now=now or datetime.now(timezone.utc)
     out=dict(status='OBSERVED',mode='AUTONOMOUS_PULL_AND_REPORT',workers=[],mt5_algo_enabled=None,
