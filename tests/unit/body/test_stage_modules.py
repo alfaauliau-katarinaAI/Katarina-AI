@@ -4,7 +4,6 @@ import importlib
 import json
 from pathlib import Path
 import unittest
-import warnings
 
 from katarina.body import STAGE_MODULES
 
@@ -20,12 +19,9 @@ class StageModuleNamingTests(unittest.TestCase):
             spec = importlib.import_module(module).Component.SPEC
             self.assertEqual((spec.stage, spec.implementation_module), (stage, module))
 
-    def test_deprecated_numbered_alias_is_the_same_module(self):
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            alias = importlib.import_module("katarina.body.stage16")
-        self.assertIs(alias, importlib.import_module(STAGE_MODULES[16]))
-        self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in caught))
+    def test_numbered_aliases_are_removed(self):
+        for stage in STAGE_MODULES:
+            self.assertFalse((ROOT / f"src/katarina/body/stage{stage}.py").exists())
 
 
 if __name__ == "__main__":

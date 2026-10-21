@@ -18,8 +18,10 @@ def clean_lab_status(value):
         choice=result.get('selected')
         if not isinstance(choice,dict) or choice.get('method') not in ('MOMENTUM','MEAN_REVERSION','BREAKOUT') or choice.get('side') not in ('BUY','SELL'): continue
         row={k:choice[k] for k in ('method','side')}
-        for key in ('development_n','review_n','development_mean_r','review_mean_r'):
+        for key in ('development_n','review_n','development_mean_r','review_mean_r','development_t','review_t'):
             v=choice.get(key);row[key]=round(v,6) if type(v) in (int,float) and math.isfinite(v) and abs(v)<1000000 else None
+        verdict=(result.get('verdict') or {}).get('result') if isinstance(result.get('verdict'),dict) else None
+        row['verdict']=verdict if verdict in ('PASSED_PRECOMMITTED_RULE','REJECTED','INSUFFICIENT_SAMPLES') else None
         out['results'].append(row)
     return out
 

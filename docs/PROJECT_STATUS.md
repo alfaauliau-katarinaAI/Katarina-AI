@@ -3,7 +3,7 @@
 Satu-satunya sumber status proyek. Diperbarui **21 Oktober 2026**. Rincian per perubahan ada di
 [CHANGELOG](../CHANGELOG.md); hasil CI terbaru di
 [GitHub Actions](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions). Status sebelumnya
-(16 Oktober) dan dokumen serah-terima lama disimpan di `archive/docs/`.
+(16 Oktober) dan dokumen serah-terima lama tersedia di riwayat Git (folder `archive/` dihapus 21 Oktober).
 
 ## Ringkasan
 

@@ -1,5 +1,37 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — lab riset: aturan lolos dikunci sebelum hasil (`broker-lab-v3`)
+
+- Setiap kandidat kini mencatat t-stat pengembangan dan review. Kandidat terpilih diberi `verdict`
+  dengan aturan yang ditetapkan sebelum ada hasil v3: minimal 30 trade per bagian, t pengembangan ≥ 2,4
+  (Bonferroni satu sisi 5% untuk 6 kandidat), dan sepertiga terakhir harus positif setelah biaya dengan t ≥ 1,65.
+- Lolos hanya berarti `next_step=DEMO_FORWARD_TEST`; `live_authorized` tetap false.
+- Uji: 200 random walk tanpa drift seluruhnya ditolak; drift persisten lolos.
+- Status publik (`research_lab_status`) kini ikut menampilkan t-stat dan `verdict` (nilai di luar daftar putih dibuang).
+- Label biaya diperbaiki ke `TYPICAL_SPREAD_PLUS_0.20_ATR_PROXY` (sebelumnya masih menyebut kutipan saat ini).
+- Versi naik ke `broker-lab-v3`, sehingga lab VPS menghitung ulang semua dataset dengan biaya spread
+  yang benar dan aturan baru. Hasil v2 tetap tersimpan.
+
+## 2026-10-21 — hapus 231 berkas tak terpakai (atas persetujuan Owner)
+
+- Dihapus: seluruh `archive/` (168 berkas), 30 alias `katarina.body.stage11–40`, 8 modul yang hanya dipakai
+  test beserta test-nya (`engines.setup_quality`, `news.news_consensus`, `lab.regime_research_router`,
+  `lab.strategy_selector`, `perception.flow_efficiency_index`, `research.experimental_strategy_evidence_portfolio`,
+  `research.owner_structure_candidate`, `research.real_tick`), dan 17 script riset yang tidak dirujuk di mana pun.
+- Dipertahankan: tooling VPS (`scripts/ai/install_*`, `scripts/vps*`), `config/`, Risk Governor, dan
+  `adapters.transport.kat1_execution` (fondasi jalur kirim order).
+- Release manifest dan `RUNTIME_MODULE_MAP.md` dibuat ulang (B=13, D=2). Semua berkas tetap ada di riwayat Git.
+- Tidak ada perubahan perilaku runtime, strategi, atau flag live.
+
+## 2026-10-21 — penjaga konektivitas antar file
+
+- Audit jalur: 305 modul `katarina` ter-import tanpa error, dan semua import `katarina.*` di `scripts/`
+  serta `katarina_pc.py` mengarah ke modul/nama yang ada. Unit, static, integration, hygiene, dependency
+  links, dan release manifest lulus.
+- Tes statis baru `tests/static/test_module_connectivity.py` menjaga dua hal itu di Body CI (proses
+  terpisah, sekitar 1 detik), supaya pemindahan/penggantian nama berikutnya tidak memutus jalur diam-diam.
+- Tidak ada perubahan perilaku, strategi, Risk Governor, atau flag live.
+
 ## 2026-10-21 — persiapan pemisahan website (perapian tahap 7, belum selesai)
 
 - `scripts/deployment/export_website_repo.py` (+ tes) mengekspor berkas situs publik ke layout repo mandiri

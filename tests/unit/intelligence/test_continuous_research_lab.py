@@ -4,7 +4,8 @@ import sqlite3
 import tempfile
 import unittest
 from unittest.mock import patch
-from katarina.intelligence.lab.continuous_research_lab import select_batch, step, evaluate
+import random
+from katarina.intelligence.lab.continuous_research_lab import select_batch, step, evaluate, verdict
 from katarina.monitoring.research_lab_status import clean_lab_status
 
 class ResearchLabTests(unittest.TestCase):
@@ -37,6 +38,8 @@ class ResearchLabTests(unittest.TestCase):
         public=clean_lab_status(dict(result,private='SECRET',recent=['SECRET']))
         self.assertNotIn('SECRET',str(public));self.assertFalse(public['live_authorized'])
         self.assertFalse(result['recent'][0]['result']['independent_holdout'])
+        forged=dict(result,recent=[dict(result=dict(selected=dict(method='MOMENTUM',side='BUY'),verdict=dict(result='LIVE')))])
+        self.assertIsNone(clean_lab_status(forged)['results'][0]['verdict'])
 
     def test_future_prices_cannot_change_development_selection(self):
         rows=[(i*3600,100+i*.1,101+i*.1,99+i*.1,100.1+i*.1) for i in range(900)]
@@ -47,5 +50,32 @@ class ResearchLabTests(unittest.TestCase):
         b=evaluate(altered,.1)
         self.assertEqual([(x['method'],x['side'],x['development_n'],x['development_mean_r']) for x in a['candidates']],
                          [(x['method'],x['side'],x['development_n'],x['development_mean_r']) for x in b['candidates']])
+
+    @staticmethod
+    def walk(drift, seed, n=6000):
+        rng=random.Random(seed); price=100.0; rows=[]
+        for i in range(n):
+            o=price; price=max(1.0,price+drift+rng.gauss(0,.3))
+            rows.append((i*3600,o,max(o,price)+.05,min(o,price)-.05,price))
+        return rows
+
+    def test_precommitted_rule_rejects_driftless_walk(self):
+        for seed in range(5):
+            result=evaluate(self.walk(0.0,seed),.01)
+            self.assertEqual(result['verdict']['result'],'REJECTED',seed)
+            self.assertIsNone(result['verdict']['next_step'])
+        self.assertFalse(result['live_authorized'])
+
+    def test_precommitted_rule_passes_persistent_drift_only_for_demo(self):
+        result=evaluate(self.walk(.08,1),.01)
+        self.assertEqual(result['verdict']['result'],'PASSED_PRECOMMITTED_RULE')
+        self.assertEqual(result['verdict']['next_step'],'DEMO_FORWARD_TEST')
+        self.assertFalse(result['live_authorized'])
+
+    def test_review_must_agree_with_development(self):
+        base=dict(development_n=80,development_mean_r=.3,development_t=3.0,review_n=40,review_mean_r=-.1,review_t=-.5)
+        self.assertIn('review mean after cost not positive',verdict(base)['reasons'])
+        self.assertEqual(verdict(dict(base,review_mean_r=.3,review_t=2.0))['result'],'PASSED_PRECOMMITTED_RULE')
+        self.assertEqual(verdict(None)['result'],'INSUFFICIENT_SAMPLES')
 
 if __name__=='__main__':unittest.main()

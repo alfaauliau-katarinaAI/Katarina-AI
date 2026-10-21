@@ -90,7 +90,7 @@ class LabAndWorkerTests(unittest.TestCase):
 
     def test_lab_records_typical_spread_and_source(self):
         run, status = self.run_lab(Broker(quote_spread=.6))
-        self.assertEqual(run['version'], 'broker-lab-v2')
+        self.assertEqual(run['version'], 'broker-lab-v3')
         self.assertEqual(run['spread_source'], 'MEDIAN_H1_BAR_SPREAD')
         self.assertAlmostEqual(run['spread_proxy_price'], .02)
         self.assertAlmostEqual(run['current_quote_spread'], .6)
