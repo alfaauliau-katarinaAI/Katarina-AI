@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "record_type": "owner_strategy_and_risk_selection",
+  "recorded_date": "2026-10-21",
+  "strategy_selection_status": "FINAL_FOR_NOW_SUBJECT_TO_VALIDATION",
+  "strategies": [
+    "MARKET_STRUCTURE",
+    "SUPPLY_DEMAND",
+    "ELLIOTT_WAVE"
+  ],
+  "strategy_confluence_rules": "NOT_SPECIFIED_YET",
+  "entry_exit_invalidation_rules": "NOT_SPECIFIED_YET",
+  "risk_per_transaction": {
+    "basis": "PERCENT_OF_ACCOUNT_EQUITY",
+    "owner_requested_min_percent": 5,
+    "owner_requested_max_percent": 10,
+    "risk_selection_condition": "DEPENDS_ON_SUPPORTING_DATA",
+    "evidence_scoring_and_calibration": "NOT_DEFINED",
+    "effective_live_position_sizing": "DISABLED"
+  },
+  "governance_missing_inputs": [
+    "MAXIMUM_DAILY_LOSS_PERCENT",
+    "MAXIMUM_TOTAL_OPEN_RISK_PERCENT",
+    "EXPLICIT_STOP_LOSS_AND_INVALIDATION_RULE",
+    "DETERMINISTIC_EVIDENCE_BASED_RISK_SCORING",
+    "PROSPECTIVE_TICK_AND_BROKER_COST_EVIDENCE",
+    "STRESS_TEST_RESULTS",
+    "LIVE_BROKER_IDENTITY_AND_RISK_RECONCILIATION",
+    "OWNER_REVIEW_OF_HIGH_REQUESTED_RISK"
+  ],
+  "execution": {
+    "live_execution_authority": false,
+    "live_risk_ready": false,
+    "live_orders_allowed": false,
+    "disable_live_by_default": true,
+    "independent_risk_governor_required": true,
+    "emergency_stop_required": true,
+    "approval_gate": "NOT_CLEARED",
+    "deployment_effect": "RECORD_ONLY_NO_RUNTIME_WIRING"
+  },
+  "notes": [
+    "Risk 5-10% per transaction is the owner's requested testing range, not a recommendation or an implemented live setting.",
+    "Large risk per transaction can cause rapid losses; no strategy edge or confidence-to-risk mapping is yet evidenced.",
+    "Stage 38 intentionally continues to reject live authorization even when simulated prerequisites are true.",
+    "No broker orders, account permission changes, or production runtime modifications are introduced by this record."
+  ]
+}
