@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — pensiun `KatarinaAIBrain` lama (perapian tahap 2a, tanpa perubahan perilaku)
+
+- `intelligence/brain.py` beserta seluruh dependennya dipindah ke `archive/`: modul riset
+  `independent_audit`, `indicator_combinations`, `mt5_journal`, `loss_diagnostics`; CLI
+  `scripts/ai/validate_brain.py`, `validate_mt5_journal.py`; empat eksperimen zone/scalp/strategi
+  10 Oktober; delapan berkas tes; dua dokumen operasi yang menjelaskan CLI tersebut.
+  Tidak satu pun terjangkau dari entry point runtime atau workflow.
+- Satu tes integrasi brain dipisah dari `test_strategy_selector.py` ke arsip; tes selector lainnya tetap.
+- `multi_market_brain` dipertahankan: modul ini library fitur/screening yang dipakai 40+ berkas aktif.
+- Penelusur peta modul kini mengenali import nama polos lewat `sys.path`; manifest rilis dibuat ulang.
+
 ## 2026-10-21 — peta modul runtime (perapian tahap 1, tanpa perubahan perilaku)
 
 - `scripts/governance/runtime_import_map.py` menelusuri import secara statis dari entry point runtime,

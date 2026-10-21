@@ -460,16 +460,6 @@
       "normalized_sha256": "b3750b748e027dbe79230b69adde9c70fc9a582a4f50b62f2bf42aaf108f95da",
       "sha256": "b3750b748e027dbe79230b69adde9c70fc9a582a4f50b62f2bf42aaf108f95da"
     },
-    "scripts/ai/validate_brain.py": {
-      "bytes": 3805,
-      "normalized_sha256": "8e9d88872a2a52df2db7ece609f359261407e5e3893af085b018884d6ce343dd",
-      "sha256": "8e9d88872a2a52df2db7ece609f359261407e5e3893af085b018884d6ce343dd"
-    },
-    "scripts/ai/validate_mt5_journal.py": {
-      "bytes": 2958,
-      "normalized_sha256": "321b607299c86e6dcd76e8b6af164b0704a5cc43e99ef716657f4e27fb090d4d",
-      "sha256": "321b607299c86e6dcd76e8b6af164b0704a5cc43e99ef716657f4e27fb090d4d"
-    },
     "scripts/ai/verify_master_design_traceability.py": {
       "bytes": 6044,
       "normalized_sha256": "6ae23da453fc5c9fb52ab1c03cfd3b44bab1f7e5010fbf9b2067aa61e161e477",
@@ -1104,11 +1094,6 @@
       "bytes": 14543,
       "normalized_sha256": "3d5b811a79384b96b744686fa96e5183b01bbb92d0164aa6d91b1e0e8185e638",
       "sha256": "3d5b811a79384b96b744686fa96e5183b01bbb92d0164aa6d91b1e0e8185e638"
-    },
-    "src/katarina/intelligence/brain.py": {
-      "bytes": 12878,
-      "normalized_sha256": "304bd2f7d487efa2bdbea08b37ec74fac1ff5bc9a7657f41ca31d1ab49e6fd74",
-      "sha256": "304bd2f7d487efa2bdbea08b37ec74fac1ff5bc9a7657f41ca31d1ab49e6fd74"
     },
     "src/katarina/intelligence/brain_observer.py": {
       "bytes": 26568,
@@ -1799,26 +1784,6 @@
       "bytes": 13415,
       "normalized_sha256": "57f611e54e1d7620bb67cf00e1196d10d7ffa98b7e8f2ed0d3d221a51a05aa75",
       "sha256": "57f611e54e1d7620bb67cf00e1196d10d7ffa98b7e8f2ed0d3d221a51a05aa75"
-    },
-    "src/katarina/research/independent_audit.py": {
-      "bytes": 4531,
-      "normalized_sha256": "198c20eef6231b2ec9717c9a38eb0e310bc6809171f90844c0fe0f35adb00676",
-      "sha256": "198c20eef6231b2ec9717c9a38eb0e310bc6809171f90844c0fe0f35adb00676"
-    },
-    "src/katarina/research/indicator_combinations.py": {
-      "bytes": 8669,
-      "normalized_sha256": "389d5b55924ffcddf63b1fb94f7d1110e3bb4dbc23b00a44d2105eebeb467361",
-      "sha256": "389d5b55924ffcddf63b1fb94f7d1110e3bb4dbc23b00a44d2105eebeb467361"
-    },
-    "src/katarina/research/loss_diagnostics.py": {
-      "bytes": 5120,
-      "normalized_sha256": "809bddf74da6b536c151b8caceb8791087d71f3cb8e05232de2a4bc22c334ee9",
-      "sha256": "809bddf74da6b536c151b8caceb8791087d71f3cb8e05232de2a4bc22c334ee9"
-    },
-    "src/katarina/research/mt5_journal.py": {
-      "bytes": 5314,
-      "normalized_sha256": "fb375c469c9e29dd3a0f822e1182b74714f7f4d8bbdbdb9ffba75a9372aea983",
-      "sha256": "fb375c469c9e29dd3a0f822e1182b74714f7f4d8bbdbdb9ffba75a9372aea983"
     },
     "src/katarina/research/owner_structure_candidate.py": {
       "bytes": 4327,

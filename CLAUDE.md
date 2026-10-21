@@ -43,7 +43,7 @@ python scripts/governance/audit_repo_hygiene.py --repo-root . --output build/rep
 python scripts/governance/audit_dependency_links.py --repo-root . --output build/validation/dependency-links.json
 ```
 
-Hasil 21 Oktober 2026: unit 1.505 OK, static 113 OK (4 skip), integration 211 OK (3 skip),
+Hasil 21 Oktober 2026 (setelah Tahap 2a): unit 1.445 OK, static 113 OK (4 skip), integration 211 OK (3 skip),
 replay 11 OK, research 5 OK, hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah
@@ -69,14 +69,13 @@ tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLA
 | Tahap | Status |
 |---|---|
 | 1. Peta modul runtime | Selesai 21 Okt — `docs/maintenance/RUNTIME_MODULE_MAP.md` |
-| 2–8 | Belum dikerjakan |
+| 2. Pensiunkan otak lama | 2a selesai: `intelligence/brain.py` (`KatarinaAIBrain`) + dependennya diarsipkan. `multi_market_brain` = library screening (fitur/regime) yang dipakai 40+ berkas, dipertahankan. Tiga otak A diganti nama di Tahap 3 |
+| 3–8 | Belum dikerjakan |
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`
-(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil 21 Okt: A=214 runtime/workflow
-(40 di antaranya hanya lewat workflow), B=19 hanya tests, C=35 hanya script riset, D=2 paket kosong.
-Untuk Tahap 2: `intelligence.brain` dan `intelligence.multi_market_brain` berkategori C (tidak dipakai
-runtime, hanya riset/tests); `adaptive_brain_v2`, `market_decision_brain_v3`, `brain_observer` masih A.
+(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil setelah Tahap 2a: A=214, B=21, C=28, D=2 (paket kosong `domain`, `entrypoints`).
+`adaptive_brain_v2`, `market_decision_brain_v3`, `brain_observer` masih A (dipakai `unified_brain`).
 
 ## Riwayat perapian
 

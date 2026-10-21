@@ -9,6 +9,7 @@ pada saat diarsipkan (21 Oktober 2026). Isinya disimpan utuh sebagai jejak riset
 | `docs/research/outputs/` | Output riset 12 Oktober 2026 yang tidak dirujuk dokumen aktif |
 | `docs/research/` | Laporan riset bertanggal 10–13 Oktober 2026 yang sudah digantikan riset berikutnya |
 | `docs/validation/` | Bukti eksperimen JSON 10 Oktober 2026 (zone/scalp/router lama) yang tidak dirujuk |
+| `src/`, `tests/`, `scripts/ai/` | `KatarinaAIBrain` lama (`intelligence/brain.py`), modul riset yang hanya dipakainya, eksperimen zone/scalp 10 Okt, dan tes-tesnya (perapian Tahap 2a) |
 | `docs/handoff/`, `docs/maintenance/`, `docs/roadmap/` | Checkpoint, audit cleanup, dan rencana kerja 12–19 Oktober yang sudah lewat |
 
 Struktur folder mengikuti lokasi asal. Untuk memakai lagi sebuah berkas, pindahkan
