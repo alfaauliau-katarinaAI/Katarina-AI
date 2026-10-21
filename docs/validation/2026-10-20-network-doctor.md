@@ -1,0 +1,17 @@
+# Network doctor and durable research memory
+
+One owner-managed background worker checks operational file freshness, research thread liveness and periodic SQLite quick checks. It inserts missing sensor-recovery requests into the existing deduplicated queue; the canonical owner alone performs broker reads with existing backoff. It never sends orders, deletes evidence, rewrites its code, changes accounts, clears owner stop, or changes risk settings. Dead threads, stale connections and database faults are diagnosed/escalated rather than forcibly restarted.
+
+Each pass archives up to 100 immutable rows per source (trials, research reports, stress reviews, protected demo variants, demo policy reviews) into cognitive-memory.sqlite3. Persistent cursors and deterministic memory IDs survive restart/crash without duplicate evidence. Closed demo broker outcomes are copied idempotently into trade experiences; original databases and outcomes remain authoritative. Archiving old experiments is gradual, not an instant assertion of complete migration. No training of Gemini weights is claimed.
+
+On detected issues, Gemini receives only allowlisted operational issue codes and repair labels, at most once per 10 minutes with durable attempt budget. Its proposal is stored with executed=false; no generated commands execute. The same JSON dialog transport lock prevents concurrent unbounded API traffic. A healthy system does not call Gemini just to simulate activity.
+
+Doctor status is written to network-doctor.json and included in canonical continuous status. Actual memory/check events use existing activity trace. Public frontend exposure of all doctor fields is not added by this change. This monitors operational paths, not internal model neurons, and does not claim diagnosis of every possible fault.
+
+Recovery coexistence fix: explicit bound demo observation can recover missing market data while Algo Trading is ON; unbound/live mode remains rejected. Owner stop and account identity checks remain in force.
+
+Validation: four doctor tests cover idempotent archive/restart/outcomes, persisted Gemini budget and non-execution, owner stop, and deduplicated recovery requests. Six recovery tests include demo Algo ON versus live rejection. Nine continuous-observation regression tests cover owner lifecycle. Windows tests require explicit connection closing and floating timestamp tolerance; production evidence clocks are unchanged.
+
+Runtime evidence: owner PID 1860 loaded 14 background workers; doctor archived 367 records and detected pending data gaps. Owner subsequently became BLOCKED; the original exception was not captured and its cause is unconfirmed. Added redacted exception type/module/line to canonical status, then restarted normally as PID 2824. At 04:04:09 UTC the owner had two successful cycles, no fault diagnostic and 14 workers. Doctor completed a pass at 04:03:55 UTC with 303 additional archived records (670 total across both runs). This is recovery after restart, not proof that doctor independently repaired the unknown fault. SQLite checks, gap queue maintenance and Gemini requests run on different persisted schedules; a healthy pass does not certify all connections or eliminate previously pending gaps.
+
+Windows validation passed: 4 doctor tests, 6 recovery tests, 9 continuous-owner tests. Local 21 demo-forward regression tests passed. Existing database evidence preserved; no native demo orders were submitted during verification (Algo Trading OFF).

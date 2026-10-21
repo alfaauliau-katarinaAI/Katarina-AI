@@ -2,6 +2,7 @@
 from datetime import datetime,timedelta,timezone
 import http.client
 import json
+from pathlib import Path
 import tempfile
 import threading
 import unittest
@@ -113,3 +114,13 @@ class RuntimeMonitorTests(unittest.TestCase):
                 publish_once('unused',{**config,'service_origin':origin})
         with self.assertRaises(ValueError):
             publish_once('unused',{**config,'endpoint':'https://monitor.onrender.com/ingest'})
+
+class PublicationLatencyTests(unittest.TestCase):
+    def test_changed_events_are_coalesced_within_half_second(self):
+        from katarina.monitoring.monitor_publisher import _wait_for_publication
+        tick=[0.]
+        def clock(): return tick[0]
+        def sleep(value): tick[0]+=value
+        with patch('katarina.monitoring.monitor_publisher._source_version',return_value=('new',)):
+            _wait_for_publication('unused',('old',),0,10,sleep=sleep,clock=clock)
+        self.assertEqual(tick[0],.5)

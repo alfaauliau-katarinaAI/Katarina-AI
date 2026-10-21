@@ -88,6 +88,22 @@ class ContinuousObservationTests(unittest.TestCase):
         self.assertEqual(len(self.instances), 1)
         self.assertEqual(result['consecutive_failures'], 0)
 
+    def test_idle_terminal_connect_failure_retries_without_blocking_owner(self):
+        from types import SimpleNamespace
+        pool=SimpleNamespace(background_count=13,state={},model=None,close=lambda:None)
+        pool.start=lambda:pool
+        doctor=SimpleNamespace(state={},thread=SimpleNamespace(is_alive=lambda:False),close=lambda:None)
+        doctor.start=lambda:doctor
+        class OfflineSensor(Sensor):
+            def initialize(self):return False
+        with patch.dict('os.environ',{'KATARINA_ALL_MARKET_RESEARCH':'1'}), \
+             patch('katarina.intelligence.autonomous_research.ResearchPool',return_value=pool), \
+             patch('katarina.intelligence.network_doctor.NetworkDoctor',return_value=doctor):
+            result=run_continuous(self.root,config=CONFIG,brain_type=self.Brain,max_cycles=2,
+                factories={'local':lambda _:OfflineSensor()},wait=lambda _:None)
+        self.assertEqual(result['successful_cycles'],2)
+        self.assertNotEqual(result['status'],'BLOCKED')
+
     def test_identity_change_blocks_and_releases_lock_without_leaking_account(self):
         with patch.object(self.Brain, 'observe_connected_market',
                           side_effect=ConnectionUnavailable('ACCOUNT_LOGIN_MISMATCH')):
