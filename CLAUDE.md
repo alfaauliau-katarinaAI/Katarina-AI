@@ -1,8 +1,8 @@
 # CLAUDE.md — peta cepat repositori Katarina AI
 
 Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~1.400 berkas).
-Diperbarui 21 Oktober 2026. Status rinci: `docs/PROJECT_STATUS.md`, `CHANGELOG.md`,
-`docs/CURRENT_PROJECT_HANDOFF.md`.
+Diperbarui 21 Oktober 2026. Status rinci (satu sumber): `docs/PROJECT_STATUS.md`; perubahan di `CHANGELOG.md`;
+dan riwayat serah-terima di `archive/docs/`.
 
 ## Apa ini
 
@@ -74,7 +74,8 @@ tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLA
 | 4. Nama fungsi `body/stageNN` | Selesai: `body/stageNN.py` → nama fungsi (mis. `stage16` → `risk_governor`), manifest `implementation_module` diperbarui, nama file manifest tetap. Alias `katarina.body.stageNN` dipertahankan satu rilis lalu dihapus |
 | 5. Sederhanakan workflow | Selesai: 12 workflow `stage07-*` → `stage07-transport.yml`, 4 workflow stage06/08/09 → `stage06-09-clearance.yml` (pemicu manual, tidak digabung ke Body CI karena pemicunya beda). Lima workflow riset lama tanpa run 30 hari (v9, v10, tournament, replay, frozen-xau) → `archive/.github/workflows/` |
 | 6. Logika script ke `src` | Selesai: `verify_unified_katarina` → `katarina.governance.unified_verification`, `audit_self_evolution_runner` → `katarina.governance.self_evolution_audit`; script tinggal CLI tipis. Dikecualikan: `hf_archive_sync.py` (layanan mandiri stdlib, dimuat lewat path dari venv HF terpisah, systemd, installer), `mt5_shadow_lab.py` (sudah CLI argparse yang mendelegasikan ke `src`). `scripts/research` tidak diubah logikanya; 3 script dari workflow riset yang diarsipkan ikut diarsipkan |
-| 7–8 | Belum dikerjakan |
+| 7. Website ke repo sendiri | Dikerjakan setelah Tahap 8 (butuh langkah Owner di Cloudflare) |
+| 8. Satu sumber status | Selesai: `docs/PROJECT_STATUS.md` ditulis ulang sebagai satu-satunya status; README hanya ringkas + tautan; status 16 Okt, `CURRENT_PROJECT_HANDOFF.md`, handoff 10/13 Okt, snapshot 11 Okt → `archive/docs/` |
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`

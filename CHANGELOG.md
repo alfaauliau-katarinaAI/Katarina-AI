@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — satu sumber status (perapian tahap 8)
+
+- `docs/PROJECT_STATUS.md` ditulis ulang sebagai satu-satunya dokumen status (per 21 Oktober, mencakup
+  perubahan 17–21 Oktober). README tinggal ringkasan dan tautan; bagian bertanggal 16 Oktober yang
+  menduplikasi dokumen arsitektur dihapus dari README.
+- Diarsipkan ke `archive/docs/`: status 16 Oktober, `CURRENT_PROJECT_HANDOFF.md`, handoff 10 dan 13 Oktober,
+  dan snapshot status GitHub-first 11 Oktober.
+
 ## 2026-10-21 — logika verifier dipindah ke `src` (perapian tahap 6, tanpa perubahan perilaku)
 
 - `scripts/ai/verify_unified_katarina.py` → `katarina.governance.unified_verification` dan
