@@ -5,7 +5,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from katarina.engines.adaptive_risk import AdaptiveRiskProfile
-from katarina.engines.risk import RiskGovernor, RiskRequest, RiskAction, OwnerDrawdownTracker, DrawdownMode
+from katarina.engines.risk import RiskGovernor, RiskRequest, RiskAction, OwnerDrawdownTracker, DrawdownMode, DrawdownAuthority
 from katarina.engines.account_risk_state import AccountRiskCoordinator, AccountRiskStateEngine
 from katarina.engines.manual_risk import SharedAccountRiskEngine
 from katarina.engines.sizing import PositionSizingEngine
