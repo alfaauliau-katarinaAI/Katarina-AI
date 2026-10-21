@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — rampingkan repo (A): pensiunkan tooling VPS lama
+
+- Dihapus: agent/remote-lab VPS lama (`scripts/vps`, `scripts/vps2012`, `ops/vps`, `ops/github-vps`,
+  `ops/bridge`, `vps_bridge`, `scripts/windows`), tiga workflow self-hosted VPS, tiga launcher `VPS_*.bat`,
+  `config/vps_remote_lab_policy.json`, dokumen dan tes khususnya. Akses VPS kini lewat Desktop Commander;
+  runtime VPS memakai `katarina_pc.py` + observer canonical dari checkout `main`.
+- Body CI tidak lagi menjalankan audit rilis VPS lama. Tidak ada perubahan otak, risiko, atau observer; LIVE tetap OFF.
+
 ## 2026-10-22 — guarded branch cleanup: daftar branch usang yang sudah ditinjau
 
 - `scripts/governance/guarded_branch_cleanup.py` kini juga menerima branch yang tercatat di

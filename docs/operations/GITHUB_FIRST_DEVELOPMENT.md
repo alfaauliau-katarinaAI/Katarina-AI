@@ -38,7 +38,6 @@ Before dispatching VPS work, record:
 | Expected evidence | Timestamped results and applicable log/artifact IDs |
 | Rollback | How to leave the host in the original safe state |
 
-**Self-hosted workflow safety:** `katarina-vps-lab.yml` and `katarina-vps-low-memory-rescue.yml` are manual-dispatch-only and restricted to `main`. Repository pushes must not launch self-hosted VPS jobs. The legacy outbound polling service, if already running, is a separate mechanism and must not receive fresh requests without this escalation gate.
 
 ## Public repository hygiene
 

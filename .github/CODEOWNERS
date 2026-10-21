@@ -44,9 +44,4 @@
 /docs/reviews/STAGE_07_INITIAL_IMPLEMENTATION_CHECK.md @alfaauliau-katarinaAI
 /docs/architecture/KATARINA_MT5_PYTHON_COMMUNICATION_DRAFT.md @alfaauliau-katarinaAI
 /docs/adr/0009-stage07-live-communication-topology.md @alfaauliau-katarinaAI
-/config/vps_remote_lab_policy.json @alfaauliau-katarinaAI
-/scripts/vps/ @alfaauliau-katarinaAI
-/ops/vps/ @alfaauliau-katarinaAI
-/docs/operations/KATARINA_VPS_REMOTE_LAB.md @alfaauliau-katarinaAI
-/.github/workflows/katarina-vps-lab.yml @alfaauliau-katarinaAI
 /tests/static/test_vps_remote_lab.py @alfaauliau-katarinaAI

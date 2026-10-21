@@ -20,7 +20,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 | `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical), demo worker, HF archive sync, publisher monitor. `install_*_test*.py` = patch berpayload untuk VPS uji (tercatat di release manifest) |
 | `scripts/research/` | Skrip riset/backtest aktif (dirujuk workflow/dokumen) |
 | `scripts/governance/` | Audit CI: hygiene, dependency links, constitution guard, branch inventory |
-| `scripts/vps/`, `scripts/vps2012/`, `ops/vps/` | Tooling VPS Windows (PowerShell); `scripts/vps/legacy/` masih dipakai tugas recovery |
+| VPS (Windows Server 2012 R2) | Diakses lewat Desktop Commander. Runtime: `C:\\Katarina\\code` (checkout `main`), Python 3.12 di `C:\\Katarina\\python312`, peluncur observer `C:\\Katarina\\run-observer.ps1`. Tooling VPS lama dihapus 22 Okt |
 | `scripts/pc/`, `scripts/deployment/` | Environment privat PC, redeploy + `release_manifest.py` |
 | `mt5/` | EA dan include MQL5 (`Experts/`, `Include/`, `Tests/`) |
 | `config/` | Konfigurasi JSON (dimuat lewat nama dinamis; `config/stages/stageNN.json` dibaca per nomor) — jangan hapus walau tampak tak dirujuk |
@@ -29,7 +29,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 | `sites/runtime-monitor/`, `functions/api/`, `oauth_gateway/`, `services/` | Worker monitor runtime, API Pages, gateway OAuth, relay monitor |
 | `docs/` | `architecture/` + `adr/` (kontrak desain, dilindungi CODEOWNERS), `operations/`, `research/`, `validation/` (bukti bertanggal), `reviews/` (freeze record stage 02–09), `deployment/` |
 | `tests/` | `unit/` (~1.500), `static/` (115, termasuk `test_module_connectivity.py` yang memastikan semua modul dan import script tersambung), `integration/` (~210), `replay/` dan `research/` (tidak dijalankan Body CI) |
-| `.github/workflows/` | 20 workflow. Otomatis hanya `katarina-body-ci.yml` (push/PR; check wajib branch protection berasal dari sini — jangan ganti nama job-nya), `katarina-hotnews.yml` (jadwal), `stage35-tester-safety.yml` (path filter). Sisanya manual (`workflow_dispatch`); `stage07-transport.yml` dan `stage06-09-clearance.yml` memilih job lewat input `check` |
+| `.github/workflows/` | 17 workflow. Otomatis hanya `katarina-body-ci.yml` (push/PR; check wajib branch protection berasal dari sini — jangan ganti nama job-nya), `katarina-hotnews.yml` (jadwal), `stage35-tester-safety.yml` (path filter). Sisanya manual (`workflow_dispatch`); `stage07-transport.yml` dan `stage06-09-clearance.yml` memilih job lewat input `check` |
 
 ## Menjalankan pengecekan (sama dengan Body CI)
 
@@ -97,3 +97,4 @@ dipatok) sengaja masih memakai path lama.
   `CLAUDE.md` ini ditambahkan.
 - 22 Okt: tujuh branch usang dicatat di `docs/maintenance/BRANCH_ARCHIVE_20261022.md` untuk dihapus;
   yang tersisa hanya `main` dan `claude-vps-bridge`.
+- 22 Okt (rampingkan A): tooling VPS lama (agent remote, runner self-hosted, BAT, workflow, dokumen, tes) dihapus.

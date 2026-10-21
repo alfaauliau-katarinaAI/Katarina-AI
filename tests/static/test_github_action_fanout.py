@@ -63,15 +63,11 @@ class TestActionRequestFanout(unittest.TestCase):
         for hook in ("katarina_team.py", "katarina_flow_v2.py", "management_acceptance.py", "team-v2-smoke", "team-smoke"):
             self.assertNotIn(hook,main)
 
-    def test_native_tester_has_pr_scoped_and_manual_vps_only(self):
+    def test_native_tester_is_pr_scoped(self):
         st=(WORKFLOWS/"stage35-tester-safety.yml").read_text()
         on=st.split("on:",1)[1].split("permissions:",1)[0]
         self.assertIn("  pull_request:\n    paths:",on)
         self.assertIn("  push:\n    branches: [main]\n    paths:",on)
-        for workflow in ("katarina-vps-lab.yml","katarina-vps-low-memory-rescue.yml"):
-            source=(WORKFLOWS/workflow).read_text()
-            self.assertEqual(events(source),{"workflow_dispatch"})
-            self.assertIn("if: github.ref == 'refs/heads/main'",source)
 
 if __name__=="__main__":
     unittest.main()
