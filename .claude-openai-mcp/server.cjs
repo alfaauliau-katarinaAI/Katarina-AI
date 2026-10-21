@@ -1,13 +1,21 @@
 'use strict';
 const express = require('express');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+if (!globalThis.crypto) globalThis.crypto = crypto.webcrypto;
 const {McpServer} = require('@modelcontextprotocol/sdk/server/mcp.js');
 const {StreamableHTTPServerTransport} = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const {z} = require('zod');
 
-const PORT = Number(process.env.PORT || 10000);
-const CONNECTOR_KEY = (process.env.CONNECTOR_KEY || '').trim();
-const OPENAI_API_KEY = (process.env.OPENAI_API_KEY || '').trim();
+const PORT = Number(process.env.PORT || 47832);
+const HOST = process.env.MCP_BIND_HOST || '127.0.0.1';
+function secret(name) {
+  if (process.env[name]) return process.env[name].trim();
+  const file = process.env[name+'_FILE'];
+  return file ? fs.readFileSync(file,'utf8').trim() : '';
+}
+const CONNECTOR_KEY = secret('CONNECTOR_KEY');
+const OPENAI_API_KEY = secret('OPENAI_API_KEY');
 const OPENAI_MODEL = (process.env.OPENAI_MODEL || 'gpt-5-mini').trim();
 if (!/^[a-fA-F0-9]{64}$/.test(CONNECTOR_KEY)) {
   console.error('STARTUP_ERROR: CONNECTOR_KEY must be a random 64-character hex secret');
@@ -122,4 +130,4 @@ app.post('/mcp',async(req,res)=>{
 app.get('/mcp',(req,res)=>res.status(405).set('Allow','POST').end());
 app.delete('/mcp',(req,res)=>res.status(405).set('Allow','POST').end());
 app.all('*',(req,res)=>res.status(404).end());
-app.listen(PORT,'0.0.0.0',()=>console.log('MCP connector running on configured port'));
+app.listen(PORT,HOST,()=>console.log('MCP connector running on configured port'));
