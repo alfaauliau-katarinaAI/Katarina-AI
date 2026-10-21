@@ -87,7 +87,7 @@ def main() -> None:
             module=module,
             reference_doc=data["reference_doc"],
         )
-        target = ROOT / "src" / "katarina" / "body" / f"stage{stage:02d}.py"
+        target = ROOT / "src" / "katarina" / "body" / f"{module.rsplit('.', 1)[1]}.py"
         target.write_text(content, encoding="utf-8")
         data["functional_body_kernel"] = base
         data["functional_body_complete"] = True

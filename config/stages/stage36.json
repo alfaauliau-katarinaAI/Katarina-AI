@@ -9,7 +9,7 @@
   "authority": "governance",
   "policy_pending": false,
   "windows_required": true,
-  "implementation_module": "katarina.body.stage36",
+  "implementation_module": "katarina.body.live_preflight",
   "reference_doc": "docs/research/stages/STAGE_36_GITHUB_REFERENCES.md",
   "status": "body_framework_complete",
   "live_risk_ready": false,

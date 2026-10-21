@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import unittest
 
+from katarina.body import STAGE_MODULES
 from katarina.body.functional import (
     BacktestEvent,
     EconomicObservation,
@@ -24,9 +25,7 @@ from katarina.body.functional import (
 
 
 def component(stage: int):
-    return importlib.import_module(
-        f"katarina.body.stage{stage:02d}"
-    ).Component()
+    return importlib.import_module(STAGE_MODULES[stage]).Component()
 
 
 class MarketBrainBodyTests(unittest.TestCase):

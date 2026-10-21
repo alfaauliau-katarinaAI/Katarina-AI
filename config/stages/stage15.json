@@ -7,7 +7,7 @@
   "authority": "advisory",
   "policy_pending": true,
   "windows_required": false,
-  "implementation_module": "katarina.body.stage15",
+  "implementation_module": "katarina.body.decision",
   "reference_doc": "docs/research/stages/STAGE_15_GITHUB_REFERENCES.md",
   "status": "body_framework_complete",
   "live_risk_ready": false,

@@ -10,7 +10,7 @@
   "authority": "governance",
   "policy_pending": true,
   "windows_required": true,
-  "implementation_module": "katarina.body.stage38",
+  "implementation_module": "katarina.body.live_micro_risk",
   "reference_doc": "docs/research/stages/STAGE_38_GITHUB_REFERENCES.md",
   "status": "body_framework_complete",
   "live_risk_ready": false,

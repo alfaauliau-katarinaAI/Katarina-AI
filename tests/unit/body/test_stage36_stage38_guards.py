@@ -3,13 +3,12 @@ from __future__ import annotations
 import importlib
 import unittest
 
+from katarina.body import STAGE_MODULES
 from katarina.body.functional import LivePreflightCheck
 
 
 def component(stage: int):
-    return importlib.import_module(
-        f"katarina.body.stage{stage:02d}"
-    ).Component()
+    return importlib.import_module(STAGE_MODULES[stage]).Component()
 
 
 class Stage36LivePreflightGuardTests(unittest.TestCase):
