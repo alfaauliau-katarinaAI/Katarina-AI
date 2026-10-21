@@ -70,12 +70,12 @@ tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLA
 |---|---|
 | 1. Peta modul runtime | Selesai 21 Okt — `docs/maintenance/RUNTIME_MODULE_MAP.md` |
 | 2. Pensiunkan otak lama | Selesai: `intelligence/brain.py` (`KatarinaAIBrain`) + dependennya diarsipkan (2a); otak berversi diganti nama kemampuan di Tahap 3 |
-| 3. Subpaket `intelligence/` | 3a: modul dipindah, semua rujukan aktif diganti, shim `sys.modules` + `DeprecationWarning` di lokasi lama. 3b (PR berikutnya): shim dihapus |
+| 3. Subpaket `intelligence/` | Selesai: modul dipindah dan semua rujukan aktif diganti (3a); shim lokasi lama dihapus (3b). Import `katarina.intelligence.<nama_lama>` kini gagal — pakai path subpaket |
 | 4–8 | Belum dikerjakan |
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`
-(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil setelah Tahap 2a: A=214, B=21, C=28, D=2 (paket kosong `domain`, `entrypoints`).
+(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil setelah Tahap 3: A=222, B=21, C=28, D=2 (paket kosong `domain`, `entrypoints`).
 Nama baru bekas otak berversi: `brain_observer` → `cognition/observer`, `market_decision_brain_v3` →
 `cognition/market_decision`, `adaptive_brain_v2` → `cognition/adaptive_observation`, `multi_market_brain` →
 `perception/screening`. Modul lain di `intelligence/` mempertahankan nama berkasnya di subpaket barunya.
