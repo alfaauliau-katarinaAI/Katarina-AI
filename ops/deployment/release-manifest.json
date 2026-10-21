@@ -971,9 +971,9 @@
       "sha256": "084419150d23a92518709466775a989f53fe33bea11c841422b0128d1ef7de68"
     },
     "src/katarina/intelligence/lab/evidence_risk.py": {
-      "bytes": 8964,
-      "normalized_sha256": "8704e897b167e0075615066958f481e8b0e122785c13c01639950a6df6ec2668",
-      "sha256": "8704e897b167e0075615066958f481e8b0e122785c13c01639950a6df6ec2668"
+      "bytes": 9048,
+      "normalized_sha256": "bfc31c6d5319b2423e452dee2adf8865bbe965d04f4961c87b2b530a9755300c",
+      "sha256": "bfc31c6d5319b2423e452dee2adf8865bbe965d04f4961c87b2b530a9755300c"
     },
     "src/katarina/intelligence/lab/offline_hand_telemetry.py": {
       "bytes": 7316,

@@ -17,7 +17,7 @@ Fokus KATARINA AI adalah menghadirkan pengalaman analisis yang praktis, terukur,
 ## Status
 
 **Development Preview / research-only. Live trading belum diaktifkan.** Edge strategi belum terbukti;
-DEMO forward dan riset berjalan di VPS uji.
+observer read-only di VPS uji sedang disiapkan ulang (menunggu login akun demo), DEMO forward belum berjalan.
 
 [**Status lengkap**](docs/PROJECT_STATUS.md) ·
 [**Perubahan**](CHANGELOG.md) ·

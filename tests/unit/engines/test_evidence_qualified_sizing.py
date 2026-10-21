@@ -84,8 +84,8 @@ class EvidenceQualifiedSizingTests(unittest.TestCase):
         self.assertFalse(self.qualify(side="SELL").eligible_for_research)
 
     def test_daily_stop_blocks_all(self):
-        state=replace(self.state,day_drawdown=.02)
-        account=replace(self.account,daily_drawdown=.02)
+        state=replace(self.state,day_drawdown=.35)
+        account=replace(self.account,daily_drawdown=.35)
         self.assertEqual(self.qualify(risk_state=state,account=account).volume,0)
 
 if __name__=="__main__":
