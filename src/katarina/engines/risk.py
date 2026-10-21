@@ -201,18 +201,18 @@ class RiskGovernor:
         if (isinstance(a,DrawdownAuthority)
                 and a.mode is DrawdownMode.EMERGENCY_LOCKDOWN):
             return RiskDecision(RiskAction.PAUSE,0.0,"emergency_drawdown_lock")
-        verified=(isinstance(a,DrawdownAuthority) and a.verified
-                  and bool(r.trading_day_key) and a.day_key==r.trading_day_key
-                  and abs(a.drawdown_fraction-r.drawdown_fraction)<1e-8)
-        owner_exception=(verified and a.mode is DrawdownMode.EXTREME_SURVIVAL
-                         and a.owner_caused and r.entry_kind=="EXTREME_RECOVERY")
+        # Owner's latest policy: 35% stops ALL new exposure, regardless of
+        # whether losses were caused by manual trades or Katarina.
+        # This is the new-entry governor; existing position management
+        # remains a separate risk-reducing pathway.
         if (r.daily_drawdown_fraction>=self.max_daily_drawdown
-                or r.drawdown_fraction>=self.max_drawdown) and not owner_exception:
+                or r.drawdown_fraction>=self.max_drawdown):
             return RiskDecision(RiskAction.PAUSE,0.0,"emergency_drawdown_lock")
         if .23<=r.drawdown_fraction<.35 and r.entry_kind!="RECOVERY_FACTOR":
             return RiskDecision(RiskAction.REJECT,0.0,"recovery_factor_entry_only")
-        if r.entry_kind=="EXTREME_RECOVERY" and not owner_exception:
-            return RiskDecision(RiskAction.REJECT,0.0,"owner_causation_not_verified")
+        # Never unlock NEW entries through an owner-origin drawdown exception.
+        if r.entry_kind=="EXTREME_RECOVERY":
+            return RiskDecision(RiskAction.PAUSE,0.0,"owner_daily_stop_no_extreme_entry")
         if r.entry_kind=="RECOVERY_FACTOR" and r.drawdown_fraction<.23:
             return RiskDecision(RiskAction.REJECT,0.0,"recovery_factor_not_active")
         if r.expected_rr <= 0 or r.uncertainty >= 0.75:
