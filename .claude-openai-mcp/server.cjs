@@ -62,7 +62,7 @@ function makeServer() {
       context:z.string().max(16000).optional().describe('Optional supporting context, sanitized code or test output. Do not send secrets.'),
     },
     async({question,context})=>{
-      if (!OPENAI_API_KEY) return result('OPENAI_API_KEY_NOT_CONFIGURED: The owner must add OPENAI_API_KEY in Render environment settings.',true);
+      if (!OPENAI_API_KEY) return result('OPENAI_API_KEY_NOT_CONFIGURED: Configure OPENAI_API_KEY or OPENAI_API_KEY_FILE privately on the server and restart the connector.',true);
       const now=Date.now();
       while (recentCalls.length && now-recentCalls[0]>60000) recentCalls.shift();
       if (active>=2 || recentCalls.length>=8) return result('RATE_LIMITED: Try again shortly.',true);
