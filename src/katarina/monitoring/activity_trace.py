@@ -12,7 +12,16 @@ PHASES = frozenset(('STARTING','CONNECT','NEWS','SENSORS','TECHNICAL','MEMORY',
                    'RISK_AUDIT','WAIT_ACK','PUBLISH','WAITING','DEGRADED','STOPPED','BLOCKED',
                    'SETTLE','CHECKPOINT','LEARNING_REVIEW','RESEARCH','MEMORY_WRITE','RECALL','ASSOCIATION','HISTORY','EXPERIMENT','HEARTBEAT','TEST_MOMENTUM','TEST_REVERSION','TEST_BREAKOUT','VALIDATE','GEMINI')) | RESEARCH_PHASES
 STATES = frozenset(('STARTED','DONE','FAILED','IDLE'))
-FIELDS = ('symbol','method','market_state','action')
+FIELDS = ('symbol','method','market_state','action','error')
+
+
+def error_code(exc):
+    """Short public failure class; never the message text, paths or account data."""
+    name=type(exc).__name__
+    text=str(exc).lower()
+    if 'locked' in text:return name+':locked'
+    if 'busy' in text:return name+':busy'
+    return name
 
 def clean_activity(value, *, now=None):
     now = now or datetime.now(timezone.utc)

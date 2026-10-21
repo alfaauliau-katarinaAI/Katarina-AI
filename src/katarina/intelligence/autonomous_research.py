@@ -6,6 +6,8 @@ from itertools import product
 import json
 from pathlib import Path
 import os
+from katarina.monitoring.activity_trace import error_code
+from katarina.intelligence.research_capacity import DB_TIMEOUT
 from katarina.monitoring.snapshot_io import replace_snapshot
 import sqlite3
 import threading
@@ -13,6 +15,8 @@ import zlib
 
 GRID = tuple(product(('MOMENTUM','MEAN_REVERSION','BREAKOUT'), (1,-1), (12,24,48), (4,12,24), (.5,1.,1.5)))
 VERSION = 'cached-entry-grid-v1'
+# Report publishing runs heavy queries under the shared write lock; keep it sparse.
+REPORT_INTERVAL_SECONDS = 30
 
 
 def preserve_dataset(db, digest, rows):
@@ -103,7 +107,7 @@ class ResearchWorker:
         if capacity['status']!='READY':
             self.state['status']=capacity['status'];return False
         target=self.root/'experiment-jobs.sqlite3'
-        with closing(sqlite3.connect(target,timeout=2)) as jobs:
+        with closing(sqlite3.connect(target,timeout=DB_TIMEOUT)) as jobs:
             jobs.execute('CREATE TABLE IF NOT EXISTS trials(id TEXT PRIMARY KEY,symbol TEXT,digest TEXT,created_utc TEXT,result_json TEXT)')
             jobs.execute("CREATE INDEX IF NOT EXISTS trials_role ON trials(json_extract(result_json,'$.method'),json_extract(result_json,'$.horizon'))")
             # A separate read-only connection; canonical observer retains exclusive broker ownership.
@@ -133,12 +137,15 @@ class ResearchWorker:
                         try:
                             result=evaluate(rows,config,spread)
                             result["spread_proxy_price"]=spread
+                            # Two short write transactions instead of one long one.
                             with jobs:
                                 preserve_dataset(jobs,digest,rows)
-                                result['dataset_preserved']=True
+                            result['dataset_preserved']=True
+                            with jobs:
                                 jobs.execute('INSERT OR IGNORE INTO trials VALUES(?,?,?,?,?)',(ident,symbol,digest,datetime.now(timezone.utc).isoformat(),json.dumps(result,allow_nan=False)))
-                        except Exception:
-                            self.trace.emit(self.phase,'FAILED',action='AUTONOMOUS_CACHED_RESEARCH',symbol=symbol)
+                        except Exception as exc:
+                            self.state['last_error']=error_code(exc)
+                            self.trace.emit(self.phase,'FAILED',action='AUTONOMOUS_CACHED_RESEARCH',symbol=symbol,error=error_code(exc))
                             raise
                         self.trace.emit(self.phase,'DONE',action='AUTONOMOUS_CACHED_RESEARCH',method=config[0],symbol=symbol,count=1)
                         self.state.update(status='EXPERIMENT_COMPLETED',completed=role_done+1)
@@ -204,7 +211,7 @@ class ResearchPool:
             state['status']=capacity['status'];return False
         phase="VALIDATE" if level==2 else "VALIDATE3"
         prefix="" if level==2 else "COST3:"
-        with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=2)) as db:
+        with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=DB_TIMEOUT)) as db:
             db.execute('CREATE TABLE IF NOT EXISTS stress_reviews(trial_id TEXT PRIMARY KEY,created_utc TEXT,result_json TEXT)')
             if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='trials'").fetchone():return False
             frozen=db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='research_datasets'").fetchone()
@@ -232,7 +239,7 @@ class ResearchPool:
         """Retry a failed legacy review only when its exact original dataset exists."""
         from katarina.intelligence.research_capacity import research_capacity
         if research_capacity(self.root)['status']!='READY':return False
-        with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=2)) as db:
+        with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=DB_TIMEOUT)) as db:
             db.execute('CREATE TABLE IF NOT EXISTS research_repairs(id TEXT PRIMARY KEY,created_utc TEXT,result_json TEXT)')
             if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='research_datasets'").fetchone():return False
             row=db.execute("SELECT s.trial_id,t.digest,t.result_json FROM stress_reviews s JOIN trials t ON t.id=CASE WHEN s.trial_id LIKE 'COST3:%' THEN substr(s.trial_id,7) ELSE s.trial_id END JOIN research_datasets d ON d.digest=t.digest WHERE json_extract(s.result_json,'$.status')='DATASET_CHANGED_REVIEW_UNAVAILABLE' AND json_extract(t.result_json,'$.status')='NEEDS_FORWARD_VALIDATION' ORDER BY s.created_utc LIMIT 1").fetchone()
@@ -251,9 +258,9 @@ class ResearchPool:
     def review_loop(self,level=2):
         while not self.stop.is_set():
             try:worked=self.review_one(level)
-            except Exception:
-                self.review_states[level]['status']='RETRY_PENDING'
-                self.trace.emit('VALIDATE' if level==2 else 'VALIDATE3','FAILED',action='RETRY_PENDING');worked=False
+            except Exception as exc:
+                self.review_states[level].update(status='RETRY_PENDING',last_error=error_code(exc))
+                self.trace.emit('VALIDATE' if level==2 else 'VALIDATE3','FAILED',action='RETRY_PENDING',error=error_code(exc));worked=False
             self._publish_role('VALIDATE' if level==2 else 'VALIDATE3',self.review_states[level])
             self.stop.wait(15 if worked else 30)
 
@@ -272,7 +279,7 @@ class ResearchPool:
         target.write_text(json.dumps({'attempt_utc':stamp,'status':'STARTED'})+'\n')
         self.trace.emit('GEMINI','STARTED',action='PUBLIC_PATTERN_HYPOTHESES')
         try:
-            with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=2)) as db:
+            with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=DB_TIMEOUT)) as db:
                 db.execute('CREATE TABLE IF NOT EXISTS gemini_hypotheses(created_utc TEXT PRIMARY KEY,result_json TEXT)')
                 previous=db.execute('SELECT result_json FROM gemini_hypotheses ORDER BY created_utc DESC LIMIT 2').fetchall()
             topics=('pullback','liquidity sweep','breakout','trend continuation','range rejection','failed breakout')
@@ -280,14 +287,14 @@ class ResearchPool:
             context=' Focus: '+topic+'. Avoid repeating these previous public hypotheses: '+json.dumps(previous)[:6000]
             reply=self.model.complete([{'role':'system','content':'You are a market research hypothesis writer. Return valid JSON only, at most 150 words. Do not provide orders, code, instrument-specific advice or claim validation.'},{'role':'user','content':'Propose ONE falsifiable entry-pattern hypothesis. Return exactly six short string fields: pattern, signal_definition, invalidation, required_data, failure_mode, validation_plan. Distinguish assumptions from evidence. This is research only.'+context}],mode='fast')
             target.write_text(json.dumps({'attempt_utc':stamp,'status':'HYPOTHESES_ONLY','hypotheses':reply,'live_authorized':False},allow_nan=False)+'\n')
-            with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=2)) as db, db:
+            with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=DB_TIMEOUT)) as db, db:
                 db.execute('INSERT OR IGNORE INTO gemini_hypotheses VALUES(?,?)',(stamp,json.dumps(reply,allow_nan=False)))
             self.model_state.update(status='HYPOTHESES_SAVED' ,**self.model.telemetry())
             self.trace.emit('GEMINI','DONE',action='HYPOTHESES_REQUIRE_IMPLEMENTATION_AND_TESTS')
-        except Exception:
-            self.model_state.update(status='RETRY_AFTER_COOLDOWN',**self.model.telemetry())
+        except Exception as exc:
+            self.model_state.update(status='RETRY_AFTER_COOLDOWN',last_error=error_code(exc),**self.model.telemetry())
             target.write_text(json.dumps({'attempt_utc':stamp,'status':'RETRY_AFTER_COOLDOWN','live_authorized':False})+'\n')
-            self.trace.emit('GEMINI','FAILED',action='RETRY_AFTER_COOLDOWN')
+            self.trace.emit('GEMINI','FAILED',action='RETRY_AFTER_COOLDOWN',error=error_code(exc))
         return True
 
     def model_loop(self):
@@ -305,15 +312,15 @@ class ResearchPool:
                 if time.monotonic()>=next_repair:
                     next_repair=time.monotonic()+30
                     try:self.repair_one()
-                    except Exception:
-                        self.trace.emit('LEARNING_REVIEW','FAILED',action='REPAIR_RETRY_PENDING')
+                    except Exception as exc:
+                        self.trace.emit('LEARNING_REVIEW','FAILED',action='REPAIR_RETRY_PENDING',error=error_code(exc))
                 if time.monotonic()>=next_reports:
-                    next_reports=time.monotonic()+3
+                    next_reports=time.monotonic()+REPORT_INTERVAL_SECONDS
                     try:
                         from katarina.intelligence.research_reports import publish_reports
                         publish_reports(self.root,self.trace)
-                    except Exception:self.trace.emit('REPORT','FAILED',action='REPORT_RETRY_PENDING')
-                with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=2)) as db:
+                    except Exception as exc:self.trace.emit('REPORT','FAILED',action='REPORT_RETRY_PENDING',error=error_code(exc))
+                with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=DB_TIMEOUT)) as db:
                     count=db.execute('SELECT COUNT(*) FROM trials').fetchone()[0]
                     reviews=db.execute('SELECT COUNT(*) FROM stress_reviews').fetchone()[0]
                 self.state.update(status='RUNNING',completed=count,stress_reviews=reviews,background_workers=self.background_count,

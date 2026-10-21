@@ -7,6 +7,9 @@ MIN_FREE = 2 * 1024**3
 # The independent free-space guard still applies to every research write.
 MAX_DATABASE = 768 * 1024**2
 WRITE_RESERVE = 8 * 1024**2
+# Writers share one SQLite file: wait for the single write lock instead of failing
+# after 2 s. Stays below worker stop timeouts (15 s) so shutdown remains bounded.
+DB_TIMEOUT = 10
 
 
 def research_capacity(root, *, disk_usage=shutil.disk_usage):
