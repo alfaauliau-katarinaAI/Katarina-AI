@@ -216,7 +216,7 @@ class DemoExecutionBoundary:
             if reason:return {'status':reason,'opened':0,'closed':0}
             b=self.broker;opened=closed=0
             with closing(self._db()) as db:
-                rows=db.execute("SELECT intent_id,state,updated_at,broker_deal,intent_json,position_id FROM demo_outbox WHERE state IN ('RESERVED','SUBMITTING','UNKNOWN','ACCEPTED','PARTIAL','OPEN') ORDER BY updated_at LIMIT 64").fetchall()
+                rows=db.execute("SELECT intent_id,state,updated_at,broker_deal,intent_json,position_id FROM demo_outbox WHERE state IN ('RESERVED','SUBMITTING','UNKNOWN','ACCEPTED','PARTIAL','OPEN','PROTECTION_REVIEW') ORDER BY updated_at LIMIT 64").fetchall()
                 for ident,state,at,deal_id,raw,position_id in rows:
                     if not raw:continue
                     intent=json.loads(raw)
