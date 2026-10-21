@@ -14,28 +14,18 @@ Uji awal memakai data buatan tanpa MT5/VPS dan menghasilkan laporan HTML lokal.
 
 Fokus KATARINA AI adalah menghadirkan pengalaman analisis yang praktis, terukur, dan memperhatikan risiko. Pengembangan dan pengujian masih berlangsung.
 
-## Status perkembangan — 16 Oktober 2026
+## Status
 
-**Development Preview / research-only. Live trading belum diaktifkan.**
+**Development Preview / research-only. Live trading belum diaktifkan.** Edge strategi belum terbukti;
+DEMO forward dan riset berjalan di VPS uji.
 
-| Bagian | Satu otak canonical — pembaruan 16 Oktober 2026 |
-|---|---|
-| Otak unified | 1 otak, 17 modul canonical; Management dan 11 spesialis dihapus |
-| Pengujian | 1.274 unit, 113 static (4 skipped), 132 integration lulus |
-| Repository | Main dilindungi; wajib PR dan CI; 0 kolaborator tambahan |
-| Cleanup | 42 branch lama diintegrasikan dan dihapus; hanya `main` tersisa |
-| Sinkronisasi | GitHub dan checkout kerja cocok; VPS belum diverifikasi |
-| Akses luar Work | Panduan tersedia; login CLI perangkat tujuan belum terpasang |
-
-[**Diagram patokan dan jalur implementasi**](docs/architecture/KATARINA_SINGLE_BRAIN_WORKFLOW_20261016.md) ·
-[**Lihat status lengkap dan bukti**](docs/PROJECT_STATUS.md) ·
-[**Lihat perubahan**](CHANGELOG.md) ·
-[**Lanjutkan pekerjaan**](docs/CURRENT_PROJECT_HANDOFF.md) ·
+[**Status lengkap**](docs/PROJECT_STATUS.md) ·
+[**Perubahan**](CHANGELOG.md) ·
+[**Diagram satu otak**](docs/architecture/KATARINA_SINGLE_BRAIN_WORKFLOW_20261016.md) ·
 [**Akses GitHub lintas perangkat**](docs/operations/GITHUB_ACCESS.md)
 
-Angka tersebut adalah snapshot bertanggal. Hasil terbaru tersedia di
+Lulus pengujian sumber tidak membuktikan profitabilitas atau kesiapan trading live. Hasil CI terbaru ada di
 [GitHub Actions](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions).
-Lulus pengujian sumber tidak membuktikan profitabilitas atau kesiapan trading live.
 
 ## Informasi
 
@@ -62,45 +52,10 @@ Lulus pengujian sumber tidak membuktikan profitabilitas atau kesiapan trading li
 - TIDAK menerima pembayaran paket langganan atau lisensi EA sampai produk, ketentuan penggunaan, verifikasi pembayaran, dan dukungan pelanggan siap. Tidak ada jaminan hasil trading.
 
 
-## Catatan teknis dan riwayat validasi
+## Catatan teknis
 
-- [Laporan validasi jalur, kode MT5, dan observer](docs/validation/2026-10-11-paths-mt5-integration.md).
-- [Audit struktur dan dependensi otomatis](scripts/governance/audit_dependency_links.py) diperiksa di GitHub Actions. Ini adalah pemeriksaan sumber, **bukan** bukti kesiapan live.
-- [Snapshot tahap 11 Oktober](docs/operations/GITHUB_FIRST_STATUS_20261011.md) — riwayat, bukan status terkini.
-
-## Navigasi pengembangan
-
-- [Aturan pengembangan dan validasi](docs/operations/GITHUB_FIRST_DEVELOPMENT.md).
-- [Audit cleanup dan sinkronisasi sumber](docs/operations/REPOSITORY_CLEANUP_20261015.md).
-- [Checkpoint historis sampai 13 Oktober](docs/handoff/KATARINA_START_NEXT_CHAT_20261013.md) — bukan status VPS terkini.
-- [Panduan hosting Cloudflare Pages](docs/deployment/CLOUDFLARE_PAGES_SETUP.md).
-
-## Portabilitas host — 16 Oktober 2026
-
-Otak dapat menjalankan satu siklus riset lokal tanpa VPS/MT5 melalui
-`run_contextual_market_observer.py --offline-research`. `--doctor` memeriksa host;
-lokasi state mengikuti konfigurasi/OS, anggaran observasi mengikuti kapasitas.
-Lihat [panduan host portabel](docs/architecture/KATARINA_PORTABLE_HOST.md). Tidak ada migrasi state legacy otomatis,
-Cloud Hands lintas host belum terverifikasi, live tetap OFF.
-
-## Koneksi otomatis baca-saja — 16 Oktober 2026
-
-Launcher memilih local/cloud/offline menurut konfigurasi akun yang diizinkan.
-Retry terbatas mengulang seluruh pass; tanpa koneksi valid tetap riset lokal.
-Sensor HTTPS baru memerlukan pemasangan dan kredensial sekali; belum diuji pada
-MT5/cloud nyata. Lihat [kontrak koneksi otomatis](docs/architecture/KATARINA_AUTOMATIC_CONNECTION.md). Risk Governor independen, live OFF.
-
-## Pemulihan environment privat — 16 Oktober 2026
-
-Startup memeriksa dependensi dan menguji kandidat pengganti sebelum memilihnya.
-Environment lama, strategi, Risk Governor dan memori tetap dipertahankan; tidak
-ada perubahan source atau izin trading. Panduan: [pemulihan environment](docs/architecture/KATARINA_ENVIRONMENT_RECOVERY.md). Live OFF.
-
-### Dialog and AI trading pretrial (LIVE OFF)
-
-`python katarina_pc.py pretrial` runs synthetic behavior acceptance.
-`python katarina_pc.py chat --model-config PATH` opens the configured model dialog;
-`ui` opens the optional foreground authenticated browser service. Model IDs,
-credentials and real MT5 connections require installation configuration.
-MT5 feedback is WAIT/ACK only, not an executable order transport.
-[Setup, target diagram and remaining real-evidence gates](docs/architecture/KATARINA_AI_TRADING_PRETRIAL.md).
+- [Audit struktur dan dependensi otomatis](scripts/governance/audit_dependency_links.py) diperiksa di GitHub Actions. Ini pemeriksaan sumber, **bukan** bukti kesiapan live.
+- [Aturan pengembangan dan validasi](docs/operations/GITHUB_FIRST_DEVELOPMENT.md) · [panduan hosting Cloudflare Pages](docs/deployment/CLOUDFLARE_PAGES_SETUP.md).
+- Dialog dan pretrial AI trading (LIVE OFF): `python katarina_pc.py pretrial` menjalankan acceptance sintetis;
+  `chat --model-config PATH` dan `ui` membuka dialog model yang dikonfigurasi. Umpan balik MT5 hanya WAIT/ACK.
+  [Kontrak dan gerbang bukti nyata](docs/architecture/KATARINA_AI_TRADING_PRETRIAL.md).
