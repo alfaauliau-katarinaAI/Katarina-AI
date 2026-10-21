@@ -1,0 +1,3426 @@
+name: Stage 07 Transport Checks
+
+# Manual native/validation checks only; Body CI owns push and pull-request checks.
+# Merged from 12 single-job workflows in cleanup stage 5; job steps are unchanged.
+on:
+  workflow_dispatch:
+    inputs:
+      check:
+        description: Which check to run
+        type: choice
+        default: all
+        options:
+          - all
+          - bridge-integration
+          - stage07-communication
+          - final-clearance
+          - cross-language-handshake
+          - mql5-kat1-codec
+          - native-account-record
+          - native-state-records
+          - preclearance
+          - reconnect
+          - recovery-integration
+          - wire-sequence
+          - zmq-capability
+
+permissions:
+  contents: read
+
+jobs:
+  # from stage07-bridge-integration.yml
+  bridge-integration:
+    name: Stage 07 Bridge Transport Integration
+    if: inputs.check == 'all' || inputs.check == 'bridge-integration'
+    env:
+      MQL5_ZMQ_REPO: coke5151/mql5-zmq
+      MQL5_ZMQ_COMMIT: f332ee903fb8f27cbf28a8169824b8130e2aaab2
+      KAT_BRIDGE_ENDPOINT: tcp://127.0.0.1:5569
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Katarina
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Stage 07 transport dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-stage07.txt
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          if (!(Test-Path "$env:RUNNER_TEMP\mt5setup.exe")) { throw "MT5 installer download failed." }
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07Bridge"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Write-Host "Installer exit code: $($p.ExitCode)"
+          Start-Sleep -Seconds 3
+
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+
+          if (-not $resolved) {
+            throw "MetaTrader installation files not found. Installer exit code=$($p.ExitCode)."
+          }
+
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Fetch pinned MQL5 ZeroMQ binding
+        shell: pwsh
+        run: |
+          $archive = "$env:RUNNER_TEMP\mql5-zmq.zip"
+          $extract = "$env:RUNNER_TEMP\mql5-zmq"
+          $url = "https://github.com/$env:MQL5_ZMQ_REPO/archive/$env:MQL5_ZMQ_COMMIT.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $extract -Force
+          $root = Get-ChildItem -Path $extract -Directory | Select-Object -First 1
+          if (-not $root) { throw "Pinned MQL5 ZeroMQ archive extraction failed." }
+          "MQL5_ZMQ_ROOT=$($root.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage Katarina and ZeroMQ MQL5 files
+        shell: pwsh
+        run: |
+          $include = "$env:MT5_HOME\MQL5\Include"
+          $libraries = "$env:MT5_HOME\MQL5\Libraries"
+          $experts = "$env:MT5_HOME\MQL5\Experts"
+          $scripts = "$env:MT5_HOME\MQL5\Scripts"
+
+          New-Item -ItemType Directory -Force -Path $include,$libraries,$experts,$scripts | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Zmq" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Mql\Lang" | Out-Null
+
+          Copy-Item ".\mt5\Include\Katarina" "$include\Katarina" -Recurse -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Zmq\*.mqh" "$include\Zmq\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Mql\Lang\*.mqh" "$include\Mql\Lang\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libzmq.dll" $libraries -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libsodium.dll" $libraries -Force
+          Copy-Item ".\mt5\Experts\KatarinaBridgeStage07EA.mq5" "$experts\KatarinaBridgeStage07EA.mq5" -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07BridgeTransportIntegration.mq5" "$scripts\KatarinaStage07BridgeTransportIntegration.mq5" -Force
+
+      - name: Strict compile Stage-07 Bridge EA
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Experts\KatarinaBridgeStage07EA.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Experts\KatarinaBridgeStage07EA.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaBridgeStage07EA.compile.log"
+
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+
+          if (!(Test-Path $log)) { throw "Bridge EA compile log missing." }
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") {
+            throw "Stage-07 Bridge EA compile is not zero-error/zero-warning."
+          }
+          if (!(Test-Path $artifact)) { throw "Stage-07 Bridge EA EX5 missing." }
+
+          "STAGE07_BRIDGE_EX5_SHA256=$((Get-FileHash $artifact -Algorithm SHA256).Hash)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Strict compile concrete Bridge transport test
+        shell: powershell
+        run: |
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07BridgeTransportIntegration.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07BridgeTransportIntegration.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07BridgeTransportIntegration.compile.log"
+
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+
+          if (!(Test-Path $log)) { throw "Bridge transport compile log missing." }
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") {
+            throw "Concrete Bridge transport compile is not zero-error/zero-warning."
+          }
+          if (!(Test-Path $artifact)) { throw "Bridge transport test EX5 missing." }
+
+      - name: Write Python Stage-07 session peer
+        shell: pwsh
+        run: |
+          @'
+          import asyncio
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import sys
+
+          ROOT = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+          sys.path.insert(0, str(ROOT / "src"))
+
+          from katarina.adapters.transport.kat1_codec import Kat1Codec, SchemaCatalog
+          from katarina.adapters.transport.session import Kat1SessionSupervisor, SessionState
+          from katarina.adapters.transport.zmq import ZmqRouterTransport
+
+          def account_id(server: str, login: int) -> str:
+              raw = server.encode("utf-8")
+              material = (
+                  b"KAT1/account-id/v1"
+                  + b"\x00"
+                  + len(raw).to_bytes(4, "little")
+                  + raw
+                  + b"\x00"
+                  + str(login).encode("ascii")
+              )
+              return hashlib.sha256(material).digest()[:16].hex()
+
+          async def main():
+              endpoint = os.environ["KAT_BRIDGE_ENDPOINT"]
+              ready = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-bridge-ready.txt"
+              result = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-bridge-python-result.json"
+
+              codec = Kat1Codec(
+                  SchemaCatalog.from_path(ROOT / "protocol" / "kat1_message_schemas_v1.json")
+              )
+              router = ZmqRouterTransport(endpoint=endpoint, send_hwm=64, receive_hwm=64)
+              session = Kat1SessionSupervisor(
+                  codec=codec,
+                  client_instance_id=b"\xA7" * 16,
+                  requested_execution_mode=0,
+                  heartbeat_interval_ms=1000,
+                  stale_after_ms=5000,
+              )
+
+              await router.start()
+              session.start()
+              ready.write_text(endpoint, encoding="utf-8")
+
+              presence = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              hello = session.observe(presence, now_ns=1_000_000_000)
+              if hello is None or session.state is not SessionState.HELLO_SENT:
+                  raise RuntimeError("Stage-07 Bridge presence did not produce HELLO")
+              await router.send_frame(hello.frame, peer=hello.peer)
+
+              ack = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              session.observe(ack, now_ns=1_100_000_000)
+
+              if session.state is not SessionState.RECOVERING:
+                  raise RuntimeError(f"Bridge did not end RECOVERING: {session.state}")
+              if session.communication_ready or session.live_risk_ready:
+                  raise RuntimeError("Bridge handshake illegally granted readiness")
+
+              binding = session.binding
+              if binding is None:
+                  raise RuntimeError("Bridge HELLO_ACK did not create binding")
+              if binding.stream_id != 77 or binding.boot_id != 88:
+                  raise RuntimeError("Bridge stream/boot binding mismatch")
+              if binding.broker_login != 123456 or binding.broker_server != "Katarina-CI":
+                  raise RuntimeError("Bridge broker binding mismatch")
+
+              expected_id = account_id("Katarina-CI", 123456)
+              if binding.account_id != expected_id:
+                  raise RuntimeError(
+                      f"Bridge account_id mismatch expected={expected_id} actual={binding.account_id}"
+                  )
+
+              result.write_text(json.dumps({
+                  "result": "PASS",
+                  "state": session.state.value,
+                  "communication_ready": session.communication_ready,
+                  "live_risk_ready": session.live_risk_ready,
+                  "stream_id": binding.stream_id,
+                  "boot_id": binding.boot_id,
+                  "account_id": binding.account_id,
+                  "broker_login": binding.broker_login,
+                  "broker_server": binding.broker_server,
+              }, indent=2), encoding="utf-8")
+              await router.stop()
+
+          asyncio.run(main())
+          '@ | Set-Content -Path "$env:RUNNER_TEMP\kat_bridge_peer.py" -Encoding UTF8
+
+      - name: Run concrete Bridge transport handshake
+        shell: pwsh
+        run: |
+          $ready = "$env:RUNNER_TEMP\kat-bridge-ready.txt"
+          $pythonResult = "$env:RUNNER_TEMP\kat-bridge-python-result.json"
+          Remove-Item $ready,$pythonResult -Force -ErrorAction SilentlyContinue
+
+          $peer = Start-Process -FilePath "python" -ArgumentList "$env:RUNNER_TEMP\kat_bridge_peer.py" -PassThru -NoNewWindow
+
+          $deadline = [DateTime]::UtcNow.AddSeconds(10)
+          while ([DateTime]::UtcNow -lt $deadline -and !(Test-Path $ready)) {
+            if ($peer.HasExited) { throw "Python Bridge peer exited before ready." }
+            Start-Sleep -Milliseconds 100
+          }
+          if (!(Test-Path $ready)) { throw "Python Bridge peer did not become ready." }
+
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $mt5Evidence = Join-Path $commonFiles "Katarina_Stage07_bridge_transport_result.txt"
+          Remove-Item $mt5Evidence -Force -ErrorAction SilentlyContinue
+
+          $config = Join-Path $env:RUNNER_TEMP "stage07-bridge-transport.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=1
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07BridgeTransportIntegration
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+
+          $terminal = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+          Write-Host "Terminal exit code: $($terminal.ExitCode)"
+
+          $peer.WaitForExit(15000) | Out-Null
+          if (-not $peer.HasExited) {
+            Stop-Process -Id $peer.Id -Force
+            throw "Python Bridge peer did not terminate."
+          }
+          if ($peer.ExitCode -ne 0) { throw "Python Bridge peer failed with exit code $($peer.ExitCode)." }
+
+          if (!(Test-Path $mt5Evidence)) { throw "MT5 Bridge transport evidence missing." }
+          if (!(Test-Path $pythonResult)) { throw "Python Bridge evidence missing." }
+
+          $values = @{}
+          foreach ($line in Get-Content $mt5Evidence) {
+            $idx = $line.IndexOf("=")
+            if ($idx -gt 0) { $values[$line.Substring(0,$idx)] = $line.Substring($idx+1) }
+          }
+          $python = Get-Content $pythonResult -Raw | ConvertFrom-Json
+
+          Get-Content $mt5Evidence | Write-Host
+          Get-Content $pythonResult | Write-Host
+
+          if ($values["result"] -ne "PASS") { throw "Concrete Bridge transport did not pass." }
+          if ($values["communication_ready"] -ne "0") { throw "Bridge transport incorrectly marked communication ready." }
+          if ($values["live_risk_ready"] -ne "0") { throw "Bridge transport incorrectly marked live risk ready." }
+          if ($python.state -ne "recovering") { throw "Python session is not RECOVERING." }
+          if ($python.communication_ready -ne $false -or $python.live_risk_ready -ne $false) {
+            throw "Python peer reports illegal readiness."
+          }
+
+          Copy-Item $mt5Evidence ".\build\stage07\Katarina_Stage07_bridge_transport_result.txt" -Force
+          Copy-Item $pythonResult ".\build\stage07\stage07_bridge_python_result.json" -Force
+
+      - name: Write Bridge integration evidence
+        shell: pwsh
+        run: |
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "07"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner = "windows-2022"
+            bridge_ea = "KatarinaBridgeStage07EA"
+            bridge_ex5_sha256 = "$env:STAGE07_BRIDGE_EX5_SHA256"
+            transport = "ZEROMQ_DEALER"
+            python_peer = "ZEROMQ_ROUTER"
+            account_id_contract = "PASS_CROSS_LANGUAGE_SHA256"
+            handshake = "PASS_HEARTBEAT_HELLO_HELLO_ACK"
+            final_state = "RECOVERING"
+            communication_ready = $false
+            live_risk_ready = $false
+            stage06_source_modified = $false
+            result = "PASS_STAGE07_CONCRETE_BRIDGE_TRANSPORT"
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content ".\build\stage07\stage07_bridge_integration_evidence.json" -Encoding UTF8
+
+      - name: Upload Bridge integration evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-bridge-integration-evidence
+          path: |
+            build/stage07/KatarinaBridgeStage07EA.compile.log
+            build/stage07/KatarinaStage07BridgeTransportIntegration.compile.log
+            build/stage07/Katarina_Stage07_bridge_transport_result.txt
+            build/stage07/stage07_bridge_python_result.json
+            build/stage07/stage07_bridge_integration_evidence.json
+          retention-days: 30
+
+  # from stage07-communication.yml
+  stage07-communication:
+    name: Stage 07 Communication
+    if: inputs.check == 'all' || inputs.check == 'stage07-communication'
+    runs-on: windows-2022
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Stage 07 transport dependency
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-stage07.txt
+          python -c "import zmq, tornado; print('pyzmq=' + zmq.__version__ + ' libzmq=' + zmq.zmq_version() + ' tornado=' + tornado.version)"
+
+      - name: Validate frozen KAT1 vectors
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "src"
+          python scripts/protocol/validate_kat1_vectors.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run Stage 07 transport tests
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "src"
+          python -m unittest tests.unit.transport.test_stage07_communication tests.unit.transport.test_stage07_stage06_contract -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Write Stage 07 evidence
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "build\stage07" | Out-Null
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "07"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner_os = "$env:RUNNER_OS"
+            runner_arch = "$env:RUNNER_ARCH"
+            image = "windows-2022"
+            python_version = (python --version 2>&1 | Out-String).Trim()
+            kat1_vectors = "PASS"
+            transport_tests = "PASS"
+            live_risk_enablement = "NOT_OWNED_BY_STAGE_07"
+            result = "PASS_STAGE07_PYTHON_COMMUNICATION_BASELINE"
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content -Path "build\stage07\stage07_python_communication_evidence.json" -Encoding UTF8
+
+      - name: Upload Stage 07 evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-python-communication-evidence
+          path: build/stage07/stage07_python_communication_evidence.json
+          retention-days: 30
+
+  # from stage07-final-clearance.yml
+  final-clearance:
+    name: Stage 07 Final Clearance
+    if: inputs.check == 'all' || inputs.check == 'final-clearance'
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Stage 07 transport dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-stage07.txt
+          python -m pip install --disable-pip-version-check pywinauto
+
+      - name: Run Stage 07 Python regressions
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "src"
+          python -m unittest tests.unit.transport.test_stage07_communication tests.unit.transport.test_stage07_stage06_contract -v 2>&1 | Tee-Object -FilePath "$env:RUNNER_TEMP\stage07_python_tests.txt"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $text = Get-Content "$env:RUNNER_TEMP\stage07_python_tests.txt" -Raw
+          if ($text -notmatch "Ran 37 tests" -or $text -notmatch "(?m)^OK\s*$") {
+            throw "Expected 37/37 Stage-07 Python tests."
+          }
+
+      - name: Download and install MetaTrader 5
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          $installer = "$env:RUNNER_TEMP\mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          $requested = "C:\MT5Stage07Final"
+          $p = Start-Process -FilePath $installer -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Write-Host "Installer exit code: $($p.ExitCode)"
+
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) { $resolved = Split-Path -Parent $found.FullName }
+          }
+          if (-not $resolved) { throw "MetaTrader 5 installation not found." }
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage and compile native TCP proof
+        shell: pwsh
+        run: |
+          $mql = "$env:MT5_HOME\MQL5"
+          New-Item -ItemType Directory -Force -Path "$mql\Include\Katarina\Stage07","$mql\Scripts",".\build\stage07" | Out-Null
+          Copy-Item ".\mt5\Include\Katarina\*" "$mql\Include\Katarina\" -Recurse -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07TcpFallbackIntegration.mq5" "$mql\Scripts\KatarinaStage07TcpFallbackIntegration.mq5" -Force
+
+          $source = "$mql\Scripts\KatarinaStage07TcpFallbackIntegration.mq5"
+          $artifact = "$mql\Scripts\KatarinaStage07TcpFallbackIntegration.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07TcpFallbackIntegration.compile.log"
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$mql`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+          if (!(Test-Path $log)) { throw "Native TCP compile log missing." }
+          $text = Get-Content $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") { throw "Native TCP proof compile failed." }
+          if (!(Test-Path $artifact)) { throw "Native TCP EX5 missing." }
+          "TCP_EX5_SHA256=$((Get-FileHash $artifact -Algorithm SHA256).Hash.ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Configure localhost socket allow-list through MT5 UI
+        shell: pwsh
+        run: |
+          python .\scripts\stage07\configure_mt5_network_allowlist.py --terminal "$env:MT5_HOME\terminal64.exe" --output ".\build\stage07\stage07_mt5_allowlist_ui.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $ui = Get-Content ".\build\stage07\stage07_mt5_allowlist_ui.json" -Raw | ConvertFrom-Json
+          if ($ui.result -ne "PASS_MT5_NETWORK_ALLOWLIST_UI") {
+            throw "MT5 localhost allow-list UI automation did not pass."
+          }
+
+      - name: Run cross-language native TCP fallback
+        shell: pwsh
+        run: |
+          $ready = "$env:RUNNER_TEMP\kat-tcp-ready.txt"
+          $pythonResult = "$env:RUNNER_TEMP\kat-tcp-python-result.json"
+          $serverScript = "$env:RUNNER_TEMP\kat_tcp_peer.py"
+          Remove-Item $ready,$pythonResult -Force -ErrorAction SilentlyContinue
+
+          @'
+          import asyncio
+          import json
+          import os
+          import pathlib
+          import sys
+
+          ROOT = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+          sys.path.insert(0, str(ROOT))
+          sys.path.insert(0, str(ROOT / "src"))
+
+          from katarina.adapters.transport.kat1_codec import Kat1Codec, SchemaCatalog
+          from katarina.adapters.transport.tcp import Kat1TcpServerTransport
+
+          async def main():
+              ready = pathlib.Path(os.environ["KAT_TCP_READY"])
+              result = pathlib.Path(os.environ["KAT_TCP_RESULT"])
+              codec = Kat1Codec(SchemaCatalog.from_path(ROOT / "protocol" / "kat1_message_schemas_v1.json"))
+              transport = Kat1TcpServerTransport(host="127.0.0.1", port=5572, receive_capacity=8)
+              await transport.start()
+              ready.write_text("READY", encoding="utf-8")
+              try:
+                  received = await asyncio.wait_for(transport.receive_frame(), timeout=30.0)
+                  decoded = codec.decode(received.frame)
+                  await transport.send_frame(received.frame, peer=received.peer)
+                  result.write_text(json.dumps({
+                      "result": "PASS",
+                      "message_type": decoded.header.message_type,
+                      "sequence": decoded.header.sequence,
+                      "stream_id": decoded.header.stream_id,
+                      "boot_id": decoded.header.boot_id,
+                      "frame_length": len(received.frame),
+                      "byte_echo": True,
+                  }, indent=2), encoding="utf-8")
+              finally:
+                  await transport.stop()
+
+          asyncio.run(main())
+          '@ | Set-Content -Path $serverScript -Encoding UTF8
+
+          $env:KAT_TCP_READY = $ready
+          $env:KAT_TCP_RESULT = $pythonResult
+          $peer = Start-Process -FilePath "python" -ArgumentList $serverScript -PassThru -NoNewWindow
+          try {
+            $deadline = [DateTime]::UtcNow.AddSeconds(10)
+            while ([DateTime]::UtcNow -lt $deadline -and !(Test-Path $ready)) {
+              if ($peer.HasExited) { throw "Python TCP peer exited before ready." }
+              Start-Sleep -Milliseconds 100
+            }
+            if (!(Test-Path $ready)) { throw "Python TCP peer did not become ready." }
+
+            $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+            New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+            $mt5Evidence = Join-Path $commonFiles "Katarina_Stage07_tcp_fallback_result.txt"
+            Remove-Item $mt5Evidence -Force -ErrorAction SilentlyContinue
+
+            $config = "$env:RUNNER_TEMP\stage07-tcp-final.ini"
+            # Do not provide an [Experts] section here. The preceding UI step
+            # persisted the terminal's trusted-address settings. Supplying partial
+            # Expert settings in a startup config can shadow/reset that persisted
+            # state on a fresh terminal process.
+            @(
+              "[StartUp]",
+              "Script=KatarinaStage07TcpFallbackIntegration",
+              "Symbol=",
+              "Period=H1",
+              "ShutdownTerminal=1"
+            ) | Set-Content -Path $config -Encoding ASCII
+
+            $terminal = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+            Write-Host "Terminal exit code: $($terminal.ExitCode)"
+
+            # Read the MQL result first. If SocketConnect was blocked, the
+            # script exits quickly while the Python peer is still waiting.
+            if (!(Test-Path $mt5Evidence)) {
+              Write-Host "MT5 evidence path missing: $mt5Evidence"
+              $terminalLogs = Get-ChildItem -Path "$env:MT5_HOME\logs" -Filter "*.log" -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 2
+              foreach ($log in $terminalLogs) {
+                Write-Host "--- terminal log $($log.FullName) ---"
+                Get-Content $log.FullName -Tail 120 -ErrorAction SilentlyContinue | Write-Host
+              }
+              throw "MT5 TCP evidence missing."
+            }
+
+            $mt5Text = Get-Content $mt5Evidence -Raw
+            Write-Host "--- MT5 native TCP evidence ---"
+            Write-Host $mt5Text
+            if ($mt5Text -notmatch "result=PASS") {
+              throw "Native TCP proof failed: $mt5Text"
+            }
+
+            [void]$peer.WaitForExit(10000)
+            if (-not $peer.HasExited) { throw "Python TCP peer did not finish after MQL reported PASS." }
+            if ($peer.ExitCode -ne 0) { throw "Python TCP peer failed: $($peer.ExitCode)" }
+            if (!(Test-Path $pythonResult)) { throw "Python TCP result missing." }
+
+            $py = Get-Content $pythonResult -Raw | ConvertFrom-Json
+            if ($py.result -ne "PASS" -or $py.byte_echo -ne $true -or $py.message_type -ne 1 -or $py.frame_length -ne 108) {
+              throw "Python TCP byte-equality evidence failed."
+            }
+
+            Copy-Item $mt5Evidence ".\build\stage07\Katarina_Stage07_tcp_fallback_result.txt" -Force
+            Copy-Item $pythonResult ".\build\stage07\stage07_native_tcp_python_result.json" -Force
+
+            $evidence = [ordered]@{
+              schema_version = 1
+              stage = "07"
+              proof_type = "KATARINA_STAGE07_NATIVE_TCP_FALLBACK"
+              runner = "windows-2022"
+              endpoint = "tcp://127.0.0.1:5572"
+              mql_transport = "SocketCreate/SocketConnect/SocketSend/SocketRead"
+              python_transport = "Kat1TcpServerTransport"
+              framing = "KAT1_FRAME_LENGTH_ONLY"
+              secondary_envelope = $false
+              golden_message = "HELLO"
+              frame_length = 108
+              cross_language_byte_equality = "PASS"
+              compile = "PASS_0_ERRORS_0_WARNINGS"
+              ex5_sha256 = "$env:TCP_EX5_SHA256"
+              live_trading_allowed = $false
+              dll_import_allowed = $false
+              result = "PASS_STAGE07_NATIVE_TCP_FALLBACK"
+            }
+            $evidence | ConvertTo-Json -Depth 8 | Set-Content ".\build\stage07\stage07_native_tcp_fallback_evidence.json" -Encoding UTF8
+          }
+          finally {
+            if (-not $peer.HasExited) { Stop-Process -Id $peer.Id -Force -ErrorAction SilentlyContinue }
+          }
+
+      - name: Run backpressure and latency profile
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "src"
+          python .\scripts\stage07\profile_stage07_transport.py --repo-root . --output .\build\stage07\stage07_transport_profile.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $p = Get-Content ".\build\stage07\stage07_transport_profile.json" -Raw | ConvertFrom-Json
+          if ($p.result -ne "PASS_STAGE07_BACKPRESSURE_LATENCY_PROFILE") {
+            throw "Stage-07 profile did not pass."
+          }
+
+      - name: Run final evidence audit
+        shell: pwsh
+        run: |
+          $tcpEvidence = Get-Content ".\build\stage07\stage07_native_tcp_fallback_evidence.json" -Raw
+          $synthetic = [ordered]@{
+            schema_version = 1
+            receipt = [ordered]@{ exit_code = 0 }
+            files = @(
+              [ordered]@{
+                name = "stage07_native_tcp_fallback_evidence.json"
+                content_included = $true
+                content = $tcpEvidence
+              }
+            )
+          }
+          $synthetic | ConvertTo-Json -Depth 12 | Set-Content ".\build\stage07\stage07_tcp_bundle.json" -Encoding UTF8
+
+          python .\scripts\stage07\audit_stage07_final.py --repo-root . --profile-evidence .\build\stage07\stage07_transport_profile.json --tcp-bundle .\build\stage07\stage07_tcp_bundle.json --batch-bundle .\ops\vps\results\katarina-vps-2012r2-01\s7-batch-opt1\bundle.json --output .\build\stage07\stage07_final_clearance.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $audit = Get-Content ".\build\stage07\stage07_final_clearance.json" -Raw | ConvertFrom-Json
+          if ($audit.result -ne "PASS_STAGE07_FINAL_CLEARANCE" -or $audit.ready_for_stage08 -ne $true) {
+            throw "Stage-07 final clearance failed."
+          }
+
+      - name: Upload Stage 07 final evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-final-clearance-evidence
+          path: |
+            build/stage07/KatarinaStage07TcpFallbackIntegration.compile.log
+            build/stage07/stage07_mt5_allowlist_ui.json
+            build/stage07/Katarina_Stage07_tcp_fallback_result.txt
+            build/stage07/stage07_native_tcp_python_result.json
+            build/stage07/stage07_native_tcp_fallback_evidence.json
+            build/stage07/stage07_transport_profile.json
+            build/stage07/stage07_final_clearance.json
+          retention-days: 90
+          if-no-files-found: warn
+
+  # from stage07-handshake.yml
+  cross-language-handshake:
+    name: Stage 07 Cross-Language Handshake
+    if: inputs.check == 'all' || inputs.check == 'cross-language-handshake'
+    env:
+      MQL5_ZMQ_REPO: coke5151/mql5-zmq
+      MQL5_ZMQ_COMMIT: f332ee903fb8f27cbf28a8169824b8130e2aaab2
+      KAT_HANDSHAKE_ENDPOINT: tcp://127.0.0.1:5568
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Katarina
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Stage 07 transport dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-stage07.txt
+          python -c "import zmq, tornado; print('pyzmq=' + zmq.__version__ + ' libzmq=' + zmq.zmq_version() + ' tornado=' + tornado.version)"
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          if (!(Test-Path "$env:RUNNER_TEMP\mt5setup.exe")) { throw "MT5 installer download failed." }
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07Handshake"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Write-Host "Installer exit code: $($p.ExitCode)"
+          Start-Sleep -Seconds 3
+
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+
+          if (-not $resolved) {
+            throw "MetaTrader installation files not found. Installer exit code=$($p.ExitCode)."
+          }
+
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Fetch pinned MQL5 ZeroMQ binding
+        shell: pwsh
+        run: |
+          $archive = "$env:RUNNER_TEMP\mql5-zmq.zip"
+          $extract = "$env:RUNNER_TEMP\mql5-zmq"
+          $url = "https://github.com/$env:MQL5_ZMQ_REPO/archive/$env:MQL5_ZMQ_COMMIT.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $extract -Force
+          $root = Get-ChildItem -Path $extract -Directory | Select-Object -First 1
+          if (-not $root) { throw "Pinned MQL5 ZeroMQ archive extraction failed." }
+          "MQL5_ZMQ_ROOT=$($root.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage binding and handshake script
+        shell: pwsh
+        run: |
+          $include = "$env:MT5_HOME\MQL5\Include"
+          $libraries = "$env:MT5_HOME\MQL5\Libraries"
+          $scripts = "$env:MT5_HOME\MQL5\Scripts"
+
+          New-Item -ItemType Directory -Force -Path "$include\Zmq" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Mql\Lang" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Katarina\Stage07" | Out-Null
+          New-Item -ItemType Directory -Force -Path $libraries | Out-Null
+          New-Item -ItemType Directory -Force -Path $scripts | Out-Null
+
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Zmq\*.mqh" "$include\Zmq\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Mql\Lang\*.mqh" "$include\Mql\Lang\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libzmq.dll" $libraries -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libsodium.dll" $libraries -Force
+          Copy-Item ".\mt5\Include\Katarina\Stage07\*.mqh" "$include\Katarina\Stage07\" -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07HandshakeIntegration.mq5" "$scripts\KatarinaStage07HandshakeIntegration.mq5" -Force
+
+      - name: Strict compile handshake script
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07HandshakeIntegration.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07HandshakeIntegration.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07HandshakeIntegration.compile.log"
+
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+
+          if (!(Test-Path $log)) { throw "MetaEditor compile log missing." }
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") {
+            throw "Stage-07 handshake compile is not zero-error/zero-warning."
+          }
+          if (!(Test-Path $artifact)) { throw "Stage-07 handshake EX5 missing." }
+          if ((Get-Item $artifact).Length -le 0) { throw "Stage-07 handshake EX5 is empty." }
+
+          "STAGE07_HANDSHAKE_EX5_SHA256=$((Get-FileHash $artifact -Algorithm SHA256).Hash)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Write Python KAT1 session server
+        shell: pwsh
+        run: |
+          @'
+          import asyncio
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import sys
+
+          ROOT = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+          sys.path.insert(0, str(ROOT / "src"))
+
+          from katarina.adapters.transport.kat1_codec import Kat1Codec, SchemaCatalog
+          from katarina.adapters.transport.session import (
+              HEARTBEAT,
+              Kat1SessionSupervisor,
+              SessionState,
+          )
+          from katarina.adapters.transport.zmq import ZmqRouterTransport
+
+          async def main():
+              endpoint = os.environ["KAT_HANDSHAKE_ENDPOINT"]
+              ready = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-handshake-ready.txt"
+              result = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-handshake-python-result.json"
+
+              codec = Kat1Codec(
+                  SchemaCatalog.from_path(ROOT / "protocol" / "kat1_message_schemas_v1.json")
+              )
+              router = ZmqRouterTransport(endpoint=endpoint, send_hwm=64, receive_hwm=64)
+              supervisor = Kat1SessionSupervisor(
+                  codec=codec,
+                  client_instance_id=b"\xAA" * 16,
+                  requested_execution_mode=0,
+                  heartbeat_interval_ms=1000,
+                  stale_after_ms=5000,
+              )
+
+              await router.start()
+              supervisor.start()
+              ready.write_text(endpoint, encoding="utf-8")
+
+              presence = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              hello_send = supervisor.observe(presence, now_ns=1_000_000_000)
+              if hello_send is None:
+                  raise RuntimeError("presence HEARTBEAT did not produce HELLO")
+              if supervisor.state is not SessionState.HELLO_SENT:
+                  raise RuntimeError(f"unexpected state after presence: {supervisor.state}")
+              await router.send_frame(hello_send.frame, peer=hello_send.peer)
+
+              hello_ack = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              supervisor.observe(hello_ack, now_ns=1_100_000_000)
+              if supervisor.state is not SessionState.RECOVERING:
+                  raise RuntimeError(f"HELLO_ACK did not enter RECOVERING: {supervisor.state}")
+              if supervisor.communication_ready:
+                  raise RuntimeError("communication became READY before recovery/reconciliation")
+              if supervisor.live_risk_ready:
+                  raise RuntimeError("Stage 07 illegally granted live-risk readiness")
+
+              binding = supervisor.binding
+              if binding is None:
+                  raise RuntimeError("HELLO_ACK did not create binding")
+              if binding.stream_id != 77 or binding.boot_id != 88:
+                  raise RuntimeError("binding stream/boot mismatch")
+              if binding.broker_login != 123456 or binding.broker_server != "Katarina-CI":
+                  raise RuntimeError("binding account identity mismatch")
+
+              server = b"Katarina-CI"
+              login_ascii = b"123456"
+              material = (
+                  b"KAT1/account-id/v1"
+                  + b"\x00"
+                  + len(server).to_bytes(4, "little")
+                  + server
+                  + b"\x00"
+                  + login_ascii
+              )
+              expected_account_id = hashlib.sha256(material).digest()[:16].hex()
+              if binding.account_id != expected_account_id:
+                  raise RuntimeError(
+                      f"account_id mismatch: expected={expected_account_id} actual={binding.account_id}"
+                  )
+
+              python_heartbeat = codec.encode(
+                  message_type=HEARTBEAT,
+                  schema_version=1,
+                  sequence=2,
+                  source_time_ns=1_150_000_000,
+                  stream_id=77,
+                  boot_id=88,
+                  values={
+                      "uptime_ms": 1150,
+                      "latest_produced_sequence": 2,
+                      "latest_consumed_command_sequence": 0,
+                      "critical_queue_depth": 0,
+                      "market_queue_depth": 0,
+                      "last_broker_observation_ns": 1_150_000_000,
+                      "transport_state": 1,
+                  },
+              )
+              await router.send_frame(python_heartbeat, peer=hello_ack.peer)
+
+              final_ack = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              final_frame = codec.decode(final_ack.frame)
+              if final_frame.header.message_type != HEARTBEAT:
+                  raise RuntimeError("final MT5 ACK is not HEARTBEAT")
+              if final_frame.header.stream_id != 77 or final_frame.header.boot_id != 88:
+                  raise RuntimeError("final MT5 ACK binding mismatch")
+              supervisor.observe(final_ack, now_ns=1_200_000_000)
+
+              if supervisor.state is not SessionState.RECOVERING:
+                  raise RuntimeError("final heartbeat changed RECOVERING state unexpectedly")
+              if supervisor.communication_ready or supervisor.live_risk_ready:
+                  raise RuntimeError("handshake incorrectly granted readiness/live risk")
+
+              result.write_text(json.dumps({
+                  "result": "PASS",
+                  "endpoint": endpoint,
+                  "state": supervisor.state.value,
+                  "communication_ready": supervisor.communication_ready,
+                  "live_risk_ready": supervisor.live_risk_ready,
+                  "account_id": binding.account_id,
+                  "broker_login": binding.broker_login,
+                  "broker_server": binding.broker_server,
+                  "stream_id": binding.stream_id,
+                  "boot_id": binding.boot_id,
+              }, indent=2), encoding="utf-8")
+              await router.stop()
+
+          asyncio.run(main())
+          '@ | Set-Content -Path "$env:RUNNER_TEMP\kat_handshake_server.py" -Encoding UTF8
+
+      - name: Run cross-language KAT1 handshake
+        shell: pwsh
+        run: |
+          $ready = "$env:RUNNER_TEMP\kat-handshake-ready.txt"
+          $pythonResult = "$env:RUNNER_TEMP\kat-handshake-python-result.json"
+          Remove-Item $ready,$pythonResult -Force -ErrorAction SilentlyContinue
+
+          $server = Start-Process -FilePath "python" -ArgumentList "$env:RUNNER_TEMP\kat_handshake_server.py" -PassThru -NoNewWindow
+
+          $deadline = [DateTime]::UtcNow.AddSeconds(10)
+          while ([DateTime]::UtcNow -lt $deadline -and !(Test-Path $ready)) {
+            if ($server.HasExited) { throw "Python handshake server exited before ready." }
+            Start-Sleep -Milliseconds 100
+          }
+          if (!(Test-Path $ready)) { throw "Python handshake server did not become ready." }
+
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $mt5Evidence = Join-Path $commonFiles "Katarina_Stage07_handshake_result.txt"
+          Remove-Item $mt5Evidence -Force -ErrorAction SilentlyContinue
+
+          $config = Join-Path $env:RUNNER_TEMP "stage07-handshake.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=1
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07HandshakeIntegration
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+
+          $terminal = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+          Write-Host "Terminal exit code: $($terminal.ExitCode)"
+
+          $server.WaitForExit(15000) | Out-Null
+          if (-not $server.HasExited) {
+            Stop-Process -Id $server.Id -Force
+            throw "Python handshake server did not terminate."
+          }
+          if ($server.ExitCode -ne 0) { throw "Python handshake server failed with exit code $($server.ExitCode)." }
+
+          if (!(Test-Path $mt5Evidence)) { throw "MT5 handshake evidence missing." }
+          if (!(Test-Path $pythonResult)) { throw "Python handshake evidence missing." }
+
+          $values = @{}
+          foreach ($line in Get-Content $mt5Evidence) {
+            $idx = $line.IndexOf("=")
+            if ($idx -gt 0) { $values[$line.Substring(0,$idx)] = $line.Substring($idx+1) }
+          }
+          $python = Get-Content $pythonResult -Raw | ConvertFrom-Json
+
+          Get-Content $mt5Evidence | Write-Host
+          Get-Content $pythonResult | Write-Host
+
+          if ($values["result"] -ne "PASS") { throw "MT5 cross-language handshake did not pass." }
+          if ($values["live_risk_ready"] -ne "0") { throw "MT5 evidence incorrectly marks live risk ready." }
+          if ($python.result -ne "PASS") { throw "Python handshake result did not pass." }
+          if ($python.state -ne "recovering") { throw "Python session must remain RECOVERING." }
+          if ($python.communication_ready -ne $false) { throw "Communication must not be READY before recovery." }
+          if ($python.live_risk_ready -ne $false) { throw "Stage 07 must never grant live-risk readiness." }
+
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          Copy-Item $mt5Evidence ".\build\stage07\Katarina_Stage07_handshake_result.txt" -Force
+          Copy-Item $pythonResult ".\build\stage07\stage07_handshake_python_result.json" -Force
+
+      - name: Write handshake evidence
+        shell: pwsh
+        run: |
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "07"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner = "windows-2022"
+            dependency_repo = "$env:MQL5_ZMQ_REPO"
+            dependency_commit = "$env:MQL5_ZMQ_COMMIT"
+            endpoint = "$env:KAT_HANDSHAKE_ENDPOINT"
+            topology = "PYTHON_ROUTER_MT5_DEALER"
+            flow = "HEARTBEAT_TO_HELLO_TO_HELLO_ACK"
+            final_state = "RECOVERING"
+            communication_ready = $false
+            live_risk_ready = $false
+            compile = "PASS_0_ERRORS_0_WARNINGS"
+            ex5_sha256 = "$env:STAGE07_HANDSHAKE_EX5_SHA256"
+            result = "PASS_STAGE07_CROSS_LANGUAGE_HANDSHAKE"
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content ".\build\stage07\stage07_handshake_evidence.json" -Encoding UTF8
+
+      - name: Upload handshake evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-cross-language-handshake-evidence
+          path: |
+            build/stage07/KatarinaStage07HandshakeIntegration.compile.log
+            build/stage07/Katarina_Stage07_handshake_result.txt
+            build/stage07/stage07_handshake_python_result.json
+            build/stage07/stage07_handshake_evidence.json
+          retention-days: 30
+
+  # from stage07-mql5-codec.yml
+  mql5-kat1-codec:
+    name: Stage 07 MQL5 KAT1 Codec
+    if: inputs.check == 'all' || inputs.check == 'mql5-kat1-codec'
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          if (!(Test-Path "$env:RUNNER_TEMP\mt5setup.exe")) { throw "MT5 installer download failed." }
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Write-Host "Installer exit code: $($p.ExitCode)"
+          Start-Sleep -Seconds 3
+
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+
+          if (-not $resolved) {
+            throw "MetaTrader installation files not found. Installer exit code=$($p.ExitCode)."
+          }
+
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          New-Item -ItemType Directory -Force -Path "$resolved\MQL5\Include\Katarina\Stage07" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$resolved\MQL5\Scripts" | Out-Null
+
+      - name: Stage Stage-07 MQL files
+        shell: pwsh
+        run: |
+          Copy-Item ".\mt5\Include\Katarina\Stage07\*.mqh" "$env:MT5_HOME\MQL5\Include\Katarina\Stage07\" -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07Kat1CodecTest.mq5" "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07Kat1CodecTest.mq5" -Force
+
+      - name: Strict MetaEditor compile
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07Kat1CodecTest.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07Kat1CodecTest.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07Kat1CodecTest.compile.log"
+
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+
+          if (!(Test-Path $log)) { throw "MetaEditor compile log missing." }
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") {
+            throw "Stage-07 MQL5 codec compile is not zero-error/zero-warning."
+          }
+          if (!(Test-Path $artifact)) { throw "Stage-07 codec EX5 missing." }
+          if ((Get-Item $artifact).Length -le 0) { throw "Stage-07 codec EX5 is empty." }
+
+          $hash = (Get-FileHash $artifact -Algorithm SHA256).Hash
+          "STAGE07_EX5_SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Run 13 golden vectors headless
+        shell: pwsh
+        run: |
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $evidence = Join-Path $commonFiles "Katarina_Stage07_kat1_codec_result.txt"
+          Remove-Item $evidence -Force -ErrorAction SilentlyContinue
+
+          $config = Join-Path $env:RUNNER_TEMP "stage07-kat1-codec.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=0
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07Kat1CodecTest
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+
+          $p = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+          Write-Host "Terminal exit code: $($p.ExitCode)"
+
+          if (!(Test-Path $evidence)) { throw "Stage-07 MQL5 codec runtime evidence missing." }
+
+          $values = @{}
+          foreach ($line in Get-Content $evidence) {
+            $idx = $line.IndexOf("=")
+            if ($idx -gt 0) { $values[$line.Substring(0,$idx)] = $line.Substring($idx+1) }
+          }
+
+          if ($values["stage"] -ne "07") { throw "Unexpected Stage-07 evidence stage." }
+          if ($values["proof_type"] -ne "MQL5_KAT1_GOLDEN_CONFORMANCE") { throw "Unexpected proof type." }
+          if ($values["vectors"] -ne "13") { throw "Expected 13 golden vectors." }
+          if ($values["failures"] -ne "0") { throw "MQL5 KAT1 golden-vector failures detected." }
+          if ($values["result"] -ne "PASS") { throw "MQL5 KAT1 conformance did not pass." }
+
+          Copy-Item $evidence ".\build\stage07\Katarina_Stage07_kat1_codec_result.txt" -Force
+
+      - name: Write Stage-07 MQL5 codec evidence
+        shell: pwsh
+        run: |
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "07"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner = "windows-2022"
+            metaeditor = (Get-Item "$env:MT5_HOME\metaeditor64.exe").VersionInfo.FileVersion
+            vectors = 13
+            compile = "PASS_0_ERRORS_0_WARNINGS"
+            runtime = "PASS_MQL5_KAT1_GOLDEN_CONFORMANCE"
+            ex5_sha256 = "$env:STAGE07_EX5_SHA256"
+            result = "PASS_STAGE07_MQL5_KAT1_CODEC_BASELINE"
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content ".\build\stage07\stage07_mql5_kat1_codec_evidence.json" -Encoding UTF8
+
+      - name: Upload Stage-07 MQL5 codec evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-mql5-kat1-codec-evidence
+          path: |
+            build/stage07/KatarinaStage07Kat1CodecTest.compile.log
+            build/stage07/Katarina_Stage07_kat1_codec_result.txt
+            build/stage07/stage07_mql5_kat1_codec_evidence.json
+          retention-days: 30
+
+  # from stage07-native-account-record.yml
+  native-account-record:
+    name: Stage 07 Native Account Record
+    if: inputs.check == 'all' || inputs.check == 'native-account-record'
+    runs-on: windows-2022
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07NativeAccount"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Start-Sleep -Seconds 3
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+          if (-not $resolved) { throw "MetaTrader installation files not found." }
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage MQL5 sources
+        shell: pwsh
+        run: |
+          $include = "$env:MT5_HOME\MQL5\Include"
+          $scripts = "$env:MT5_HOME\MQL5\Scripts"
+          New-Item -ItemType Directory -Force -Path $include,$scripts | Out-Null
+          Copy-Item ".\mt5\Include\Katarina" "$include\Katarina" -Recurse -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07NativeAccountRecordTest.mq5" "$scripts\KatarinaStage07NativeAccountRecordTest.mq5" -Force
+
+      - name: Strict compile native account record test
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07NativeAccountRecordTest.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07NativeAccountRecordTest.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07NativeAccountRecordTest.compile.log"
+
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+          if (!(Test-Path $log)) { throw "Compile log missing." }
+          $text = Get-Content $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") { throw "Compile is not 0/0." }
+          if (!(Test-Path $artifact)) { throw "EX5 missing." }
+
+      - name: Run MQL5 native account record test
+        shell: pwsh
+        run: |
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $evidence = Join-Path $commonFiles "Katarina_Stage07_native_account_record_result.txt"
+          Remove-Item $evidence -Force -ErrorAction SilentlyContinue
+
+          $config = Join-Path $env:RUNNER_TEMP "stage07-native-account.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=0
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07NativeAccountRecordTest
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+
+          $p = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+          Write-Host "Terminal exit code: $($p.ExitCode)"
+          if (!(Test-Path $evidence)) { throw "MQL evidence missing." }
+          Get-Content $evidence | Write-Host
+          if ((Get-Content $evidence -Raw) -notmatch "result=PASS") { throw "MQL account record builder failed." }
+          Copy-Item $evidence ".\build\stage07\Katarina_Stage07_native_account_record_result.txt" -Force
+
+      - name: Verify 144-byte body against Python KAT1 codec
+        shell: pwsh
+        run: |
+          @'
+          import hashlib
+          import json
+          import pathlib
+          import sys
+
+          root = pathlib.Path.cwd()
+          sys.path.insert(0, str(root / "src"))
+
+          from katarina.adapters.transport.kat1_codec import Kat1Codec, SchemaCatalog
+
+          evidence = root / "build" / "stage07" / "Katarina_Stage07_native_account_record_result.txt"
+          values = {}
+          for line in evidence.read_text(encoding="utf-8").splitlines():
+              if "=" in line:
+                  key, value = line.split("=", 1)
+                  values[key] = value
+
+          actual = bytes.fromhex(values["body_hex"])
+          if len(actual) != 144:
+              raise RuntimeError(f"MQL body length expected 144, got {len(actual)}")
+
+          server = b"Katarina-CI"
+          material = (
+              b"KAT1/account-id/v1"
+              + b"\x00"
+              + len(server).to_bytes(4, "little")
+              + server
+              + b"\x00"
+              + b"123456"
+          )
+          account_id = hashlib.sha256(material).digest()[:16]
+
+          codec = Kat1Codec(
+              SchemaCatalog.from_path(root / "protocol" / "kat1_message_schemas_v1.json")
+          )
+          frame = codec.encode(
+              message_type=200,
+              schema_version=1,
+              sequence=1,
+              source_time_ns=1,
+              stream_id=77,
+              boot_id=88,
+              values={
+                  "account_id": account_id,
+                  "account_revision": 55,
+                  "presence_flags": 0xFFFF,
+                  "balance_units": 100000,
+                  "equity_units": 98766,
+                  "credit_units": 0,
+                  "profit_units": -1234,
+                  "margin_units": 5000,
+                  "free_margin_units": 93766,
+                  "margin_initial_units": 0,
+                  "margin_maintenance_units": 0,
+                  "leverage": 500,
+                  "margin_level_e6": 1975320000,
+                  "margin_call_e6": 50000000,
+                  "stopout_e6": 20000000,
+                  "account_mode": 1,
+                  "trade_mode": 3,
+                  "stopout_mode_raw": 0,
+                  "account_currency_digits": 2,
+                  "account_flags": 7,
+                  "account_unit_profile_revision": 9,
+              },
+          )
+          decoded = codec.decode(frame)
+          expected = decoded.payload[:decoded.header.block_length]
+
+          if actual != expected:
+              for i, (a, b) in enumerate(zip(actual, expected)):
+                  if a != b:
+                      raise RuntimeError(
+                          f"native ACCOUNT_STATE byte mismatch at offset {i}: "
+                          f"mql={a:02x} python={b:02x}"
+                      )
+              raise RuntimeError("native ACCOUNT_STATE body mismatch")
+
+          out = root / "build" / "stage07" / "stage07_native_account_record_evidence.json"
+          out.write_text(
+              json.dumps(
+                  {
+                      "schema_version": "1.0",
+                      "stage": "07",
+                      "record_type": "ACCOUNT_STATE",
+                      "body_bytes": 144,
+                      "cross_language_byte_equality": "PASS",
+                      "money_scale": 2,
+                      "negative_money_roundtrip": "PASS",
+                      "result": "PASS_STAGE07_NATIVE_ACCOUNT_RECORD",
+                  },
+                  indent=2,
+              ),
+              encoding="utf-8",
+          )
+          print("Stage-07 native ACCOUNT_STATE MQL/Python body equality PASS")
+          '@ | python
+
+      - name: Upload native account record evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-native-account-record-evidence
+          path: |
+            build/stage07/KatarinaStage07NativeAccountRecordTest.compile.log
+            build/stage07/Katarina_Stage07_native_account_record_result.txt
+            build/stage07/stage07_native_account_record_evidence.json
+          retention-days: 30
+
+  # from stage07-native-state-records.yml
+  native-state-records:
+    name: Stage 07 Native State Records
+    if: inputs.check == 'all' || inputs.check == 'native-state-records'
+    runs-on: windows-2022
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe" -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07NativeState"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Start-Sleep -Seconds 3
+          $candidates = @($requested,"$env:ProgramFiles\MetaTrader 5","$env:ProgramFiles\MetaTrader 5 Terminal")
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and (Test-Path "$candidate\metaeditor64.exe") -and (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+          if (-not $resolved) { throw "MetaTrader installation files not found." }
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage MQL5 sources
+        shell: pwsh
+        run: |
+          $include = "$env:MT5_HOME\MQL5\Include"
+          $scripts = "$env:MT5_HOME\MQL5\Scripts"
+          New-Item -ItemType Directory -Force -Path $include,$scripts | Out-Null
+          Copy-Item ".\mt5\Include\Katarina" "$include\Katarina" -Recurse -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07NativeStateRecordsTest.mq5" "$scripts\KatarinaStage07NativeStateRecordsTest.mq5" -Force
+
+      - name: Strict compile native state records test
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07NativeStateRecordsTest.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07NativeStateRecordsTest.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07NativeStateRecordsTest.compile.log"
+          $args = @("/compile:`"$source`"","/inc:`"$env:MT5_HOME\MQL5`"","/log:`"$log`"")
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+          if (!(Test-Path $log)) { throw "Compile log missing." }
+          $text = Get-Content $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") { throw "Compile is not 0/0." }
+          if (!(Test-Path $artifact)) { throw "EX5 missing." }
+
+      - name: Run MQL5 native state records test
+        shell: pwsh
+        run: |
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $evidence = Join-Path $commonFiles "Katarina_Stage07_native_state_records_result.txt"
+          Remove-Item $evidence -Force -ErrorAction SilentlyContinue
+          $config = Join-Path $env:RUNNER_TEMP "stage07-native-state.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=0
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07NativeStateRecordsTest
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+          $p = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable","/config:`"$config`"") -Wait -PassThru
+          if (!(Test-Path $evidence)) { throw "MQL evidence missing." }
+          Get-Content $evidence | Write-Host
+          if ((Get-Content $evidence -Raw) -notmatch "result=PASS") { throw "MQL native state records failed." }
+          Copy-Item $evidence ".\build\stage07\Katarina_Stage07_native_state_records_result.txt" -Force
+
+      - name: Verify state bodies against Python KAT1 codec
+        shell: pwsh
+        run: |
+          @'
+          import hashlib
+          import json
+          import pathlib
+          import sys
+
+          root = pathlib.Path.cwd()
+          sys.path.insert(0, str(root / "src"))
+          from katarina.adapters.transport.kat1_codec import Kat1Codec, SchemaCatalog
+
+          values = {}
+          source = root / "build" / "stage07" / "Katarina_Stage07_native_state_records_result.txt"
+          for line in source.read_text(encoding="utf-8").splitlines():
+              if "=" in line:
+                  key, value = line.split("=", 1)
+                  values[key] = value
+
+          codec = Kat1Codec(SchemaCatalog.from_path(root / "protocol" / "kat1_message_schemas_v1.json"))
+
+          server = b"Katarina-CI"
+          material = b"KAT1/account-id/v1" + b"\x00" + len(server).to_bytes(4,"little") + server + b"\x00" + b"123456"
+          account_id = hashlib.sha256(material).digest()[:16]
+
+          fixtures = {
+              "symbol_body_hex": (
+                  102,
+                  {
+                      "instrument_id": 1,
+                      "spec_revision": 7,
+                      "digits": 2,
+                      "price_scale": 2,
+                      "volume_scale": 2,
+                      "trade_calc_mode_raw": 0,
+                      "trade_mode_raw": 4,
+                      "swap_mode_raw": 1,
+                      "order_mode_bits": 127,
+                      "filling_mode_bits": 3,
+                      "expiration_mode_bits": 15,
+                      "stops_level_points": 20,
+                      "freeze_level_points": 5,
+                      "point_units": 1,
+                      "tick_size_units": 1,
+                      "tick_value_units": 123,
+                      "tick_value_profit_units": 124,
+                      "tick_value_loss_units": 122,
+                      "contract_size_e8": 10000000000,
+                      "volume_min_units": 1,
+                      "volume_max_units": 10000,
+                      "volume_step_units": 1,
+                      "volume_limit_units": 20000,
+                      "margin_initial_units": 0,
+                      "margin_maintenance_units": 0,
+                      "swap_long_e8": -1250000000,
+                      "swap_short_e8": 325000000,
+                      "swap_sunday_e4": 10000,
+                      "swap_monday_e4": 10000,
+                      "swap_tuesday_e4": 10000,
+                      "swap_wednesday_e4": 30000,
+                      "swap_thursday_e4": 10000,
+                      "swap_friday_e4": 10000,
+                      "swap_saturday_e4": 10000,
+                      "symbol_flags": 0,
+                      "canonical_symbol": "XAUUSD",
+                      "broker_symbol": "XAUUSD.a",
+                      "base_currency": "XAU",
+                      "profit_currency": "USD",
+                      "margin_currency": "USD",
+                  },
+              ),
+              "session_body_hex": (
+                  103,
+                  {
+                      "instrument_id": 1,
+                      "spec_revision": 7,
+                      "state_revision": 11,
+                      "last_tick_time_ns": 1790956800123000000,
+                      "server_time_ns": 1790956800000000000,
+                      "scheduled_open": 1,
+                      "terminal_connected": 1,
+                      "terminal_trade_allowed": 1,
+                      "mql_trade_allowed": 1,
+                      "symbol_trade_allowed": 1,
+                      "fresh_tick": 1,
+                      "session_open": 1,
+                      "terminal_ping_us": 33000,
+                  },
+              ),
+              "position_body_hex": (
+                  201,
+                  {
+                      "account_id": account_id,
+                      "position_ticket": 10001,
+                      "position_identifier": 11001,
+                      "instrument_id": 1,
+                      "spec_revision": 7,
+                      "magic": 778899,
+                      "position_revision": 9,
+                      "open_time_ns": 1790956800123000000,
+                      "update_time_ns": 1790956860456000000,
+                      "volume_units": 10,
+                      "open_price_units": 428635,
+                      "current_price_units": 428711,
+                      "sl_units": 427500,
+                      "tp_units": 431000,
+                      "profit_units": 3550,
+                      "swap_units": -125,
+                      "change_kind": 1,
+                      "side": 1,
+                      "origin_class": 1,
+                      "position_reason_raw": 3,
+                      "presence_flags": 0,
+                      "position_type_raw": 0,
+                  },
+              ),
+              "order_body_hex": (
+                  202,
+                  {
+                      "account_id": account_id,
+                      "broker_order_ticket": 8001,
+                      "linked_order_id": bytes(16),
+                      "instrument_id": 1,
+                      "spec_revision": 7,
+                      "magic": 778899,
+                      "order_revision": 4,
+                      "create_time_ns": 1790956800123000000,
+                      "update_time_ns": 0,
+                      "volume_initial_units": 10,
+                      "volume_current_units": 10,
+                      "price_open_units": 428000,
+                      "stop_limit_units": 0,
+                      "sl_units": 427000,
+                      "tp_units": 431000,
+                      "expiration_time_ns": 1790960400000000000,
+                      "change_kind": 1,
+                      "side": 1,
+                      "entry_type": 2,
+                      "origin_class": 1,
+                      "normalized_order_state": 2,
+                      "time_in_force": 2,
+                      "filling_policy": 1,
+                      "presence_flags": 0,
+                      "order_type_raw": 2,
+                      "order_state_raw": 1,
+                      "order_reason_raw": 3,
+                  },
+              ),
+          }
+
+          checked = {}
+          for evidence_key, (message_type, logical) in fixtures.items():
+              actual = bytes.fromhex(values[evidence_key])
+              frame = codec.encode(
+                  message_type=message_type,
+                  schema_version=1,
+                  sequence=1,
+                  source_time_ns=1,
+                  stream_id=77,
+                  boot_id=88,
+                  values=logical,
+              )
+              decoded = codec.decode(frame)
+              expected = decoded.payload
+              if actual != expected:
+                  limit = min(len(actual), len(expected))
+                  mismatch = next((i for i in range(limit) if actual[i] != expected[i]), None)
+                  raise RuntimeError(
+                      f"{evidence_key} mismatch: actual={len(actual)} expected={len(expected)} "
+                      f"first_offset={mismatch}"
+                  )
+              checked[evidence_key] = len(actual)
+
+          out = root / "build" / "stage07" / "stage07_native_state_records_evidence.json"
+          out.write_text(json.dumps({
+              "schema_version": "1.0",
+              "stage": "07",
+              "records": checked,
+              "cross_language_byte_equality": "PASS",
+              "result": "PASS_STAGE07_NATIVE_STATE_RECORDS",
+          }, indent=2), encoding="utf-8")
+          print("Stage-07 native SYMBOL/SESSION/POSITION/ORDER body equality PASS")
+          '@ | python
+
+      - name: Upload native state record evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-native-state-records-evidence
+          path: |
+            build/stage07/KatarinaStage07NativeStateRecordsTest.compile.log
+            build/stage07/Katarina_Stage07_native_state_records_result.txt
+            build/stage07/stage07_native_state_records_evidence.json
+          retention-days: 30
+
+  # from stage07-preclearance.yml
+  preclearance:
+    name: Stage 07 Pre-Clearance
+    if: inputs.check == 'all' || inputs.check == 'preclearance'
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Stage 07 dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-stage07.txt
+
+      - name: Run 37 Stage 07 regressions
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "src"
+          $log = ".\build\stage07\preclearance_tests.txt"
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          python -m unittest tests.unit.transport.test_stage07_communication tests.unit.transport.test_stage07_stage06_contract -v 2>&1 | Tee-Object -FilePath $log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $text = Get-Content $log -Raw
+          if ($text -notmatch "Ran 37 tests" -or $text -notmatch "(?m)^OK\s*$") {
+            throw "Expected 37/37 Stage-07 regression tests."
+          }
+
+      - name: Run latency and backpressure profile
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "src"
+          python .\scripts\stage07\profile_stage07_transport.py --repo-root . --output .\build\stage07\stage07_transport_profile.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Audit Stage 07 pre-clearance
+        shell: pwsh
+        run: |
+          python .\scripts\stage07\audit_stage07_preclearance.py --repo-root . --profile-evidence .\build\stage07\stage07_transport_profile.json --test-log .\build\stage07\preclearance_tests.txt --output .\build\stage07\stage07_preclearance.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $audit = Get-Content ".\build\stage07\stage07_preclearance.json" -Raw | ConvertFrom-Json
+          if ($audit.result -ne "PASS_STAGE07_PRECLEARANCE_MANUAL_TERMINAL_PERMISSION_ONLY") {
+            throw "Stage-07 pre-clearance did not pass."
+          }
+
+      - name: Upload pre-clearance evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-preclearance-evidence
+          path: |
+            build/stage07/preclearance_tests.txt
+            build/stage07/stage07_transport_profile.json
+            build/stage07/stage07_preclearance.json
+          retention-days: 90
+
+  # from stage07-reconnect.yml
+  reconnect:
+    name: Stage 07 Cross-Process Reconnect
+    if: inputs.check == 'all' || inputs.check == 'reconnect'
+    env:
+      MQL5_ZMQ_REPO: coke5151/mql5-zmq
+      MQL5_ZMQ_COMMIT: f332ee903fb8f27cbf28a8169824b8130e2aaab2
+      KAT_RECONNECT_ENDPOINT: tcp://127.0.0.1:5571
+    runs-on: windows-2022
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout Katarina
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Stage 07 transport dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-stage07.txt
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          if (!(Test-Path "$env:RUNNER_TEMP\mt5setup.exe")) { throw "MT5 installer download failed." }
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07Reconnect"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Write-Host "Installer exit code: $($p.ExitCode)"
+          Start-Sleep -Seconds 3
+
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+
+          if (-not $resolved) {
+            throw "MetaTrader installation files not found. Installer exit code=$($p.ExitCode)."
+          }
+
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Fetch pinned MQL5 ZeroMQ binding
+        shell: pwsh
+        run: |
+          $archive = "$env:RUNNER_TEMP\mql5-zmq.zip"
+          $extract = "$env:RUNNER_TEMP\mql5-zmq"
+          $url = "https://github.com/$env:MQL5_ZMQ_REPO/archive/$env:MQL5_ZMQ_COMMIT.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $extract -Force
+          $root = Get-ChildItem -Path $extract -Directory | Select-Object -First 1
+          if (-not $root) { throw "Pinned MQL5 ZeroMQ archive extraction failed." }
+          "MQL5_ZMQ_ROOT=$($root.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage reconnect integration files
+        shell: pwsh
+        run: |
+          $include = "$env:MT5_HOME\MQL5\Include"
+          $libraries = "$env:MT5_HOME\MQL5\Libraries"
+          $scripts = "$env:MT5_HOME\MQL5\Scripts"
+
+          New-Item -ItemType Directory -Force -Path $include,$libraries,$scripts | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Zmq" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Mql\Lang" | Out-Null
+
+          Copy-Item ".\mt5\Include\Katarina" "$include\Katarina" -Recurse -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Zmq\*.mqh" "$include\Zmq\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Mql\Lang\*.mqh" "$include\Mql\Lang\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libzmq.dll" $libraries -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libsodium.dll" $libraries -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07ReconnectIntegration.mq5" "$scripts\KatarinaStage07ReconnectIntegration.mq5" -Force
+
+      - name: Strict compile reconnect integration
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07ReconnectIntegration.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07ReconnectIntegration.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07ReconnectIntegration.compile.log"
+
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+
+          if (!(Test-Path $log)) { throw "Reconnect compile log missing." }
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") {
+            throw "Reconnect integration compile is not zero-error/zero-warning."
+          }
+          if (!(Test-Path $artifact)) { throw "Reconnect integration EX5 missing." }
+
+          "STAGE07_RECONNECT_EX5_SHA256=$((Get-FileHash $artifact -Algorithm SHA256).Hash)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Write persistent Python reconnect peer
+        shell: pwsh
+        run: |
+          @'
+          import asyncio
+          import json
+          import os
+          import pathlib
+          import sys
+
+          ROOT = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+          sys.path.insert(0, str(ROOT / "src"))
+
+          from katarina.adapters.transport.kat1_codec import Kat1Codec, SchemaCatalog
+          from katarina.adapters.transport.recovery import Kat1RecoveryGate, RecoveryState
+          from katarina.adapters.transport.session import HEARTBEAT, Kat1SessionSupervisor, SessionState
+          from katarina.adapters.transport.zmq import ZmqRouterTransport
+
+          async def recovery_cycle(
+              *,
+              router,
+              codec,
+              session,
+              peer,
+              binding,
+              phase,
+              now_base,
+              expected_snapshot_sequence,
+              expected_reconcile_sequence,
+              expected_ready_sequence,
+              expected_mt5_sequences,
+          ):
+              recovery = Kat1RecoveryGate(
+                  codec=codec,
+                  stream_id=binding.stream_id,
+                  boot_id=binding.boot_id,
+                  account_id=binding.account_id,
+              )
+              recovery.start(snapshot_request_id=bytes([0x40 + phase]) * 16)
+
+              snapshot_seq = session.reserve_outbound_sequence(
+                  stream_id=binding.stream_id
+              )
+              if snapshot_seq != expected_snapshot_sequence:
+                  raise RuntimeError(
+                      f"phase {phase}: snapshot request seq expected "
+                      f"{expected_snapshot_sequence}, got {snapshot_seq}"
+                  )
+              request = recovery.build_snapshot_request(
+                  sequence=snapshot_seq,
+                  source_time_ns=now_base + 200_000_000,
+                  requested_record_mask=0x7F,
+                  after_execution_cursor=0,
+                  max_chunk_bytes=60000,
+              )
+              await router.send_frame(request, peer=peer)
+
+              for index, expected_type in enumerate((11, 12, 13)):
+                  received = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+                  decoded = codec.decode(received.frame)
+                  expected_seq = expected_mt5_sequences[index]
+                  if decoded.header.sequence != expected_seq:
+                      raise RuntimeError(
+                          f"phase {phase}: MT5 recovery sequence expected "
+                          f"{expected_seq}, got {decoded.header.sequence}"
+                      )
+                  if decoded.header.boot_id != binding.boot_id:
+                      raise RuntimeError(f"phase {phase}: recovery boot_id mismatch")
+                  session.observe(
+                      received,
+                      now_ns=now_base + 300_000_000 + index * 100_000_000,
+                  )
+                  recovery.observe(decoded)
+
+              if recovery.state is not RecoveryState.WAITING_RECONCILE:
+                  raise RuntimeError(f"phase {phase}: snapshot incomplete")
+
+              reconcile_seq = session.reserve_outbound_sequence(
+                  stream_id=binding.stream_id
+              )
+              if reconcile_seq != expected_reconcile_sequence:
+                  raise RuntimeError(
+                      f"phase {phase}: reconcile seq expected "
+                      f"{expected_reconcile_sequence}, got {reconcile_seq}"
+                  )
+              reconcile = recovery.build_reconcile_request(
+                  sequence=reconcile_seq,
+                  source_time_ns=now_base + 600_000_000,
+                  request_id=bytes([0x50 + phase]) * 16,
+                  after_event_cursor=expected_mt5_sequences[-1],
+                  scope_flags=0xFFFFFFFF,
+              )
+              await router.send_frame(reconcile, peer=peer)
+
+              report_received = await asyncio.wait_for(
+                  router.receive_frame(), timeout=10.0
+              )
+              report = codec.decode(report_received.frame)
+              expected_report_seq = expected_mt5_sequences[-1] + 1
+              if report.header.sequence != expected_report_seq:
+                  raise RuntimeError(
+                      f"phase {phase}: report seq expected "
+                      f"{expected_report_seq}, got {report.header.sequence}"
+                  )
+              session.observe(
+                  report_received,
+                  now_ns=now_base + 700_000_000,
+              )
+              recovery.observe(report)
+              if recovery.state is not RecoveryState.COMPLETE:
+                  raise RuntimeError(f"phase {phase}: reconciliation incomplete")
+
+              session.mark_recovered(now_ns=now_base + 800_000_000)
+              if session.state is not SessionState.READY:
+                  raise RuntimeError(f"phase {phase}: session did not become READY")
+
+              ready_seq = session.reserve_outbound_sequence(
+                  stream_id=binding.stream_id
+              )
+              if ready_seq != expected_ready_sequence:
+                  raise RuntimeError(
+                      f"phase {phase}: ready heartbeat seq expected "
+                      f"{expected_ready_sequence}, got {ready_seq}"
+                  )
+
+              ready_hb = codec.encode(
+                  message_type=HEARTBEAT,
+                  schema_version=1,
+                  sequence=ready_seq,
+                  source_time_ns=now_base + 850_000_000,
+                  stream_id=binding.stream_id,
+                  boot_id=binding.boot_id,
+                  values={
+                      "uptime_ms": phase * 1000 + 850,
+                      "latest_produced_sequence": ready_seq,
+                      "latest_consumed_command_sequence": expected_report_seq,
+                      "critical_queue_depth": 0,
+                      "market_queue_depth": 0,
+                      "last_broker_observation_ns": now_base + 850_000_000,
+                      "transport_state": 1,
+                  },
+              )
+              await router.send_frame(ready_hb, peer=peer)
+
+              final_received = await asyncio.wait_for(
+                  router.receive_frame(), timeout=10.0
+              )
+              final_frame = codec.decode(final_received.frame)
+              expected_final = expected_report_seq + 1
+              if final_frame.header.sequence != expected_final:
+                  raise RuntimeError(
+                      f"phase {phase}: final MT5 seq expected "
+                      f"{expected_final}, got {final_frame.header.sequence}"
+                  )
+              session.observe(
+                  final_received,
+                  now_ns=now_base + 900_000_000,
+              )
+              if session.state is not SessionState.READY:
+                  raise RuntimeError(f"phase {phase}: final heartbeat lost READY")
+              if session.live_risk_ready:
+                  raise RuntimeError("Stage 07 illegally granted live-risk readiness")
+
+              return {
+                  "snapshot_sequence": snapshot_seq,
+                  "reconcile_sequence": reconcile_seq,
+                  "ready_sequence": ready_seq,
+                  "final_mt5_sequence": final_frame.header.sequence,
+                  "boot_id": binding.boot_id,
+              }
+
+          async def main():
+              endpoint = os.environ["KAT_RECONNECT_ENDPOINT"]
+              ready = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-reconnect-ready.txt"
+              phase1_done = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-reconnect-phase1-done.txt"
+              phase2_ready = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-reconnect-phase2-ready.txt"
+              result = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-reconnect-python-result.json"
+
+              codec = Kat1Codec(
+                  SchemaCatalog.from_path(ROOT / "protocol" / "kat1_message_schemas_v1.json")
+              )
+              router = ZmqRouterTransport(endpoint=endpoint, send_hwm=64, receive_hwm=64)
+              session = Kat1SessionSupervisor(
+                  codec=codec,
+                  client_instance_id=b"\xA9" * 16,
+                  requested_execution_mode=0,
+                  heartbeat_interval_ms=1000,
+                  stale_after_ms=5000,
+              )
+
+              await router.start()
+              session.start()
+              ready.write_text(endpoint, encoding="utf-8")
+
+              # Phase 1: boot_id=88, MT5 lane 1..7, Python lane 1..4.
+              presence1 = await asyncio.wait_for(router.receive_frame(), timeout=30.0)
+              p1 = codec.decode(presence1.frame)
+              if p1.header.sequence != 1 or p1.header.boot_id != 88:
+                  raise RuntimeError("phase1 presence sequence/boot mismatch")
+              hello1 = session.observe(presence1, now_ns=1_000_000_000)
+              if hello1 is None:
+                  raise RuntimeError("phase1 presence did not produce HELLO")
+              if codec.decode(hello1.frame).header.sequence != 1:
+                  raise RuntimeError("phase1 Python HELLO sequence is not 1")
+              await router.send_frame(hello1.frame, peer=hello1.peer)
+
+              ack1 = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              ack1_frame = codec.decode(ack1.frame)
+              if ack1_frame.header.sequence != 2 or ack1_frame.header.boot_id != 88:
+                  raise RuntimeError("phase1 HELLO_ACK sequence/boot mismatch")
+              session.observe(ack1, now_ns=1_100_000_000)
+              binding1 = session.binding
+              if binding1 is None or binding1.boot_id != 88:
+                  raise RuntimeError("phase1 binding missing")
+
+              phase1 = await recovery_cycle(
+                  router=router,
+                  codec=codec,
+                  session=session,
+                  peer=ack1.peer,
+                  binding=binding1,
+                  phase=1,
+                  now_base=1_000_000_000,
+                  expected_snapshot_sequence=2,
+                  expected_reconcile_sequence=3,
+                  expected_ready_sequence=4,
+                  expected_mt5_sequences=(3, 4, 5),
+              )
+              if phase1["final_mt5_sequence"] != 7:
+                  raise RuntimeError("phase1 did not finish MT5 sequence 7")
+
+              phase1_done.write_text("phase1 READY", encoding="utf-8")
+
+              # Give the old DEALER process time to close, then force session
+              # stale without destroying binding/sequence history.
+              await asyncio.sleep(1.0)
+              if not session.check_stale(now_ns=8_000_000_000):
+                  raise RuntimeError("phase1 session did not become STALE")
+              if session.state is not SessionState.STALE:
+                  raise RuntimeError("phase1 stale state mismatch")
+              phase2_ready.write_text("STALE; launch phase2", encoding="utf-8")
+
+              # Phase 2: same stream, new boot=89. MT5 must continue at 8;
+              # Python must continue at 5, not reset to 1.
+              presence2 = await asyncio.wait_for(router.receive_frame(), timeout=30.0)
+              p2 = codec.decode(presence2.frame)
+              if p2.header.sequence != 8 or p2.header.boot_id != 89:
+                  raise RuntimeError(
+                      f"phase2 presence expected seq8/boot89, "
+                      f"got seq{p2.header.sequence}/boot{p2.header.boot_id}"
+                  )
+              hello2 = session.observe(presence2, now_ns=9_000_000_000)
+              if hello2 is None:
+                  raise RuntimeError("phase2 stale presence did not produce HELLO")
+              hello2_frame = codec.decode(hello2.frame)
+              if hello2_frame.header.sequence != 5:
+                  raise RuntimeError(
+                      f"phase2 Python HELLO expected sequence 5, "
+                      f"got {hello2_frame.header.sequence}"
+                  )
+              await router.send_frame(hello2.frame, peer=hello2.peer)
+
+              ack2 = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              ack2_frame = codec.decode(ack2.frame)
+              if ack2_frame.header.sequence != 9 or ack2_frame.header.boot_id != 89:
+                  raise RuntimeError("phase2 HELLO_ACK sequence/boot mismatch")
+              session.observe(ack2, now_ns=9_100_000_000)
+
+              binding2 = session.binding
+              if binding2 is None:
+                  raise RuntimeError("phase2 binding missing")
+              if binding2.stream_id != binding1.stream_id:
+                  raise RuntimeError("phase2 stream_id changed")
+              if binding2.boot_id != 89:
+                  raise RuntimeError("phase2 new boot_id not accepted")
+              if (
+                  binding2.account_id != binding1.account_id
+                  or binding2.broker_login != binding1.broker_login
+                  or binding2.broker_server != binding1.broker_server
+              ):
+                  raise RuntimeError("phase2 account binding changed")
+
+              phase2 = await recovery_cycle(
+                  router=router,
+                  codec=codec,
+                  session=session,
+                  peer=ack2.peer,
+                  binding=binding2,
+                  phase=2,
+                  now_base=9_000_000_000,
+                  expected_snapshot_sequence=6,
+                  expected_reconcile_sequence=7,
+                  expected_ready_sequence=8,
+                  expected_mt5_sequences=(10, 11, 12),
+              )
+              if phase2["final_mt5_sequence"] != 14:
+                  raise RuntimeError("phase2 did not finish MT5 sequence 14")
+
+              result.write_text(json.dumps({
+                  "result": "PASS",
+                  "stream_id_stable": binding1.stream_id == binding2.stream_id == 77,
+                  "boot_transition": [binding1.boot_id, binding2.boot_id],
+                  "phase1_python_final": phase1["ready_sequence"],
+                  "phase2_python_first": 5,
+                  "phase2_python_final": phase2["ready_sequence"],
+                  "phase1_mt5_final": phase1["final_mt5_sequence"],
+                  "phase2_mt5_first": 8,
+                  "phase2_mt5_final": phase2["final_mt5_sequence"],
+                  "session_state": session.state.value,
+                  "communication_ready": session.communication_ready,
+                  "live_risk_ready": session.live_risk_ready,
+                  "duplicate_or_gap_detected": False,
+                  "full_recovery_repeated": True,
+              }, indent=2), encoding="utf-8")
+              await router.stop()
+
+          asyncio.run(main())
+          '@ | Set-Content -Path "$env:RUNNER_TEMP\kat_reconnect_peer.py" -Encoding UTF8
+
+      - name: Run two-terminal-process reconnect proof
+        shell: pwsh
+        run: |
+          $ready = "$env:RUNNER_TEMP\kat-reconnect-ready.txt"
+          $phase1Done = "$env:RUNNER_TEMP\kat-reconnect-phase1-done.txt"
+          $phase2Ready = "$env:RUNNER_TEMP\kat-reconnect-phase2-ready.txt"
+          $pythonResult = "$env:RUNNER_TEMP\kat-reconnect-python-result.json"
+          Remove-Item $ready,$phase1Done,$phase2Ready,$pythonResult -Force -ErrorAction SilentlyContinue
+
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $marker = Join-Path $commonFiles "Katarina_Stage07_reconnect_phase.txt"
+          $mt5Evidence = Join-Path $commonFiles "Katarina_Stage07_reconnect_result.txt"
+          Remove-Item $marker,$mt5Evidence -Force -ErrorAction SilentlyContinue
+
+          # Keep the ROUTER process alive in THIS SAME workflow step while both
+          # independent MT5 terminal processes start/stop.
+          $peer = Start-Process -FilePath "python" -ArgumentList "$env:RUNNER_TEMP\kat_reconnect_peer.py" -PassThru -NoNewWindow
+
+          try {
+            $deadline = [DateTime]::UtcNow.AddSeconds(10)
+            while ([DateTime]::UtcNow -lt $deadline -and !(Test-Path $ready)) {
+              if ($peer.HasExited) { throw "Python reconnect peer exited before ready." }
+              Start-Sleep -Milliseconds 100
+            }
+            if (!(Test-Path $ready)) { throw "Python reconnect peer did not become ready." }
+
+            $config1 = Join-Path $env:RUNNER_TEMP "stage07-reconnect-phase1.ini"
+            @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=1
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07ReconnectIntegration
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config1 -Encoding ASCII
+
+            $p1 = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config1`"") -Wait -PassThru
+            Write-Host "Phase-1 terminal exit code: $($p1.ExitCode)"
+
+            if (!(Test-Path $mt5Evidence)) { throw "Phase-1 reconnect evidence missing." }
+            $phase1Text = Get-Content $mt5Evidence -Raw
+            Write-Host $phase1Text
+            if ($phase1Text -notmatch "result=PHASE1_PASS") { throw "Reconnect phase 1 failed." }
+            if ($phase1Text -notmatch "last_mt5_sequence=7") { throw "Phase 1 MT5 sequence did not end at 7." }
+            if ($phase1Text -notmatch "last_python_sequence=4") { throw "Phase 1 Python sequence did not end at 4." }
+
+            $deadline = [DateTime]::UtcNow.AddSeconds(12)
+            while ([DateTime]::UtcNow -lt $deadline -and !(Test-Path $phase2Ready)) {
+              if ($peer.HasExited) { throw "Python reconnect peer exited before phase 2." }
+              Start-Sleep -Milliseconds 100
+            }
+            if (!(Test-Path $phase2Ready)) { throw "Python peer never reached STALE/phase2-ready." }
+            Get-Content $phase2Ready | Write-Host
+
+            Remove-Item $mt5Evidence -Force -ErrorAction SilentlyContinue
+
+            $config2 = Join-Path $env:RUNNER_TEMP "stage07-reconnect-phase2.ini"
+            @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=1
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07ReconnectIntegration
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config2 -Encoding ASCII
+
+            $p2 = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config2`"") -Wait -PassThru
+            Write-Host "Phase-2 terminal exit code: $($p2.ExitCode)"
+
+            if (!(Test-Path $mt5Evidence)) { throw "Phase-2 reconnect evidence missing." }
+            $phase2Text = Get-Content $mt5Evidence -Raw
+            Write-Host $phase2Text
+            if ($phase2Text -notmatch "result=PASS") { throw "Reconnect phase 2 failed." }
+            if ($phase2Text -notmatch "boot_id=89") { throw "Phase 2 did not use new boot_id 89." }
+            if ($phase2Text -notmatch "last_mt5_sequence=14") { throw "Phase 2 MT5 sequence did not end at 14." }
+            if ($phase2Text -notmatch "last_python_sequence=8") { throw "Phase 2 Python sequence did not end at 8." }
+
+            $peer.WaitForExit(15000) | Out-Null
+            if (-not $peer.HasExited) {
+              throw "Python reconnect peer did not terminate after phase 2."
+            }
+            if ($peer.ExitCode -ne 0) {
+              throw "Python reconnect peer failed with exit code $($peer.ExitCode)."
+            }
+
+            if (!(Test-Path $pythonResult)) { throw "Python reconnect result missing." }
+            $python = Get-Content $pythonResult -Raw | ConvertFrom-Json
+            Get-Content $pythonResult | Write-Host
+
+            if ($python.result -ne "PASS") { throw "Python reconnect result did not pass." }
+            if ($python.stream_id_stable -ne $true) { throw "stream_id changed across reconnect." }
+            if ($python.phase1_mt5_final -ne 7 -or $python.phase2_mt5_first -ne 8 -or $python.phase2_mt5_final -ne 14) {
+              throw "MT5 sequence continuity failed."
+            }
+            if ($python.phase1_python_final -ne 4 -or $python.phase2_python_first -ne 5 -or $python.phase2_python_final -ne 8) {
+              throw "Python sequence continuity failed."
+            }
+            if ($python.session_state -ne "ready" -or $python.communication_ready -ne $true) {
+              throw "Second recovery did not finish READY."
+            }
+            if ($python.live_risk_ready -ne $false) { throw "Stage 07 illegally granted live-risk readiness." }
+            if ($python.duplicate_or_gap_detected -ne $false) { throw "Duplicate/gap was detected." }
+            if ($python.full_recovery_repeated -ne $true) { throw "Full recovery was not repeated." }
+
+            Copy-Item $mt5Evidence ".\build\stage07\Katarina_Stage07_reconnect_result.txt" -Force
+            Copy-Item $pythonResult ".\build\stage07\stage07_reconnect_python_result.json" -Force
+          }
+          finally {
+            if (-not $peer.HasExited) {
+              Stop-Process -Id $peer.Id -Force -ErrorAction SilentlyContinue
+            }
+          }
+
+      - name: Write reconnect evidence
+        shell: pwsh
+        run: |
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "07"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner = "windows-2022"
+            process_restart = $true
+            stream_id_stable = $true
+            boot_id_changed = $true
+            boot_transition = @(88,89)
+            mt5_lane = "1..7 then 8..14"
+            python_lane = "1..4 then 5..8"
+            duplicate_or_gap = $false
+            stale_gate = "PASS"
+            rehandshake = "PASS"
+            repeated_snapshot_reconciliation = "PASS"
+            final_state = "READY"
+            communication_ready = $true
+            live_risk_ready = $false
+            compile = "PASS_0_ERRORS_0_WARNINGS"
+            ex5_sha256 = "$env:STAGE07_RECONNECT_EX5_SHA256"
+            result = "PASS_STAGE07_CROSS_PROCESS_RECONNECT"
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content ".\build\stage07\stage07_reconnect_evidence.json" -Encoding UTF8
+
+      - name: Upload reconnect evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-cross-process-reconnect-evidence
+          path: |
+            build/stage07/KatarinaStage07ReconnectIntegration.compile.log
+            build/stage07/Katarina_Stage07_reconnect_result.txt
+            build/stage07/stage07_reconnect_python_result.json
+            build/stage07/stage07_reconnect_evidence.json
+          retention-days: 30
+
+  # from stage07-recovery-integration.yml
+  recovery-integration:
+    name: Stage 07 Cross-Language Recovery
+    if: inputs.check == 'all' || inputs.check == 'recovery-integration'
+    env:
+      MQL5_ZMQ_REPO: coke5151/mql5-zmq
+      MQL5_ZMQ_COMMIT: f332ee903fb8f27cbf28a8169824b8130e2aaab2
+      KAT_RECOVERY_ENDPOINT: tcp://127.0.0.1:5570
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Katarina
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Stage 07 transport dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-stage07.txt
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          if (!(Test-Path "$env:RUNNER_TEMP\mt5setup.exe")) { throw "MT5 installer download failed." }
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07Recovery"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Write-Host "Installer exit code: $($p.ExitCode)"
+          Start-Sleep -Seconds 3
+
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+
+          if (-not $resolved) {
+            throw "MetaTrader installation files not found. Installer exit code=$($p.ExitCode)."
+          }
+
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Fetch pinned MQL5 ZeroMQ binding
+        shell: pwsh
+        run: |
+          $archive = "$env:RUNNER_TEMP\mql5-zmq.zip"
+          $extract = "$env:RUNNER_TEMP\mql5-zmq"
+          $url = "https://github.com/$env:MQL5_ZMQ_REPO/archive/$env:MQL5_ZMQ_COMMIT.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $extract -Force
+          $root = Get-ChildItem -Path $extract -Directory | Select-Object -First 1
+          if (-not $root) { throw "Pinned MQL5 ZeroMQ archive extraction failed." }
+          "MQL5_ZMQ_ROOT=$($root.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage recovery integration files
+        shell: pwsh
+        run: |
+          $include = "$env:MT5_HOME\MQL5\Include"
+          $libraries = "$env:MT5_HOME\MQL5\Libraries"
+          $scripts = "$env:MT5_HOME\MQL5\Scripts"
+
+          New-Item -ItemType Directory -Force -Path $include,$libraries,$scripts | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Zmq" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Mql\Lang" | Out-Null
+
+          Copy-Item ".\mt5\Include\Katarina" "$include\Katarina" -Recurse -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Zmq\*.mqh" "$include\Zmq\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Mql\Lang\*.mqh" "$include\Mql\Lang\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libzmq.dll" $libraries -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libsodium.dll" $libraries -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07RecoveryIntegration.mq5" "$scripts\KatarinaStage07RecoveryIntegration.mq5" -Force
+
+      - name: Strict compile recovery integration
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07RecoveryIntegration.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07RecoveryIntegration.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07RecoveryIntegration.compile.log"
+
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+
+          if (!(Test-Path $log)) { throw "Recovery compile log missing." }
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") {
+            throw "Recovery integration compile is not zero-error/zero-warning."
+          }
+          if (!(Test-Path $artifact)) { throw "Recovery integration EX5 missing." }
+
+          "STAGE07_RECOVERY_EX5_SHA256=$((Get-FileHash $artifact -Algorithm SHA256).Hash)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Write Python recovery peer
+        shell: pwsh
+        run: |
+          @'
+          import asyncio
+          import json
+          import os
+          import pathlib
+          import sys
+
+          ROOT = pathlib.Path(os.environ["GITHUB_WORKSPACE"])
+          sys.path.insert(0, str(ROOT / "src"))
+
+          from katarina.adapters.transport.kat1_codec import Kat1Codec, SchemaCatalog
+          from katarina.adapters.transport.recovery import Kat1RecoveryGate, RecoveryState
+          from katarina.adapters.transport.session import HEARTBEAT, Kat1SessionSupervisor, SessionState
+          from katarina.adapters.transport.zmq import ZmqRouterTransport
+
+          async def main():
+              endpoint = os.environ["KAT_RECOVERY_ENDPOINT"]
+              ready = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-recovery-ready.txt"
+              result = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-recovery-python-result.json"
+
+              codec = Kat1Codec(
+                  SchemaCatalog.from_path(ROOT / "protocol" / "kat1_message_schemas_v1.json")
+              )
+              router = ZmqRouterTransport(endpoint=endpoint, send_hwm=64, receive_hwm=64)
+              session = Kat1SessionSupervisor(
+                  codec=codec,
+                  client_instance_id=b"\xA8" * 16,
+                  requested_execution_mode=0,
+                  heartbeat_interval_ms=1000,
+                  stale_after_ms=5000,
+              )
+
+              await router.start()
+              session.start()
+              ready.write_text(endpoint, encoding="utf-8")
+
+              presence = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              hello = session.observe(presence, now_ns=1_000_000_000)
+              if hello is None:
+                  raise RuntimeError("presence did not produce HELLO")
+              await router.send_frame(hello.frame, peer=hello.peer)
+
+              ack = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              session.observe(ack, now_ns=1_100_000_000)
+              if session.state is not SessionState.RECOVERING:
+                  raise RuntimeError("HELLO_ACK did not enter RECOVERING")
+              binding = session.binding
+              if binding is None:
+                  raise RuntimeError("HELLO_ACK binding missing")
+
+              recovery = Kat1RecoveryGate(
+                  codec=codec,
+                  stream_id=binding.stream_id,
+                  boot_id=binding.boot_id,
+                  account_id=binding.account_id,
+              )
+              snapshot_request_id = b"\x44" * 16
+              recovery.start(snapshot_request_id=snapshot_request_id)
+
+              snapshot_request_sequence = session.reserve_outbound_sequence(
+                  stream_id=binding.stream_id
+              )
+              if snapshot_request_sequence != 2:
+                  raise RuntimeError(
+                      f"expected Python snapshot request sequence 2, got {snapshot_request_sequence}"
+                  )
+              snapshot_request = recovery.build_snapshot_request(
+                  sequence=snapshot_request_sequence,
+                  source_time_ns=1_200_000_000,
+                  requested_record_mask=0x7F,
+                  after_execution_cursor=0,
+                  max_chunk_bytes=60000,
+              )
+              await router.send_frame(snapshot_request, peer=ack.peer)
+
+              snapshot_messages = []
+              now_ns = 2_000_000_000
+              for expected_type in (11, 12, 13):
+                  received = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+
+                  # Session supervisor owns MT5→Python lane continuity even
+                  # when message semantics are dispatched to the recovery gate.
+                  session.observe(received, now_ns=now_ns)
+                  decoded = codec.decode(received.frame)
+                  if decoded.header.message_type != expected_type:
+                      raise RuntimeError(
+                          f"expected recovery type {expected_type}, got {decoded.header.message_type}"
+                      )
+                  if codec.reencode(decoded) != received.frame:
+                      raise RuntimeError(
+                          f"MQL5 recovery frame {expected_type} is not Python byte-identical"
+                      )
+                  recovery.observe(decoded)
+                  snapshot_messages.append(decoded)
+                  now_ns += 100_000_000
+
+              if recovery.state is not RecoveryState.WAITING_RECONCILE:
+                  raise RuntimeError(
+                      f"snapshot did not reach WAITING_RECONCILE: {recovery.state}"
+                  )
+
+              chunk = snapshot_messages[1]
+              records = chunk.values["records"]
+              if len(records) != 1:
+                  raise RuntimeError("synthetic snapshot did not contain one record")
+              record = records[0]
+              if record["record_type"] != 3 or record["schema_version"] != 1:
+                  raise RuntimeError("snapshot embedded record identity mismatch")
+              if record["body"] != b"stage07-synthetic-account-state":
+                  raise RuntimeError("snapshot embedded record body mismatch")
+
+              reconcile_request_id = b"\x55" * 16
+              reconcile_sequence = session.reserve_outbound_sequence(
+                  stream_id=binding.stream_id
+              )
+              if reconcile_sequence != 3:
+                  raise RuntimeError(
+                      f"expected Python reconcile sequence 3, got {reconcile_sequence}"
+                  )
+
+              reconcile_request = recovery.build_reconcile_request(
+                  sequence=reconcile_sequence,
+                  source_time_ns=2_300_000_000,
+                  request_id=reconcile_request_id,
+                  after_event_cursor=5,
+                  scope_flags=0xFFFFFFFF,
+              )
+              await router.send_frame(reconcile_request, peer=ack.peer)
+
+              report_received = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              session.observe(report_received, now_ns=2_400_000_000)
+              report = codec.decode(report_received.frame)
+              if report.header.message_type != 313:
+                  raise RuntimeError("expected RECONCILE_REPORT")
+              if codec.reencode(report) != report_received.frame:
+                  raise RuntimeError("MQL5 RECONCILE_REPORT is not Python byte-identical")
+              recovery.observe(report)
+
+              if recovery.state is not RecoveryState.COMPLETE:
+                  raise RuntimeError(f"recovery did not complete: {recovery.state}")
+              if not recovery.communication_ready or recovery.live_risk_ready:
+                  raise RuntimeError("recovery gate readiness/live-risk semantics invalid")
+
+              session.mark_recovered(now_ns=2_500_000_000)
+              if session.state is not SessionState.READY:
+                  raise RuntimeError("session did not promote to READY")
+              if not session.communication_ready or session.live_risk_ready:
+                  raise RuntimeError("session READY/live-risk semantics invalid")
+
+              heartbeat_sequence = session.reserve_outbound_sequence(
+                  stream_id=binding.stream_id
+              )
+              if heartbeat_sequence != 4:
+                  raise RuntimeError(
+                      f"expected Python READY heartbeat sequence 4, got {heartbeat_sequence}"
+                  )
+              python_heartbeat = codec.encode(
+                  message_type=HEARTBEAT,
+                  schema_version=1,
+                  sequence=heartbeat_sequence,
+                  source_time_ns=2_550_000_000,
+                  stream_id=binding.stream_id,
+                  boot_id=binding.boot_id,
+                  values={
+                      "uptime_ms": 2550,
+                      "latest_produced_sequence": heartbeat_sequence,
+                      "latest_consumed_command_sequence": 6,
+                      "critical_queue_depth": 0,
+                      "market_queue_depth": 0,
+                      "last_broker_observation_ns": 2_550_000_000,
+                      "transport_state": 1,
+                  },
+              )
+              await router.send_frame(python_heartbeat, peer=ack.peer)
+
+              final_mt5 = await asyncio.wait_for(router.receive_frame(), timeout=10.0)
+              session.observe(final_mt5, now_ns=2_600_000_000)
+              final_decoded = codec.decode(final_mt5.frame)
+              if final_decoded.header.message_type != HEARTBEAT:
+                  raise RuntimeError("final MT5 frame is not HEARTBEAT")
+              if final_decoded.header.sequence != 7:
+                  raise RuntimeError(
+                      f"final MT5 sequence expected 7, got {final_decoded.header.sequence}"
+                  )
+              if session.state is not SessionState.READY:
+                  raise RuntimeError("final heartbeat changed READY state")
+              if session.live_risk_ready:
+                  raise RuntimeError("Stage 07 illegally granted live-risk readiness")
+
+              result.write_text(json.dumps({
+                  "result": "PASS",
+                  "snapshot_request_sequence": snapshot_request_sequence,
+                  "reconcile_request_sequence": reconcile_sequence,
+                  "ready_heartbeat_sequence": heartbeat_sequence,
+                  "mt5_final_sequence": final_decoded.header.sequence,
+                  "snapshot_state": recovery.state.value,
+                  "session_state": session.state.value,
+                  "communication_ready": session.communication_ready,
+                  "live_risk_ready": session.live_risk_ready,
+                  "mql_to_python_byte_equality": True,
+                  "python_to_mql_byte_equality": True,
+                  "snapshot_record_type": record["record_type"],
+                  "snapshot_record_schema": record["schema_version"],
+              }, indent=2), encoding="utf-8")
+              await router.stop()
+
+          asyncio.run(main())
+          '@ | Set-Content -Path "$env:RUNNER_TEMP\kat_recovery_peer.py" -Encoding UTF8
+
+      - name: Run cross-language snapshot reconciliation
+        shell: pwsh
+        run: |
+          $ready = "$env:RUNNER_TEMP\kat-recovery-ready.txt"
+          $pythonResult = "$env:RUNNER_TEMP\kat-recovery-python-result.json"
+          Remove-Item $ready,$pythonResult -Force -ErrorAction SilentlyContinue
+
+          $peer = Start-Process -FilePath "python" -ArgumentList "$env:RUNNER_TEMP\kat_recovery_peer.py" -PassThru -NoNewWindow
+
+          $deadline = [DateTime]::UtcNow.AddSeconds(10)
+          while ([DateTime]::UtcNow -lt $deadline -and !(Test-Path $ready)) {
+            if ($peer.HasExited) { throw "Python recovery peer exited before ready." }
+            Start-Sleep -Milliseconds 100
+          }
+          if (!(Test-Path $ready)) { throw "Python recovery peer did not become ready." }
+
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $mt5Evidence = Join-Path $commonFiles "Katarina_Stage07_recovery_result.txt"
+          Remove-Item $mt5Evidence -Force -ErrorAction SilentlyContinue
+
+          $config = Join-Path $env:RUNNER_TEMP "stage07-recovery.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=1
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07RecoveryIntegration
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+
+          $terminal = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+          Write-Host "Terminal exit code: $($terminal.ExitCode)"
+
+          $peer.WaitForExit(15000) | Out-Null
+          if (-not $peer.HasExited) {
+            Stop-Process -Id $peer.Id -Force
+            throw "Python recovery peer did not terminate."
+          }
+          if ($peer.ExitCode -ne 0) { throw "Python recovery peer failed with exit code $($peer.ExitCode)." }
+
+          if (!(Test-Path $mt5Evidence)) { throw "MT5 recovery evidence missing." }
+          if (!(Test-Path $pythonResult)) { throw "Python recovery evidence missing." }
+
+          $values = @{}
+          foreach ($line in Get-Content $mt5Evidence) {
+            $idx = $line.IndexOf("=")
+            if ($idx -gt 0) { $values[$line.Substring(0,$idx)] = $line.Substring($idx+1) }
+          }
+          $python = Get-Content $pythonResult -Raw | ConvertFrom-Json
+
+          Get-Content $mt5Evidence | Write-Host
+          Get-Content $pythonResult | Write-Host
+
+          if ($values["result"] -ne "PASS") { throw "MT5 recovery integration did not pass." }
+          if ($values["request_byte_equality"] -ne "1") { throw "Python→MQL snapshot request equality failed." }
+          if ($values["reconcile_request_byte_equality"] -ne "1") { throw "Python→MQL reconcile equality failed." }
+          if ($python.result -ne "PASS") { throw "Python recovery result did not pass." }
+          if ($python.session_state -ne "ready") { throw "Session did not end READY." }
+          if ($python.communication_ready -ne $true) { throw "Communication readiness missing." }
+          if ($python.live_risk_ready -ne $false) { throw "Stage 07 must never grant live-risk readiness." }
+          if ($python.mql_to_python_byte_equality -ne $true -or $python.python_to_mql_byte_equality -ne $true) {
+            throw "Cross-language byte equality failed."
+          }
+
+          Copy-Item $mt5Evidence ".\build\stage07\Katarina_Stage07_recovery_result.txt" -Force
+          Copy-Item $pythonResult ".\build\stage07\stage07_recovery_python_result.json" -Force
+
+      - name: Write recovery evidence
+        shell: pwsh
+        run: |
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "07"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner = "windows-2022"
+            topology = "PYTHON_ROUTER_MT5_DEALER"
+            flow = "HANDSHAKE_SNAPSHOT_RECONCILE_READY"
+            snapshot_semantics = "ADR_0011_PROPOSED"
+            sequence_semantics = "ADR_0012_PROPOSED"
+            python_to_mql_byte_equality = "PASS"
+            mql_to_python_byte_equality = "PASS"
+            chunk_crc32c = "PASS"
+            aggregate_crc32c = "PASS"
+            atomic_snapshot = "PASS"
+            clean_reconciliation = "PASS"
+            final_state = "READY"
+            communication_ready = $true
+            live_risk_ready = $false
+            compile = "PASS_0_ERRORS_0_WARNINGS"
+            ex5_sha256 = "$env:STAGE07_RECOVERY_EX5_SHA256"
+            result = "PASS_STAGE07_CROSS_LANGUAGE_RECOVERY"
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content ".\build\stage07\stage07_recovery_evidence.json" -Encoding UTF8
+
+      - name: Upload recovery evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-cross-language-recovery-evidence
+          path: |
+            build/stage07/KatarinaStage07RecoveryIntegration.compile.log
+            build/stage07/Katarina_Stage07_recovery_result.txt
+            build/stage07/stage07_recovery_python_result.json
+            build/stage07/stage07_recovery_evidence.json
+          retention-days: 30
+
+  # from stage07-wire-sequence.yml
+  wire-sequence:
+    name: Stage 07 MT5 Wire Sequence Persistence
+    if: inputs.check == 'all' || inputs.check == 'wire-sequence'
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          if (!(Test-Path "$env:RUNNER_TEMP\mt5setup.exe")) { throw "MT5 installer download failed." }
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07Sequence"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Write-Host "Installer exit code: $($p.ExitCode)"
+          Start-Sleep -Seconds 3
+
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+
+          if (-not $resolved) {
+            throw "MetaTrader installation files not found. Installer exit code=$($p.ExitCode)."
+          }
+
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          New-Item -ItemType Directory -Force -Path "$resolved\MQL5\Include\Katarina\Stage07" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$resolved\MQL5\Include\Katarina" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$resolved\MQL5\Scripts" | Out-Null
+
+      - name: Stage sequence sources
+        shell: pwsh
+        run: |
+          Copy-Item ".\mt5\Include\Katarina\BridgeIdentity.mqh" "$env:MT5_HOME\MQL5\Include\Katarina\BridgeIdentity.mqh" -Force
+          Copy-Item ".\mt5\Include\Katarina\Stage07\WireSequence.mqh" "$env:MT5_HOME\MQL5\Include\Katarina\Stage07\WireSequence.mqh" -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07WireSequenceTest.mq5" "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07WireSequenceTest.mq5" -Force
+
+      - name: Strict compile wire sequence test
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07WireSequenceTest.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07WireSequenceTest.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07WireSequenceTest.compile.log"
+
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+
+          if (!(Test-Path $log)) { throw "MetaEditor compile log missing." }
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") {
+            throw "Wire sequence test compile is not zero-error/zero-warning."
+          }
+          if (!(Test-Path $artifact)) { throw "Wire sequence EX5 missing." }
+
+      - name: Run phase 1 before terminal restart
+        shell: pwsh
+        run: |
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $marker = Join-Path $commonFiles "Katarina_Stage07_wire_sequence_phase.txt"
+          $evidence = Join-Path $commonFiles "Katarina_Stage07_wire_sequence_result.txt"
+          Remove-Item $marker,$evidence -Force -ErrorAction SilentlyContinue
+
+          $config = Join-Path $env:RUNNER_TEMP "stage07-sequence-phase1.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=0
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07WireSequenceTest
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+
+          $p = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+          Write-Host "Phase-1 terminal exit code: $($p.ExitCode)"
+
+          if (!(Test-Path $evidence)) { throw "Phase-1 evidence missing." }
+          $content = Get-Content $evidence -Raw
+          Write-Host $content
+          if ($content -notmatch "result=PHASE1_PASS") { throw "Phase-1 sequence persistence did not pass." }
+          if (!(Test-Path $marker)) { throw "Phase marker missing after phase 1." }
+
+      - name: Run phase 2 after fresh terminal process
+        shell: pwsh
+        run: |
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          $evidence = Join-Path $commonFiles "Katarina_Stage07_wire_sequence_result.txt"
+          Remove-Item $evidence -Force -ErrorAction SilentlyContinue
+
+          $config = Join-Path $env:RUNNER_TEMP "stage07-sequence-phase2.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=0
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07WireSequenceTest
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+
+          $p = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+          Write-Host "Phase-2 terminal exit code: $($p.ExitCode)"
+
+          if (!(Test-Path $evidence)) { throw "Phase-2 evidence missing." }
+
+          $values = @{}
+          foreach ($line in Get-Content $evidence) {
+            $idx = $line.IndexOf("=")
+            if ($idx -gt 0) { $values[$line.Substring(0,$idx)] = $line.Substring($idx+1) }
+          }
+
+          Get-Content $evidence | Write-Host
+
+          if ($values["result"] -ne "PASS") { throw "Persistent wire sequence did not pass." }
+          if ($values["observed_last"] -ne "2") { throw "Restart did not recover sequence 2." }
+          if ($values["allocated_next"] -ne "3") { throw "Restart did not allocate sequence 3." }
+
+          Copy-Item $evidence ".\build\stage07\Katarina_Stage07_wire_sequence_result.txt" -Force
+
+      - name: Write sequence persistence evidence
+        shell: pwsh
+        run: |
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "07"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner = "windows-2022"
+            lane = "MT5_TO_PYTHON"
+            first_process_last = 2
+            second_process_observed = 2
+            second_process_next = 3
+            duplicate_reuse = $false
+            compile = "PASS_0_ERRORS_0_WARNINGS"
+            result = "PASS_STAGE07_MT5_WIRE_SEQUENCE_RESTART"
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content ".\build\stage07\stage07_wire_sequence_evidence.json" -Encoding UTF8
+
+      - name: Upload sequence persistence evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-wire-sequence-evidence
+          path: |
+            build/stage07/KatarinaStage07WireSequenceTest.compile.log
+            build/stage07/Katarina_Stage07_wire_sequence_result.txt
+            build/stage07/stage07_wire_sequence_evidence.json
+          retention-days: 30
+
+  # from stage07-zmq-capability.yml
+  zmq-capability:
+    name: Stage 07 ZeroMQ Capability
+    if: inputs.check == 'all' || inputs.check == 'zmq-capability'
+    env:
+      MQL5_ZMQ_REPO: coke5151/mql5-zmq
+      MQL5_ZMQ_COMMIT: f332ee903fb8f27cbf28a8169824b8130e2aaab2
+      KAT_ZMQ_ENDPOINT: tcp://127.0.0.1:5567
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Katarina
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python ZeroMQ capability dependency
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check pyzmq
+          python -c "import zmq; print('pyzmq=' + zmq.__version__ + ' libzmq=' + zmq.zmq_version())"
+
+      - name: Download official MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          if (!(Test-Path "$env:RUNNER_TEMP\mt5setup.exe")) { throw "MT5 installer download failed." }
+
+      - name: Install MetaTrader 5 unattended
+        shell: pwsh
+        run: |
+          $requested = "C:\MT5Stage07Zmq"
+          $p = Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList @("/auto", "/path:`"$requested`"") -Wait -PassThru
+          Write-Host "Installer exit code: $($p.ExitCode)"
+          Start-Sleep -Seconds 3
+
+          $candidates = @(
+            $requested,
+            "$env:ProgramFiles\MetaTrader 5",
+            "$env:ProgramFiles\MetaTrader 5 Terminal"
+          )
+          $resolved = $null
+          foreach ($candidate in $candidates) {
+            if ($candidate -and
+                (Test-Path "$candidate\metaeditor64.exe") -and
+                (Test-Path "$candidate\terminal64.exe")) {
+              $resolved = $candidate
+              break
+            }
+          }
+
+          if (-not $resolved) {
+            $found = Get-ChildItem -Path "C:\" -Filter "metaeditor64.exe" -File -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if ($found) {
+              $candidate = Split-Path -Parent $found.FullName
+              if (Test-Path "$candidate\terminal64.exe") { $resolved = $candidate }
+            }
+          }
+
+          if (-not $resolved) {
+            throw "MetaTrader installation files not found. Installer exit code=$($p.ExitCode)."
+          }
+
+          "MT5_HOME=$resolved" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Fetch pinned MQL5 ZeroMQ binding
+        shell: pwsh
+        run: |
+          $archive = "$env:RUNNER_TEMP\mql5-zmq.zip"
+          $extract = "$env:RUNNER_TEMP\mql5-zmq"
+          $url = "https://github.com/$env:MQL5_ZMQ_REPO/archive/$env:MQL5_ZMQ_COMMIT.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $extract -Force
+          $root = Get-ChildItem -Path $extract -Directory | Select-Object -First 1
+          if (-not $root) { throw "Pinned MQL5 ZeroMQ archive extraction failed." }
+          "MQL5_ZMQ_ROOT=$($root.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage ZeroMQ binding DLLs and Katarina spike
+        shell: pwsh
+        run: |
+          $include = "$env:MT5_HOME\MQL5\Include"
+          $libraries = "$env:MT5_HOME\MQL5\Libraries"
+          $scripts = "$env:MT5_HOME\MQL5\Scripts"
+
+          New-Item -ItemType Directory -Force -Path "$include\Zmq" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Mql\Lang" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$include\Katarina\Stage07" | Out-Null
+          New-Item -ItemType Directory -Force -Path $libraries | Out-Null
+          New-Item -ItemType Directory -Force -Path $scripts | Out-Null
+
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Zmq\*.mqh" "$include\Zmq\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Include\Mql\Lang\*.mqh" "$include\Mql\Lang\" -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libzmq.dll" $libraries -Force
+          Copy-Item "$env:MQL5_ZMQ_ROOT\Library\libsodium.dll" $libraries -Force
+          Copy-Item ".\mt5\Include\Katarina\Stage07\*.mqh" "$include\Katarina\Stage07\" -Force
+          Copy-Item ".\mt5\Tests\KatarinaStage07ZmqCapability.mq5" "$scripts\KatarinaStage07ZmqCapability.mq5" -Force
+
+          foreach ($name in @("libzmq.dll","libsodium.dll")) {
+            $p = Join-Path $libraries $name
+            if (!(Test-Path $p)) { throw "$name missing from MT5 Libraries." }
+            Write-Host "$name SHA256=$((Get-FileHash $p -Algorithm SHA256).Hash)"
+          }
+
+      - name: Strict compile ZeroMQ capability spike
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          $source = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07ZmqCapability.mq5"
+          $artifact = "$env:MT5_HOME\MQL5\Scripts\KatarinaStage07ZmqCapability.ex5"
+          $log = (Resolve-Path ".\build\stage07").Path + "\KatarinaStage07ZmqCapability.compile.log"
+
+          Remove-Item $artifact,$log -Force -ErrorAction SilentlyContinue
+          $args = @(
+            "/compile:`"$source`"",
+            "/inc:`"$env:MT5_HOME\MQL5`"",
+            "/log:`"$log`""
+          )
+          Start-Process -FilePath "$env:MT5_HOME\metaeditor64.exe" -ArgumentList $args -Wait | Out-Null
+
+          if (!(Test-Path $log)) { throw "MetaEditor compile log missing." }
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host $text
+          if ($text -notmatch "0 errors, 0 warnings") {
+            throw "ZeroMQ capability spike compile is not zero-error/zero-warning."
+          }
+          if (!(Test-Path $artifact)) { throw "ZeroMQ capability EX5 missing." }
+          if ((Get-Item $artifact).Length -le 0) { throw "ZeroMQ capability EX5 is empty." }
+
+          "STAGE07_ZMQ_EX5_SHA256=$((Get-FileHash $artifact -Algorithm SHA256).Hash)" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Write Python ROUTER raw-KAT1 echo server
+        shell: pwsh
+        run: |
+          @'
+          import json
+          import os
+          import pathlib
+          import time
+          import zmq
+
+          endpoint = os.environ["KAT_ZMQ_ENDPOINT"]
+          ready = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-zmq-ready.txt"
+          result = pathlib.Path(os.environ["RUNNER_TEMP"]) / "kat-zmq-router-result.json"
+
+          ctx = zmq.Context.instance()
+          sock = ctx.socket(zmq.ROUTER)
+          sock.linger = 0
+          sock.bind(endpoint)
+          ready.write_text(endpoint, encoding="utf-8")
+
+          poller = zmq.Poller()
+          poller.register(sock, zmq.POLLIN)
+          deadline = time.monotonic() + 15.0
+          payload = None
+          route = None
+
+          while time.monotonic() < deadline:
+              events = dict(poller.poll(100))
+              if sock not in events:
+                  continue
+              parts = sock.recv_multipart()
+              if len(parts) != 2:
+                  raise RuntimeError(f"expected ROUTER identity+payload, got {len(parts)} parts")
+              route, payload = parts
+              if len(payload) != 104:
+                  raise RuntimeError(f"expected 104 raw KAT1 bytes, got {len(payload)}")
+              if payload[:4] != b"KAT1":
+                  raise RuntimeError("raw payload does not start with KAT1 magic")
+              sock.send_multipart([route, payload])
+
+              # Do not close immediately with linger=0. Wait until MT5 proves
+              # it received the echo by sending the same KAT1 frame back.
+              ack_deadline = time.monotonic() + 8.0
+              ack = None
+              while time.monotonic() < ack_deadline:
+                  ack_events = dict(poller.poll(100))
+                  if sock not in ack_events:
+                      continue
+                  ack_parts = sock.recv_multipart()
+                  if len(ack_parts) != 2:
+                      raise RuntimeError(
+                          f"expected ACK identity+payload, got {len(ack_parts)} parts"
+                      )
+                  ack_route, ack = ack_parts
+                  if ack_route != route:
+                      raise RuntimeError("MT5 ACK route identity changed")
+                  if ack != payload:
+                      raise RuntimeError("MT5 ACK payload differs from echoed KAT1 frame")
+                  break
+
+              if ack is None:
+                  raise RuntimeError("timed out waiting for MT5 echo ACK")
+              break
+
+          if payload is None:
+              raise RuntimeError("timed out waiting for MT5 DEALER KAT1 frame")
+
+          result.write_text(json.dumps({
+              "result": "PASS",
+              "endpoint": endpoint,
+              "payload_bytes": len(payload),
+              "ack_bytes": len(ack),
+              "magic": payload[:4].decode("ascii"),
+              "route_bytes": len(route),
+              "pyzmq": zmq.__version__,
+              "libzmq": zmq.zmq_version(),
+          }, indent=2), encoding="utf-8")
+          sock.close(0)
+          '@ | Set-Content -Path "$env:RUNNER_TEMP\kat_zmq_router.py" -Encoding UTF8
+
+      - name: Run MT5 DEALER to Python ROUTER capability roundtrip
+        shell: pwsh
+        run: |
+          $ready = "$env:RUNNER_TEMP\kat-zmq-ready.txt"
+          $routerResult = "$env:RUNNER_TEMP\kat-zmq-router-result.json"
+          Remove-Item $ready,$routerResult -Force -ErrorAction SilentlyContinue
+
+          $router = Start-Process -FilePath "python" -ArgumentList "$env:RUNNER_TEMP\kat_zmq_router.py" -PassThru -NoNewWindow
+
+          $deadline = [DateTime]::UtcNow.AddSeconds(10)
+          while ([DateTime]::UtcNow -lt $deadline -and !(Test-Path $ready)) {
+            if ($router.HasExited) { throw "Python ROUTER exited before becoming ready." }
+            Start-Sleep -Milliseconds 100
+          }
+          if (!(Test-Path $ready)) { throw "Python ROUTER did not become ready." }
+
+          $commonFiles = Join-Path $env:APPDATA "MetaQuotes\Terminal\Common\Files"
+          New-Item -ItemType Directory -Force -Path $commonFiles | Out-Null
+          $mt5Evidence = Join-Path $commonFiles "Katarina_Stage07_zmq_capability_result.txt"
+          Remove-Item $mt5Evidence -Force -ErrorAction SilentlyContinue
+
+          $config = Join-Path $env:RUNNER_TEMP "stage07-zmq-capability.ini"
+          @"
+          [Experts]
+          AllowLiveTrading=0
+          AllowDllImport=1
+          Enabled=1
+
+          [StartUp]
+          Script=KatarinaStage07ZmqCapability
+          Symbol=
+          Period=H1
+          ShutdownTerminal=1
+          "@ | Set-Content -Path $config -Encoding ASCII
+
+          $terminal = Start-Process -FilePath "$env:MT5_HOME\terminal64.exe" -ArgumentList @("/portable", "/config:`"$config`"") -Wait -PassThru
+          Write-Host "Terminal exit code: $($terminal.ExitCode)"
+
+          $router.WaitForExit(15000) | Out-Null
+          if (-not $router.HasExited) {
+            Stop-Process -Id $router.Id -Force
+            throw "Python ROUTER did not terminate after roundtrip."
+          }
+          if ($router.ExitCode -ne 0) { throw "Python ROUTER failed with exit code $($router.ExitCode)." }
+
+          if (!(Test-Path $mt5Evidence)) { throw "MT5 ZeroMQ capability evidence missing." }
+          if (!(Test-Path $routerResult)) { throw "Python ROUTER evidence missing." }
+
+          $values = @{}
+          foreach ($line in Get-Content $mt5Evidence) {
+            $idx = $line.IndexOf("=")
+            if ($idx -gt 0) { $values[$line.Substring(0,$idx)] = $line.Substring($idx+1) }
+          }
+
+          Get-Content $mt5Evidence | Write-Host
+          Get-Content $routerResult | Write-Host
+
+          if ($values["result"] -ne "PASS") { throw "MT5 ZeroMQ capability result is not PASS." }
+          if ($values["proof_type"] -ne "MQL5_ZEROMQ_CAPABILITY") { throw "Unexpected MT5 proof type." }
+          if ($values["raw_kat1_bytes"] -ne "104") { throw "Unexpected raw KAT1 byte count." }
+          if ($values["dlls_allowed"] -ne "1") { throw "MT5 did not run with DLL imports enabled for spike." }
+
+          New-Item -ItemType Directory -Force -Path ".\build\stage07" | Out-Null
+          Copy-Item $mt5Evidence ".\build\stage07\Katarina_Stage07_zmq_capability_result.txt" -Force
+          Copy-Item $routerResult ".\build\stage07\stage07_zmq_router_result.json" -Force
+
+      - name: Write ZeroMQ capability evidence
+        shell: pwsh
+        run: |
+          $router = Get-Content ".\build\stage07\stage07_zmq_router_result.json" -Raw | ConvertFrom-Json
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "07"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner = "windows-2022"
+            dependency_repo = "$env:MQL5_ZMQ_REPO"
+            dependency_commit = "$env:MQL5_ZMQ_COMMIT"
+            endpoint = "$env:KAT_ZMQ_ENDPOINT"
+            topology = "PYTHON_ROUTER_MT5_DEALER"
+            raw_kat1_bytes = [int]$router.payload_bytes
+            pyzmq = [string]$router.pyzmq
+            libzmq_python = [string]$router.libzmq
+            mt5_ex5_sha256 = "$env:STAGE07_ZMQ_EX5_SHA256"
+            compile = "PASS_0_ERRORS_0_WARNINGS"
+            dll_load = "PASS"
+            dealer_router_roundtrip = "PASS"
+            nonblocking_mql_send_receive = "PASS"
+            json_application_wrapper = $false
+            result = "PASS_STAGE07_ZEROMQ_CAPABILITY_SPIKE"
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content ".\build\stage07\stage07_zmq_capability_evidence.json" -Encoding UTF8
+
+      - name: Upload ZeroMQ capability evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage07-zmq-capability-evidence
+          path: |
+            build/stage07/KatarinaStage07ZmqCapability.compile.log
+            build/stage07/Katarina_Stage07_zmq_capability_result.txt
+            build/stage07/stage07_zmq_router_result.json
+            build/stage07/stage07_zmq_capability_evidence.json
+          retention-days: 30
