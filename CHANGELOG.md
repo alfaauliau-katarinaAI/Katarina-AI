@@ -1,5 +1,18 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — jalur order demo: penolakan pasti, pengiriman yang tak pernah terisi, slippage dan biaya
+
+- Retcode broker yang menyatakan order **tidak dieksekusi** (requote, reject, price changed/off, invalid
+  volume/price/stops, market closed, no money, dll.) kini dicatat `REJECTED` (final), bukan `UNKNOWN`.
+  Sebelumnya satu requote membuat outbox demo terkunci permanen, karena `UNKNOWN` tanpa deal tidak pernah selesai.
+- `reconcile()` menandai kiriman `SUBMITTING`/`UNKNOWN` sebagai `NOT_FILLED` hanya jika sudah lebih dari 15 menit,
+  tidak ada deal dengan komentar intent tersebut, dan tidak ada pending order dengan komentar itu. Timeout dan
+  error yang ambigu tetap memblokir sampai terbukti.
+- Outcome posisi yang tutup kini mencatat slippage entry (positif berarti merugikan), serta komisi, swap, dan fee
+  secara terpisah. Data ini menjadi bahan model biaya riset dari histori demo.
+- Tidak ada retry otomatis. Setelah `REJECTED`, produsen boleh mengirim intent baru dengan harga segar
+  lewat Risk Governor seperti biasa. Hanya untuk akun demo; live tetap OFF.
+
 ## 2026-10-21 — lab riset: holdout prospektif, exit SL/TP, dan swap
 
 - **Holdout prospektif.** Kandidat pertama yang lolos aturan untuk suatu instrumen dicatat sekali di
