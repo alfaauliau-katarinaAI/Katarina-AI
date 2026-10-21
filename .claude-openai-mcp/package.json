@@ -1,0 +1,17 @@
+{
+  "name": "katarina-claude-openai-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Authenticated Claude-to-OpenAI Responses MCP connector",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "express": "4.21.2",
+    "zod": "3.25.76"
+  }
+}
