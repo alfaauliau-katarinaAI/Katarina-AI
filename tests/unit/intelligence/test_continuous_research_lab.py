@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import random
-from katarina.intelligence.lab.continuous_research_lab import select_batch, step, evaluate, verdict
+from katarina.intelligence.lab.continuous_research_lab import select_batch, step, evaluate, verdict, trades, swap_costs, forward_record, setup
 from katarina.monitoring.research_lab_status import clean_lab_status
 
 class ResearchLabTests(unittest.TestCase):
@@ -77,5 +77,58 @@ class ResearchLabTests(unittest.TestCase):
         self.assertIn('review mean after cost not positive',verdict(base)['reasons'])
         self.assertEqual(verdict(dict(base,review_mean_r=.3,review_t=2.0))['result'],'PASSED_PRECOMMITTED_RULE')
         self.assertEqual(verdict(None)['result'],'INSUFFICIENT_SAMPLES')
+
+    def test_bracket_books_stop_when_a_bar_touches_both_levels(self):
+        rows=[(i*3600,100.0,100.5,99.5,100.0) for i in range(60)]
+        rows[32]=(32*3600,100.0,100.5,99.5,103.0)   # breakout signal close
+        rows[33]=(33*3600,103.0,110.0,90.0,103.0)   # next bar spans stop and target
+        found=trades(rows,0.0,'BREAKOUT',1,'ATR_BRACKET')
+        self.assertEqual(len(found),1)
+        signal,last,value=found[0]
+        self.assertEqual((signal,last),(32,33))
+        self.assertLess(value,-1.0)  # full stop plus the 0.2 ATR reserve
+
+    def test_point_swap_is_charged_per_broker_night(self):
+        info=SimpleNamespace(swap_mode=1,point=.01,swap_long=-50.0,swap_short=10.0)
+        swap=swap_costs(info)
+        self.assertAlmostEqual(swap[1],.5); self.assertAlmostEqual(swap[-1],-.1)
+        self.assertIsNone(swap_costs(SimpleNamespace(swap_mode=2,point=.01,swap_long=1,swap_short=1)))
+        rows=self.walk(.0,3,1200)
+        plain=[v for *_,v in trades(rows,.01,'MOMENTUM',1,'CLOSE_12')]
+        charged=[v for *_,v in trades(rows,.01,'MOMENTUM',1,'CLOSE_12',swap)]
+        self.assertEqual(len(plain),len(charged))
+        self.assertLess(sum(charged),sum(plain))
+
+    def test_forward_record_scores_only_bars_after_nomination(self):
+        db=sqlite3.connect(':memory:'); setup(db); now=datetime.now(timezone.utc)
+        rows=self.walk(.08,1)
+        first=evaluate(rows,.01)
+        record=forward_record(db,'TEST',rows,.01,None,first,now)
+        self.assertEqual((record['state'],record['forward_n']),('FORWARD_PENDING',0))
+        # Later data: the same drift continues, so the nominated rule confirms forward.
+        later=self.walk(.08,1,6000+40*13*3)
+        confirmed=forward_record(db,'TEST',later,.01,None,evaluate(later,.01),now)
+        self.assertGreaterEqual(confirmed['forward_n'],30)
+        self.assertEqual(confirmed['state'],'FORWARD_CONFIRMED')
+        self.assertEqual(confirmed['next_step'],'DEMO_FORWARD_TEST'); self.assertFalse(confirmed['live_authorized'])
+        # The nomination is fixed: a different later selection never replaces it.
+        self.assertEqual(db.execute('SELECT COUNT(*) FROM lab_nominations').fetchone()[0],1)
+
+    def test_forward_record_fails_when_drift_disappears(self):
+        db=sqlite3.connect(':memory:'); setup(db); now=datetime.now(timezone.utc)
+        rows=self.walk(.08,1)
+        forward_record(db,'TEST',rows,.01,None,evaluate(rows,.01),now)
+        rng=random.Random(9); later=list(rows); price=later[-1][4]
+        for i in range(len(rows),len(rows)+13*13*40):
+            o=price; price=max(1.0,price+rng.gauss(0,.3))
+            later.append((i*3600,o,max(o,price)+.05,min(o,price)-.05,price))
+        failed=forward_record(db,'TEST',later,.01,None,evaluate(later,.01),now)
+        self.assertGreaterEqual(failed['forward_n'],30)
+        self.assertEqual(failed['state'],'FORWARD_FAILED'); self.assertIsNone(failed['next_step'])
+
+    def test_rejected_run_is_never_nominated(self):
+        db=sqlite3.connect(':memory:'); setup(db)
+        rows=self.walk(0.0,2)
+        self.assertIsNone(forward_record(db,'TEST',rows,.01,None,evaluate(rows,.01),datetime.now(timezone.utc)))
 
 if __name__=='__main__':unittest.main()

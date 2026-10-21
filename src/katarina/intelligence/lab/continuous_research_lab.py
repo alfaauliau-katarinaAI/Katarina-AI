@@ -20,12 +20,12 @@ MIN_SPREAD_SAMPLES = 100
 # any H1-horizon edge; such instruments are skipped, not tested and rejected.
 MAX_SPREAD_TO_RANGE = 0.20
 RANGE_WINDOW = 512
-# Pass rule fixed before any v3 result exists. Six candidates per run are tried,
-# so the development t-stat must clear a one-sided 5% Bonferroni bar (0.05/6 ->
-# z ~ 2.39); the later third must then agree on its own. A pass only nominates a
+# Pass rule fixed before any v3 result exists. Twelve candidates per run are tried,
+# so the development t-stat must clear a one-sided 5% Bonferroni bar (0.05/12 ->
+# z ~ 2.64); the later third must then agree on its own. A pass only nominates a
 # candidate for demo forward testing; it never authorizes execution.
 MIN_TRADES = 30
-DEVELOPMENT_MIN_T = 2.4
+DEVELOPMENT_MIN_T = 2.65
 REVIEW_MIN_T = 1.65
 
 
@@ -91,6 +91,8 @@ def setup(db):
     CREATE TABLE IF NOT EXISTS lab_bars(symbol TEXT, stamp INTEGER, o REAL,h REAL,l REAL,c REAL,
       PRIMARY KEY(symbol,stamp));
     CREATE TABLE IF NOT EXISTS lab_runs(id TEXT PRIMARY KEY,symbol TEXT,created_utc TEXT,digest TEXT,result_json TEXT);
+    CREATE TABLE IF NOT EXISTS lab_nominations(symbol TEXT PRIMARY KEY, method TEXT, side TEXT, exit TEXT,
+      version TEXT, nominated_utc TEXT, nominated_last_stamp INTEGER);
     CREATE TABLE IF NOT EXISTS lab_progress(id INTEGER PRIMARY KEY CHECK(id=1),cursor INTEGER NOT NULL);
     INSERT OR IGNORE INTO lab_progress VALUES(1,0);
     ''')
@@ -136,46 +138,114 @@ def verdict(candidate):
         reasons.append(f'review t below {REVIEW_MIN_T}')
     return dict(result='REJECTED' if reasons else 'PASSED_PRECOMMITTED_RULE', reasons=reasons,
                 rule=dict(min_trades=MIN_TRADES, development_min_t=DEVELOPMENT_MIN_T, review_min_t=REVIEW_MIN_T,
-                          candidates_per_run=6), next_step=None if reasons else 'DEMO_FORWARD_TEST')
+                          candidates_per_run=12), next_step=None if reasons else 'DEMO_FORWARD_TEST')
 
 
-def evaluate(rows, spread):
-    """Frozen 3-pattern x BUY/SELL, nonoverlap 12-bar close exits; exploratory only."""
+FAMILIES = ('MOMENTUM', 'MEAN_REVERSION', 'BREAKOUT')
+# CLOSE_12: exit at the 12th bar close. ATR_BRACKET: stop 1 ATR, target 1.5 ATR,
+# otherwise the 12th bar close; a bar touching both is booked as the stop.
+EXITS = ('CLOSE_12', 'ATR_BRACKET')
+STOP_ATR, TARGET_ATR, HOLD_BARS = 1.0, 1.5, 12
+
+
+def swap_costs(info):
+    """Per-night swap cost in price units per side, only when the broker quotes swap in points."""
+    try:
+        if int(info.swap_mode) != 1:
+            return None
+        point = float(info.point)
+        return {1: -float(info.swap_long) * point, -1: -float(info.swap_short) * point}
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
+def trades(rows, spread, family, side, exit_mode, swap=None):
+    """Nonoverlapping trades as (signal_index, exit_index, value_in_atr)."""
+    out = []
+    for i in range(32, len(rows)-HOLD_BARS-1, HOLD_BARS+1):
+        previous = rows[i-24:i]
+        close = rows[i][4]
+        atr = sum(r[2]-r[3] for r in rows[i-14:i])/14
+        if atr <= 0: continue
+        mean = sum(r[4] for r in previous)/24
+        signal = ((close-previous[0][4])*side > atr if family=='MOMENTUM' else
+                  (mean-close)*side > atr if family=='MEAN_REVERSION' else
+                  close > max(r[2] for r in previous) if side==1 else close < min(r[3] for r in previous))
+        if not signal: continue
+        # Next open after completed signal; gaps remain uncertain.
+        entry, last = rows[i+1][1], i+HOLD_BARS
+        exit_price = rows[last][4]
+        if exit_mode == 'ATR_BRACKET':
+            stop, target = entry - side*STOP_ATR*atr, entry + side*TARGET_ATR*atr
+            for j in range(i+1, i+HOLD_BARS+1):
+                high, low = rows[j][2], rows[j][3]
+                hit_stop = low <= stop if side == 1 else high >= stop
+                hit_target = high >= target if side == 1 else low <= target
+                if hit_stop or hit_target:
+                    exit_price, last = (stop if hit_stop else target), j
+                    break
+        cost = max(spread, 0) + .2*atr
+        if swap:
+            # Raw broker stamps: each broker-day boundary crossed is one swap night.
+            nights = rows[last][0]//86400 - rows[i+1][0]//86400
+            cost += max(nights, 0)*swap.get(side, 0)
+        out.append((i, last, ((exit_price-entry)*side - cost)/atr))
+    return out
+
+
+def evaluate(rows, spread, swap=None):
+    """Frozen 3-pattern x BUY/SELL x 2 exits on nonoverlapping trades; exploratory only."""
     outcomes = []
-    for family in ('MOMENTUM', 'MEAN_REVERSION', 'BREAKOUT'):
+    cutoff = len(rows)*2//3
+    for family in FAMILIES:
         for side in (1,-1):
-            values = [[], []]
-            for i in range(32, len(rows)-13, 13):
-                previous = rows[i-24:i]
-                close = rows[i][4]
-                atr = sum(r[2]-r[3] for r in rows[i-14:i])/14
-                if atr <= 0: continue
-                mean = sum(r[4] for r in previous)/24
-                signal = ((close-previous[0][4])*side > atr if family=='MOMENTUM' else
-                          (mean-close)*side > atr if family=='MEAN_REVERSION' else
-                          close > max(r[2] for r in previous) if side==1 else close < min(r[3] for r in previous))
-                if not signal: continue
-                # Next open after completed signal, 12-bar close outcome; gaps remain uncertain.
-                entry, exit_price = rows[i+1][1], rows[i+12][4]
-                value = ((exit_price-entry)*side - max(spread, 0) - .2*atr)/atr
-                cutoff=len(rows)*2//3
-                if i+12 < cutoff: values[0].append(value)
-                elif i >= cutoff: values[1].append(value)
-            train, review = values
-            train_mean, train_t = _stats(train)
-            review_mean, review_t = _stats(review)
-            outcomes.append(dict(method=family,side='BUY' if side==1 else 'SELL',
-                development_n=len(train),development_mean_r=train_mean,development_t=train_t,
-                review_n=len(review),review_mean_r=review_mean,review_t=review_t))
+            for exit_mode in EXITS:
+                found = trades(rows, spread, family, side, exit_mode, swap)
+                train = [v for i, last, v in found if last < cutoff]
+                review = [v for i, last, v in found if i >= cutoff]
+                train_mean, train_t = _stats(train)
+                review_mean, review_t = _stats(review)
+                outcomes.append(dict(method=family,side='BUY' if side==1 else 'SELL',exit=exit_mode,
+                    development_n=len(train),development_mean_r=train_mean,development_t=train_t,
+                    review_n=len(review),review_mean_r=review_mean,review_t=review_t))
     qualified = [x for x in outcomes if x['development_n'] >= MIN_TRADES]
     candidate = max(qualified, key=lambda x:x['development_mean_r']) if qualified else None
     return dict(candidates=outcomes,selected=candidate,status='HYPOTHESIS_ONLY' if candidate else 'INSUFFICIENT_SAMPLES',
         verdict=verdict(candidate),
-        execution_model='H1_NEXT_OPEN_12_BAR_CLOSE_NO_SL_TP',cost_model='TYPICAL_SPREAD_PLUS_0.20_ATR_PROXY',
+        execution_model='H1_NEXT_OPEN_12_BAR_CLOSE_OR_ATR_BRACKET',
+        cost_model='TYPICAL_SPREAD_PLUS_0.20_ATR_PROXY'+('_PLUS_POINT_SWAP' if swap else ''),
         independent_holdout=False,history_reused=True,broker_fill_verified=False,
         improvement_verified=False,live_authorized=False,
-        limitations=['Historical exploration; no independent holdout','Typical bar spread is not a broker fill cost',
-                    'Gaps, commission, swap, slippage and margin unresolved','No automatic promotion'])
+        limitations=['Historical exploration; the forward record is the only independent test',
+                    'Typical bar spread is not a broker fill cost',
+                    'Commission, triple swap, slippage and margin unresolved','No automatic promotion'])
+
+
+def forward_record(db, symbol, rows, spread, swap, result, now):
+    """Nominate a passing candidate once, then score it only on bars after nomination."""
+    row = db.execute('SELECT method,side,exit,version,nominated_utc,nominated_last_stamp FROM lab_nominations WHERE symbol=?',
+                     (symbol,)).fetchone()
+    if row is None:
+        if result['verdict']['result'] != 'PASSED_PRECOMMITTED_RULE':
+            return None
+        chosen = result['selected']
+        row = (chosen['method'], chosen['side'], chosen['exit'], VERSION, now.isoformat(), rows[-1][0])
+        with db:
+            db.execute('INSERT INTO lab_nominations VALUES(?,?,?,?,?,?,?)', (symbol, *row))
+    method, side, exit_mode, version, nominated_utc, boundary = row
+    sign = 1 if side == 'BUY' else -1
+    # Only trades whose signal bar closed after nomination; nothing seen at selection time.
+    values = [v for i, last, v in trades(rows, spread, method, sign, exit_mode, swap) if rows[i][0] > boundary]
+    mean, t = _stats(values)
+    if len(values) < MIN_TRADES:
+        state = 'FORWARD_PENDING'
+    elif (mean or 0) > 0 and (t or 0) >= REVIEW_MIN_T:
+        state = 'FORWARD_CONFIRMED'
+    else:
+        state = 'FORWARD_FAILED'
+    return dict(method=method, side=side, exit=exit_mode, nominated_version=version, nominated_utc=nominated_utc,
+                forward_n=len(values), forward_mean_r=mean, forward_t=t, state=state,
+                next_step='DEMO_FORWARD_TEST' if state == 'FORWARD_CONFIRMED' else None, live_authorized=False)
 
 
 def step(db, broker, root, now, *, emit=lambda *a,**k:None):
@@ -224,7 +294,12 @@ def step(db, broker, root, now, *, emit=lambda *a,**k:None):
                 if cost is not None:
                     spread=cost['price']
                     ratio,prohibitive=cost_gate(rows,spread)
-                    result=evaluate(rows,spread)
+                    try:
+                        swap=swap_costs(broker.symbol_info(symbol))
+                    except (AttributeError, TypeError, ValueError):
+                        swap=None
+                    result=evaluate(rows,spread,swap)
+                    result['forward']=forward_record(db,symbol,rows,spread,swap,result,now)
                     result.update(spread_source=cost['source'],spread_samples=cost['samples'],
                                   current_quote_spread=cost['current_quote'],
                                   spread_to_median_range=round(ratio,6) if ratio is not None else None,
@@ -234,7 +309,7 @@ def step(db, broker, root, now, *, emit=lambda *a,**k:None):
                         db.execute('INSERT INTO lab_runs VALUES(?,?,?,?,?)',(ident,symbol,now.isoformat(),digest,json.dumps(result,allow_nan=False)))
                         db.execute('UPDATE lab_universe SET status=? WHERE symbol=?',
                                    ('COST_PROHIBITIVE' if prohibitive else 'EXPLORATORY_ONLY',symbol))
-                    emit('EXPERIMENT','DONE',symbol=symbol,count=6)
+                    emit('EXPERIMENT','DONE',symbol=symbol,count=len(result['candidates']))
                 else: emit('EXPERIMENT','FAILED',symbol=symbol)
     except Exception:
         emit('HISTORY','FAILED',symbol=symbol)
@@ -258,6 +333,7 @@ def summary(db, now, status):
         history_symbols=db.execute('SELECT COUNT(DISTINCT symbol) FROM lab_bars').fetchone()[0],
         history_bars=db.execute('SELECT COUNT(*) FROM lab_bars').fetchone()[0],
         experiments=db.execute('SELECT COUNT(*) FROM lab_runs').fetchone()[0],
-        strategy_candidates=db.execute('SELECT COUNT(*)*6 FROM lab_runs').fetchone()[0],
+        strategy_candidates=db.execute('SELECT COUNT(*)*12 FROM lab_runs').fetchone()[0],
+        forward_nominations=db.execute('SELECT COUNT(*) FROM lab_nominations').fetchone()[0],
         live_authorized=False,improvement_verified=False,
         recent=[dict(id=r[0],symbol=r[1],created_utc=r[2],result=json.loads(r[3])) for r in rows])
