@@ -475,6 +475,11 @@
       "normalized_sha256": "a6db4bd97b7cf6b2f40783b6dfd619dabcd9c96e23a3dde890c103a6a62cad52",
       "sha256": "a6db4bd97b7cf6b2f40783b6dfd619dabcd9c96e23a3dde890c103a6a62cad52"
     },
+    "scripts/deployment/export_website_repo.py": {
+      "bytes": 3728,
+      "normalized_sha256": "f2a8484106699e08e764cf93cb4eceedbd7bb61377da9a04b9dc7d61ed2648a5",
+      "sha256": "f2a8484106699e08e764cf93cb4eceedbd7bb61377da9a04b9dc7d61ed2648a5"
+    },
     "scripts/deployment/install_hf_storage.py": {
       "bytes": 7551,
       "normalized_sha256": "c37cde28480e247bc270900c0a4ad07c618f8e8487a269d863446ba9f2f79260",
