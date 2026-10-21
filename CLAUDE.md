@@ -30,7 +30,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 | `docs/` | `architecture/` + `adr/` (kontrak desain, dilindungi CODEOWNERS), `operations/`, `research/`, `validation/` (bukti bertanggal), `reviews/` (freeze record stage 02–09), `deployment/` |
 | `tests/` | `unit/` (~1.500), `static/` (113), `integration/` (~210), `replay/` dan `research/` (tidak dijalankan Body CI) |
 | `archive/` | Skrip/dokumen lama tak dirujuk, disimpan utuh — lihat `archive/README.md` |
-| `.github/workflows/` | 39 workflow; utama `katarina-body-ci.yml` |
+| `.github/workflows/` | 20 workflow. Otomatis hanya `katarina-body-ci.yml` (push/PR; check wajib branch protection berasal dari sini — jangan ganti nama job-nya), `katarina-hotnews.yml` (jadwal), `stage35-tester-safety.yml` (path filter). Sisanya manual (`workflow_dispatch`); `stage07-transport.yml` dan `stage06-09-clearance.yml` memilih job lewat input `check` |
 
 ## Menjalankan pengecekan (sama dengan Body CI)
 
@@ -72,7 +72,8 @@ tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLA
 | 2. Pensiunkan otak lama | Selesai: `intelligence/brain.py` (`KatarinaAIBrain`) + dependennya diarsipkan (2a); otak berversi diganti nama kemampuan di Tahap 3 |
 | 3. Subpaket `intelligence/` | Selesai: modul dipindah dan semua rujukan aktif diganti (3a); shim lokasi lama dihapus (3b). Import `katarina.intelligence.<nama_lama>` kini gagal — pakai path subpaket |
 | 4. Nama fungsi `body/stageNN` | Selesai: `body/stageNN.py` → nama fungsi (mis. `stage16` → `risk_governor`), manifest `implementation_module` diperbarui, nama file manifest tetap. Alias `katarina.body.stageNN` dipertahankan satu rilis lalu dihapus |
-| 5–8 | Belum dikerjakan |
+| 5. Sederhanakan workflow | Selesai: 12 workflow `stage07-*` → `stage07-transport.yml`, 4 workflow stage06/08/09 → `stage06-09-clearance.yml` (pemicu manual, tidak digabung ke Body CI karena pemicunya beda). Lima workflow riset lama tanpa run 30 hari (v9, v10, tournament, replay, frozen-xau) → `archive/.github/workflows/` |
+| 6–8 | Belum dikerjakan |
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`

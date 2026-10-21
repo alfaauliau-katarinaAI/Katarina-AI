@@ -1,5 +1,17 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — workflow CI disederhanakan (perapian tahap 5, tanpa perubahan perilaku)
+
+- 12 workflow manual `stage07-*` digabung menjadi `stage07-transport.yml`; `stage06-static`,
+  `stage06-modern-compile`, `stage08-validation`, `stage09-health-safety` menjadi `stage06-09-clearance.yml`.
+  Input `check` memilih satu job atau `all`. Langkah tiap job identik (diverifikasi lewat YAML); env tingkat
+  workflow dipindah ke job, nama tampilan job = nama workflow lama.
+- Tidak digabung ke `katarina-body-ci.yml` karena pemicunya berbeda (manual vs push/PR). Nama job Body CI
+  yang menjadi check wajib tidak berubah.
+- Workflow riset `broker-entry-research-v9`, `broker-multitf-research-v10`, `public-strategy-tournament`,
+  `katarina-strategy-replay`, `frozen-xau-tick-verdict` tidak pernah dipicu dalam 30 hari terakhir dan dipindah
+  ke `archive/.github/workflows/` (tidak aktif di luar `.github/`). Jumlah workflow 39 → 20.
+
 ## 2026-10-21 — modul body bernama fungsi (perapian tahap 4, tanpa perubahan perilaku)
 
 - `src/katarina/body/stageNN.py` (11–40) diganti nama sesuai fungsinya, mis. `stage16` → `risk_governor`,

@@ -1,14 +1,84 @@
-name: Stage 06 Modern MetaEditor Proof
+name: Stage 06-09 Clearance Checks
 
-# On-demand only: avoid redundant GitHub Actions push/PR fanout.
+# Manual native/validation checks only; Body CI owns push and pull-request checks.
+# Merged from 4 single-job workflows in cleanup stage 5; job steps are unchanged.
 on:
   workflow_dispatch:
+    inputs:
+      check:
+        description: Which check to run
+        type: choice
+        default: all
+        options:
+          - all
+          - stage06-static
+          - modern-compile
+          - validation
+          - health-safety
 
 permissions:
   contents: read
 
 jobs:
+  # from stage06-static.yml
+  stage06-static:
+    name: Stage 06 Static Evidence
+    if: inputs.check == 'all' || inputs.check == 'stage06-static'
+    runs-on: windows-2022
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run Stage 06 static regressions
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = "src"
+          python -m unittest tests.static.test_stage06_mt5_bridge tests.static.test_stage06_windows_compatibility -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Write evidence
+        shell: pwsh
+        run: |
+          $pythonVersion = (python --version 2>&1 | Out-String).Trim()
+          $evidence = [ordered]@{
+            schema_version = "1.0"
+            stage = "06"
+            generated_utc = [DateTime]::UtcNow.ToString("o")
+            git_commit = "$env:GITHUB_SHA"
+            runner_os = "$env:RUNNER_OS"
+            runner_name = "$env:RUNNER_NAME"
+            runner_arch = "$env:RUNNER_ARCH"
+            image = "windows-2022"
+            python_version = $pythonVersion
+            suite = @(
+              "tests.static.test_stage06_mt5_bridge",
+              "tests.static.test_stage06_windows_compatibility"
+            )
+            result = "PASS_STAGE06_STATIC_REGRESSIONS"
+          }
+          New-Item -ItemType Directory -Force -Path "build\mt5" | Out-Null
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content -Path "build\mt5\stage06_static_evidence.json" -Encoding UTF8
+
+      - name: Upload static evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage06-static-evidence
+          path: build/mt5/stage06_static_evidence.json
+          retention-days: 30
+
+  # from stage06-modern-compile.yml
   modern-compile:
+    name: Stage 06 Modern MetaEditor Proof
+    if: inputs.check == 'all' || inputs.check == 'modern-compile'
     runs-on: windows-2022
     timeout-minutes: 30
 
@@ -151,3 +221,95 @@ jobs:
             build/mt5/stage06_final_clearance.json
             build/mt5/STAGE_06_FINAL_AUDIT_CANDIDATE.md
           retention-days: 30
+
+  # from stage08-validation.yml
+  validation:
+    name: Stage 08 Data Validation
+    if: inputs.check == 'all' || inputs.check == 'validation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run Stage 08 validation tests
+        shell: bash
+        run: |
+          export PYTHONPATH=src
+          python -m unittest discover -s tests/unit/validation -p 'test_*.py' -v 2>&1 | tee stage08-tests.txt
+          grep -E "Ran [0-9]+ tests" stage08-tests.txt
+          grep -E "^OK$" stage08-tests.txt
+
+      - name: Run Stage 08 final audit
+        shell: bash
+        run: |
+          export PYTHONPATH=src
+          mkdir -p build/stage08
+          python scripts/stage08/audit_stage08_final.py --repo-root . --output build/stage08/stage08_final_clearance.json
+          python - <<'PY'
+          import json
+          with open("build/stage08/stage08_final_clearance.json", encoding="utf-8") as f:
+              data = json.load(f)
+          assert data["result"] == "PASS_STAGE08_FINAL_CLEARANCE"
+          assert data["ready_for_stage09"] is True
+          assert data["live_risk_ready"] is False
+          PY
+
+      - name: Upload Stage 08 evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage08-final-clearance-evidence
+          path: |
+            stage08-tests.txt
+            build/stage08/stage08_final_clearance.json
+          retention-days: 90
+
+  # from stage09-health-safety.yml
+  health-safety:
+    name: Stage 09 Health Safety
+    if: inputs.check == 'all' || inputs.check == 'health-safety'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run Stage 09 tests
+        shell: bash
+        run: |
+          export PYTHONPATH=src
+          python -m unittest discover -s tests/unit/health -p 'test_*.py' -v 2>&1 | tee stage09-tests.txt
+          grep -E "Ran [0-9]+ tests" stage09-tests.txt
+          grep -E "^OK$" stage09-tests.txt
+      - name: Run Stage 09 final audit
+        shell: bash
+        run: |
+          export PYTHONPATH=src
+          mkdir -p build/stage09
+          python scripts/stage09/audit_stage09_final.py --repo-root . --output build/stage09/stage09_final_clearance.json
+          python - <<'PY'
+          import json
+          with open("build/stage09/stage09_final_clearance.json", encoding="utf-8") as f:
+              data=json.load(f)
+          assert data["result"] == "PASS_STAGE09_FINAL_CLEARANCE"
+          assert data["ready_for_stage10"] is True
+          assert data["live_risk_ready"] is False
+          PY
+      - name: Upload Stage 09 evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+        with:
+          name: stage09-final-clearance-evidence
+          path: |
+            stage09-tests.txt
+            build/stage09/stage09_final_clearance.json
+          retention-days: 90
