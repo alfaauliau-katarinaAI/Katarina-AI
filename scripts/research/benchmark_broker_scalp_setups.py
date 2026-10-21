@@ -7,7 +7,7 @@ Published Standard $0 commission is a *schedule assumption* absent deal proof.
 from __future__ import annotations
 import argparse
 from bisect import bisect_right
-from collections import Counter,defaultdict
+from collections import Counter
 from datetime import datetime,timedelta,timezone
 from hashlib import sha256
 import json

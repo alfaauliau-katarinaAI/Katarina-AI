@@ -5,7 +5,6 @@ Never infer component execution from a repository file or a healthy heartbeat.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Mapping, Any
 
 LANES = (

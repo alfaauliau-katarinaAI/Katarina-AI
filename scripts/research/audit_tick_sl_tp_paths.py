@@ -12,7 +12,7 @@ import sys
 
 SCRIPTS=Path(__file__).resolve().parent
 sys.path.insert(0,str(SCRIPTS))
-from replay_historical_tick_stops import CONFIG,FEE_STRESS_BPS,COST_CEILINGS,summarize
+from replay_historical_tick_stops import CONFIG,FEE_STRESS_BPS,summarize
 
 def epoch(v):
     dt=datetime.fromisoformat(v)

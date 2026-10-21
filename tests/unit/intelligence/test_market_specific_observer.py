@@ -2,7 +2,7 @@
 import unittest
 from unittest.mock import patch
 from tests.unit.intelligence.test_multi_market_brain import market,ClearContext,bars,NOW
-from katarina.intelligence.multi_market_brain import screen,save_observation
+from katarina.intelligence.multi_market_brain import screen
 from katarina.intelligence.symbol_playbooks import SYMBOLS
 
 def record(symbol="NAS100.vx",mode=4):

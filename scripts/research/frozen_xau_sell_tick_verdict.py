@@ -247,7 +247,6 @@ def run():
 
 
 def self_test():
-    from types import SimpleNamespace
     tick_size=.01
     def raw(time,bid,ask):
         return {"time_msc":int(time*1000),"bid":bid,"ask":ask}

@@ -10,7 +10,7 @@ from katarina.engines.manual_risk import (
     PositionPnLChange,
     BrokerPnLReconciler,
 )
-from katarina.engines.risk import RiskAction, RiskGovernor, RiskRequest
+from katarina.engines.risk import RiskAction, RiskGovernor
 from katarina.validation.engine import (
     ValidationDisposition,
     ValidationResult,

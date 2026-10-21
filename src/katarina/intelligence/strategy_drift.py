@@ -6,12 +6,12 @@ evidence is missing or deteriorates, only NO_TRADE may be returned.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from math import isfinite
 
 from katarina.intelligence.shadow_journal import ShadowJournal, _utc
 from katarina.intelligence.strategy_evidence import (
-    ForwardStrategyEvidenceGate, StrategyEvidenceDecision,
+    ForwardStrategyEvidenceGate,
 )
 
 

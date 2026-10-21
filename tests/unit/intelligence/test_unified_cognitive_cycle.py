@@ -5,7 +5,6 @@ import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from katarina.intelligence.prospective_shadow_book import ProspectiveShadowBook
 from katarina.intelligence.unified_cognitive_cycle import (
@@ -152,7 +151,6 @@ class UnifiedCognitionTests(unittest.TestCase):
         ).fetchone()[0],1)
 
     def test_invalid_curiosity_priorities_are_rejected(self):
-        from katarina.intelligence.prospective_shadow_book import ResearchHypothesis
         book=ProspectiveShadowBook(self.db)
         for bad in (
             {("XAUUSD.vx","SWEEP","BUY","TREND_UP"):True},

@@ -13,7 +13,7 @@ from katarina.intelligence.shadow_journal import ShadowJournal,ShadowSignal
 from katarina.intelligence.shadow_paper_book import (
     ShadowPaperBook,ObservedQuote,PaperPosition)
 from katarina.intelligence.shadow_gold_intraday import (
-    GoldShadowIntraday,ShadowSetup)
+    ShadowSetup)
 from katarina.intelligence.mt5_shadow_cycle import MT5ShadowCycle
 
 UTC=timezone.utc

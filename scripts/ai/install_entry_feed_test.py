@@ -1,6 +1,5 @@
 """Install the committed read-only feed on the testing VPS; restart publisher only."""
 from pathlib import Path
-from datetime import datetime, timezone
 import hashlib,json,subprocess,sys,time
 ROOT=Path(r'C:\KatarinaGitTest-4e14b098')
 STATE=Path(r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer')

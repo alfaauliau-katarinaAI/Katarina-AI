@@ -1,7 +1,7 @@
 from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
-import json,sqlite3,tempfile,unittest,threading
+import json,sqlite3,tempfile,unittest
 from katarina.intelligence.autonomous_research import ResearchPool,preserve_dataset
 from katarina.monitoring.research_health import read_research_health
 

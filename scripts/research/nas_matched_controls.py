@@ -9,11 +9,9 @@ test, and never touches broker orders.
 """
 from __future__ import annotations
 import argparse,json
-from bisect import bisect_left,bisect_right
 from collections import Counter,defaultdict
 from datetime import datetime,timedelta,timezone
 from hashlib import sha256
-from math import sqrt
 from pathlib import Path
 from random import Random
 from statistics import mean

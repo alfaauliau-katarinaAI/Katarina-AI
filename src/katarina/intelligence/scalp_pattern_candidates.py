@@ -4,8 +4,7 @@ Reference families: trend EMA reclaim, sweep-and-reclaim, breakout retest.
 No live orders; historical exploration only; cannot infer future fills.
 """
 from __future__ import annotations
-from bisect import bisect_right
-from datetime import datetime,timezone
+from datetime import timezone
 from math import isfinite
 from statistics import mean
 
@@ -40,7 +39,6 @@ def propose_family(m1_bars,m5_bars,now):
     width=high-low
     if width<=0 or not low<=min(opening,close)<=max(opening,close)<=high:
         return []
-    prev=[float(b["close"]) for b in m1_bars[-22:-1]]
     avg_volume=mean(float(b["tick_volume"]) for b in m1_bars[-21:-1])
     if avg_volume<=0:
         return []

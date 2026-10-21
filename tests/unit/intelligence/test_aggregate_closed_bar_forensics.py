@@ -1,7 +1,6 @@
 """Research report must count all 17 symbols, both dates and all losses."""
 import unittest
 from datetime import datetime,timezone
-from copy import deepcopy
 from scripts.research.aggregate_closed_bar_forensics import aggregate
 
 SYMS=[f"S{i:02d}.vx" for i in range(17)]

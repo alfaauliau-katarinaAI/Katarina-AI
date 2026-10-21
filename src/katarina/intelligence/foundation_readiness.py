@@ -6,7 +6,6 @@ validation, multi-asset risk clearance and any eventual trade authorization.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from math import isfinite
 
 
 def _clock(value) -> datetime | None:

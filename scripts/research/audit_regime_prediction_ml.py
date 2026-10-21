@@ -12,7 +12,7 @@ from hashlib import sha256
 from pathlib import Path
 from statistics import mean
 from evaluate_regime_prediction_ml import (
-    scores,FOLDS,EMBARGO_SECONDS,MIN_TEST,select_samples,CLAMP)
+    scores,FOLDS,EMBARGO_SECONDS,select_samples,CLAMP)
 
 def stamp(value):
     dt=datetime.fromisoformat(value)

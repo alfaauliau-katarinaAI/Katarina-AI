@@ -1,5 +1,4 @@
 import unittest
-from datetime import datetime, timezone
 
 from katarina.intelligence.market import MarketIntelligenceEngine
 from katarina.intelligence.timeframe import MultiTimeframeEngine, TimeframeView

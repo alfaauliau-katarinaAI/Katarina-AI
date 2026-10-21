@@ -5,7 +5,7 @@ from datetime import datetime,timedelta,timezone
 import sqlite3
 
 from katarina.intelligence.prospective_shadow_book import (
-    ResearchHypothesis,ProspectiveShadowBook,MAX_GAP_SEC,COST_STRESS_R
+    ResearchHypothesis,ProspectiveShadowBook,COST_STRESS_R
 )
 
 NOW=datetime(2026,10,13,10,0,tzinfo=timezone.utc)

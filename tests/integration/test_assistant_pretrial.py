@@ -1,7 +1,6 @@
 """Behavior evidence, fabricated model and broker fixtures; never live validation."""
 import json
 from pathlib import Path
-import sqlite3
 import tempfile
 import time
 from types import SimpleNamespace
@@ -10,7 +9,7 @@ from unittest.mock import patch
 
 from katarina.adapters.automatic_connection import BoundLocalBroker, ConnectionConfig, ConnectionUnavailable
 from katarina.adapters.brain_feedback import FeedbackInbox
-from katarina.adapters.dialog_model import JSONDialogModel, ModelConfig, ModelUnavailable
+from katarina.adapters.dialog_model import JSONDialogModel, ModelConfig
 from katarina.adapters.pc_simulation import PCSimulationBroker
 from katarina.adapters.readonly_cloud import CloudReadOnlyBroker, ReadOnlySensorBridge
 from katarina.intelligence.unified_brain import UnifiedKatarinaBrain

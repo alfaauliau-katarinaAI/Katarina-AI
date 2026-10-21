@@ -1,7 +1,6 @@
 """Local-only MT5 dashboard transport. Display never grants execution rights."""
 from katarina.monitoring.snapshot_io import replace_snapshot
 from datetime import datetime, timezone
-import json
 import os
 from pathlib import Path
 import time

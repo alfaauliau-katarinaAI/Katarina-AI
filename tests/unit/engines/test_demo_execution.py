@@ -2,7 +2,6 @@ import concurrent.futures
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace as NS
-import sqlite3
 import tempfile
 import unittest
 

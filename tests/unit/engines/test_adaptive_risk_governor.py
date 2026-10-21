@@ -1,5 +1,4 @@
 """Adaptive KATARINA risk curve and shared-account safety regression tests."""
-import math
 import unittest
 from dataclasses import replace
 from pathlib import Path

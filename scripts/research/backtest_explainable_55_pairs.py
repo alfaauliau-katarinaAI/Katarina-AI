@@ -9,9 +9,9 @@ WAIT and multi-symbol counts are retained; synthetic next-open fills approximate
 execution, not a replacement for the MT5 tick Strategy Tester.
 """
 from __future__ import annotations
-import csv, json, math, os, sys, time
-from collections import Counter, defaultdict
-from datetime import datetime, timedelta, timezone
+import json, math, sys, time
+from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 import numpy as np
 import MetaTrader5 as mt5

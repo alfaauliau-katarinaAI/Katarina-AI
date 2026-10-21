@@ -1,6 +1,5 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from math import sqrt
 from statistics import mean, pstdev
 from typing import Sequence
 

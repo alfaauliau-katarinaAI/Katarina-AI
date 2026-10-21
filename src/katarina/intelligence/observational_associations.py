@@ -1,7 +1,6 @@
 """Price/news associations independent of entry signals. Never strategy clearance."""
 from datetime import datetime, timezone
 from hashlib import sha256
-import json
 import math
 
 

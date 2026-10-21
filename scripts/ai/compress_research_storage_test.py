@@ -1,7 +1,7 @@
 """Reversible NTFS compression of research storage, with byte identity verification."""
 from pathlib import Path
 from contextlib import closing
-import hashlib,json,shutil,sqlite3,subprocess,time
+import hashlib,json,shutil,sqlite3,subprocess
 ROOT=Path(r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer')
 TARGET=ROOT/'experiment-jobs.sqlite3'
 def read(p):return json.loads(p.read_text(encoding='utf-8-sig'))

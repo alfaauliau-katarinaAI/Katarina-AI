@@ -117,7 +117,6 @@ def main():
         if terminal is None or not terminal.connected or terminal.trade_allowed:
             raise SystemExit("REFUSE_MT5_AUTOTRADING_OR_OFFLINE")
         def history(symbol, tick_at):
-            from datetime import timedelta
             begin = datetime.fromtimestamp(tick_at - MAX_ENTRY_SKEW_SECONDS,
                                            timezone.utc)
             end = datetime.fromtimestamp(tick_at + 1, timezone.utc)

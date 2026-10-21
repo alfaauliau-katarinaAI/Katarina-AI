@@ -2,7 +2,7 @@
 import json
 import unittest
 from katarina.governance.external_model_bridge import (
-    brief_for_external_models, request_github_model, review_by_external_models,
+    brief_for_external_models, review_by_external_models,
     verdict_from_text,
 )
 

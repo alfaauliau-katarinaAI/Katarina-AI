@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import argparse
 from bisect import bisect_left
-from collections import Counter,defaultdict
+from collections import Counter
 from datetime import datetime,timedelta,timezone
 from hashlib import sha256
 import json

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 
 @dataclass(frozen=True, slots=True)

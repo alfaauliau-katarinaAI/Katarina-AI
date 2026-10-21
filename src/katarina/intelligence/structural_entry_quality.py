@@ -80,7 +80,6 @@ class StructuralEntryQuality:
         o=_get(now,"open")
         h=_get(now,"high");l=_get(now,"low")
         pc=_get(previous,"close")
-        ph=_get(previous,"high");pl=_get(previous,"low")
         a=_atr(m5);a15=_atr(m15)
         if a is None or a15 is None:raise ValueError("invalid_atr")
         for row in (now,previous):

@@ -6,10 +6,9 @@ No thresholds selected on outcomes, no broker actual fills, no promotion.
 """
 from __future__ import annotations
 import argparse,json
-from collections import Counter,defaultdict
+from collections import Counter
 from bisect import bisect_right
 from datetime import datetime,timedelta,timezone
-from hashlib import sha256
 from pathlib import Path
 from statistics import mean
 from math import isfinite

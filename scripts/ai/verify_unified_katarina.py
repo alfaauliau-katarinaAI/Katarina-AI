@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 from hashlib import sha256
-import importlib
 import json
 from pathlib import Path
 import sqlite3

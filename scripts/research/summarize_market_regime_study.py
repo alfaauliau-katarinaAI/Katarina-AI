@@ -1,6 +1,6 @@
 """Readable descriptive regime outcome report, not a trade strategy."""
 import json,sys
-from collections import Counter,defaultdict
+from collections import Counter
 from statistics import mean
 p=sys.argv[1]
 r=json.load(open(p,encoding="utf-8"))

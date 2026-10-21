@@ -65,3 +65,48 @@ class PublicResearchTests(unittest.TestCase):
         self.assertEqual(result['entry_positions'][0]['entry_price'],1.2)
         self.assertEqual(result['orders_submitted'],0)
         self.assertNotIn('PRIVATE',json.dumps(result))
+
+    def test_cached_worker_stays_visible_when_market_snapshot_belongs_to_old_process(self):
+        from unittest.mock import patch
+        from katarina.monitoring.public_runtime import build_public_runtime
+        now=datetime.now(timezone.utc).isoformat()
+        with TemporaryDirectory() as root:
+            status=dict(pid=99,status='DEGRADED',delivery='DISABLED',orders_submitted=0,live_execution_authorized=False)
+            Path(root,'continuous-status.json').write_text(json.dumps(status))
+            activity=dict(pid=99,fresh=True,events=[],current=None)
+            run=dict(id='f'*64,symbol='PRIVATE_INSTRUMENT',created_utc=now,result={'data_sha256':'e'*64})
+            with patch('katarina.monitoring.public_runtime.read_runtime',return_value={'operational':{'snapshot_pid':12}}), \
+                 patch('katarina.monitoring.public_runtime.project_agent_board',side_effect=lambda *a,**k:dict(result='SNAPSHOT_PASS',delivery='DISABLED')), \
+                 patch('katarina.monitoring.public_runtime.read_activity',return_value=activity), \
+                 patch('katarina.monitoring.public_runtime.public_dashboard_snapshot',side_effect=lambda v:v), \
+                 patch('katarina.monitoring.public_research.read_public_research',return_value=({'status':'NOT_ATTESTED'},{'status':'NOT_ATTESTED'})), \
+                 patch('katarina.monitoring.public_research.worker_research_runs',return_value=[run]), \
+                 patch('katarina.monitoring.research_lab_status.read_lab_status',return_value={'status':'RUNNING'}):
+                board=build_public_runtime(root)['agent_board']
+                self.assertTrue(board['snapshot_process_matches'])
+                self.assertEqual(board['result'],'BLOCKED')
+                self.assertEqual(board['entries']['status'],'NOT_ATTESTED')
+                self.assertEqual(len(board['research_graph']['nodes']),3)
+                self.assertNotIn('PRIVATE_INSTRUMENT',json.dumps(board['research_graph']))
+                status['live_execution_authorized']=True
+                Path(root,'continuous-status.json').write_text(json.dumps(status))
+                self.assertFalse(build_public_runtime(root)['agent_board']['research_source_verified'])
+
+    def test_persisted_trials_create_attributed_nodes_and_keep_initial_discoveries(self):
+        import sqlite3
+        from katarina.monitoring.public_research import worker_research_runs
+        with TemporaryDirectory() as root:
+            db=sqlite3.connect(Path(root)/'experiment-jobs.sqlite3')
+            db.execute('CREATE TABLE trials(id,symbol,digest,created_utc,result_json)')
+            for i in range(120):
+                db.execute('INSERT INTO trials VALUES(?,?,?,?,?)',(format(i,'064x'),'PRIVATE_SYMBOL','d'*64,f'2026-10-19T20:{i//60:02}:{i%60:02}+00:00',json.dumps({'method':'MEAN_REVERSION','horizon':12,'secret':'PRIVATE'})))
+            db.commit();db.close()
+            runs=worker_research_runs(root)
+            self.assertEqual(len(runs),96)
+            self.assertIn('0'*64,{r['id'] for r in runs})
+            self.assertIn(format(119,'064x'),{r['id'] for r in runs})
+            graph=graph_from_report({'continuous_research_lab':{'recent':runs}})
+            experiments=[n for n in graph['nodes'] if n['kind']=='experiment']
+            self.assertEqual(len(experiments),96)
+            self.assertTrue(all(n['producer_phase']=='TEST_REVERSION_H12' for n in experiments))
+            self.assertNotIn('PRIVATE',json.dumps(graph))

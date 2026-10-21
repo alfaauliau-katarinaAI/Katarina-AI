@@ -5,7 +5,7 @@ Chosen from 2025 only: opening-range H1/H4-aligned break, UTC06, RR 2 and
 stop-first fill proxy, broker spread, adverse ticks; no live order calls.
 """
 from __future__ import annotations
-import sys, json, random, statistics, math
+import sys, json, random, statistics
 from collections import defaultdict
 from datetime import datetime,timezone
 from pathlib import Path

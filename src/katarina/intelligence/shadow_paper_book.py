@@ -8,7 +8,7 @@ unless actually observed live after strategy freeze.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from hashlib import sha256
 from math import isfinite
 from pathlib import Path

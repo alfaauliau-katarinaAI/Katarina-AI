@@ -1,6 +1,5 @@
 from pathlib import Path
 from types import SimpleNamespace
-import json
 import tempfile
 import threading
 import unittest

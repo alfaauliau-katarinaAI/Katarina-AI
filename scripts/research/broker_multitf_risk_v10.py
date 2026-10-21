@@ -12,7 +12,6 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
-from math import isfinite
 from statistics import median
 
 UTC=timezone.utc

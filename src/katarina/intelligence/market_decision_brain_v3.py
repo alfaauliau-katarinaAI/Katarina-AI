@@ -8,11 +8,16 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from math import isfinite
-from typing import Mapping, Sequence
+from typing import TYPE_CHECKING, Mapping, Sequence
 
 from katarina.intelligence.market_decision_pipeline import (
     MarketDecisionPipeline, SensorCandle,
 )
+
+if TYPE_CHECKING:  # annotation-only; avoids import cycles at runtime
+    from katarina.intelligence.contextual_decision_intelligence import (
+        ContextDecision, MacroEvidence, ResolvedExperience, RiskSituation)
+    from katarina.intelligence.news_intelligence import NewsContext
 
 @dataclass(frozen=True)
 class DecisionCard:

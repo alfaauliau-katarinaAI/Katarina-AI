@@ -1,6 +1,6 @@
 """One guarded bounded report-batch check; always restore the observer task."""
 from pathlib import Path
-import json,sqlite3,time,subprocess
+import json,time,subprocess
 from katarina.intelligence.research_reports import publish_reports
 root=Path(r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer')
 d=json.loads((root/'demo-forward/status.json').read_text())

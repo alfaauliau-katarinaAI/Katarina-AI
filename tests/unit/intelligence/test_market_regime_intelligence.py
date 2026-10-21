@@ -1,9 +1,8 @@
 """Deterministic causal behavior and no-trading guarantees for regime v1."""
 import json,unittest
-from copy import deepcopy
 from datetime import datetime,timezone
 from katarina.intelligence.market_regime_intelligence import (
-    classify_regime,PROFILES,STATES,_reversal_structure)
+    classify_regime,PROFILES,_reversal_structure)
 
 NOW=datetime(2026,10,9,12,tzinfo=timezone.utc)
 
@@ -53,6 +52,18 @@ class MarketRegimeIntelligenceTests(unittest.TestCase):
             fixture("DOWN",900),fixture("UP",3600),NOW)
         self.assertEqual(q["regime"],"TRANSITION")
         self.assertIsNone(q["evidence_score_0_100"])
+
+    def test_timeframe_alignment_reports_each_frame(self):
+        q=classify_regime("NAS100.vx",fixture("UP",300),fixture("UP",900),
+             fixture("UP",3600),NOW)
+        self.assertEqual(q["timeframe_alignment"],{"H1":"ALIGNED","M15":"ALIGNED","M5":"ALIGNED"})
+        q=classify_regime("NAS100.vx",fixture("DOWN",300),
+             fixture("UP",900),fixture("UP",3600),NOW)
+        self.assertEqual(q["regime"],"PULLBACK_UP")
+        self.assertEqual(q["timeframe_alignment"],{"H1":"ALIGNED","M15":"ALIGNED","M5":"CONFLICTING"})
+        q=classify_regime("EURUSD.vx",fixture("UP",300),fixture("DOWN",900),fixture("UP",3600),NOW)
+        self.assertEqual(set(q["timeframe_alignment"].values()),{"NEUTRAL"})
+        self.assertEqual(classify_regime("UNKNOWN.vx",[],[],[],NOW)["timeframe_alignment"],{})
 
     def test_pullback_is_not_mislabeled_as_reversal(self):
         q=classify_regime("NAS100.vx",fixture("DOWN",300),

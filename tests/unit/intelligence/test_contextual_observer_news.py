@@ -3,15 +3,10 @@ import unittest
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
-from io import BytesIO
-from unittest.mock import patch
 import sqlite3
-import json
-import tempfile
 
 from katarina.intelligence.verified_policy_context import (
-    _host_ok,parse_full_article,_policy_signal,market_mechanism,
-    ReadArticle,evidence_from_article,item_from_article,instrument_currencies,
+    _host_ok,parse_full_article,_policy_signal,ReadArticle,evidence_from_article,item_from_article,instrument_currencies,
 )
 from katarina.intelligence.contextual_observation_journal import ContextDecisionJournal
 

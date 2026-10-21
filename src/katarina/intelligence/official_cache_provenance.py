@@ -5,7 +5,7 @@ successful, fresh, complete or correct. This never invents macro direction.
 """
 from __future__ import annotations
 
-from datetime import datetime,timezone,timedelta
+from datetime import datetime,timezone
 from hashlib import sha256
 import json
 

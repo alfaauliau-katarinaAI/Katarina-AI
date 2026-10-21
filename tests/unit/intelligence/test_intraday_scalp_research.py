@@ -1,6 +1,5 @@
 """Full-candle intraday/scalp: no forward price peeking, conservative fills."""
 import unittest
-from dataclasses import replace
 import numpy as np
 from katarina.intelligence.intraday_scalp_research import (
     Candidate,trailing_mean,previous_extremes,vector_prefilter,fill_next_open)

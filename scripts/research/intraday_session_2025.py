@@ -7,11 +7,10 @@ No MT5 trade_send, no live changes. Chronological years shown separately.
 2026 is previously inspected, NOT a fresh untouched holdout.
 """
 from __future__ import annotations
-import json,sys,hashlib,statistics
-from collections import defaultdict,Counter
-from datetime import datetime,timezone,timedelta
+import json,sys
+from collections import defaultdict
+from datetime import datetime,timezone
 from pathlib import Path
-from bisect import bisect_right
 
 REPO=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(REPO/"scripts"/"research"))

@@ -3,7 +3,6 @@ import sys
 import unittest
 from datetime import datetime,timezone
 from pathlib import Path
-from statistics import mean
 
 SCRIPTS=Path(__file__).resolve().parents[3]/"scripts"/"research"
 sys.path.insert(0,str(SCRIPTS))

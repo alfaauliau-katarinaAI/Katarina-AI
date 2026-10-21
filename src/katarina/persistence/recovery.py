@@ -5,7 +5,6 @@ from pathlib import Path
 
 from katarina.persistence.sqlite_journal import SQLiteAppendOnlyJournal
 from katarina.persistence.stores import (
-    OperationalSnapshot,
     SQLiteExperienceMemoryStore,
     SQLiteOperationalStateStore,
 )

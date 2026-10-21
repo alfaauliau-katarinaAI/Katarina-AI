@@ -1,6 +1,5 @@
 """Causal market-regime diagnostics; no strategy promotion."""
 import json
-import math
 import unittest
 from datetime import datetime, timezone
 

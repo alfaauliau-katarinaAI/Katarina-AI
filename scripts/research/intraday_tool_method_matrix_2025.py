@@ -10,11 +10,10 @@ Select by 2025 only; 2026 is REUSED diagnostics (not virgin OOS).
 M5 OHLC stop-first execution approximation. No broker orders.
 """
 from __future__ import annotations
-import sys,json,math,statistics,hashlib
+import sys,json,statistics
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from bisect import bisect_right
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/"scripts"/"research"))
 from backtest_brain_v2_from_2025 import load_bars,aggregate,build_frames,frame_last,getframe,MT5PATH,AUDIT

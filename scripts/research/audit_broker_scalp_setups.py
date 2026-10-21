@@ -7,7 +7,6 @@ from hashlib import sha256
 import json
 from math import isfinite
 from pathlib import Path
-from statistics import mean
 
 from benchmark_broker_scalp_setups import (
     FAMILIES,PERIODS,EXITS,ADVERSE_TICK_PER_SIDE,make_summary)

@@ -5,7 +5,7 @@ observed bid/ask markouts are resolved; NEVER count them as fills,
 commission-reconciled net R, profitable trades or trained alpha.
 """
 from __future__ import annotations
-from datetime import datetime, timezone
+from datetime import datetime
 from math import isfinite
 import json
 import sqlite3

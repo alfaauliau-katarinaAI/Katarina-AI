@@ -4,7 +4,7 @@ import unittest
 
 from katarina.contracts.runtime import RuntimeMode
 from katarina.core.readiness import ReadinessGate, ReadinessSignal
-from katarina.health.engine import HealthPolicy, HealthSafetyEngine, HealthState
+from katarina.health.engine import HealthSafetyEngine, HealthState
 
 
 NOW = 2_000_000_000_000_000_000

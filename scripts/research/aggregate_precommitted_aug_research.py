@@ -6,9 +6,8 @@ validate profit of every proxy label or brokerage cost.
 """
 from __future__ import annotations
 
-from collections import Counter,defaultdict
+from collections import Counter
 from datetime import datetime,timezone
-from math import isfinite
 from pathlib import Path
 from statistics import mean
 import argparse,json

@@ -5,7 +5,6 @@ import unittest
 from pathlib import Path
 from hashlib import sha256
 from datetime import datetime,timezone
-import json
 
 SCRIPT_DIR=Path(__file__).resolve().parents[3]/"scripts"/"research"
 sys.path.insert(0,str(SCRIPT_DIR))

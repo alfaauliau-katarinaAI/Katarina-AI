@@ -19,7 +19,6 @@ from katarina.adapters.automatic_connection import ConnectionConfig, verify_iden
 from katarina.adapters.demo_permissions import observation_permission, monitor_permission
 from katarina.intelligence.demo_forward import DemoForwardRuntime
 from katarina.intelligence.demo_strategy import qualify_variant
-from katarina.intelligence.demo_account import DemoAccountLedger
 
 
 class Native:
