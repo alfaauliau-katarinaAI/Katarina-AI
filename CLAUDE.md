@@ -28,7 +28,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 | `website/` | Situs statis publik (Cloudflare Pages); JSON di dalamnya ditulis workflow |
 | `sites/runtime-monitor/`, `functions/api/`, `oauth_gateway/`, `services/` | Worker monitor runtime, API Pages, gateway OAuth, relay monitor |
 | `docs/` | `architecture/` + `adr/` (kontrak desain, dilindungi CODEOWNERS), `operations/`, `research/`, `validation/` (bukti bertanggal), `reviews/` (freeze record stage 02–09), `deployment/` |
-| `tests/` | `unit/` (~1.500), `static/` (113), `integration/` (~210), `replay/` dan `research/` (tidak dijalankan Body CI) |
+| `tests/` | `unit/` (~1.500), `static/` (115, termasuk `test_module_connectivity.py` yang memastikan semua modul dan import script tersambung), `integration/` (~210), `replay/` dan `research/` (tidak dijalankan Body CI) |
 | `archive/` | Skrip/dokumen lama tak dirujuk, disimpan utuh — lihat `archive/README.md` |
 | `.github/workflows/` | 20 workflow. Otomatis hanya `katarina-body-ci.yml` (push/PR; check wajib branch protection berasal dari sini — jangan ganti nama job-nya), `katarina-hotnews.yml` (jadwal), `stage35-tester-safety.yml` (path filter). Sisanya manual (`workflow_dispatch`); `stage07-transport.yml` dan `stage06-09-clearance.yml` memilih job lewat input `check` |
 
@@ -43,7 +43,7 @@ python scripts/governance/audit_repo_hygiene.py --repo-root . --output build/rep
 python scripts/governance/audit_dependency_links.py --repo-root . --output build/validation/dependency-links.json
 ```
 
-Hasil 21 Oktober 2026 (setelah Tahap 2a): unit 1.445 OK, static 113 OK (4 skip), integration 211 OK (3 skip),
+Hasil 21 Oktober 2026 (setelah penjaga konektivitas): unit 1.448 OK, static 115 OK (4 skip), integration 207 OK (3 skip),
 replay 11 OK, research 5 OK, hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah

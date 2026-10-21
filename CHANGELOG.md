@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — penjaga konektivitas antar file
+
+- Audit jalur: 305 modul `katarina` ter-import tanpa error, dan semua import `katarina.*` di `scripts/`
+  serta `katarina_pc.py` mengarah ke modul/nama yang ada. Unit, static, integration, hygiene, dependency
+  links, dan release manifest lulus.
+- Tes statis baru `tests/static/test_module_connectivity.py` menjaga dua hal itu di Body CI (proses
+  terpisah, sekitar 1 detik), supaya pemindahan/penggantian nama berikutnya tidak memutus jalur diam-diam.
+- Tidak ada perubahan perilaku, strategi, Risk Governor, atau flag live.
+
 ## 2026-10-21 — persiapan pemisahan website (perapian tahap 7, belum selesai)
 
 - `scripts/deployment/export_website_repo.py` (+ tes) mengekspor berkas situs publik ke layout repo mandiri
