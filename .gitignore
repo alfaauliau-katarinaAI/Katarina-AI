@@ -233,16 +233,9 @@ credentials/
 .katarina/
 
 # Generated VPS execution evidence
-ops/vps/results/*
-!ops/vps/results/README.md
-vps_bridge/reports/
 
 # Historical VPS control-plane artifacts must stay out of new source commits
-ops/vps/bootstrap/
-ops/vps/rescue/*.trigger
-ops/vps/requests/**/*.log
 infrastructure/legacy-vps-control/
-ops/bridge/CONTROL_TEST.txt
 
 # Editor/OS transient files and accidental scratch copies
 .DS_Store
@@ -269,7 +262,6 @@ Desktop.ini
 /temp/
 
 # VPS heartbeat snapshots are runtime telemetry, not current source state
-ops/vps/health/*/status.json
 
 # Standalone website development secrets and Cloudflare cache
 .dev.vars

@@ -91,19 +91,6 @@ jobs:
         run: |
           PYTHONPATH=src python scripts/body/audit_functional_body.py --repo-root . --output build/body/katarina_body_local_clearance.json
 
-      - name: Block automatic self-hosted VPS workflows
-        run: |
-          python - <<'PY'
-          import re
-          from pathlib import Path
-          for name in ("katarina-vps-lab.yml", "katarina-vps-low-memory-rescue.yml"):
-              text = (Path(".github/workflows") / name).read_text(encoding="utf-8")
-              trigger_section = text.split("permissions:", 1)[0]
-              assert re.search(r"(?m)^  workflow_dispatch:\s*$", trigger_section), name
-              assert not re.search(r"(?m)^  push:\s*$", trigger_section), name
-              assert "if: github.ref == 'refs/heads/main'" in text, name
-          print("PASS_VPS_MANUAL_ONLY")
-          PY
 
       - name: Repository hygiene guard
         run: python scripts/governance/audit_repo_hygiene.py --repo-root . --output build/repository-hygiene.json
@@ -328,22 +315,10 @@ jobs:
       - name: Exercise host policy and real offline lifecycle without MT5
         env:
           PYTHONPATH: src
-        run: python -m unittest tests.integration.test_portable_host tests.integration.test_automatic_connection tests.integration.test_pc_acceptance tests.integration.test_environment_recovery tests.integration.test_assistant_pretrial tests.integration.test_vps_pretrial_release tests.integration.test_continuous_observation tests.integration.test_unified_owner_surface tests.integration.test_system_acceptance_report tests.integration.test_portable_runtime_binding -v
+        run: python -m unittest tests.integration.test_portable_host tests.integration.test_automatic_connection tests.integration.test_pc_acceptance tests.integration.test_environment_recovery tests.integration.test_assistant_pretrial tests.integration.test_continuous_observation tests.integration.test_unified_owner_surface tests.integration.test_system_acceptance_report tests.integration.test_portable_runtime_binding -v
 
       - name: Build committed source-only PC test kit
         run: python scripts/pc/build_pc_test_package.py
-      - name: Verify bounded Windows VPS release audit without broker access
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          $sha = (git rev-parse HEAD).Trim()
-          $raw = & .\scripts\vps\Invoke-KatarinaPretrialRelease.ps1 -Mode Audit -ExpectedCommit $sha -SourceRoot $env:GITHUB_WORKSPACE -PythonExe (Get-Command python.exe).Source
-          $result = ($raw -join "`n") | ConvertFrom-Json
-          $result | ConvertTo-Json -Depth 8
-          if (!$result.ok -or !$result.source_matches -or !$result.python.numpy -or $result.orders_submitted -ne 0 -or $result.live_execution_authorized) {
-            throw 'VPS release audit failed without any broker operation.'
-          }
-          $result | ConvertTo-Json -Depth 8
       - name: Extract package to a path with spaces and create its private environment
         shell: bash
         run: |

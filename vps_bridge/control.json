@@ -1,8 +1,0 @@
-{
-  "schema_version": 1,
-  "sequence": 0,
-  "action": "IDLE",
-  "patch_path": "",
-  "patch_sha256": "",
-  "note": "Initial VPS bridge control. main is not modified by the bridge."
-}
