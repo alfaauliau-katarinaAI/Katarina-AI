@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — rampingkan repo (C): skrip riset sekali pakai
+
+- Dihapus 62 skrip `scripts/research` yang hanya dirujuk tesnya sendiri, `research/safety/reselection_guard.py`,
+  registri regime 11 Okt, `tests/replay`, `tests/research`, dan 25 tes unit yang hanya menguji skrip tersebut.
+- Dipertahankan 4 skrip yang dipakai workflow/operasional. Tidak ada modul runtime yang kehilangan tes.
+
 ## 2026-10-22 — rampingkan repo (B): dokumen bertanggal dan usang
 
 - Dihapus 116 dokumen yang tidak dirujuk kode, config, tes, workflow, maupun dokumen inti: laporan riset,
