@@ -8,13 +8,14 @@ from pathlib import Path
 import os
 from katarina.monitoring.activity_trace import error_code
 from katarina.intelligence.research_capacity import DB_TIMEOUT
+from katarina.intelligence.session_gaps import GAP_POLICY, spans_long_gap
 from katarina.monitoring.snapshot_io import replace_snapshot
 import sqlite3
 import threading
 import zlib
 
 GRID = tuple(product(('MOMENTUM','MEAN_REVERSION','BREAKOUT'), (1,-1), (12,24,48), (4,12,24), (.5,1.,1.5)))
-VERSION = 'cached-entry-grid-v1'
+VERSION = 'cached-entry-grid-v2'
 # Report publishing runs heavy queries under the shared write lock; keep it sparse.
 REPORT_INTERVAL_SECONDS = 30
 
@@ -62,8 +63,8 @@ def evaluate(rows, config, spread, range_cost=.2):
                   close > max(r[2] for r in prior)+(threshold-.5)*scale if side==1 else
                   close < min(r[3] for r in prior)-(threshold-.5)*scale)
         if not signal: continue
-        # Require consecutive H1 bars throughout entry/exit; weekend/gap trades excluded.
-        if any(rows[j+1][0]-rows[j][0] != 3600 for j in range(i,i+horizon)): continue
+        # Short daily pauses allowed; weekend/holiday/outage gaps still excluded.
+        if spans_long_gap(rows,i,horizon): continue
         bucket = 0 if i+horizon < split else 1 if i >= split else None
         if bucket is not None:
             samples[bucket].append(((rows[i+horizon][4]-rows[i+1][1])*side-spread-range_cost*scale)/scale)
@@ -78,7 +79,7 @@ def evaluate(rows, config, spread, range_cost=.2):
                 'NEEDS_FORWARD_VALIDATION')
     return dict(method=family,side='BUY' if side==1 else 'SELL',lookback=lookback,horizon=horizon,threshold=threshold,
                 development=dev,review=review,review_is_chronological=True,independent_holdout=False,
-                history_reused=True,execution_model='NEXT_H1_OPEN_FIXED_CLOSE_NO_SL_TP',
+                history_reused=True,execution_model='NEXT_H1_OPEN_FIXED_CLOSE_NO_SL_TP',gap_policy=GAP_POLICY,
                 cost_model=f'RECORDED_CURRENT_SPREAD_PLUS_{range_cost:.2f}_MEAN_RANGE',
                 status=assessment,live_authorized=False,improvement_verified=False)
 
