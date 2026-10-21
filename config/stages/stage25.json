@@ -9,7 +9,7 @@
   "authority": "advisory",
   "policy_pending": false,
   "windows_required": false,
-  "implementation_module": "katarina.body.stage25",
+  "implementation_module": "katarina.body.tester_evaluation",
   "reference_doc": "docs/research/stages/STAGE_25_GITHUB_REFERENCES.md",
   "status": "body_framework_complete",
   "live_risk_ready": false,

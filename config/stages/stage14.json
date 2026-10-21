@@ -9,7 +9,7 @@
   "authority": "advisory",
   "policy_pending": true,
   "windows_required": false,
-  "implementation_module": "katarina.body.stage14",
+  "implementation_module": "katarina.body.xauusd_specialist",
   "reference_doc": "docs/research/stages/STAGE_14_GITHUB_REFERENCES.md",
   "status": "body_framework_complete",
   "live_risk_ready": false,

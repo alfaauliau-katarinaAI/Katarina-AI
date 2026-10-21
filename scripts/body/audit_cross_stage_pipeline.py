@@ -4,14 +4,12 @@ import importlib
 import json
 from pathlib import Path
 
-from katarina.body import BodyRegistry
+from katarina.body import BodyRegistry, STAGE_MODULES
 from katarina.body.functional import ExecutionIntent, TesterEvaluationIntent
 
 
 def component(stage: int):
-    return importlib.import_module(
-        f"katarina.body.stage{stage:02d}"
-    ).Component()
+    return importlib.import_module(STAGE_MODULES[stage]).Component()
 
 
 def main() -> int:

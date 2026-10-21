@@ -18,11 +18,11 @@ kategori D adalah kandidat untuk dicek manual, bukan bukti tidak terpakai.
 | Kategori | Arti | Jumlah |
 |---|---|---|
 | A | dipakai runtime/operasional atau workflow | 222 |
-| B | hanya dipakai tests | 21 |
+| B | hanya dipakai tests | 22 |
 | C | hanya dipakai script non-operasional (riset dll.) | 28 |
-| D | tidak terjangkau dari root mana pun | 2 |
+| D | tidak terjangkau dari root mana pun | 31 |
 
-Total modul: 273. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
+Total modul: 303. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
 
 ## Root yang dipakai
 
@@ -44,7 +44,7 @@ Total modul: 273. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset 
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina` | runtime, ops, workflow, research, scripts, tests | 158 | 274 |
+| `katarina` | runtime, ops, workflow, research, scripts, tests | 188 | 274 |
 | `katarina.adapters` | runtime, ops, workflow, scripts, tests | 23 | 38 |
 | `katarina.adapters.agent_dashboard_page` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 14 |
@@ -68,42 +68,42 @@ Total modul: 273. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.adapters.transport.session` | workflow, tests | 0 | 1 |
 | `katarina.adapters.transport.tcp` | ops, workflow, tests | 0 | 2 |
 | `katarina.adapters.transport.zmq` | workflow, tests | 0 | 1 |
-| `katarina.body` | ops, workflow, scripts, tests | 34 | 10 |
-| `katarina.body.component` | ops, workflow, scripts, tests | 3 | 1 |
-| `katarina.body.contracts` | ops, workflow, scripts, tests | 34 | 2 |
+| `katarina.body` | ops, workflow, scripts, tests | 64 | 10 |
+| `katarina.body.automated_testing` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.backtesting` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.component` | ops, workflow, scripts, tests | 3 | 0 |
+| `katarina.body.constitution_guard` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.continuous_evolution` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.contracts` | ops, workflow, scripts, tests | 34 | 1 |
+| `katarina.body.dashboard` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.decision` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.economic_intelligence` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.execution` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.exposure` | ops, workflow, scripts, tests | 4 | 0 |
 | `katarina.body.functional` | ops, workflow, scripts, tests | 30 | 5 |
+| `katarina.body.learning` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.live_micro_risk` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.live_preflight` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.machine_learning` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.market_intelligence` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.market_regime` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.model_promotion` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.multi_timeframe` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.performance_monitoring` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.portfolio` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.position_manager` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.position_sizing` | ops, workflow, scripts, tests | 4 | 0 |
 | `katarina.body.registry` | ops, workflow, scripts, tests | 2 | 0 |
+| `katarina.body.research` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.risk_governor` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.robustness` | ops, workflow, scripts, tests | 4 | 0 |
 | `katarina.body.runtime` | ops, workflow, scripts, tests | 1 | 0 |
-| `katarina.body.stage11` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage12` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage13` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage14` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage15` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage16` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage17` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage18` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage19` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage20` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage21` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage22` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage23` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage24` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage25` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage26` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage27` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage28` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage29` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage30` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage31` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage32` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage33` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage34` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage35` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage36` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage37` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage38` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage39` | ops, workflow, scripts, tests | 2 | 0 |
-| `katarina.body.stage40` | ops, workflow, scripts, tests | 2 | 0 |
+| `katarina.body.strategy_tester` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.stress_test` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.tester_evaluation` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.trade_evaluation` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.walk_forward` | ops, workflow, scripts, tests | 4 | 0 |
+| `katarina.body.xauusd_specialist` | ops, workflow, scripts, tests | 4 | 0 |
 | `katarina.contracts` | runtime, ops, workflow, research, scripts, tests | 10 | 18 |
 | `katarina.contracts.runtime` | runtime, ops, workflow, research, scripts, tests | 11 | 18 |
 | `katarina.core` | runtime, ops, workflow, research, scripts, tests | 5 | 9 |
@@ -267,11 +267,12 @@ Total modul: 273. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.validation` | runtime, ops, workflow, research, scripts, tests | 4 | 11 |
 | `katarina.validation.engine` | runtime, ops, workflow, research, scripts, tests | 5 | 11 |
 
-## B — hanya dipakai tests (21)
+## B — hanya dipakai tests (22)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
 | `katarina.adapters.transport.kat1_execution` | tests | 0 | 1 |
+| `katarina.body.stage16` | tests | 0 | 1 |
 | `katarina.engines.account_risk_state` | tests | 2 | 8 |
 | `katarina.engines.broker_risk` | tests | 0 | 3 |
 | `katarina.engines.multi_symbol_execution` | tests | 0 | 1 |
@@ -326,9 +327,38 @@ Total modul: 273. Dari kategori A, 40 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.shadow.strategy_evidence` | scripts, tests | 3 | 3 |
 | `katarina.monitoring.monitor_relay` | scripts, tests | 0 | 2 |
 
-## D — tidak terjangkau dari root mana pun (2)
+## D — tidak terjangkau dari root mana pun (31)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
+| `katarina.body.stage11` | — | 0 | 0 |
+| `katarina.body.stage12` | — | 0 | 0 |
+| `katarina.body.stage13` | — | 0 | 0 |
+| `katarina.body.stage14` | — | 0 | 0 |
+| `katarina.body.stage15` | — | 0 | 0 |
+| `katarina.body.stage17` | — | 0 | 0 |
+| `katarina.body.stage18` | — | 0 | 0 |
+| `katarina.body.stage19` | — | 0 | 0 |
+| `katarina.body.stage20` | — | 0 | 0 |
+| `katarina.body.stage21` | — | 0 | 0 |
+| `katarina.body.stage22` | — | 0 | 0 |
+| `katarina.body.stage23` | — | 0 | 0 |
+| `katarina.body.stage24` | — | 0 | 0 |
+| `katarina.body.stage25` | — | 0 | 0 |
+| `katarina.body.stage26` | — | 0 | 0 |
+| `katarina.body.stage27` | — | 0 | 0 |
+| `katarina.body.stage28` | — | 0 | 0 |
+| `katarina.body.stage29` | — | 0 | 0 |
+| `katarina.body.stage30` | — | 0 | 0 |
+| `katarina.body.stage31` | — | 0 | 0 |
+| `katarina.body.stage32` | — | 0 | 0 |
+| `katarina.body.stage33` | — | 0 | 0 |
+| `katarina.body.stage34` | — | 0 | 0 |
+| `katarina.body.stage35` | — | 0 | 0 |
+| `katarina.body.stage36` | — | 0 | 0 |
+| `katarina.body.stage37` | — | 0 | 0 |
+| `katarina.body.stage38` | — | 0 | 0 |
+| `katarina.body.stage39` | — | 0 | 0 |
+| `katarina.body.stage40` | — | 0 | 0 |
 | `katarina.domain` | — | 0 | 0 |
 | `katarina.entrypoints` | — | 0 | 0 |

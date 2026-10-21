@@ -7,7 +7,7 @@
   "authority": "execution_path",
   "policy_pending": false,
   "windows_required": false,
-  "implementation_module": "katarina.body.stage19",
+  "implementation_module": "katarina.body.position_manager",
   "reference_doc": "docs/research/stages/STAGE_19_GITHUB_REFERENCES.md",
   "status": "body_framework_complete",
   "live_risk_ready": false,

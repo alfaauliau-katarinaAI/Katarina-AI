@@ -7,7 +7,7 @@
   "authority": "analytic",
   "policy_pending": false,
   "windows_required": false,
-  "implementation_module": "katarina.body.stage11",
+  "implementation_module": "katarina.body.market_intelligence",
   "reference_doc": "docs/research/stages/STAGE_11_GITHUB_REFERENCES.md",
   "status": "body_framework_complete",
   "live_risk_ready": false,

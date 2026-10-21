@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-21 — modul body bernama fungsi (perapian tahap 4, tanpa perubahan perilaku)
+
+- `src/katarina/body/stageNN.py` (11–40) diganti nama sesuai fungsinya, mis. `stage16` → `risk_governor`,
+  `stage35` → `strategy_tester`. Tabel lengkap: `docs/maintenance/BODY_STAGE_MAP.md`.
+- `implementation_module` di `config/stages/stageNN.json` dan `SPEC` modul memakai nama baru; nama file
+  manifest tetap karena dimuat per nomor. Konstanta `katarina.body.STAGE_MODULES` dan tes konsistensinya
+  ditambahkan; tes dan audit lintas-stage memakai konstanta itu.
+- Alias `katarina.body.stageNN` (`sys.modules` + `DeprecationWarning`) dipertahankan satu rilis.
+- Generator `upgrade_functional_body.py` menulis berkas sesuai manifest (hasilnya identik). Bootstrap
+  sekali pakai `scripts/body/bootstrap_fast_body.py`, yang membuat ulang layout lama, diarsipkan.
+
 ## 2026-10-21 — shim lokasi lama `intelligence/` dihapus (perapian tahap 3b)
 
 - 104 shim `katarina.intelligence.<nama_lama>` dari tahap 3a dihapus; semua rujukan aktif sudah memakai
