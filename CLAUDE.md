@@ -79,7 +79,7 @@ tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLA
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`
-(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil setelah penghapusan 21 Okt: A=223, B=13, C=29, D=2 (paket kosong `domain`, `entrypoints`).
+(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil setelah penghapusan 21 Okt: A=223, B=13, C=29, D=2 (paket kosong `domain`, `entrypoints` — dipertahankan karena tercantum di kontrak arsitektur beku `config/repository_architecture.json`).
 Nama baru bekas otak berversi: `brain_observer` → `cognition/observer`, `market_decision_brain_v3` →
 `cognition/market_decision`, `adaptive_brain_v2` → `cognition/adaptive_observation`, `multi_market_brain` →
 `perception/screening`. Modul lain di `intelligence/` mempertahankan nama berkasnya di subpaket barunya.
@@ -95,3 +95,5 @@ dipatok) sengaja masih memakai path lama.
 - 21 Okt (lanjutan): 58 dokumen lama tak dirujuk (riset 10–13 Okt, JSON validasi 10 Okt,
   handoff/maintenance/roadmap lama) dan `select_and_validate_strategies.py` dipindah ke `archive/`;
   `CLAUDE.md` ini ditambahkan.
+- 22 Okt: tujuh branch usang dicatat di `docs/maintenance/BRANCH_ARCHIVE_20261022.md` untuk dihapus;
+  yang tersisa hanya `main` dan `claude-vps-bridge`.
