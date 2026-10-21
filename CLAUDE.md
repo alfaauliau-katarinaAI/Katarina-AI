@@ -51,8 +51,11 @@ replay 11 OK, research 5 OK, hygiene dan dependency links PASS.
 - Jangan menghapus berkas hanya karena tidak ditemukan rujukan nama: config dimuat dinamis,
   workflow adalah entry point, website disajikan langsung, `scripts/ai/run_market_brain.py` dan
   `run_decision_brain_v3.py` sengaja jadi stub penolak (tombstone) legacy.
-- Berkas yang tercatat di `ops/deployment/release-manifest.json` (373 berkas) diverifikasi saat
-  redeploy; manifest belum dibuat ulang sejak perapian 21 Oktober — perbarui saat rilis.
+- Berkas yang tercatat di `ops/deployment/release-manifest.json` (372 berkas, dibuat ulang
+  21 Oktober) diverifikasi saat redeploy. Setelah mengubah kode di `src/katarina`, `scripts/ai`,
+  `scripts/deployment`, `scripts/memory` atau `mt5`, buat ulang dengan
+  `python scripts/deployment/release_manifest.py --manifest ops/deployment/release-manifest.json --generate`
+  lalu verifikasi tanpa `--generate` (harus `MATCH`).
 - Arsipkan dengan `git mv <path> archive/<path>` (pertahankan struktur asal), bukan hapus.
 - Jangan commit runtime state, data broker, kredensial, atau snapshot heartbeat VPS
   (`.gitignore` + `audit_repo_hygiene.py` menjaganya).

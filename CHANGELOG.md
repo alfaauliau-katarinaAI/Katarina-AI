@@ -21,7 +21,7 @@
 - 226 import tak terpakai dihapus; lima nama anotasi di `market_decision_brain_v3` kini diimpor
   lewat `TYPE_CHECKING`; enam variabel lokal sisa yang tidak berefek dihapus.
 - Di `scripts/research` hanya import tak terpakai yang dihapus; logika riset tidak diubah agar hasil tercatat tetap dapat direproduksi.
-- `ops/deployment/release-manifest.json` sengaja tidak dibuat ulang; perbarui saat rilis berikutnya.
+- `ops/deployment/release-manifest.json` dibuat ulang setelah perapian (372 berkas, status MATCH).
 
 ## 2026-10-16 — jalur runtime sesuai diagram patokan Owner
 
