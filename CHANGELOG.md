@@ -1,5 +1,18 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — rampingkan repo (E): sisa yang tidak terpakai
+
+- Dihapus modul yang yatim setelah A–D: lab riset (replay kausal, rekonsiliasi tick, forensik bar, scalp
+  intraday, setup precommitted, diagnostik biaya, readiness/ablation/intraday gate), perception riset
+  (playbook alternatif, kalender historis, kandidat pola scalp, cost expectancy, multi-pair arbitrator) dan
+  subsistem shadow/paper lama (journal, paper book, manifest, hypotheses, evidence, drift, siklus MT5 shadow,
+  `mt5_shadow_lab`), beserta tesnya.
+- Dihapus 20 skrip tanpa rujukan (patch VPS `install_*`, installer observer lama, skrip MT5 Stage06 interaktif,
+  audit stage 01–40 dan 11–40, dll.), 5 workflow manual yang mengulang Body CI, 15 config tanpa pemuat, serta
+  dependensi `pyzmq`/`tornado` (`requirements-stage07.txt` kini kosong; cek environment PC disesuaikan).
+- Dipertahankan: otak canonical, observer, demo forward, Risk Governor, modul tahap 11–40, buku shadow
+  prospektif (dipakai Body CI), website, EA MT5 dashboard dan bridge Stage 06. LIVE tetap OFF.
+
 ## 2026-10-22 — rampingkan repo (D): pensiunkan transport KAT1/ZMQ
 
 - Dihapus: `adapters/transport` (codec, sesi, ZMQ, TCP, recovery), `ports/transport`, `scripts/stage07`,

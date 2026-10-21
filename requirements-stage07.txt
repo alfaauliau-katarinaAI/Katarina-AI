@@ -1,4 +1,3 @@
-# Stage-07 live transport dependencies only.
-# Core, ports, and frozen protocol code must remain dependency-free.
-pyzmq==27.2.0
-tornado>=6.1,<7
+# Core runtime dependencies besides NumPy (pinned in config/runtime_dependencies_v1.json).
+# The KAT1/ZMQ transport that needed pyzmq and tornado was retired on 2026-10-22,
+# so this file intentionally lists no packages. Kept for installer compatibility.

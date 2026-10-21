@@ -1,7 +1,7 @@
 # CLAUDE.md — peta cepat repositori Katarina AI
 
-Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~1.400 berkas).
-Diperbarui 21 Oktober 2026. Status rinci (satu sumber): `docs/PROJECT_STATUS.md`; perubahan di `CHANGELOG.md`;
+Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~800 berkas setelah perampingan 22 Okt).
+Diperbarui 22 Oktober 2026. Status rinci (satu sumber): `docs/PROJECT_STATUS.md`; perubahan di `CHANGELOG.md`;
 riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktober).
 
 ## Apa ini
@@ -15,9 +15,9 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 
 | Lokasi | Isi |
 |---|---|
-| `src/katarina/` | Paket utama. `intelligence/` (100 modul dalam 8 subpaket: `cognition/` otak canonical `cognition/unified_brain.py` → `UnifiedKatarinaBrain` beserta kemampuannya, `perception/` fitur/regime/playbook, `broker/` sensor read-only, `news/`, `demo/`, `shadow/`, `lab/` riset offline, `operations/`), `engines/` (risk, setup quality, eksekusi riset), `monitoring/` (feed status/PnL/entry untuk website), `adapters/` (MT5 read-only, koneksi otomatis, dialog owner; transport KAT1/ZMQ dipensiunkan 22 Okt), `body/` (stage 11–40 "body framework", modul bernama fungsi; nomor→modul di `katarina.body.STAGE_MODULES` dan `docs/maintenance/BODY_STAGE_MAP.md`), `core/` (orchestrator), `memory/`, `persistence/`, `governance/`, `research/` |
+| `src/katarina/` | Paket utama. `intelligence/` (77 modul dalam 8 subpaket: `cognition/` otak canonical `cognition/unified_brain.py` → `UnifiedKatarinaBrain` beserta kemampuannya, `perception/` fitur/regime/playbook, `broker/` sensor read-only, `news/`, `demo/`, `shadow/` (buku prospektif), `lab/` riset offline, `operations/`), `engines/` (risk, setup quality, eksekusi riset), `monitoring/` (feed status/PnL/entry untuk website), `adapters/` (MT5 read-only, koneksi otomatis, dialog owner; transport KAT1/ZMQ dipensiunkan 22 Okt), `body/` (stage 11–40 "body framework", modul bernama fungsi; nomor→modul di `katarina.body.STAGE_MODULES` dan `docs/maintenance/BODY_STAGE_MAP.md`), `core/` (orchestrator), `memory/`, `persistence/`, `governance/`, `research/` |
 | `katarina_pc.py` + `SETUP_/START_KATARINA.bat` | Entry point uji PC (Python 3.12): `setup, repair, test, doctor, observe, chat, ui, pretrial` |
-| `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical), demo worker, HF archive sync, publisher monitor. `install_*_test*.py` = patch berpayload untuk VPS uji (tercatat di release manifest) |
+| `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical), demo worker, HF archive sync, publisher monitor, tombstone `run_market_brain.py`/`run_decision_brain_v3.py` |
 | `scripts/research/` | Hanya 4 skrip yang dipakai workflow/operasional: `audit_private_alpha_holdout`, `run_adaptive_walkforward`, `run_autonomous_strategy_discovery`, `probe_current_market_analogs` |
 | `scripts/governance/` | Audit CI: hygiene, dependency links, constitution guard, branch inventory |
 | VPS (Windows Server 2012 R2) | Diakses lewat Desktop Commander. Runtime: `C:\Katarina\code` (checkout `main`), Python 3.12 di `C:\Katarina\python312`, peluncur observer `C:\Katarina\run-observer.ps1`. Tooling VPS lama dihapus 22 Okt |
@@ -27,9 +27,9 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 | `protocol/` | Skema pesan KAT1 — kontrak validation/health engine (implementasi transport sudah dipensiunkan) |
 | `website/` | Situs statis publik (Cloudflare Pages); JSON di dalamnya ditulis workflow |
 | `sites/runtime-monitor/`, `functions/api/`, `oauth_gateway/`, `services/` | Worker monitor runtime, API Pages, gateway OAuth, relay monitor |
-| `docs/` | `architecture/` + `adr/` (kontrak desain, dilindungi CODEOWNERS), `operations/`, `research/`, `validation/` (bukti bertanggal), `reviews/` (freeze record stage 02–09), `deployment/` |
-| `tests/` | `unit/` (~1.500), `static/` (115, termasuk `test_module_connectivity.py` yang memastikan semua modul dan import script tersambung), `integration/` (~210), `replay/` dan `research/` (tidak dijalankan Body CI) |
-| `.github/workflows/` | 16 workflow. Otomatis hanya `katarina-body-ci.yml` (push/PR; check wajib branch protection berasal dari sini — jangan ganti nama job-nya), `katarina-hotnews.yml` (jadwal), `stage35-tester-safety.yml` (path filter). Sisanya manual (`workflow_dispatch`); `stage06-09-clearance.yml` memilih job lewat input `check` |
+| `docs/` | `architecture/` + `adr/` (kontrak desain, dilindungi CODEOWNERS), `operations/` (panduan GitHub), `reviews/` (freeze record stage yang dibaca audit), `research/` + `validation/` (hanya bukti yang dirujuk config/tes), `deployment/`, `maintenance/` |
+| `tests/` | `unit/` (~1.140), `static/` (69, termasuk `test_module_connectivity.py` yang memastikan semua modul dan import script tersambung), `integration/` (~200) |
+| `.github/workflows/` | 11 workflow. Otomatis hanya `katarina-body-ci.yml` (push/PR; check wajib branch protection berasal dari sini — jangan ganti nama job-nya), `katarina-hotnews.yml` (jadwal), `stage35-tester-safety.yml` (path filter). Sisanya manual (`workflow_dispatch`); `stage06-09-clearance.yml` memilih job lewat input `check` |
 
 ## Menjalankan pengecekan (sama dengan Body CI)
 
@@ -42,16 +42,16 @@ python scripts/governance/audit_repo_hygiene.py --repo-root . --output build/rep
 python scripts/governance/audit_dependency_links.py --repo-root . --output build/validation/dependency-links.json
 ```
 
-Hasil 21 Oktober 2026 (setelah penghapusan 231 berkas tak terpakai): unit 1.395 OK, static 115 OK (4 skip), integration 207 OK (3 skip),
-replay 11 OK, research 5 OK, hygiene dan dependency links PASS.
+Hasil 22 Oktober 2026 (setelah perampingan A–E): unit 1.136 OK, static 69 OK (4 skip), integration 204 OK,
+hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah
 
-- Jangan menghapus berkas hanya karena tidak ditemukan rujukan nama: config dimuat dinamis,
+- Jangan menghapus berkas hanya karena tidak ditemukan rujukan nama: `config/stages/stageNN.json` dimuat per nomor,
   workflow adalah entry point, website disajikan langsung, `scripts/ai/run_market_brain.py` dan
   `run_decision_brain_v3.py` sengaja jadi stub penolak (tombstone) legacy.
-- Berkas yang tercatat di `ops/deployment/release-manifest.json` (368 berkas, dibuat ulang
-  21 Oktober) diverifikasi saat redeploy. Setelah mengubah kode di `src/katarina`, `scripts/ai`,
+- Berkas yang tercatat di `ops/deployment/release-manifest.json` (291 berkas, dibuat ulang
+  22 Oktober) diverifikasi saat redeploy. Setelah mengubah kode di `src/katarina`, `scripts/ai`,
   `scripts/deployment`, `scripts/memory` atau `mt5`, buat ulang dengan
   `python scripts/deployment/release_manifest.py --manifest ops/deployment/release-manifest.json --generate`
   lalu verifikasi tanpa `--generate` (harus `MATCH`).
@@ -79,12 +79,11 @@ tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLA
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`
-(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil setelah penghapusan 21 Okt: A=223, B=13, C=29, D=2 (paket kosong `domain`, `entrypoints` — dipertahankan karena tercantum di kontrak arsitektur beku `config/repository_architecture.json`).
+(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil 22 Okt: A=183, B=40, C=8, D=3. Sebagian besar B adalah modul tahap 11–40 (engines, governance, perception dasar, research) yang hanya diuji tes — itu identitas body Katarina, **jangan dihapus**. D = paket kosong `domain`, `entrypoints`, `ports` (tercantum di kontrak arsitektur beku `config/repository_architecture.json`).
 Nama baru bekas otak berversi: `brain_observer` → `cognition/observer`, `market_decision_brain_v3` →
 `cognition/market_decision`, `adaptive_brain_v2` → `cognition/adaptive_observation`, `multi_market_brain` →
 `perception/screening`. Modul lain di `intelligence/` mempertahankan nama berkasnya di subpaket barunya.
-Dokumen bertanggal, `CHANGELOG`, arsip, dan payload `scripts/ai/install_*` (patch untuk checkout VPS yang
-dipatok) sengaja masih memakai path lama.
+`CHANGELOG` sengaja masih memakai path lama.
 
 ## Riwayat perapian
 
@@ -101,3 +100,4 @@ dipatok) sengaja masih memakai path lama.
 - 22 Okt (rampingkan B): 116 dokumen bertanggal/usang yang tidak dirujuk dihapus.
 - 22 Okt (rampingkan C): 62 skrip riset sekali pakai, `research/safety`, tes replay/research, dan 25 tes khusus skrip riset dihapus.
 - 22 Okt (rampingkan D): transport KAT1/ZMQ (codec, sesi, ZMQ/TCP, port transport, vektor golden, jembatan MT5 Stage07 + multi-symbol extension, workflow `stage07-transport`, tes, ADR/dokumen khusus) dihapus; skema `protocol/` dipertahankan.
+- 22 Okt (rampingkan E): modul riset/shadow-paper yang yatim, 20 skrip `scripts/ai`/`mt5`/lainnya tanpa rujukan, 5 workflow manual yang mengulang Body CI, 15 config tanpa pemuat, dan dependensi `pyzmq`/`tornado` dihapus. Total repo turun dari ~1.211 berkas/174 ribu baris menjadi ~795 berkas/92 ribu baris.
