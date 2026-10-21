@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — guarded branch cleanup: daftar branch usang yang sudah ditinjau
+
+- `scripts/governance/guarded_branch_cleanup.py` kini juga menerima branch yang tercatat di
+  `docs/maintenance/superseded-branches.json`, **hanya** selama branch itu masih menunjuk ke commit yang
+  dicatat persis. Penjaga lama tetap berlaku: bukan `main`, tidak diproteksi, tidak dipakai PR terbuka,
+  SHA dicek ulang sesaat sebelum hapus, maksimal 10 per run, mode dry-run default.
+- Daftar berisi tujuh branch dari `BRANCH_ARCHIVE_20261022.md`. `claude-vps-bridge` sengaja tidak masuk.
+  Workflow tetap satu-satunya yang punya hak tulis; tidak ada perubahan perilaku trading, live tetap OFF.
+
 ## 2026-10-22 — arsip branch usang
 
 - Tujuh branch diperiksa per berkas terhadap `main`: isinya sudah ada di `main` (PR #139/#152, pindah ke

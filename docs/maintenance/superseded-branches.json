@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "description": "Branches reviewed file-by-file as redundant with main; guarded cleanup may delete them only while they still point at the recorded commit. Rationale: BRANCH_ARCHIVE_20261022.md",
+  "branches": [
+    {
+      "name": "ccr-1758c3cd-9g5dcd",
+      "sha": "a9e4f6d3b5695f5126a9fa520d2eeca8c4d0c666"
+    },
+    {
+      "name": "chore/tidy-repository",
+      "sha": "42d0353e15f3fa3ba8c4dc880b3e080981510773"
+    },
+    {
+      "name": "claude/vps-access-handoff-20261021",
+      "sha": "7078ac94ee83cb535f439aac63290402aac0e848"
+    },
+    {
+      "name": "feat/continuous-all-market-research-20261020",
+      "sha": "be51cabbc967172ef0c7faa3a6b3273a58ed3e16"
+    },
+    {
+      "name": "policy/owner-ms-sd-elliott-risk-20261021",
+      "sha": "d53caddacdf41059e4c5ee83c47d84e56b08e9a8"
+    },
+    {
+      "name": "research/ms-sd-elliott-evidence-v1-20261021",
+      "sha": "e685154df55ef16a2a2827efcdbf09f447b8622c"
+    },
+    {
+      "name": "research/v26-corrected-selection-guard-20261019",
+      "sha": "6c50ed5f7b9a1d46f0026a30605148233db592a5"
+    }
+  ]
+}
