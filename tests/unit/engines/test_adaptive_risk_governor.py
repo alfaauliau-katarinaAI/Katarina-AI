@@ -5,7 +5,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from katarina.engines.adaptive_risk import AdaptiveRiskProfile
-from katarina.engines.risk import RiskGovernor, RiskRequest, RiskAction, OwnerDrawdownTracker, DrawdownMode
+from katarina.engines.risk import RiskGovernor, RiskRequest, RiskAction, OwnerDrawdownTracker, DrawdownMode, DrawdownAuthority
 from katarina.engines.account_risk_state import AccountRiskCoordinator, AccountRiskStateEngine
 from katarina.engines.manual_risk import SharedAccountRiskEngine
 from katarina.engines.sizing import PositionSizingEngine
@@ -107,6 +107,21 @@ class AdaptiveRiskTests(unittest.TestCase):
         decision=self.gov.evaluate(req)
         self.assertEqual(decision.action,RiskAction.PAUSE)
         self.assertEqual(decision.approved_fraction,0)
+
+    def test_stale_risk_request_cannot_override_owner_extreme_authority(self):
+        authority=DrawdownAuthority(
+            "broker-day",DrawdownMode.EXTREME_SURVIVAL,.40,True,True)
+        for kind in ("NORMAL","RECOVERY_FACTOR","EXTREME_RECOVERY"):
+            with self.subTest(kind=kind):
+                req=RiskRequest(
+                    .01,0,.05,.1,2,True,True,.05,
+                    risk_capital=9500,risk_reference_capital=10000,
+                    account_currency="USD",entry_kind=kind,
+                    trading_day_key="broker-day",drawdown_authority=authority)
+                decision=self.gov.evaluate(req)
+                self.assertEqual(decision.action,RiskAction.PAUSE)
+                self.assertEqual(decision.approved_fraction,0)
+                self.assertEqual(decision.reason,"emergency_drawdown_lock")
 
     def test_katarina_caused_dd35_remains_locked_even_after_manual_loss(self):
         tracker=OwnerDrawdownTracker()

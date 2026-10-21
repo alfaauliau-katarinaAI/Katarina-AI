@@ -198,8 +198,12 @@ class RiskGovernor:
         # not silently re-authorize NEW trades while lockdown is in force.
         # The OwnerDrawdownTracker explicitly issues a fresh authority on
         # the next trading day; that is evaluation, never automatic entry.
+        # Both emergency and Owner-origin extreme observations must latch
+        # the no-new-entry policy even if a RiskRequest carries stale DD.
+        # Existing-position management is assessed separately.
         if (isinstance(a,DrawdownAuthority)
-                and a.mode is DrawdownMode.EMERGENCY_LOCKDOWN):
+                and a.mode in (DrawdownMode.EMERGENCY_LOCKDOWN,
+                               DrawdownMode.EXTREME_SURVIVAL)):
             return RiskDecision(RiskAction.PAUSE,0.0,"emergency_drawdown_lock")
         # Owner's latest policy: 35% stops ALL new exposure, regardless of
         # whether losses were caused by manual trades or Katarina.
