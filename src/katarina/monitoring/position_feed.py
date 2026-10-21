@@ -7,7 +7,7 @@ from math import isfinite,fsum
 from pathlib import Path
 import re
 import sqlite3
-from katarina.monitoring.worker_runtime import _read,_fresh
+from katarina.monitoring.worker_runtime import _read,_fresh,read_independent_demo_monitor
 from katarina.monitoring.entry_feed import _db,_price,_symbol
 
 
@@ -19,8 +19,12 @@ def read_position_feed(root,*,allowed,now=None):
     now=now or datetime.now(timezone.utc);root=Path(root)
     empty=dict(status='NOT_ATTESTED',positions=[])
     latest=_read(root/'latest.json');monitor=latest.get('broker_account_monitor') or {}
+    observer_fresh=_fresh(latest,now,90,'observed_at_utc')
+    independent=read_independent_demo_monitor(root,now=now) if allowed else {}
+    if independent:
+        monitor=independent
     snapshot=monitor.get('position_snapshot') or {}
-    if not (allowed and _fresh(latest,now,90,'observed_at_utc') and monitor.get('connected') is True
+    if not (allowed and (observer_fresh or bool(independent)) and monitor.get('connected') is True
             and monitor.get('positions_read_success') is True and snapshot.get('status')=='OBSERVED'
             and snapshot.get('as_of_utc')==monitor.get('observed_at_utc',snapshot.get('as_of_utc')) and _fresh(snapshot,now)
             and isinstance(snapshot.get('currency'),str) and re.fullmatch(r'[A-Z][A-Z0-9]{2,7}',snapshot['currency'])):
