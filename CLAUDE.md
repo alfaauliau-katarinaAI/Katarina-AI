@@ -47,6 +47,11 @@ hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah
 
+- Penguatan Tahap 0–1 (22 Okt): reconnect dideduplikasi per siklus pemulihan dan dibatasi sejak kegagalan pertama;
+  validasi menolak gap/outcome masa depan/baseline tren tidak lengkap serta reuse holdout oleh hipotesis pasca-paparan.
+  CLI holdout membaca data setelah receipt; hash kode terdaftar harus sama dengan `--code-sha256`. Registry/ledger
+  wajib dipertahankan dan ditulis satu proses; batas kontrol akses dijelaskan di `docs/research/VALIDATION_PROTOCOL.md`.
+
 - Jangan menghapus berkas hanya karena tidak ditemukan rujukan nama: `config/stages/stageNN.json` dimuat per nomor,
   workflow adalah entry point, website disajikan langsung, `scripts/ai/run_market_brain.py` dan
   `run_decision_brain_v3.py` sengaja jadi stub penolak (tombstone) legacy.

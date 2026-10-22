@@ -90,6 +90,26 @@ class DataHealthTest(unittest.TestCase):
         self.assertEqual(recon["passed_tests"], 0)
         self.assertFalse(recon["tests"][0]["passed"])
 
+    def test_overlapping_test_records_count_one_recovery(self):
+        start = datetime(2026, 11, 9, 8, tzinfo=UTC)
+        fill(self.db, start, 0.1, every=60)
+        for seconds in (5, 10, 15):
+            ledger.record_reconnect_test(self.db, started_utc=start + timedelta(seconds=seconds),
+                                         method="KILL_TERMINAL", now=start + timedelta(hours=4))
+        recon = by_name(data_health.assess(self.db, start + timedelta(hours=4)))["reconnect_recoveries"]
+        self.assertEqual(recon["recoveries"], 1)
+        self.assertEqual(recon["status"], "NOT_MET")
+        self.assertEqual(sum(t["duplicate_recovery"] for t in recon["tests"]), 2)
+
+    def test_long_outage_with_late_retry_is_not_fast_recovery(self):
+        start = datetime(2026, 11, 9, 8, tzinfo=UTC)
+        for minutes in (0, 59):
+            ledger.close_cycle(self.db, finished_utc=start + timedelta(minutes=minutes),
+                               status="FAILED", reason="LOCAL_CONNECT_FAILED")
+        fill(self.db, start + timedelta(hours=1), 0.01, every=60)
+        recon = by_name(data_health.assess(self.db, start + timedelta(hours=2)))["reconnect_recoveries"]
+        self.assertEqual(recon["spontaneous_recoveries"], 0)
+
     def test_reconnect_test_rejects_unknown_method_and_future_start(self):
         now = datetime(2026, 11, 9, tzinfo=UTC)
         with self.assertRaises(ValueError):

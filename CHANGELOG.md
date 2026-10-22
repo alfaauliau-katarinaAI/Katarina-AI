@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — verifikasi Tahap 0–1: cegah bukti kelulusan palsu
+
+- Pemeriksa Tahap 0 menghitung satu pemulihan hanya sekali meskipun beberapa catatan uji menunjuk siklus OK
+  yang sama. Pemulihan spontan dibatasi 10 menit sejak kegagalan pertama, bukan retry terakhir.
+- Validasi Tahap 1 menolak outcome yang belum diketahui pada waktu laporan, posisi melintasi CELAH, pembanding
+  tren tidak lengkap, kode yang tidak cocok dengan hash terdaftar, dan pendaftaran dari masa depan. Baris CELAH
+  tetap terlihat sebagai penolakan; data rusak menghasilkan FAIL walau sampelnya sedikit.
+- Hipotesis yang didaftarkan setelah paparan holdout tidak boleh memakai rentang holdout yang bertumpang tindih.
+  CLI baru membaca berkas holdout setelah receipt tersimpan; `--code-sha256` mengikat evaluasi ke definisi kode.
+- Tes regresi memakai data sintetis. Ini perbaikan alat bukti, bukan kelulusan strategi, promosi, atau verifikasi VPS.
+
 ## 2026-10-22 — Tahap 0: uji putus-sambung tercatat; observer VPS aktif
 
 - Observer read-only berjalan di VPS sejak 22 Okt 04:24 UTC (akun demo, Algo Trading OFF); CELAH holdout

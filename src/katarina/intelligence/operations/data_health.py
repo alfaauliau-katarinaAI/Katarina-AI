@@ -178,20 +178,36 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     # 6. reconnect recoveries: deliberate disconnect tests that recovered on their own within
     #    RECOVERY_SECONDS, plus spontaneous failed stretches followed by an OK cycle.
     tests = []
+    claimed_recoveries = set()
     if "reconnect_tests" in _tables(db):
         for started, method in db.execute("SELECT started_utc, method FROM reconnect_tests ORDER BY started_utc"):
             begin = datetime.fromisoformat(started)
             after = [c for c in cycles if c[0] > begin]
             recovered = next((c for c in after if c[1] == "OK"), None)
             seconds = (recovered[0] - begin).total_seconds() if recovered else None
+            recovery_id = recovered[0].isoformat() if recovered else None
+            duplicate = recovery_id is not None and recovery_id in claimed_recoveries
+            passed = seconds is not None and seconds <= RECOVERY_SECONDS and not duplicate
+            if passed:
+                claimed_recoveries.add(recovery_id)
             tests.append({"started_utc": begin.isoformat(), "method": method,
                           "recovered_utc": recovered[0].isoformat() if recovered else None,
                           "recovery_seconds": None if seconds is None else int(seconds),
                           "failed_cycles_before_recovery": sum(1 for c in after if recovered and c[0] < recovered[0]),
-                          "passed": seconds is not None and seconds <= RECOVERY_SECONDS})
+                          "duplicate_recovery": duplicate, "passed": passed})
     test_recoveries = {t["recovered_utc"] for t in tests if t["passed"]}
-    spontaneous = sum(1 for a, b in zip(cycles, cycles[1:])
-                      if a[1] in ("FAILED", "NO_MARKET_DATA") and b[1] == "OK" and b[0].isoformat() not in test_recoveries)
+    # Time from the FIRST failure, not the last retry; a long outage is not a fast recovery.
+    spontaneous = 0
+    failed_since = None
+    for cycle in cycles:
+        if cycle[1] in ("FAILED", "NO_MARKET_DATA") and failed_since is None:
+            failed_since = cycle[0]
+        elif cycle[1] == "OK":
+            if (failed_since is not None and
+                    0 < (cycle[0] - failed_since).total_seconds() <= RECOVERY_SECONDS and
+                    cycle[0].isoformat() not in test_recoveries):
+                spontaneous += 1
+            failed_since = None
     passed_tests = sum(1 for t in tests if t["passed"])
     recoveries = passed_tests + spontaneous
     criteria.append(_criterion(
