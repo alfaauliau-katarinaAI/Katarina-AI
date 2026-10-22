@@ -98,9 +98,10 @@ def setup(db):
     ''')
 
 
-def select_batch(db, catalog, budget, now):
+def select_batch(db, catalog, budget, now, *, exclude=()):
     setup(db)
-    names = catalog_symbols(catalog)
+    ignored = frozenset(exclude)
+    names = [name for name in catalog_symbols(catalog) if name not in ignored]
     with db:
         db.executemany('INSERT INTO lab_universe(symbol,seen_utc) VALUES(?,?) ON CONFLICT(symbol) DO UPDATE SET seen_utc=excluded.seen_utc',
                        [(s, now.isoformat()) for s in names])
