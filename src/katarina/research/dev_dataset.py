@@ -8,7 +8,6 @@ from __future__ import annotations
 import csv
 import gzip
 import hashlib
-import io
 import json
 import math
 import os
@@ -164,10 +163,11 @@ def _archive(broker, symbol, timeframe, start, end, root, chunk_days, metadata):
         os.replace(temp, path)
     finally:
         temp.unlink(missing_ok=True)
+    with path.open("rb") as source:
+        digest = hashlib.file_digest(source, "sha256").hexdigest()
     return dict(symbol=symbol, timeframe=timeframe, bars=count,
                 first_utc=first, last_utc=last, gaps=gaps,
-                sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
-                bytes=path.stat().st_size, **metadata)
+                sha256=digest, bytes=path.stat().st_size, **metadata)
 
 
 def export_dev_bars(broker, core, *, start, out, end=DEV_CUTOFF_UTC,
@@ -210,12 +210,12 @@ def export_dev_bars(broker, core, *, start, out, end=DEV_CUTOFF_UTC,
 def _read_archive(path, record, start, end):
     if not path.is_file() or path.is_symlink():
         raise ValidationError("development_file_missing")
-    raw = path.read_bytes()
-    if (len(raw) != record["bytes"]
-            or hashlib.sha256(raw).hexdigest() != record["sha256"]):
+    with path.open("rb") as source:
+        digest = hashlib.file_digest(source, "sha256").hexdigest()
+    if (path.stat().st_size != record["bytes"] or digest != record["sha256"]):
         raise ValidationError("development_file_hash_mismatch")
     try:
-        with gzip.open(io.BytesIO(raw), "rt", encoding="ascii", newline="") as stream:
+        with gzip.open(path, "rt", encoding="ascii", newline="") as stream:
             reader = csv.DictReader(stream)
             if tuple(reader.fieldnames or ()) != CSV_FIELDS:
                 raise ValidationError("development_csv_header_invalid")
