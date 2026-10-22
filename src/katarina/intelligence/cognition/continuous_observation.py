@@ -40,6 +40,8 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
         from katarina.intelligence.broker.observer_universe import ObserverUniverse
         if not isinstance(universe, ObserverUniverse):
             raise ValueError('INVALID_OBSERVER_UNIVERSE')
+        if os.environ.get('KATARINA_ALL_MARKET_RESEARCH') == '1':
+            raise ValueError('universe_and_all_market_research_exclusive')
     if config is None:
         raise ValueError('continuous_account_binding_required')
     if type(max_symbols) is not int or not 1 <= max_symbols <= 17:
