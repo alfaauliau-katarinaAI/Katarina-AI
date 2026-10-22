@@ -5,6 +5,10 @@ Diterbitkan 22 Oktober 2026 sebagai bagian dari [roadmap berbasis bukti](../ROAD
 untuk tahap berikutnya; laporan PASS hanyalah bukti riset dan tetap membutuhkan catatan promosi yang disetujui Owner
 (`docs/governance/promotions/`).
 
+Perintah `market-filter` menyiapkan eksperimen [Market Intelligence Tahap 2](MARKET_INTELLIGENCE.md)
+di atas alat yang sama. Pengembangan alat ini boleh berjalan selama Tahap 0 mengumpulkan data;
+laporan perbandingan pengembangan tidak memberi kelulusan tahap atau kewenangan trading.
+
 ## 1. Daftarkan sebelum menguji
 
 - Setiap hipotesis didaftarkan di `registry.jsonl` **sebelum** diuji. Isi wajib: `name`, `symbol`, `side`
