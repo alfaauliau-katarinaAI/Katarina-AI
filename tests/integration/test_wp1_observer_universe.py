@@ -27,7 +27,9 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
             )
             if not (root / "latest.json").exists():
                 self_fail_status = (root / "continuous-status.json").read_text(encoding="utf-8")
-                raise AssertionError(f"observer_not_published: {result}; {self_fail_status}")
+                with closing(sqlite3.connect(root / "context.sqlite3")) as db:
+                    faults = db.execute("SELECT status, reason FROM observer_cycles").fetchall()
+                raise AssertionError(f"observer_not_published: {result}; {self_fail_status}; {faults}")
             report = json.loads((root / "latest.json").read_text(
                 encoding="utf-8"))
             with closing(sqlite3.connect(root / "context.sqlite3")) as db:
