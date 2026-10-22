@@ -91,3 +91,13 @@ protections remain. The Owner-cancelled automation stays OFF.
 
 Independent prospective performance, broker fills/costs and healthy runtime
 must be verified before any strategy may progress beyond research.
+
+## Profil DEMO dan Stage 38 (22 Okt 2026)
+
+Profil risiko utama tetap **satu** untuk backtest, demo, dan riil (`config/risk_governor_v2.json`, termasuk stop
+entry baru di drawdown harian 35%; bagian `stage38` menyatakan `uses_same_risk_profile_as_backtest_and_demo`).
+Roadmap (`docs/ROADMAP.md`, Tahap 3) menambahkan **profil DEMO sebagai lapisan pembatas tambahan**, bukan
+pengganti: ia dievaluasi setelah Risk Governor dan hanya boleh mengecilkan atau menolak keputusan (mis. usulan
+0,5% per trade dan stop harian 3%). Profil utama, batas 35%, dan Stage 38 sebagai gerbang otorisasi eksekusi riil
+tidak berubah. Evaluasi ulang batas 35% sebelum akun riil memakai hasil DEMO.
+

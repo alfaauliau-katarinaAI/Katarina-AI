@@ -1,6 +1,7 @@
 # Roadmap Katarina AI — berbasis bukti
 
-Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**. Dokumen ini menjadi dasar pengembangan
+Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari yang sama setelah review PM
+(dua aliran data, paralel vs berurutan, celah holdout dan PENDING, profil DEMO vs Stage 38). Dokumen ini menjadi dasar pengembangan
 Katarina berikutnya. Status harian ada di [PROJECT_STATUS](PROJECT_STATUS.md); aturan perapian di
 [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md).
 
@@ -40,12 +41,24 @@ Kewenangan naik satu anak tangga hanya jika kriteria kelulusan tahap terkait ter
 
 Katarina tidak pernah boleh menaikkan kewenangannya sendiri, mengubah kode trading, atau melonggarkan batas risiko.
 
+## Paralel dan berurutan
+
+Pengembangan boleh berjalan **paralel**: alat validasi Tahap 1 (dan persiapan tahap lain) boleh dibangun selama
+Tahap 0 mengumpulkan data. Yang wajib **berurutan** adalah **kelulusan tahap dan pemberian kewenangan**. Pekerjaan
+paralel tidak boleh membuka holdout, mengubah strategi aktif, atau melonggarkan Risk Governor.
+
 ## Pemisahan data
 
 - **Periode pengembangan** dan **periode holdout** ditentukan berdasarkan tanggal sebelum data dilihat, dan
   dicatat di repo beserta hash definisinya.
 - Holdout 70 sel yang dibekukan (periode 13 Okt 2026 – 30 Apr 2027, issue #29) **belum pernah terisi** karena
   observer tidak berjalan sejak 16 Okt; independensinya masih utuh dan wajib dijaga.
+- Periode tanpa data observer asli — sejak awal holdout 13 Okt 2026 (observer berhenti 16 Okt dan datanya tidak
+  lagi ada di VPS) sampai observer kembali aktif — dicatat sebagai **CELAH**, kecuali ada salinan data observer asli
+  yang terverifikasi hash-nya untuk sebagian periode itu. Data riwayat yang diunduh ulang (backfill) untuk periode
+  itu **tidak pernah** dihitung sebagai pengamatan forward.
+- Jika sampai akhir periode holdout jumlah sampel belum memenuhi kriteria, hasilnya **PENDING** — tidak boleh
+  dinyatakan lulus, diperpanjang diam-diam, atau dilengkapi dengan data dari periode lain.
 - Holdout hanya boleh dibuka **satu kali per strategi yang sudah final**. Setiap pembukaan dicatat (strategi,
   tanggal, hasil). Hasil holdout tidak boleh dipakai untuk memilih, menyetel, atau memperbaiki strategi; strategi
   yang diubah setelah melihat holdout dianggap strategi baru dan harus menunggu holdout baru.
@@ -73,8 +86,14 @@ direproduksi — bukan sekadar program berjalan atau backtest profit.
 
 Tujuan: data pasar dan eksekusi yang dapat dipercaya. Status ONLINE saja tidak cukup.
 
+Ada dua aliran data yang **wajib dibedakan** dan disimpan terpisah:
+- **Snapshot observer**: bid/ask/spread dan candle tertutup yang dibaca setiap siklus (60 detik). Dipakai untuk
+  keputusan dan sebagai catatan apa yang Katarina "lihat" saat memutuskan. Ini **bukan** data tick.
+- **Tick broker**: seluruh tick bid/ask dari riwayat MT5, diunduh per periode setelah periode itu selesai. Dipakai
+  untuk riset biaya eksekusi, spread aktual, dan validasi.
+
 Pekerjaan: login akun demo di MT5 VPS (Algo Trading OFF), konfigurasi koneksi privat, aktifkan observer read-only,
-dan pemeriksa kesehatan data observer.
+pengunduh tick broker per periode, dan pemeriksa kesehatan data untuk kedua aliran.
 
 Kriteria kelulusan:
 - Observer berjalan **≥ 10 hari bursa berturut-turut**.
@@ -83,6 +102,10 @@ Kriteria kelulusan:
 - Selisih jam broker vs jam VPS tercatat dan stabil (perubahan hanya saat pergantian DST yang terdeteksi).
 - Bid, ask, dan spread tercatat di setiap siklus untuk setiap simbol yang diamati.
 - Uji putus-sambung MT5 lulus **≥ 3 kali** tanpa data hilang atau ganda, dan observer pulih sendiri.
+- Tick broker tersimpan untuk setiap hari bursa yang diamati; setiap **celah** (tick tidak tersedia, koneksi
+  putus, server broker kosong) dicatat dengan rentang waktu dan alasannya — tidak pernah diisi interpolasi.
+- Pemulihan celah diverifikasi: tick yang diunduh ulang setelah putus-sambung cocok dengan snapshot observer di
+  waktu yang sama (bid/ask dalam toleransi satu tick size), dan hasil verifikasinya dicatat.
 - 0 order terkirim.
 
 ### Tahap 1 — Validasi ilmiah
@@ -119,7 +142,8 @@ Kriteria kelulusan:
 Tujuan: pembatas DEMO dan umpan balik hasil yang jujur.
 
 Pekerjaan: profil DEMO sebagai lapisan tambahan di atas Risk Governor (usulan awal: **0,5% per trade, stop entry
-baru di drawdown harian 3%**; nilai final ditetapkan Owner); ringkasan hasil: expectancy bersih, profit factor,
+baru di drawdown harian 3%**; nilai final ditetapkan Owner). Profil utama tetap satu untuk backtest, demo, dan riil
+(lihat [profil risiko](architecture/RISK_PROFILE_V2.md)); profil DEMO hanya menambah batas, tidak menggantikannya; ringkasan hasil: expectancy bersih, profit factor,
 drawdown, akurasi BUY/SELL per regime, alasan WAIT, slippage, biaya, dan order ditolak.
 
 Kriteria kelulusan:

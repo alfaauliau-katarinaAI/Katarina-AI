@@ -7,9 +7,11 @@
   "json_realtime_authoritative": false,
   "flexible_control_codec_candidate": "MESSAGEPACK_OR_VERSIONED_BINARY",
   "live_transport": {
-    "primary": "ZEROMQ_LOCALHOST",
-    "fallback": "NATIVE_LOCAL_TCP",
-    "public_bind_allowed": false
+    "primary": "RETIRED_2026_10_22",
+    "fallback": "RETIRED_2026_10_22",
+    "public_bind_allowed": false,
+    "current_mt5_python_path": "METATRADER5_PYTHON_PACKAGE",
+    "note": "KAT1 ZeroMQ/TCP transport retired 2026-10-22. Python reads MT5 through the MetaTrader5 package (read-only observer); demo orders only through DemoExecutionBoundary + Risk Governor."
   },
   "tester_transport": {
     "interface": "TESTER_TRANSPORT_ADAPTER"

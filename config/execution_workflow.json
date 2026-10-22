@@ -24,9 +24,10 @@
     "realtime_codec": "VERSIONED_BINARY",
     "flexible_control_codec": "MESSAGEPACK_OR_VERSIONED_BINARY",
     "json_hot_path": false,
-    "live_primary": "ZEROMQ_LOCALHOST",
-    "live_fallback": "NATIVE_LOCAL_TCP",
-    "tester": "TESTER_TRANSPORT_ADAPTER"
+    "live_primary": "RETIRED_2026_10_22",
+    "live_fallback": "RETIRED_2026_10_22",
+    "tester": "TESTER_TRANSPORT_ADAPTER",
+    "current_mt5_python_path": "METATRADER5_PYTHON_PACKAGE"
   },
   "ordering_and_recovery": {
     "stream_id_required": true,

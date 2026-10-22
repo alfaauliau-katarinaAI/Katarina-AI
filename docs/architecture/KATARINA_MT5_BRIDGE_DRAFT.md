@@ -582,3 +582,6 @@ Remaining work is external proof:
 - cent-like account probe;
 - evidence collection;
 - final freeze audit.
+
+> Catatan 22 Okt 2026: jalur ZeroMQ/TCP Stage 07 di draf ini sudah dipensiunkan dan kodenya dihapus dari `main`.
+> Python membaca MT5 lewat paket MetaTrader5 (observer read-only); order hanya ke akun demo lewat `DemoExecutionBoundary`.

@@ -11,7 +11,8 @@ Tidak ada klaim bisa memperbaiki semua ketidakcocokan OS/perangkat.
    atau diganti otomatis. Paket native MT5 tetap memerlukan Windows 64-bit.
 2. Cari environment aktif yang terdaftar. Legacy `.venv-pc` sehat tetap dapat
    dipakai bila belum ada pointer; tidak dihapus atau dipindahkan.
-3. Verifikasi import NumPy, pyzmq, tornado, versi Python/dependensi. MT5 diperiksa
+3. Verifikasi import NumPy, versi Python/dependensi (`pyzmq`/`tornado` tidak lagi dibutuhkan sejak transport
+   KAT1/ZMQ dipensiunkan 22 Okt 2026). MT5 diperiksa
    hanya bila diminta eksplisit ketika setup/repair atau tercatat wajib sebelumnya.
 4. Bila sehat, langsung gunakan tanpa pip/download. Bila rusak dan environment
    sebelumnya sehat, jalankan acceptance sintetis pada state sementara sebelum

@@ -40,8 +40,9 @@ BOUNDED PRIORITY EVENT BUFFER
 VERSIONED BINARY CODEC
         ↓
 TRANSPORT ABSTRACTION
-  ├─ Live: ZeroMQ localhost
-  ├─ Live fallback: native local TCP
+  ├─ Live KAT1 ZeroMQ/TCP: RETIRED 2026-10-22
+  ├─ Current: MetaTrader5 Python package (read-only observer;
+  │           demo orders only via DemoExecutionBoundary)
   └─ Tester: TesterTransport
         ↓
 KATARINA INGEST
@@ -187,8 +188,11 @@ Authoritative policy:
 
 - production hot path: versioned binary;
 - flexible lower-frequency control: structured binary / MessagePack candidate;
-- live primary: ZeroMQ over localhost only;
-- live fallback: native local TCP;
+- live KAT1 transport (ZeroMQ localhost primary, native local TCP fallback): **retired on 22 October 2026**;
+  the implementation was removed from `main` and only the `protocol/` message schemas remain as the
+  contract for the validation and health engines;
+- current MT5 ↔ Python path: the MetaTrader5 Python package — read-only for the observer, and demo-only
+  order submission through `DemoExecutionBoundary` behind the Risk Governor;
 - Strategy Tester: dedicated TesterTransport;
 - JSON: audit/debug/config/test fixtures only.
 
