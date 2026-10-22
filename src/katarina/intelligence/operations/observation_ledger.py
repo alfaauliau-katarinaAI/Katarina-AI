@@ -79,6 +79,13 @@ def setup(db) -> None:
         snapshots_matched INTEGER NOT NULL DEFAULT 0,
         tick_size REAL,
         PRIMARY KEY(symbol, day));
+    CREATE TABLE IF NOT EXISTS reconnect_tests(
+        id INTEGER PRIMARY KEY,
+        started_utc TEXT NOT NULL,
+        method TEXT NOT NULL,
+        note TEXT,
+        recorded_utc TEXT NOT NULL,
+        UNIQUE(started_utc, method));
     CREATE TABLE IF NOT EXISTS data_gaps(
         id INTEGER PRIMARY KEY,
         stream TEXT NOT NULL,
@@ -181,6 +188,23 @@ def cycle_status(result: dict) -> tuple[str, str | None]:
     if received < observed:
         return "PARTIAL", "SOME_SYMBOLS_WITHOUT_QUOTE"
     return "OK", None
+
+
+RECONNECT_METHODS = frozenset(("KILL_TERMINAL", "KILL_TERMINAL_MID_CYCLE", "NETWORK_DISCONNECT", "VPS_RESTART"))
+
+
+def record_reconnect_test(db, *, started_utc: datetime, method: str, now: datetime, note: str = "") -> int:
+    """Record when a deliberate MT5 disconnect test began; data_health judges the recovery."""
+    setup(db)
+    if method not in RECONNECT_METHODS:
+        raise ValueError("unknown_reconnect_method")
+    started, now = _utc(started_utc), _utc(now)
+    if started > now:
+        raise ValueError("reconnect_test_in_future")
+    with db:
+        cursor = db.execute("INSERT OR IGNORE INTO reconnect_tests(started_utc, method, note, recorded_utc) "
+                            "VALUES(?,?,?,?)", (started.isoformat(), method, str(note)[:200], now.isoformat()))
+    return cursor.rowcount
 
 
 # --------------------------------------------------------------------------- broker tick stream
