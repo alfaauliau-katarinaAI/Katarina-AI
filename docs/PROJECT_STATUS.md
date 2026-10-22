@@ -1,6 +1,6 @@
 # Status Katarina AI
 
-Satu-satunya sumber status proyek. Diperbarui **22 Oktober 2026**. Rincian per perubahan ada di
+Satu-satunya sumber status proyek. Diperbarui **23 Oktober 2026**. Rincian per perubahan ada di
 [CHANGELOG](../CHANGELOG.md); hasil CI terbaru di
 [GitHub Actions](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions).
 
@@ -22,8 +22,10 @@ Pengembangan mengikuti **[Roadmap berbasis bukti](ROADMAP.md)** (ditetapkan Owne
 hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
 
 1. **Tahap 0 — Observer & data** (sedang dikerjakan): alat repo selesai 22 Okt (ledger snapshot per siklus,
-   pengunduh tick broker per hari, `scripts/ai/check_stage0_health.py`); observer VPS aktif 22 Okt. Sisa: 10 hari
-   bursa data berturut-turut dan uji putus-sambung ≥ 3 kali, dinilai dengan `check_stage0_health.py`.
+   pengunduh tick broker per hari, `scripts/ai/check_stage0_health.py`); observer VPS aktif sejak 22 Okt 04:24 UTC
+   dengan 3 simbol; uji putus-sambung 3× lulus 22 Okt. Simbol inti 7 (`--universe`, WP1 #184) sudah di `main`,
+   penerapan ke VPS menunggu WP2–WP3 (WP6). Sisa: 10 hari bursa berturut-turut (dihitung mulai 23 Okt; paling cepat
+   ±6 Nov bila tanpa putus) dan tick broker harian + rekonsiliasi, dinilai dengan `check_stage0_health.py`.
 2. **Tahap 1 — Validasi ilmiah:** alat dan protokol selesai 22 Okt (`katarina.research.validation`,
    [protokol](research/VALIDATION_PROTOCOL.md)); kriterianya dibuktikan tes. Dipakai untuk semua strategi berikutnya.
 3. Tahap 2–5 (market intelligence, risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan,

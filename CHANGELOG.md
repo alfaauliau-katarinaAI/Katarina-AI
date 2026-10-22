@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: peta alat per tahap, status hanya di PROJECT_STATUS
+
+- Tabel "Posisi saat ini" di roadmap diganti "Peta alat per tahap" tanpa tanggal/perkiraan; status operasional
+  (observer, VPS, perkiraan kelulusan) dipindah ke `docs/PROJECT_STATUS.md`. Tahap 4–5 kini menyebut modul
+  riset/adaptasi yang sudah ada dan menegaskan bahwa yang belum dimulai adalah **pembuktian resmi**. Pembagian peran
+  dokumen (roadmap, PROJECT_STATUS, PR, CHANGELOG) ditulis di bagian cara membaca. Masukan review PM.
+
 ## 2026-10-23 — WP1: daftar simbol inti observer (PR #184)
 
 - Menambah `config/observer_universe.json` dengan tujuh simbol program holdout (XAUUSD pertama),
