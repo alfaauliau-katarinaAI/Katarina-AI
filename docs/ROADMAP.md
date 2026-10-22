@@ -114,7 +114,8 @@ Alat (repo, 22 Okt 2026): `katarina.intelligence.operations.observation_ledger` 
 (tabel `observer_cycles`, `observer_quotes`, termasuk WAIT; kegagalan selalu dengan alasan) dan, dengan anggaran satu
 simbol-hari per siklus, mengunduh tick broker hari UTC yang sudah selesai dan memang diamati ke
 `<state>/broker-ticks/SIMBOL/YYYY-MM-DD.csv.gz` (`broker_tick_days`, celah di `data_gaps`, rekonsiliasi dengan
-snapshot dalam satu tick size). `python scripts/ai/check_stage0_health.py --state-dir <state>` menilai kriteria di
+snapshot dalam satu tick size). Uji putus-sambung dicatat dengan `scripts/ai/record_reconnect_test.py` (lulus bila
+siklus OK berikutnya ≤ 10 menit setelah gangguan). `python scripts/ai/check_stage0_health.py --state-dir <state>` menilai kriteria di
 bawah (PASS / NOT_MET / NO_DATA) secara read-only. Statistik siklus memakai jendela konservatif Senin 00:00 – Jumat
 20:00 UTC tanpa rollover 20:45–21:15 UTC. Status tahap tetap **belum lulus** sampai observer berjalan di VPS.
 

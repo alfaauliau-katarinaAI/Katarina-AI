@@ -70,6 +70,34 @@ class DataHealthTest(unittest.TestCase):
         criteria = by_name(data_health.assess(self.db, start + timedelta(days=1, hours=1), interval_seconds=60))
         self.assertEqual(criteria["consecutive_trading_days"]["covered_days"], [])
 
+    def test_recorded_disconnect_tests_count_when_observer_recovers_in_time(self):
+        start = datetime(2026, 11, 9, 8, tzinfo=UTC)
+        fill(self.db, start, 1, every=60)
+        for minutes, method in ((60, "KILL_TERMINAL"), (120, "KILL_TERMINAL_MID_CYCLE"), (180, "KILL_TERMINAL")):
+            ledger.record_reconnect_test(self.db, started_utc=start + timedelta(minutes=minutes, seconds=5),
+                                         method=method, now=start + timedelta(days=1))
+        criteria = by_name(data_health.assess(self.db, start + timedelta(days=1)))
+        recon = criteria["reconnect_recoveries"]
+        self.assertEqual((recon["status"], recon["passed_tests"]), ("PASS", 3))
+        self.assertTrue(all(t["recovery_seconds"] <= 60 for t in recon["tests"]))
+
+    def test_disconnect_without_recovery_does_not_pass(self):
+        start = datetime(2026, 11, 9, 8, tzinfo=UTC)
+        fill(self.db, start, 0.1, every=60)
+        ledger.record_reconnect_test(self.db, started_utc=start + timedelta(hours=3), method="KILL_TERMINAL",
+                                     now=start + timedelta(hours=4))
+        recon = by_name(data_health.assess(self.db, start + timedelta(hours=4)))["reconnect_recoveries"]
+        self.assertEqual(recon["passed_tests"], 0)
+        self.assertFalse(recon["tests"][0]["passed"])
+
+    def test_reconnect_test_rejects_unknown_method_and_future_start(self):
+        now = datetime(2026, 11, 9, tzinfo=UTC)
+        with self.assertRaises(ValueError):
+            ledger.record_reconnect_test(self.db, started_utc=now, method="PULL_PLUG", now=now)
+        with self.assertRaises(ValueError):
+            ledger.record_reconnect_test(self.db, started_utc=now + timedelta(hours=1), method="KILL_TERMINAL",
+                                         now=now)
+
     def test_frequent_failures_do_not_meet_success_rate(self):
         start = datetime(2026, 11, 9, tzinfo=UTC)
         fill(self.db, start, 2, every=300, fail_every=10)

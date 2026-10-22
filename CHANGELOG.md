@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — Tahap 0: uji putus-sambung tercatat; observer VPS aktif
+
+- Observer read-only berjalan di VPS sejak 22 Okt 04:24 UTC (akun demo, Algo Trading OFF); CELAH holdout
+  13–22 Okt dicatat di roadmap.
+- `observation_ledger.record_reconnect_test` + `scripts/ai/record_reconnect_test.py`: mencatat waktu mulai uji
+  putus-sambung MT5. `data_health` menilai tiap uji dari ledger (siklus OK ≤ 10 menit setelah gangguan) dan
+  menghitungnya bersama pemulihan spontan. Observer yang menyalakan ulang terminal sendiri tanpa siklus gagal kini
+  terhitung lulus.
+
 ## 2026-10-22 — Tahap 1: alat validasi ilmiah
 
 - `katarina.research.validation`: registry hipotesis append-only berantai hash (ID = hash definisi; definisi berubah =

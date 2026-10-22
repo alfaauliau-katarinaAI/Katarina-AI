@@ -18,6 +18,7 @@ MIN_TRADING_DAYS = 10
 MIN_SUCCESS_RATE = 0.98
 MIN_QUOTE_COVERAGE = 0.98
 MIN_RECOVERIES = 3
+RECOVERY_SECONDS = 600
 DAY_COVERAGE = 0.90
 DST_TOLERANCE_DAYS = 3
 SETTLED_TICK_STATES = ("STORED", "STORED_WITH_GAPS", "GAP")
@@ -174,12 +175,30 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
         required=MIN_QUOTE_COVERAGE, coverage=None if coverage is None else round(coverage, 6),
         symbol_rows=len(rows), missing_without_reason=no_reason))
 
-    # 6. reconnect recoveries: a failed stretch followed by an OK cycle, without duplicates
-    recoveries = sum(1 for a, b in zip(cycles, cycles[1:]) if a[1] in ("FAILED", "NO_MARKET_DATA") and b[1] == "OK")
+    # 6. reconnect recoveries: deliberate disconnect tests that recovered on their own within
+    #    RECOVERY_SECONDS, plus spontaneous failed stretches followed by an OK cycle.
+    tests = []
+    if "reconnect_tests" in _tables(db):
+        for started, method in db.execute("SELECT started_utc, method FROM reconnect_tests ORDER BY started_utc"):
+            begin = datetime.fromisoformat(started)
+            after = [c for c in cycles if c[0] > begin]
+            recovered = next((c for c in after if c[1] == "OK"), None)
+            seconds = (recovered[0] - begin).total_seconds() if recovered else None
+            tests.append({"started_utc": begin.isoformat(), "method": method,
+                          "recovered_utc": recovered[0].isoformat() if recovered else None,
+                          "recovery_seconds": None if seconds is None else int(seconds),
+                          "failed_cycles_before_recovery": sum(1 for c in after if recovered and c[0] < recovered[0]),
+                          "passed": seconds is not None and seconds <= RECOVERY_SECONDS})
+    test_recoveries = {t["recovered_utc"] for t in tests if t["passed"]}
+    spontaneous = sum(1 for a, b in zip(cycles, cycles[1:])
+                      if a[1] in ("FAILED", "NO_MARKET_DATA") and b[1] == "OK" and b[0].isoformat() not in test_recoveries)
+    passed_tests = sum(1 for t in tests if t["passed"])
+    recoveries = passed_tests + spontaneous
     criteria.append(_criterion(
         "reconnect_recoveries", "NO_DATA" if not cycles else
         "PASS" if recoveries >= MIN_RECOVERIES and duplicate_quotes == duplicate_cycles == 0 else "NOT_MET",
-        required=MIN_RECOVERIES, recoveries=recoveries))
+        required=MIN_RECOVERIES, recoveries=recoveries, passed_tests=passed_tests,
+        spontaneous_recoveries=spontaneous, tests=tests, recovery_limit_seconds=RECOVERY_SECONDS))
 
     # observer outages inside the session (reported, never filled)
     outages = []
