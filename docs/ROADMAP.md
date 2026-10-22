@@ -661,7 +661,7 @@ Menunggu Owner · Dikerjakan Claude.
 |---|---|---|---|
 | WP1 | Selesai (merge); penerapan VPS di WP6 | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
 | WP2 | Siap dikerjakan | – | – |
-| WP3 | Siap dikerjakan | – | – |
+| WP3 | Sedang dikerjakan — ChatGPT, PR #191 | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | Diagnostik feed dan ledger berita; menunggu review Claude |
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP6 | Dikerjakan Claude setelah WP2 + WP3 | – | – |
