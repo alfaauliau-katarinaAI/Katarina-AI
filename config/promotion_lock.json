@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "description": "SHA-256 of files that decide Katarina's active trades and risk. Change only through docs/ROADMAP.md 'Gerbang promosi'.",
+  "promotion_record": "docs/governance/promotions/P-0000-baseline-20261022.json",
+  "files": {
+    "config/katarina_unified_v1.json": "4621be4aa6d82a0cdb11fe429d366b6fcd91be5373efc6d4f846bf407263e0a4",
+    "config/risk_governor_v2.json": "29c103295b5622a70e57b7c6c97c6f00bf664d32f6cc4f3182f246671ed45a90",
+    "src/katarina/engines/account_risk_state.py": "e24d415264f730114f944de2822ab102370e3480da1e02839be402fd9c2902e7",
+    "src/katarina/engines/adaptive_risk.py": "ebfeb35dc464c17f9337f4b2d5493327ae183a3b726ee989611526dd1dffa0de",
+    "src/katarina/engines/demo_execution.py": "6d2c8ff9e729e4355d79133a9cb5613f40cee41541f6ef3e7d7027b5cd60b10e",
+    "src/katarina/engines/manual_risk.py": "7a2737593fb40f5dca01f7f9b34425cc789b1c6d69bb640f77954cae3190bc00",
+    "src/katarina/engines/risk.py": "2dbdf08831e9d51bd3143f1617c75cf9f31b0503687b6779ea341679b4f86bee",
+    "src/katarina/intelligence/cognition/adaptive_observation.py": "b882f2e7243d76239a3ebc1900196fef6296706ae7ba8f94c8145d80f1903e7d",
+    "src/katarina/intelligence/cognition/contextual_decision_intelligence.py": "7347c79ffe39ec2ef625396cca3fa099fd9d91346de444492f39c2d219a3a8fe",
+    "src/katarina/intelligence/cognition/explainable_market_decision.py": "65eb976507b65705e8a3743b2f51be24b9f1243d08986472f6ad9a0b6e9e149e",
+    "src/katarina/intelligence/cognition/market_decision.py": "16762f5acd042063cf0f24a7aec40a5969349984e6c2d8bd2a70cf9d77a65fa4",
+    "src/katarina/intelligence/cognition/market_decision_pipeline.py": "78d277a63cefa7b44f19d9cc1b0c2adcad7e7355da2525db45daf2446dd369aa",
+    "src/katarina/intelligence/demo/demo_strategy.py": "5bb694ff04b1a9c028963c81685eb7d372d3729b965e8a5cbee6e7004c4cfaee",
+    "src/katarina/intelligence/lab/evidence_risk.py": "bfc31c6d5319b2423e452dee2adf8865bbe965d04f4961c87b2b530a9755300c",
+    "src/katarina/intelligence/perception/adaptive_regime.py": "a15ddee8cbfb05c949e7ddd021de3876f5bfe011a2743e8b20f1db4c4d01d2b9",
+    "src/katarina/intelligence/perception/closed_swing_structure.py": "3b8625a8f4e1f9bdf3ea2f834cfb9c67a6f3691466cc8fdf33cb1b0cfe7731af",
+    "src/katarina/intelligence/perception/semantic_setup_truth.py": "25fe7fe41d8fa84aa169b4d9b86fcb19a551e9e5e628f4e79a978a3799afa6d9",
+    "src/katarina/intelligence/perception/structural_entry_quality.py": "fe7d444f2aef1e01344b82189954491b61d6c1780142b6e378baf41deaa6ae59",
+    "src/katarina/intelligence/perception/structure_exit_plan.py": "31bfcb0c47a7ea6a239d7b004616cf21a68564ddd751dcbe0f3b6245decd036b"
+  }
+}

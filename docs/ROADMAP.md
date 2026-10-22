@@ -74,7 +74,20 @@ Strategi atau perubahan parameter hanya boleh masuk ke sistem aktif jika:
    sama persis (hash), dan
 2. Ada **persetujuan Owner** yang tercatat untuk catatan tersebut.
 
-CI menolak perubahan pada strategi aktif atau parameter keputusan tanpa kedua hal itu.
+Penegakan oleh CI (berlaku sejak 22 Okt 2026):
+
+- `config/promotion_lock.json` mengunci hash SHA-256 berkas yang menentukan keputusan dan risiko aktif: otak
+  keputusan (`market_decision`, pipeline, contextual decision, explainable decision, adaptive observation),
+  persepsi regime/struktur/setup/entry/exit, strategi demo, Risk Governor, risiko adaptif/manual/akun, batas
+  eksekusi demo, gerbang risiko riset, serta `config/risk_governor_v2.json` dan `config/katarina_unified_v1.json`.
+- Kunci harus menunjuk catatan promosi di `docs/governance/promotions/`. Catatan `PROMOTION` wajib memuat
+  `validation.status = PASS`, laporan validasi yang ada di repo dengan hash cocok, dan `owner_approval`.
+  Satu-satunya pengecualian adalah baseline `P-0000` (keadaan saat gerbang diperkenalkan, **bukan** klaim performa).
+- Body CI menjalankan `python scripts/governance/promotion_gate.py --check` dan `tests/static/test_promotion_gate.py`;
+  perubahan berkas terkunci tanpa catatan sah membuat CI gagal.
+- Prosedur: (1) laporan validasi Tahap 1 untuk versi baru, (2) catatan promosi dengan persetujuan Owner,
+  (3) `python scripts/governance/promotion_gate.py --write-lock <catatan>`, (4) PR seperti biasa.
+- Menambah berkas ke daftar kunci boleh kapan saja; mengeluarkan berkas dari daftar memerlukan persetujuan Owner.
 
 ## Urutan pengembangan dan kriteria kelulusan
 

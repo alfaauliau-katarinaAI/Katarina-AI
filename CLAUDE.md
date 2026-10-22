@@ -42,7 +42,7 @@ python scripts/governance/audit_repo_hygiene.py --repo-root . --output build/rep
 python scripts/governance/audit_dependency_links.py --repo-root . --output build/validation/dependency-links.json
 ```
 
-Hasil 22 Oktober 2026 (setelah perampingan A–E dan sinkronisasi DD 35%): unit 1.139 OK, static 69 OK (4 skip), integration 204 OK,
+Hasil 22 Oktober 2026 (setelah perampingan A–E, sinkronisasi DD 35%, gerbang promosi): unit 1.143 OK, static 71 OK (4 skip), integration 204 OK,
 hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah
@@ -62,6 +62,10 @@ hygiene dan dependency links PASS.
 - Satu otak canonical: jangan menambah observer/worker paralel atau jalur eksekusi tersembunyi.
 - Ikuti `docs/ROADMAP.md`: tidak ada strategi/parameter keputusan yang masuk sistem aktif tanpa catatan
   kelulusan validasi + persetujuan Owner; holdout hanya dibuka sekali per strategi final; kerjakan tahap berurutan.
+- **Gerbang promosi ditegakkan CI**: berkas di `config/promotion_lock.json` (otak keputusan, persepsi, strategi
+  demo, Risk Governor dan config risiko) tidak boleh diubah tanpa catatan di `docs/governance/promotions/`
+  (validasi PASS + persetujuan Owner) lalu `scripts/governance/promotion_gate.py --write-lock`. Jangan
+  mengedit kunci atau membuat catatan promosi sendiri tanpa persetujuan Owner.
 
 ## Aturan dan status perapian
 

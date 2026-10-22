@@ -36,3 +36,6 @@
 /src/katarina/ports/transport.py @alfaauliau-katarinaAI
 /tests/unit/transport/ @alfaauliau-katarinaAI
 /tests/static/test_vps_remote_lab.py @alfaauliau-katarinaAI
+/config/promotion_lock.json @alfaauliau-katarinaAI
+/docs/governance/promotions/ @alfaauliau-katarinaAI
+/src/katarina/governance/promotion_gate.py @alfaauliau-katarinaAI

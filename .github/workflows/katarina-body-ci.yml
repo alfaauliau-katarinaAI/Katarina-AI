@@ -83,6 +83,9 @@ jobs:
         run: |
           PYTHONPATH=src python scripts/governance/audit_constitution_guard.py --repo-root . --output build/governance/constitution_guard.json
 
+      - name: Promotion gate (active decision and risk files)
+        run: python scripts/governance/promotion_gate.py --check
+
       - name: Stage 11-40 framework audit
         run: |
           PYTHONPATH=src python scripts/body/audit_body_framework.py --repo-root . --output build/body/body_framework_audit.json

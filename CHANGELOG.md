@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — gerbang promosi ditegakkan CI
+
+- `config/promotion_lock.json` mengunci SHA-256 19 berkas yang menentukan keputusan dan risiko aktif (otak keputusan,
+  persepsi, strategi demo, Risk Governor, risiko adaptif/manual/akun, batas eksekusi demo, gerbang risiko riset,
+  config risiko dan unified). Baseline `docs/governance/promotions/P-0000-baseline-20261022.json` = keadaan `main`
+  saat gerbang diperkenalkan, disetujui Owner, **bukan** klaim performa.
+- `katarina.governance.promotion_gate` + `scripts/governance/promotion_gate.py` (`--check`, `--hashes`, `--write-lock`):
+  catatan `PROMOTION` wajib validasi PASS dengan laporan ber-hash dan persetujuan Owner. Body CI menjalankan
+  `--check`; tes statis dan unit (manipulasi laporan, perubahan berkas, CRLF) ditambahkan. CODEOWNERS mencakup kunci
+  dan folder promosi. Tidak ada perubahan perilaku trading; LIVE tetap OFF.
+
 ## 2026-10-22 — roadmap disempurnakan; dokumen lama disinkronkan
 
 - `docs/ROADMAP.md`: Tahap 0 membedakan **snapshot observer** dan **tick broker** (disimpan terpisah, celah dicatat
