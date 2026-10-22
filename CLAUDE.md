@@ -6,6 +6,12 @@ riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktob
 
 ## Apa ini
 
+**Handoff roadmap 22 Okt:** baca `docs/ROADMAP.md`, bagian "Catatan implementasi".
+PR #177 → #178 → #179 memuat penguatan Tahap 0–1 dan persiapan Tahap 2–3;
+seluruhnya tersedia di branch `codex/roadmap-demo-risk`, belum digabung ke `main` saat dicatat.
+Bukti tes/CI dan pekerjaan yang masih menunggu data/validasi tercantum di roadmap.
+Implementasi alat tidak berarti tahap lulus atau trading diaktifkan.
+
 Sistem riset trading MT5 berbasis Python (bahasa dokumen utama: Indonesia).
 **Research-only / LIVE OFF**: tidak ada jalur kirim order live. Mode DEMO forward dan
 lab riset VPS ada, tetapi Risk Governor (`src/katarina/engines/risk.py`) independen dan
@@ -46,6 +52,10 @@ Hasil 22 Oktober 2026 (setelah perampingan A–E, sinkronisasi DD 35%, gerbang p
 hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah
+
+- Persiapan Tahap 3: `research/demo_readiness.py` berisi adapter pembatas governor tanpa default produksi
+  dan ringkasan outbox existing; CLI `scripts/research/check_demo_readiness.py` baca-saja. Tidak terhubung
+  worker aktif. Batas interpretasi metrik dan profil usulan di `docs/research/DEMO_READINESS.md`.
 
 - Persiapan Tahap 2 ada di `research/market_intelligence.py`, lewat CLI validasi `market-filter`:
   eksperimen pengembangan memakai registry/split/CostModel/laporan Tahap 1 yang sama; threshold wajib

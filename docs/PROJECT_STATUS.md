@@ -33,6 +33,10 @@ hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
    mencatat alasan WAIT serta menolak kebocoran. Tes sintetis bukan kelulusan pasar. Data pengembangan
    ber-lineage dan promosi filter aktif masih belum tersedia; panduan: [Market Intelligence](research/MARKET_INTELLIGENCE.md).
    Pengembangan alat tahap berikutnya boleh berjalan bersamaan dengan observasi Tahap 0.
+   **Persiapan Tahap 3:** adapter pembatas tambahan `DemoRiskOverlay` diuji terhadap governor dan boundary
+   demo existing dengan broker sintetis; CLI `check_demo_readiness.py` membaca outbox untuk laporan P/L,
+   biaya, slippage, WAIT dan kelengkapan rekonsiliasi. Belum terpasang pada worker aktif; nilai profil final
+   dan bukti broker nyata masih diperlukan. Panduan: [DEMO readiness](research/DEMO_READINESS.md).
 4. Keputusan Owner di luar roadmap: repo private atau pemisahan website (Tahap 7 perapian), 15 folder lama
    terkunci di `C:\` VPS.
 
