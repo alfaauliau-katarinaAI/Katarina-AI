@@ -49,8 +49,8 @@ paralel tidak boleh membuka holdout, mengubah strategi aktif, atau melonggarkan 
 
 ## Catatan implementasi — 22 Oktober 2026
 
-Catatan untuk review Claude/Owner: pekerjaan berikut sudah diimplementasikan pada branch PR,
-tetapi **belum digabung ke `main` pada saat pencatatan**. Ini kemajuan perangkat lunak, bukan
+Pekerjaan berikut sudah direview dan digabung ke `main` (22 Okt 2026, merge #177 → #178 → #179).
+Ini kemajuan perangkat lunak, bukan
 kelulusan tahap, bukti profit, atau izin mengirim order. Pengumpulan ≥ 10 hari bursa Tahap 0
 tetap berjalan; persiapan tahap berikutnya tidak perlu menunggu pengumpulan tersebut selesai.
 
@@ -60,8 +60,6 @@ tetap berjalan; persiapan tahap berikutnya tidak perlu menunggu pengumpulan ters
 | 2 | Eksperimen filter pasar pada data pengembangan memakai registry, split, biaya dan validasi Tahap 1; alasan WAIT dan perbandingan sebelum/sesudah filter | [#178](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/178), [panduan](research/MARKET_INTELLIGENCE.md) | Persiapan riset; filter aktif belum diubah |
 | 3 | Adapter pembatas risiko DEMO dan laporan deterministik dari outbox existing secara baca-saja | [#179](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/179), [panduan](research/DEMO_READINESS.md) | Implementasi persiapan diuji; belum dihubungkan ke worker aktif |
 
-Urutan integrasi PR bertumpuk: **#177 → #178 → #179**. Untuk memeriksa seluruh perubahan,
-gunakan branch `codex/roadmap-demo-risk`; membaca `main` saja belum mencakup PR tersebut.
 
 Rincian Tahap 3 untuk review:
 
