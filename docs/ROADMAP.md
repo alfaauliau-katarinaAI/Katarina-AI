@@ -45,6 +45,7 @@ dan berhenti. Menebak dianggap kesalahan.
 5. [Pemisahan data](#pemisahan-data) · 6. [Gerbang promosi](#gerbang-promosi) ·
 7. [Urutan pengembangan dan kriteria kelulusan](#urutan-pengembangan-dan-kriteria-kelulusan) (Tahap 0–5) ·
 8. [Sebelum akun riil](#sebelum-akun-riil-di-luar-roadmap-ini) ·
+9. [Arah lanjutan](#arah-lanjutan--bukan-paket-kerja-baru) ·
 Lampiran A — [Rencana kerja perbaikan](#lampiran-a--rencana-kerja-perbaikan-untuk-pelaksana) ·
 [Mulai di sini untuk pelaksana AI](#mulai-di-sini--untuk-pelaksana-ai-chatgpt-codex-atau-ai-lain)
 
