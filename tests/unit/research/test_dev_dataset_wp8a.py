@@ -128,7 +128,7 @@ class DevDatasetTests(unittest.TestCase):
             header = list(rows[0])
             import io
             buf = io.StringIO()
-            writer = csv.DictWriter(buf, fieldnames=header, lineterminator="\\n")
+            writer = csv.DictWriter(buf, fieldnames=header, lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
             with data_path.open("wb") as raw:
