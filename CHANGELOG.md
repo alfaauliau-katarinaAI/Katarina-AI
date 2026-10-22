@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — persiapan Tahap 3: pembatas DEMO dan laporan outbox
+
+- Adapter `DemoRiskOverlay` mempertahankan veto governor lalu membatasi anggaran dan DD harian lebih ketat;
+  nilai wajib eksplisit, usulan 0,5%/3% hanya dipakai tes. Boundary existing tetap menolak volume berlebih.
+- `check_demo_readiness.py` membaca outbox existing secara read-only: expectancy/PF/P&L bersih, drawdown
+  strategi terealisasi menurut waktu observasi, kelompok simbol/BUY/SELL/regime, biaya, slippage dan WAIT.
+- Status tak jelas, outcome invalid dan position ID ganda menghalangi kelengkapan rekonsiliasi; data kosong
+  bukan kelulusan. Laporan tidak memuat ID broker mentah dan tidak menghitung biaya dua kali.
+- Tes sintetis dan panduan disertakan. Worker aktif, governor utama, berkas promosi dan VPS tidak diubah;
+  profil final dan kelulusan berdasarkan bukti tetap diperlukan sebelum aktivasi.
+
 ## 2026-10-22 — persiapan Tahap 2 selama pengumpulan data Tahap 0
 
 - `research/market_intelligence.py` dan perintah `validate_strategy.py market-filter` membandingkan kelompok

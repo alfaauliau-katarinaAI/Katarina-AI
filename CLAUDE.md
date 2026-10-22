@@ -47,6 +47,10 @@ hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah
 
+- Persiapan Tahap 3: `research/demo_readiness.py` berisi adapter pembatas governor tanpa default produksi
+  dan ringkasan outbox existing; CLI `scripts/research/check_demo_readiness.py` baca-saja. Tidak terhubung
+  worker aktif. Batas interpretasi metrik dan profil usulan di `docs/research/DEMO_READINESS.md`.
+
 - Persiapan Tahap 2 ada di `research/market_intelligence.py`, lewat CLI validasi `market-filter`:
   eksperimen pengembangan memakai registry/split/CostModel/laporan Tahap 1 yang sama; threshold wajib
   terdaftar, semua WAIT dijelaskan, tidak mengubah filter aktif. Panduan input dan batas bukti di
