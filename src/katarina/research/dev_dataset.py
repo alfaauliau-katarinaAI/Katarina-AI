@@ -92,6 +92,7 @@ def _bar_stream(broker, symbol, timeframe, start, end, chunk_days):
     frame = getattr(broker, "TIMEFRAME_" + timeframe, timeframe)
     cursor = start
     previous = None
+    missing_until = start
     while cursor < end:
         upper = min(cursor + timedelta(days=chunk_days), end)
         # MT5 range can include the end tick; remove it in the range query,
@@ -100,8 +101,10 @@ def _bar_stream(broker, symbol, timeframe, start, end, chunk_days):
             symbol, frame, cursor, upper - timedelta(microseconds=1))
         if rows is None:
             yield None, (cursor.isoformat(), upper.isoformat(), "BROKER_HISTORY_UNAVAILABLE")
+            missing_until = upper
         elif len(rows) == 0:
             yield None, (cursor.isoformat(), upper.isoformat(), "BROKER_SERVER_EMPTY")
+            missing_until = upper
         else:
             if len(rows) > 50000:
                 raise ValidationError("DEVELOPMENT_CHUNK_OVER_LIMIT")
@@ -117,17 +120,24 @@ def _bar_stream(broker, symbol, timeframe, start, end, chunk_days):
             for key in sorted(dedup):
                 row = dedup[key]
                 opened = datetime.fromisoformat(row[0])
+                if previous is None and opened > missing_until:
+                    yield None, (missing_until.isoformat(), opened.isoformat(), "BROKER_BAR_GAP")
                 if previous is not None:
                     if opened <= previous:
                         if opened == previous:
                             continue
                         raise ValidationError("DEVELOPMENT_BARS_NOT_MONOTONIC")
                     gap_start = previous + timedelta(minutes=minutes)
+                    gap_start = max(gap_start, missing_until)
                     if opened > gap_start:
                         yield None, (gap_start.isoformat(), opened.isoformat(), "BROKER_BAR_GAP")
                 previous = opened
                 yield row, None
         cursor = upper
+    if previous is not None:
+        tail = max(previous + timedelta(minutes=minutes), missing_until)
+        if tail < end:
+            yield None, (tail.isoformat(), end.isoformat(), "BROKER_BAR_GAP")
 
 
 def _archive(broker, symbol, timeframe, start, end, root, chunk_days, metadata):
