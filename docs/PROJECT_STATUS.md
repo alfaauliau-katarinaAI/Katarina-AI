@@ -28,6 +28,11 @@ hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
    [protokol](research/VALIDATION_PROTOCOL.md)); kriterianya dibuktikan tes. Dipakai untuk semua strategi berikutnya.
 3. Tahap 2–5 (market intelligence, risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan,
    masing-masing dengan kriteria kelulusan di roadmap.
+   **Persiapan Tahap 2:** alat eksperimen filter tersedia di `katarina.research.market_intelligence` dan
+   perintah `validate_strategy.py market-filter`; membandingkan biaya/MFE dan dua laporan Tahap 1,
+   mencatat alasan WAIT serta menolak kebocoran. Tes sintetis bukan kelulusan pasar. Data pengembangan
+   ber-lineage dan promosi filter aktif masih belum tersedia; panduan: [Market Intelligence](research/MARKET_INTELLIGENCE.md).
+   Pengembangan alat tahap berikutnya boleh berjalan bersamaan dengan observasi Tahap 0.
 4. Keputusan Owner di luar roadmap: repo private atau pemisahan website (Tahap 7 perapian), 15 folder lama
    terkunci di `C:\` VPS.
 

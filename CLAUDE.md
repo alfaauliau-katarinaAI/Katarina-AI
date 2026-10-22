@@ -47,6 +47,11 @@ hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah
 
+- Persiapan Tahap 2 ada di `research/market_intelligence.py`, lewat CLI validasi `market-filter`:
+  eksperimen pengembangan memakai registry/split/CostModel/laporan Tahap 1 yang sama; threshold wajib
+  terdaftar, semua WAIT dijelaskan, tidak mengubah filter aktif. Panduan input dan batas bukti di
+  `docs/research/MARKET_INTELLIGENCE.md`. Pengembangan boleh lanjut selama observasi Tahap 0 berjalan.
+
 - Penguatan Tahap 0–1 (22 Okt): reconnect dideduplikasi per siklus pemulihan dan dibatasi sejak kegagalan pertama;
   validasi menolak gap/outcome masa depan/baseline tren tidak lengkap serta reuse holdout oleh hipotesis pasca-paparan.
   CLI holdout membaca data setelah receipt; hash kode terdaftar harus sama dengan `--code-sha256`. Registry/ledger

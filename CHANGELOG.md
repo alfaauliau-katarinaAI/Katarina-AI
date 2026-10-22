@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — persiapan Tahap 2 selama pengumpulan data Tahap 0
+
+- `research/market_intelligence.py` dan perintah `validate_strategy.py market-filter` membandingkan kelompok
+  pengembangan lengkap vs terfilter menggunakan alat Tahap 1, registry hipotesis dan split ber-hash yang sama.
+- Filter eksperimen memakai spread/risiko, biaya/range, jam UTC, ATR/risiko, usia konteks dan aktivitas tick.
+  Semua threshold wajib terdaftar; outcome dan spread exit tidak dipakai untuk memilih sinyal.
+- Laporan memuat alasan WAIT, rasio biaya/MFE, dua laporan validasi, dan hash input. Menolak holdout, CELAH,
+  konteks masa depan, outcome belum tersedia, duplikat, serta mismatch instrumen/split/kode.
+- Dokumentasi dan tes sintetis disertakan. Ini persiapan alat, bukan kelulusan Tahap 2 atau aktivasi strategi;
+  pengembangan berlanjut sambil observer mengumpulkan bukti Tahap 0.
+
 ## 2026-10-22 — verifikasi Tahap 0–1: cegah bukti kelulusan palsu
 
 - Pemeriksa Tahap 0 menghitung satu pemulihan hanya sekali meskipun beberapa catatan uji menunjuk siklus OK
