@@ -8,8 +8,9 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 
 - Bagian 1–7 adalah **aturan tetap**: prinsip, kewenangan, pemisahan data, gerbang promosi, dan kriteria kelulusan
   tiap tahap. Mengubahnya butuh persetujuan Owner dan catatan di `CHANGELOG.md`.
-- **Lampiran A** adalah **rencana kerja berjalan** untuk pelaksana (AI lain atau manusia): urutan paket, cara kerja
-  standar, peta berkas, langkah per paket, perintah siap pakai, dan daftar periksa review.
+- **Lampiran A** adalah **rencana kerja berjalan** untuk pelaksana (AI lain atau manusia): urutan dan alur kerja (R0),
+  temuan (R1), cara kerja standar (R2), peta berkas (R3), langkah per paket (R4), status (R5), perintah siap pakai
+  (R6), daftar periksa review (R7), cara menulis kode (R8), dan aturan menulis dokumen/PR (R9).
 - Pembagian dokumen: roadmap = arah dan aturan; [PROJECT_STATUS](PROJECT_STATUS.md) = status terkini (satu-satunya
   sumber status operasional); deskripsi PR = bukti dan log kerja; [CHANGELOG](../CHANGELOG.md) = riwayat perubahan;
   [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian. **Log kerja tidak ditulis di roadmap.**
@@ -278,31 +279,46 @@ review PM (Yura). Pelaksana (ChatGPT/Codex/AI lain) mengerjakan paket di bawah *
 menyempurnakan setiap PR sebelum merge. Rencana ini **tidak** mengubah tahap, kriteria kelulusan, atau aturan lain
 di dokumen ini. Bila ada yang bertentangan, aturan di bagian lain roadmap dan `CLAUDE.md` yang berlaku.
 
-### R0. Urutan pengerjaan (baca ini dulu)
+### R0. Urutan pengerjaan dan alur kerja (baca ini dulu)
 
-Owner cukup mengirim **R6.0 Aturan umum + perintah paket** dari **R6** ke pelaksana, satu paket per kali, sesuai urutan berikut.
-Paket berikutnya baru dimulai setelah PR paket sebelumnya **di-merge** (bukan hanya dibuka), kecuali disebut paralel.
-Baris "P" berjalan paralel dengan urutan bernomor (pengembangan paralel, validasi berurutan).
+**Siklus satu paket (selalu sama):**
 
-| Urutan | Paket | Dikerjakan oleh | Syarat mulai | Perkiraan ukuran PR | Hasil yang diserahkan |
+```
+1. Owner  → kirim ke pelaksana: blok R6.0 + blok "Perintah WPn" (R6)
+2. Pelaksana → pahami (R6.0 A) → branch dari origin/main → tes dulu → kode → semua pengecekan R2.6 → PR
+3. Owner  → kirim nomor PR ke Claude
+4. Claude → review dengan R7 + R8 → perbaiki kecil langsung di branch PR, atau tulis komentar review
+5. (bila ada komentar) Owner → kirim "Perintah perbaikan setelah review" (R6) ke pelaksana → kembali ke 3
+6. Claude → selaraskan dengan main (merge commit, tanpa force-push) → CI hijau → squash-merge → isi baris R5
+7. (paket yang menyentuh runtime) Claude → terapkan ke VPS sesuai WP6 → catat di PROJECT_STATUS
+```
+
+**Urutan paket.** Paket bernomor dikerjakan berurutan; paket berlabel "paralel" boleh berjalan bersamaan karena
+berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (bukan hanya dibuka).
+
+| Fase | Paket | Oleh | Prasyarat | Ukuran perkiraan | Status (rinci di R5) |
 |---|---|---|---|---|---|
-| 1 | WP1 — daftar simbol eksplisit | Pelaksana | — | ±6 berkas, ±300 baris | PR `WP1: ...` hijau |
-| 2 | Review WP1 | Claude | PR WP1 dibuka | — | Perbaikan/komentar, lalu merge |
-| 3 | WP2 — tick streaming | Pelaksana | WP1 di-merge | ±2 berkas, ±250 baris | PR `WP2: ...` hijau |
-| 4 | WP3 — diagnosis berita | Pelaksana | boleh paralel dengan WP2 (berkas berbeda) | ±4 berkas, ±200 baris | PR `WP3: ...` hijau |
-| 5 | Review WP2 dan WP3 | Claude | PR dibuka | — | Merge |
-| 6 | WP6 — terapkan ke VPS bertahap | Claude | WP1–WP3 di-merge | — | Laporan 5→7 simbol, catatan roadmap |
-| 7 | WP4 — jurnal kandidat riset + replay sinyal | Pelaksana | WP6 tahap A berjalan | ±6 berkas, ±450 baris | PR `WP4: ...` hijau |
-| 8 | Review WP4 lalu terapkan ke VPS | Claude | PR WP4 dibuka | — | Merge + restart observer |
-| 9 | WP5 — hipotesis perankingan antarpair | Pelaksana | WP4 di-merge dan ≥ 5 hari bursa data kandidat | ±4 berkas, ±350 baris | PR `WP5: ...` hijau |
-| 10 | Review WP5 | Claude | PR WP5 dibuka | — | Merge; hasil riset dilaporkan ke Owner |
-| P | WP8 — riset historis setup BUY/SELL antarpair (alat) | Pelaksana | boleh paralel dengan WP2/WP3 (berkas berbeda) | ±10 berkas, ±800 baris; boleh dipecah WP8a ekspor+dataset, WP8b setup+simulasi+perbandingan | PR `WP8a: ...`, `WP8b: ...` hijau |
-| P+1 | Ekspor dataset pengembangan di VPS + hipotesis nyata | Claude | WP8a di-merge; akhir pekan (pasar tutup) | — | Dataset ber-hash, laporan perbandingan setup (riset) |
-| — | WP7 — keputusan Owner | Owner | kapan saja | — | Keputusan tertulis di roadmap |
+| 1 | WP1 — daftar simbol inti | Pelaksana → Claude | — | ±6 berkas | Selesai (#184) |
+| 2 | WP2 — tick streaming hemat memori | Pelaksana | WP1 | ±2 berkas, ±250 baris | Siap dikirim |
+| 2 (paralel) | WP3 — diagnosis jalur berita | Pelaksana | WP1 | ±4 berkas, ±200 baris | Siap dikirim |
+| 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Siap dikirim |
+| 3 | Review + merge WP2, WP3, WP8a | Claude | PR dibuka | — | — |
+| 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP2 + WP3 | — | — |
+| 4 (paralel) | Ekspor dataset pengembangan di VPS (akhir pekan, pasar tutup) | Claude | WP8a | — | — |
+| 5 | WP8b — setup BUY/SELL, simulasi, perbandingan | Pelaksana | WP8a | ±8 berkas, ±600 baris | — |
+| 5 (paralel) | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP6 tahap A berjalan | ±6 berkas, ±450 baris | — |
+| 6 | Review + merge WP8b, WP4; WP4 diterapkan ke VPS | Claude | PR dibuka | — | — |
+| 7 | Daftarkan hipotesis nyata + laporan perbandingan setup (riset) | Claude, disetujui Owner | WP8b + dataset | — | — |
+| 8 | WP5 — hipotesis perankingan antarpair | Pelaksana | WP4 + ≥ 5 hari bursa data kandidat | ±4 berkas, ±350 baris | — |
+| 9 | Review + merge WP5; hasil riset ke Owner | Claude | PR dibuka | — | — |
+| kapan saja | WP7 — keputusan Owner | Owner | — | — | Menunggu |
+| terus berjalan | Tahap 0 — observer VPS mengumpulkan 10 hari bursa | VPS | — | — | Lihat PROJECT_STATUS |
 
-Aturan alur: bila review Claude meminta perubahan, Owner meneruskan komentar review ke pelaksana dengan perintah
-"Perbaiki PR #N sesuai komentar review, ikuti R2" lalu Claude meninjau ulang. Bila pelaksana menemukan bahwa paket
-memerlukan berkas terkunci, ia berhenti dan menuliskannya di PR; Owner meneruskan ke Claude.
+**Aturan alur:**
+- Satu paket = satu branch dari `origin/main` = satu PR. Jangan menumpuk PR di atas PR lain.
+- PR paralel hanya mengubah **baris paketnya sendiri** di tabel R5; konflik di dokumen diselesaikan Claude.
+- Bila paket ternyata butuh berkas terkunci atau keputusan Owner, pelaksana berhenti dan menulis pertanyaan di PR.
+- Kelulusan tahap tidak pernah dipercepat: pengembangan paralel, validasi berurutan.
 
 ### R1. Temuan yang mendasari (bukti 22 Okt, VPS `30d043c`, 600+ siklus)
 
@@ -629,7 +645,7 @@ Kamu pelaksana untuk repo GitHub alfaauliau-katarinaAI/Katarina-AI (sistem riset
 dokumen berbahasa Indonesia). Standar kerja ditetapkan Claude di docs/ROADMAP.md "Lampiran A". Patuhi urutan ini:
 
 A. PAHAMI DULU, JANGAN LANGSUNG MENULIS KODE.
-   1. Baca CLAUDE.md, lalu docs/ROADMAP.md Lampiran A: R0, R1, R2, R3, sub-bagian paket yang ditugaskan di R4, dan R7.
+   1. Baca CLAUDE.md, lalu docs/ROADMAP.md Lampiran A: R0, R1, R2, R3, sub-bagian paket yang ditugaskan di R4, R7, R8, R9.
    2. Baca seluruh isi setiap berkas yang disebut paket itu (bukan potongan). Telusuri pemanggil dan yang dipanggil
       dengan grep sampai kamu bisa menjelaskan alurnya.
    3. Buat PR draft lebih dulu (atau tulis di awal deskripsi PR) bagian "Pemahaman" berisi: tujuan paket dengan
@@ -638,7 +654,7 @@ A. PAHAMI DULU, JANGAN LANGSUNG MENULIS KODE.
    4. Jika ada yang ambigu atau tampak bertentangan dengan roadmap, JANGAN MENEBAK: tulis pertanyaannya di PR dan
       berhenti sampai Owner/Claude menjawab.
 
-B. KERJAKAN SESUAI R2 (cara kerja standar), langkah demi langkah:
+B. KERJAKAN SESUAI R2 (cara kerja standar) DAN R8 (cara Claude menulis kode), langkah demi langkah:
    tes dulu (harus gagal sebelum perubahan), lalu kode minimal yang membuat tes lulus, tanpa memperluas cakupan.
    Ikuti gaya berkas yang diubah. Jangan refactor, rename, atau "rapikan" kode di luar paket.
 
@@ -649,10 +665,11 @@ C. LARANGAN MUTLAK: mengubah berkas di config/promotion_lock.json, membuat catat
 D. SEBELUM MEMBUKA/MENANDAI PR SIAP:
    1. Jalankan SEMUA perintah R2 langkah 6. Semua harus lulus; manifest harus MATCH. Jika ada yang gagal karena
       lingkungan (mis. numpy tidak terpasang), perbaiki lingkungannya dan ulangi; jangan melaporkan "lulus sebagian".
-   2. Periksa diri sendiri dengan daftar R7 butir 1–6 dan salin daftarnya ke deskripsi PR dengan tanda [x] hanya
+   2. Periksa diri sendiri dengan daftar R7 butir 1–6, 8 dan 9, lalu salin daftarnya ke deskripsi PR dengan tanda [x] hanya
       untuk butir yang benar-benar kamu verifikasi.
-   3. Dokumen sesuai R2 langkah 7: roadmap HANYA baris paket di tabel R5 (+ satu-dua kalimat paragraf "Alat" bila
-      ada CLI/modul baru). Jangan menambah sub-bagian atau log kerja ke roadmap.
+   3. Dokumen sesuai R2 langkah 7 dan R9: roadmap HANYA baris paket di tabel R5 (+ satu-dua kalimat paragraf "Alat"
+      bila ada CLI/modul baru). Jangan menambah sub-bagian atau log kerja ke roadmap. Tulis singkat dan faktual.
+   4. Periksa diff sendiri dengan pertanyaan R8 butir 6 dan hapus baris yang tidak dibutuhkan paket.
 
 E. DESKRIPSI PR memakai templat ini (bahasa Indonesia):
    ## Pemahaman      (dari langkah A3)
@@ -662,7 +679,8 @@ E. DESKRIPSI PR memakai templat ini (bahasa Indonesia):
                       dan bukti bahwa tes itu gagal sebelum perubahan)
    ## Daftar periksa R7   (butir [x]/[ ])
    ## Belum yakin / pertanyaan
-   Log kerja rinci, kegagalan yang ditemui dan cara memperbaikinya ditulis di sini, tidak di berkas repo.
+   Kegagalan yang ditemui dan cara memperbaikinya ditulis singkat di sini (R9), tidak di berkas repo.
+   Panjang deskripsi ±40–80 baris; tabel lebih baik daripada paragraf; jangan mengulang isi roadmap.
 
 F. Setelah PR dibuka: berhenti. Jangan mulai paket berikutnya. Tunggu review Claude.
 ```
@@ -777,3 +795,70 @@ balas setiap komentar dengan apa yang diubah (atau alasan bila tidak diubah). Ja
 6. CI Body, Portable Ubuntu dan Windows hijau; manifest `MATCH`; CHANGELOG, CLAUDE.md dan tabel R5 diperbarui
    sesuai R2 langkah 7 (tanpa log kerja di roadmap).
 7. Untuk paket yang diterapkan ke VPS: rencana WP6 dan batas pemantauan dipenuhi sebelum dinaikkan.
+8. Diff minimal (R8 butir 2): tidak ada refactor/format ulang di luar paket, tidak ada abstraksi spekulatif.
+9. Dokumen dan PR mengikuti R9: tanpa log di roadmap, CHANGELOG ≤ 10 baris, deskripsi PR faktual dan ringkas.
+
+### R8. Cara Claude menulis kode (standar yang harus ditiru pelaksana)
+
+Prinsipnya: **perubahan terkecil yang benar, dibuktikan tes, dijelaskan singkat.** Uraian per kebiasaan:
+
+**1. Pahami sebelum menulis.**
+- Baca berkas yang akan diubah **utuh**, lalu pemanggil dan yang dipanggilnya (`grep -n "nama" -r src scripts tests`).
+- Cari pola yang sudah ada dan ikuti; modul baru meniru modul sejenis terdekat (gaya, penamaan, cara error).
+- Cek data nyata bila menyangkut perilaku runtime (laporan VPS, ledger) sebelum menyimpulkan penyebab.
+
+**2. Ubah sesedikit mungkin.**
+- Tambah parameter opsional dengan default yang mempertahankan perilaku lama; jangan mengubah tanda tangan yang
+  sudah dipakai.
+- Jangan refactor, rename, memformat ulang, atau "merapikan" kode di luar paket. Diff harus bisa dibaca baris demi baris.
+- Jangan membuat abstraksi untuk kebutuhan yang belum ada (kelas basis, plugin, konfigurasi "untuk nanti").
+
+**3. Tes membuktikan, bukan menghias.**
+- Tulis tes yang **gagal** dulu, lalu kode sampai lulus. Satu tes = satu perilaku; nama tes menyebut perilakunya
+  (`test_missing_core_is_wait_with_failed_quote_ledger_reason`).
+- Uji jalur gagal dan batas (data kosong, duplikat, waktu naif, nilai di luar rentang), bukan hanya jalur sukses.
+- Tes deterministik: waktu disuntikkan, tanpa jaringan/MT5, tanpa `sleep`, berkas sementara ditutup.
+- Jangan mengubah tes lama agar lulus; bila tes lama harus berubah, jelaskan alasannya di PR.
+
+**4. Kode yang mudah diaudit.**
+- Fungsi pendek (sasaran ≤ 40 baris) dengan satu tugas; nama menjelaskan isi; konstanta bernama di atas berkas.
+- Komentar menjelaskan **mengapa**, bukan mengulang apa yang dilakukan kode. Docstring modul: tujuan, tahap
+  roadmap, dan batas keamanan dalam 2–5 baris.
+- Kesalahan: tolak dengan kode alasan stabil; tangkap jenis exception spesifik; tidak ada `except:` kosong,
+  `print` debug, kode mati, atau TODO tanpa nomor paket.
+- Angka keputusan/riset tidak pernah di-hardcode diam-diam: konstanta bernama, atau dibaca dari spec/config.
+
+**5. Akar masalah, bukan tambalan.**
+- Bila tes/CI gagal, cari penyebabnya sampai bisa dijelaskan dalam satu kalimat; jangan menambah `retry`, `sleep`,
+  atau mengendurkan pemeriksaan agar hijau. Contoh benar dari WP1: tes gagal karena broker sintetis kurang simbol
+  untuk kuorum jam → fixture tes diperbaiki, pemeriksaan jam tidak dilonggarkan.
+- Masalah lingkungan (paket tidak terpasang, path Windows) diperbaiki di lingkungan, bukan di kode produksi.
+
+**6. Periksa diff sendiri sebelum PR** (`git diff origin/main`), dengan pertanyaan:
+- Apakah ada baris yang tidak dibutuhkan paket? Hapus.
+- Apakah perilaku tanpa opsi baru identik? Buktikan dengan tes lama yang lulus tanpa diubah.
+- Apa yang membuat CI Windows gagal (path, koneksi SQLite terbuka, CRLF)? Apa yang membuat VPS RAM 2 GB berat?
+- Apakah ada jalur order, worker, jaringan, atau berkas terkunci yang tersentuh? Harus tidak.
+
+### R9. Aturan menulis dokumen dan PR (singkat, padat, tidak berulang)
+
+| Tempat | Isi | Batas |
+|---|---|---|
+| Roadmap | Baris status paket di R5; satu-dua kalimat di paragraf "Alat" tahap terkait | Tanpa sub-bagian baru, tanpa log |
+| `CHANGELOG.md` | Apa yang berubah dan mengapa, satu entri per PR | ≤ 10 baris |
+| `CLAUDE.md` | Hanya bila CLI/modul baru atau angka tes/peta modul berubah | ≤ 2 baris per perubahan, di tabel/baris yang tepat |
+| Deskripsi PR | Templat R6.0 E | ±40–80 baris; tabel lebih baik daripada paragraf |
+| Komentar review/jawaban | Apa yang diubah atau alasan tidak diubah | Beberapa kalimat |
+| Pesan commit | Kalimat perintah singkat dalam bahasa Indonesia, lalu baris kosong dan alasan bila perlu | Judul ≤ 72 karakter |
+
+Cara menulis:
+- Tulis fakta yang dapat diperiksa (nama berkas, fungsi, angka hasil tes), bukan klaim umum ("sudah aman",
+  "sangat robust").
+- Satu fakta ditulis di satu tempat; tempat lain cukup merujuk. Jangan menyalin isi roadmap ke PR atau sebaliknya.
+- Hapus kalimat pembuka/penutup yang tidak berisi informasi, pengulangan larangan yang sudah ada di R6.0, dan daftar
+  "yang tidak dilakukan" yang panjang; cukup satu baris Keamanan.
+- Kegagalan ditulis jujur dan singkat: apa yang gagal, penyebab, apa yang dilakukan.
+
+Contoh buruk (jangan ditiru): sub-bagian "R5A" sepanjang ±150 baris di roadmap berisi riwayat commit, daftar seluruh
+berkas, dan narasi proses. Contoh baik: satu baris R5 — `| WP1 | Selesai (merge) | #184 | path tes absolut; log
+dikeluarkan dari roadmap |` — dan rincian prosesnya di deskripsi PR.
