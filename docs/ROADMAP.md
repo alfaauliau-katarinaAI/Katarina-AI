@@ -10,10 +10,33 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
   tiap tahap. Mengubahnya butuh persetujuan Owner dan catatan di `CHANGELOG.md`.
 - **Lampiran A** adalah **rencana kerja berjalan** untuk pelaksana (AI lain atau manusia): urutan dan alur kerja (R0),
   temuan (R1), cara kerja standar (R2), peta berkas (R3), langkah per paket (R4), status (R5), perintah siap pakai
-  (R6), daftar periksa review (R7), cara menulis kode (R8), dan aturan menulis dokumen/PR (R9).
+  (R6), daftar periksa review (R7), cara menulis kode (R8), aturan menulis dokumen/PR (R9), dan standar teknis (R10).
 - Pembagian dokumen: roadmap = arah dan aturan; [PROJECT_STATUS](PROJECT_STATUS.md) = status terkini (satu-satunya
   sumber status operasional); deskripsi PR = bukti dan log kerja; [CHANGELOG](../CHANGELOG.md) = riwayat perubahan;
   [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian. **Log kerja tidak ditulis di roadmap.**
+
+## Mulai di sini — untuk pelaksana AI (ChatGPT, Codex, atau AI lain)
+
+Jika kamu diminta "baca roadmap dan kerjakan", ikuti urutan ini **persis**. Semua aturan yang perlu kamu ketahui
+ada di dokumen ini dan di `CLAUDE.md`; jangan membuat aturan sendiri.
+
+1. **Kenali proyeknya.** Katarina adalah sistem riset trading MT5 berbasis Python 3.12, **LIVE OFF**, satu otak
+   canonical, Risk Governor independen dengan batas drawdown 35%. Baca `CLAUDE.md` (peta repo dan perintah
+   pengecekan), lalu bagian 1–7 dokumen ini (aturan tetap). Jangan pernah melanggar bagian 5 (pemisahan data) dan 6
+   (gerbang promosi).
+2. **Pahami cara kerja.** Baca seluruh Lampiran A: R0 (alur dan urutan), R2 (cara kerja standar), R3 (peta berkas),
+   R6.0 (aturan umum pelaksana — **berlaku walaupun tidak dikirim terpisah**), R7 (daftar periksa review), R8 (cara
+   menulis kode), R9 (aturan menulis), R10 (standar teknis).
+3. **Pilih satu paket** dengan aturan R5 "Cara mengambil paket": paket pertama di tabel R5 berstatus **Siap
+   dikerjakan** yang prasyaratnya di R0 sudah di-merge dan belum diambil orang lain. Jika diberi paket tertentu,
+   kerjakan paket itu saja.
+4. **Kerjakan paket itu** sesuai sub-bagiannya di R4 dan perintahnya di R6 (blok "Perintah WPn"), dengan seluruh
+   aturan R6.0 A–F. Satu paket, satu branch, satu PR.
+5. **Berhenti setelah PR dibuka.** Claude meninjau (R7) dan melakukan merge; kamu tidak merge, tidak mengubah VPS,
+   dan tidak memulai paket berikutnya sebelum diminta.
+
+Jika ada yang tidak jelas, bertentangan, atau butuh keputusan Owner: tulis pertanyaannya di PR (atau balas Owner)
+dan berhenti. Menebak dianggap kesalahan.
 
 **Daftar isi**
 
@@ -22,7 +45,8 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 5. [Pemisahan data](#pemisahan-data) · 6. [Gerbang promosi](#gerbang-promosi) ·
 7. [Urutan pengembangan dan kriteria kelulusan](#urutan-pengembangan-dan-kriteria-kelulusan) (Tahap 0–5) ·
 8. [Sebelum akun riil](#sebelum-akun-riil-di-luar-roadmap-ini) ·
-Lampiran A — [Rencana kerja perbaikan](#lampiran-a--rencana-kerja-perbaikan-untuk-pelaksana)
+Lampiran A — [Rencana kerja perbaikan](#lampiran-a--rencana-kerja-perbaikan-untuk-pelaksana) ·
+[Mulai di sini untuk pelaksana AI](#mulai-di-sini--untuk-pelaksana-ai-chatgpt-codex-atau-ai-lain)
 
 **Peta alat per tahap** (status operasional terkini — observer, VPS, tanggal, perkiraan — hanya di
 [PROJECT_STATUS](PROJECT_STATUS.md); tabel ini hanya berubah bila alat baru masuk `main` atau sebuah tahap lulus)
@@ -299,9 +323,9 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | Fase | Paket | Oleh | Prasyarat | Ukuran perkiraan | Status (rinci di R5) |
 |---|---|---|---|---|---|
 | 1 | WP1 — daftar simbol inti | Pelaksana → Claude | — | ±6 berkas | Selesai (#184) |
-| 2 | WP2 — tick streaming hemat memori | Pelaksana | WP1 | ±2 berkas, ±250 baris | Siap dikirim |
-| 2 (paralel) | WP3 — diagnosis jalur berita | Pelaksana | WP1 | ±4 berkas, ±200 baris | Siap dikirim |
-| 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Siap dikirim |
+| 2 | WP2 — tick streaming hemat memori | Pelaksana | WP1 | ±2 berkas, ±250 baris | Siap dikerjakan |
+| 2 (paralel) | WP3 — diagnosis jalur berita | Pelaksana | WP1 | ±4 berkas, ±200 baris | Siap dikerjakan |
+| 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Siap dikerjakan |
 | 3 | Review + merge WP2, WP3, WP8a | Claude | PR dibuka | — | — |
 | 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP2 + WP3 | — | — |
 | 4 (paralel) | Ekspor dataset pengembangan di VPS (akhir pekan, pasar tutup) | Claude | WP8a | — | — |
@@ -623,20 +647,32 @@ Hipotesis nyata didaftarkan dan dijalankan oleh Claude/Owner setelah dataset die
 
 ### R5. Status paket
 
+**Cara mengambil paket** (untuk pelaksana yang diminta "baca roadmap dan kerjakan"):
+1. Pilih baris teratas berstatus **Siap dikerjakan** yang prasyaratnya di R0 sudah di-merge.
+2. Pastikan belum diambil: tidak ada PR terbuka atau branch `*/wpN-*` untuk paket itu
+   (`git ls-remote --heads origin "*wpN*"` dan daftar PR terbuka). Jika sudah ada, pilih paket lain.
+3. Langsung buka PR draft dengan bagian "Pemahaman" (R6.0 A3) dan ubah baris paket itu menjadi
+   **Sedang dikerjakan — <agen>, PR #N**. Status lain hanya diubah Claude (review/merge) atau Owner.
+
+Status yang dipakai: Siap dikerjakan · Sedang dikerjakan · Dalam review · Selesai (merge) · Menunggu prasyarat ·
+Menunggu Owner · Dikerjakan Claude.
+
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP1 | Selesai (merge), belum diterapkan ke VPS (WP6) | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
-| WP2 | Belum dimulai | – | – |
-| WP3 | Belum dimulai | – | – |
-| WP4 | Belum dimulai | – | – |
-| WP5 | Belum dimulai | – | – |
-| WP6 | Menunggu WP1–WP3 | – | – |
-| WP8 | Belum dimulai (boleh paralel WP2/WP3) | – | – |
+| WP1 | Selesai (merge); penerapan VPS di WP6 | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
+| WP2 | Siap dikerjakan | – | – |
+| WP3 | Siap dikerjakan | – | – |
+| WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
+| WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
+| WP6 | Dikerjakan Claude setelah WP2 + WP3 | – | – |
+| WP8a | Siap dikerjakan (paralel dengan WP2/WP3) | – | – |
+| WP8b | Menunggu prasyarat (WP8a) | – | – |
 | WP7 | Menunggu Owner | – | – |
 
 ### R6. Perintah siap pakai untuk pelaksana
 
 Salin **dua blok** ke pelaksana: blok **R6.0 Aturan umum** (selalu) lalu blok perintah paket yang dikerjakan.
+Pelaksana yang hanya diminta "baca roadmap" tetap terikat R6.0 dan memakai blok paket sebagai instruksinya.
 Keduanya berdiri sendiri; pelaksana tidak perlu konteks percakapan lain.
 
 **R6.0 Aturan umum (selalu dikirim bersama perintah paket)**
@@ -645,7 +681,8 @@ Kamu pelaksana untuk repo GitHub alfaauliau-katarinaAI/Katarina-AI (sistem riset
 dokumen berbahasa Indonesia). Standar kerja ditetapkan Claude di docs/ROADMAP.md "Lampiran A". Patuhi urutan ini:
 
 A. PAHAMI DULU, JANGAN LANGSUNG MENULIS KODE.
-   1. Baca CLAUDE.md, lalu docs/ROADMAP.md Lampiran A: R0, R1, R2, R3, sub-bagian paket yang ditugaskan di R4, R7, R8, R9.
+   1. Baca CLAUDE.md, docs/ROADMAP.md bagian "Mulai di sini", bagian 1–7, dan Lampiran A: R0, R1, R2, R3, sub-bagian
+      paket yang ditugaskan di R4, R5, R7, R8, R9, R10.
    2. Baca seluruh isi setiap berkas yang disebut paket itu (bukan potongan). Telusuri pemanggil dan yang dipanggil
       dengan grep sampai kamu bisa menjelaskan alurnya.
    3. Buat PR draft lebih dulu (atau tulis di awal deskripsi PR) bagian "Pemahaman" berisi: tujuan paket dengan
@@ -758,7 +795,7 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
    "WP8a: ekspor dan dataset pengembangan historis".
 3. Wajib: semua bar >= 2026-10-13T00:00:00Z ditolak saat ekspor DAN saat dimuat; manifest ber-hash diverifikasi;
    tes memakai broker palsu, tanpa MT5/jaringan. Jangan menjalankan ekspor ke VPS.
-4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP8 di tabel R5.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini (WP8a/WP8b) di tabel R5.
 ```
 
 **Perintah WP8b (setup, simulasi, perbandingan)**
@@ -774,7 +811,7 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sud
    tertutup (buktikan dengan tes bar masa depan); invalidation-dulu bila target dan stop di bar sama; trend_side untuk
    semua trade; batas 5 hipotesis per instrumen per sisi; tidak pernah memanggil perintah holdout; keluaran berlabel
    "RISET — data pengembangan, bukan kelulusan".
-4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP8 di tabel R5.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini (WP8a/WP8b) di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
@@ -790,7 +827,8 @@ balas setiap komentar dengan apa yang diubah (atau alasan bila tidak diubah). Ja
 1. Diff tidak menyentuh berkas di `config/promotion_lock.json`; `promotion_gate.py --check` PASS.
 2. Perilaku tanpa opsi baru identik; tes lama tidak diubah kecuali paket memintanya.
 3. Tidak ada jalur order, thread/worker baru, jaringan di tes, atau dependensi baru.
-4. Waktu UTC ber-zona, fail-closed dengan kode alasan, SQLite di `with db:`, hasil deterministik.
+4. Waktu UTC ber-zona, fail-closed dengan kode alasan, SQLite di `with db:`, hasil deterministik; standar R10
+   (Python 3.12, Linux + Windows, encoding, batas VPS, penamaan, tes) dipenuhi.
 5. Tes baru benar-benar gagal tanpa perubahan (diverifikasi dengan membalik perubahan secara lokal).
 6. CI Body, Portable Ubuntu dan Windows hijau; manifest `MATCH`; CHANGELOG, CLAUDE.md dan tabel R5 diperbarui
    sesuai R2 langkah 7 (tanpa log kerja di roadmap).
@@ -862,3 +900,44 @@ Cara menulis:
 Contoh buruk (jangan ditiru): sub-bagian "R5A" sepanjang ±150 baris di roadmap berisi riwayat commit, daftar seluruh
 berkas, dan narasi proses. Contoh baik: satu baris R5 — `| WP1 | Selesai (merge) | #184 | path tes absolut; log
 dikeluarkan dari roadmap |` — dan rincian prosesnya di deskripsi PR.
+
+### R10. Standar teknis lengkap (pelengkap R2 dan R8)
+
+**Lingkungan**
+- Python **3.12** (CI dan VPS). Jangan memakai fitur yang hanya ada di 3.13+. Dependensi hanya yang sudah ada
+  (`requirements-stage07.txt` + `numpy`; paket `MetaTrader5` hanya di VPS, tidak pernah diimpor di tes).
+- Kode harus jalan di **Linux dan Windows** (CI menjalankan keduanya; VPS Windows Server 2012 R2):
+  `pathlib.Path` untuk path, `encoding="utf-8"` di setiap open/read/write teks, `newline="\n"` saat menulis berkas
+  yang di-hash, tanpa symlink, tanpa perintah shell khusus satu OS, koneksi SQLite/berkas selalu ditutup.
+- Batas VPS (RAM 2 GB, observer 60 detik/siklus): pekerjaan di thread observer harus terbatas (anggaran per
+  siklus, ≤ ±5 detik tambahan); data besar diproses per potong (streaming), bukan dimuat utuh.
+
+**Struktur dan penamaan**
+- Logika di `src/katarina/...`; skrip di `scripts/...` hanya CLI tipis (argparse → panggil fungsi `src`), dengan
+  `sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))` seperti skrip yang ada.
+- Tes: `tests/unit/<area>/test_<modul>.py` untuk logika murni; `tests/integration/test_<fitur>.py` untuk alur
+  observer/CLI dengan broker sintetis. Kelas `unittest.TestCase`; path berkas repo di tes dihitung dari
+  `Path(__file__).resolve().parents[N]`, tidak bergantung direktori kerja.
+- Nama: modul dan fungsi `snake_case`, kelas `PascalCase`, konstanta `HURUF_BESAR`, kode alasan
+  `HURUF_BESAR_GARIS_BAWAH`. Nama menjelaskan isi (`collect_tick_days`, bukan `process`).
+- Modul baru wajib tersambung (diimpor oleh kode/skrip/tes) agar `tests/static/test_module_connectivity.py` lulus.
+
+**Data dan waktu**
+- Waktu: `datetime` ber-zona UTC; simpan sebagai ISO 8601 (`.isoformat()`); waktu pasar dari `time_msc` MT5.
+- Uang/harga: `float` dengan pemeriksaan `math.isfinite`; satuan selalu disebut (price, point, R).
+- Format berkas: JSON kanonik (`sort_keys=True`), JSON lines untuk baris data, CSV gzip (`mtime=0`, tanpa nama)
+  untuk data besar; setiap dataset/laporan yang dipakai keputusan punya SHA-256.
+- Tidak pernah commit data broker, state runtime, kredensial, nomor akun, atau nama server ke repo.
+
+**Git dan PR**
+- Branch: `<agen>/wpN-<ringkas>-YYYYMMDD` dari `origin/main` terbaru. Commit kecil dan bermakna; tanpa force-push;
+  bila `main` bergerak, gabungkan dengan merge commit.
+- Commit: judul kalimat perintah bahasa Indonesia ≤ 72 karakter (mis. `WP2: tulis tick per jam secara streaming`),
+  baris kosong, lalu alasan singkat bila perlu.
+- PR memakai templat R6.0 E; satu PR hanya satu paket; deskripsi berisi angka hasil pengecekan R2 langkah 6.
+
+**Keamanan (tidak bisa ditawar)**
+- Tidak ada `order_send`, jalur eksekusi, atau perubahan kewenangan; observer tetap 0 order.
+- Berkas di `config/promotion_lock.json` tidak disentuh; perubahan perilaku keputusan selalu lewat hipotesis →
+  validasi → catatan promosi → persetujuan Owner.
+- Data holdout (≥ 13 Okt 2026 00:00 UTC) tidak dipakai untuk memilih/menyetel apa pun.
