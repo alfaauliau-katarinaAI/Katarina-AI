@@ -30,8 +30,9 @@ hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
    masing-masing dengan kriteria kelulusan di roadmap.
    **Persiapan Tahap 2:** alat eksperimen filter tersedia di `katarina.research.market_intelligence` dan
    perintah `validate_strategy.py market-filter`; membandingkan biaya/MFE dan dua laporan Tahap 1,
-   mencatat alasan WAIT serta menolak kebocoran. Tes sintetis bukan kelulusan pasar. Data pengembangan
-   ber-lineage dan promosi filter aktif masih belum tersedia; panduan: [Market Intelligence](research/MARKET_INTELLIGENCE.md).
+   mencatat alasan WAIT serta menolak kebocoran. Tes sintetis bukan kelulusan pasar. `export_market_contexts.py`
+   membangun `contexts.jsonl` dari tick broker Tahap 0 yang terverifikasi hash (tanpa interpolasi celah);
+   dataset pengembangan nyata (butuh tick Tahap 0 yang cukup) dan promosi filter aktif masih belum tersedia; panduan: [Market Intelligence](research/MARKET_INTELLIGENCE.md).
    Pengembangan alat tahap berikutnya boleh berjalan bersamaan dengan observasi Tahap 0.
    **Persiapan Tahap 3:** adapter pembatas tambahan `DemoRiskOverlay` diuji terhadap governor dan boundary
    demo existing dengan broker sintetis; CLI `check_demo_readiness.py` membaca outbox untuk laporan P/L,

@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — ekspor konteks Tahap 2 ber-lineage dari tick broker Tahap 0
+
+- `katarina.research.context_export` + `scripts/research/export_market_contexts.py` membangun `contexts.jsonl`
+  untuk `validate_strategy.py market-filter` dari file tick broker ledger Tahap 0: hanya hari `STORED`/
+  `STORED_WITH_GAPS` dengan hash file cocok, hanya tick sebelum entry, range/ATR dari bar tertutup, dan
+  `source_sha256` yang mengikat ke file tick + parameter. Jendela yang menyentuh celah tick, CELAH split, atau
+  keluar dari periode pengembangan tidak diberi konteks; alasannya dicatat di manifest. Tidak ada interpolasi.
+- 8 tes alat. Tidak ada berkas terkunci yang diubah; tidak ada akses broker atau order.
+
 ## 2026-10-22 — review dan penggabungan alat roadmap Tahap 0–3
 
 - PR #177 (penguatan reconnect/validasi), #178 (eksperimen filter Tahap 2), #179 (pembatas DEMO + laporan outbox

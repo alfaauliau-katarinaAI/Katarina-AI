@@ -1450,6 +1450,11 @@
       "normalized_sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da",
       "sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da"
     },
+    "src/katarina/research/context_export.py": {
+      "bytes": 8754,
+      "normalized_sha256": "609d91336fbbf48fe101b1c1e06dabec267194771c71fe5ed8608583119bbb5e",
+      "sha256": "609d91336fbbf48fe101b1c1e06dabec267194771c71fe5ed8608583119bbb5e"
+    },
     "src/katarina/research/demo_readiness.py": {
       "bytes": 10719,
       "normalized_sha256": "df4d3719a9f67ea2a21c81eabad35b9cc08256ac37e49171e4420d787f4f1642",
