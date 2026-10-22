@@ -509,6 +509,12 @@ Ada dua aliran data yang **wajib dibedakan** dan disimpan terpisah:
 - **Tick broker**: seluruh tick bid/ask dari riwayat MT5, diunduh per periode setelah periode itu selesai. Dipakai
   untuk riset biaya eksekusi, spread aktual, dan validasi.
 
+Untuk WP1, penentuan tujuh simbol inti boleh memakai config eksplisit setelah review dan
+penerapan WP6, tanpa mengubah opsi lama. Contoh peluncur (belum diaktifkan di VPS):
+`run_contextual_market_observer.py --continuous --universe config\\observer_universe.json --connection-config PRIVATE_CONFIG --state-dir PRIVATE_STATE --interval-seconds 60`.
+Jika simbol inti tidak tersedia pada broker, simpan kartu WAIT dan alasan
+`CORE_SYMBOL_UNAVAILABLE` pada ledger; data yang hilang tidak diisi secara sintetis.
+
 Pekerjaan: login akun demo di MT5 VPS (Algo Trading OFF), konfigurasi koneksi privat, aktifkan observer read-only,
 pengunduh tick broker per periode, dan pemeriksa kesehatan data untuk kedua aliran.
 
