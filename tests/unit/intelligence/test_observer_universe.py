@@ -9,6 +9,8 @@ from katarina.intelligence.broker.observer_universe import (
     ObserverUniverse, load_universe, select_symbols,
 )
 
+REPO = Path(__file__).resolve().parents[3]
+
 
 def sym(name, mode=4):
     return SimpleNamespace(name=name, trade_mode=mode)
@@ -16,9 +18,9 @@ def sym(name, mode=4):
 
 class ObserverUniverseTests(unittest.TestCase):
     def test_matches_frozen_alpha_program_and_gold_first(self):
-        universe = load_universe("config/observer_universe.json")
-        alpha = json.loads(Path(
-            "config/research/alpha_regime_program_v1.json").read_text())
+        universe = load_universe(REPO / "config/observer_universe.json")
+        alpha = json.loads((
+            REPO / "config/research/alpha_regime_program_v1.json").read_text(encoding="utf-8"))
         self.assertEqual(set(universe.core), set(alpha["symbols"]))
         self.assertEqual(universe.core[0], "XAUUSD.vx")
         self.assertEqual(universe.rotating_slots, 0)

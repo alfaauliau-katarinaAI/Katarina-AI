@@ -6,13 +6,11 @@ riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktob
 
 ## Apa ini
 
-**Posisi roadmap (22 Okt):** alat Tahap 0–3 sudah di `main` (#173–#175, #177–#179; ringkasan di `docs/ROADMAP.md`,
-"Catatan implementasi"). Tahap 0 sedang mengumpulkan data di VPS (cek `check_stage0_health.py`); belum ada tahap
+**Posisi roadmap (22 Okt):** alat Tahap 0–3 sudah di `main` (#173–#175, #177–#179, WP1 #184; tabel "Posisi saat ini" di
+`docs/ROADMAP.md`; rencana kerja pelaksana di Lampiran A). Tahap 0 sedang mengumpulkan data di VPS (cek `check_stage0_health.py`); belum ada tahap
 yang **lulus**. Alat tersedia ≠ tahap lulus ≠ trading diaktifkan.
 
 Sistem riset trading MT5 berbasis Python (bahasa dokumen utama: Indonesia).
-**WP1 Tahap 0 (PR review):** modul `broker/observer_universe.py`, config `config/observer_universe.json` (tujuh core dengan XAUUSD di urutan pertama), dan CLI `run_contextual_market_observer.py --universe PATH` menambah observasi core eksplisit tanpa memotongnya ke budget host. Tanpa opsi, default lama identik. Tidak dipasang ke VPS sampai WP1–WP3 disetujui menurut roadmap WP6.
-
 **Research-only / LIVE OFF**: tidak ada jalur kirim order live. Mode DEMO forward dan
 lab riset VPS ada, tetapi Risk Governor (`src/katarina/engines/risk.py`) independen dan
 tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + CI.
@@ -23,7 +21,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 |---|---|
 | `src/katarina/` | Paket utama. `intelligence/` (77 modul dalam 8 subpaket: `cognition/` otak canonical `cognition/unified_brain.py` → `UnifiedKatarinaBrain` beserta kemampuannya, `perception/` fitur/regime/playbook, `broker/` sensor read-only, `news/`, `demo/`, `shadow/` (buku prospektif), `lab/` riset offline, `operations/`), `engines/` (risk, setup quality, eksekusi riset), `monitoring/` (feed status/PnL/entry untuk website), `adapters/` (MT5 read-only, koneksi otomatis, dialog owner; transport KAT1/ZMQ dipensiunkan 22 Okt), `body/` (stage 11–40 "body framework", modul bernama fungsi; nomor→modul di `katarina.body.STAGE_MODULES` dan `docs/maintenance/BODY_STAGE_MAP.md`), `core/` (orchestrator), `memory/`, `persistence/`, `governance/`, `research/` |
 | `katarina_pc.py` + `SETUP_/START_KATARINA.bat` | Entry point uji PC (Python 3.12): `setup, repair, test, doctor, observe, chat, ui, pretrial` |
-| `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical), `check_stage0_health.py` (kriteria Tahap 0 dari ledger `operations/observation_ledger.py`), `record_reconnect_test.py` (uji putus-sambung), demo worker, HF archive sync, publisher monitor, tombstone `run_market_brain.py`/`run_decision_brain_v3.py` |
+| `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical; `--universe config/observer_universe.json` = 7 simbol inti tiap siklus lewat `broker/observer_universe.py`, tanpa opsi perilaku lama), `check_stage0_health.py` (kriteria Tahap 0 dari ledger `operations/observation_ledger.py`), `record_reconnect_test.py` (uji putus-sambung), demo worker, HF archive sync, publisher monitor, tombstone `run_market_brain.py`/`run_decision_brain_v3.py` |
 | `scripts/research/` | Skrip yang dipakai workflow/operasional: `validate_strategy` (alat validasi Tahap 1, `research/validation.py`, protokol `docs/research/VALIDATION_PROTOCOL.md`; perintah `market-filter` = eksperimen filter Tahap 2, `research/market_intelligence.py`), `export_market_contexts` (konteks Tahap 2 dari tick broker Tahap 0 terverifikasi hash, `research/context_export.py`), `check_demo_readiness` (laporan outbox DEMO Tahap 3, `research/demo_readiness.py` + `DemoRiskOverlay`), `audit_private_alpha_holdout`, `run_adaptive_walkforward`, `run_autonomous_strategy_discovery`, `probe_current_market_analogs` |
 | `scripts/governance/` | Audit CI: hygiene, dependency links, constitution guard, branch inventory |
 | VPS (Windows Server 2012 R2) | Diakses lewat Desktop Commander. Runtime: `C:\Katarina\code` (checkout `main`), Python 3.12 di `C:\Katarina\python312`, peluncur observer `C:\Katarina\run-observer.ps1`. Tooling VPS lama dihapus 22 Okt |
