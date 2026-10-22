@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: WP10 biaya trading, counterfactual di WP9d, R0 dirapikan
+
+- Lampiran A ditambah WP10: WP10a profil spread broker deskriptif (label `DESCRIPTIVE_ONLY_NOT_FOR_TUNING`,
+  pagar impor) dan WP10b swap + sensitivitas biaya di `CostModel` (default 0, verdict tidak berubah); perintah R6.
+- WP9d memuat aturan counterfactual kelas C: hanya `dev_dataset`, kartu WAIT forward dilarang untuk untung-rugi.
+- Tabel R0 diurutkan per fase; status WP8a (#195) dan WP9a (#196); "Arah lanjutan" menunjuk WP9d/WP10.
+
 ## 2026-10-23 — roadmap: enam arah lanjutan dengan batas data dan prasyarat
 
 - Tambahkan arah Autonomous Research, Market Intelligence, Counterfactual, Cost Intelligence,
