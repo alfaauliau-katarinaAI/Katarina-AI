@@ -59,6 +59,20 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
         self.assertEqual(orders, 0)
         self.assertEqual(result["orders_submitted"], 0)
 
+    def test_explicit_universe_rejects_worker_mode_before_host_lock(self):
+        import os
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.dict(os.environ, {"KATARINA_ALL_MARKET_RESEARCH": "1"}):
+                with self.assertRaisesRegex(
+                        ValueError, "universe_and_all_market_research_exclusive"):
+                    run_continuous(
+                        Path(tmp), config=config(priority=("local",), attempts=1),
+                        universe=ObserverUniverse(("XAUUSD", "EURUSD")),
+                        max_cycles=1, fetch_news=False,
+                    )
+            self.assertFalse((Path(tmp) / "brain.lock").exists())
+
     def test_old_path_still_selects_three_symbols_without_universe(self):
         _, report, rows, orders = self.observe()
         self.assertEqual(len(report["symbols"]), 3)
