@@ -86,7 +86,7 @@ def load_articles(store,now, *, allow_fetch=True):
         articles=snap.get("payload",{}).get("items",[])
         diagnostics[source+"_feed_items"]=len(articles)
         diagnostics[source+"_items_in_window"]=0
-        newest=sorted(articles,key=lambda x:x.get("published_utc",""),reverse=True)
+        newest=sorted(articles,key=lambda x:str(x.get("published_utc") or ""),reverse=True)
         newest_age=None
         for item in newest[:6]:
             try:
