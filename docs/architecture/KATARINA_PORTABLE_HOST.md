@@ -37,7 +37,8 @@ Urutan pemilihan: `--state-dir` → `KATARINA_STATE_DIR` → lokasi bawaan OS:
 | macOS | ~/Library/Application Support/Katarina/contextual-observer |
 | Linux | XDG_STATE_HOME/Katarina/contextual-observer atau ~/.local/state/Katarina/contextual-observer |
 
-Tidak ada pemindahan otomatis dari `C:\KatarinaDev` atau database legacy.
+Tidak ada pemindahan otomatis dari layout lama (`C:\KatarinaDev`, sudah tidak dipakai) atau database legacy.
+Di VPS sekarang state berada di `C:\Katarina\state` (diberikan lewat `--state-dir` / `KATARINA_STATE_DIR`).
 Untuk mempertahankan pengetahuan saat pindah host: hentikan semua pemilik proses,
 salin **seluruh direktori state setelah database ditutup**, arahkan state-dir
 ke salinan baru, jalankan doctor, lalu siklus offline. Jangan menyalin SQLite

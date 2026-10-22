@@ -107,9 +107,9 @@ berubah menjadi klaim koneksi model terverifikasi.
 
 ## Runtime portable dan checkout kanonis
 
-Jika runtime dipasang di `C:\KatarinaDev` sementara source kanonis berada di
-`C:\KatarinaGitBridge`, berikan `-SourceRoot` pada bootstrap. Root instalasi bukan
-root source. Binder mengutamakan checkout kanonis dalam `python312._pth`, menyimpan
+Di VPS sekarang (22 Okt 2026) Python 3.12 terpasang di `C:\Katarina\python312`, source kanonis
+(checkout `main`) di `C:\Katarina\code`, dan state di `C:\Katarina\state`. Root instalasi bukan
+root source. Untuk Python embeddable, `scripts/pc/bind_portable_runtime.py` mengutamakan checkout kanonis dalam `python312._pth`, menyimpan
 backup berdasarkan hash dan mempertahankan stdlib/site packages serta path lama.
 Perubahan file path saja bukan bukti impor: jalankan probe proses Python baru dan
 pastikan modul yang terimpor berada di checkout yang disetujui. Hentikan otak dan
