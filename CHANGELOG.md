@@ -8,7 +8,8 @@
   ada di CHANGELOG); kalimat basi Tahap 0 diperbarui.
 - Aturan dokumentasi pelaksana (R2 langkah 7, R6, R7): log kerja dan hasil tes rinci ditulis di deskripsi PR, bukan
   di roadmap; roadmap hanya diubah di tabel R5 dan paragraf "Alat" tahap terkait. Isi aturan dan kriteria tahap
-  tidak berubah.
+  tidak berubah. R6 diberi blok "R6.0 Aturan umum" (pahami dulu, larangan, pengecekan wajib, templat PR,
+  daftar periksa R7, berhenti setelah PR) yang selalu dikirim bersama perintah paket; rujukan bagian diperbaiki.
 
 ## 2026-10-22 — rencana kerja perbaikan di roadmap
 

@@ -271,7 +271,7 @@ di dokumen ini. Bila ada yang bertentangan, aturan di bagian lain roadmap dan `C
 
 ### R0. Urutan pengerjaan (baca ini dulu)
 
-Owner cukup mengirim perintah siap pakai di **R6** ke pelaksana, satu paket per kali, sesuai urutan berikut.
+Owner cukup mengirim **R6.0 Aturan umum + perintah paket** dari **R6** ke pelaksana, satu paket per kali, sesuai urutan berikut.
 Paket berikutnya baru dimulai setelah PR paket sebelumnya **di-merge** (bukan hanya dibuka), kecuali disebut paralel.
 
 | Urutan | Paket | Dikerjakan oleh | Syarat mulai | Perkiraan ukuran PR | Hasil yang diserahkan |
@@ -547,52 +547,91 @@ Tujuan: bahan riset untuk Tahap 1/2 walau semua keputusan WAIT. **Tidak** mengub
 
 ### R6. Perintah siap pakai untuk pelaksana
 
-Salin satu blok utuh ke pelaksana. Setiap blok berdiri sendiri; pelaksana tidak perlu konteks percakapan lain.
+Salin **dua blok** ke pelaksana: blok **R6.0 Aturan umum** (selalu) lalu blok perintah paket yang dikerjakan.
+Keduanya berdiri sendiri; pelaksana tidak perlu konteks percakapan lain.
+
+**R6.0 Aturan umum (selalu dikirim bersama perintah paket)**
+```text
+Kamu pelaksana untuk repo GitHub alfaauliau-katarinaAI/Katarina-AI (sistem riset trading MT5 berbasis Python,
+dokumen berbahasa Indonesia). Standar kerja ditetapkan Claude di docs/ROADMAP.md "Lampiran A". Patuhi urutan ini:
+
+A. PAHAMI DULU, JANGAN LANGSUNG MENULIS KODE.
+   1. Baca CLAUDE.md, lalu docs/ROADMAP.md Lampiran A: R0, R1, R2, R3, sub-bagian paket yang ditugaskan di R4, dan R7.
+   2. Baca seluruh isi setiap berkas yang disebut paket itu (bukan potongan). Telusuri pemanggil dan yang dipanggil
+      dengan grep sampai kamu bisa menjelaskan alurnya.
+   3. Buat PR draft lebih dulu (atau tulis di awal deskripsi PR) bagian "Pemahaman" berisi: tujuan paket dengan
+      kata-katamu sendiri, daftar berkas yang AKAN diubah, daftar berkas yang TIDAK BOLEH disentuh (hasil
+      `python scripts/governance/promotion_gate.py --hashes`), tes yang akan ditambah, dan risiko yang kamu lihat.
+   4. Jika ada yang ambigu atau tampak bertentangan dengan roadmap, JANGAN MENEBAK: tulis pertanyaannya di PR dan
+      berhenti sampai Owner/Claude menjawab.
+
+B. KERJAKAN SESUAI R2 (cara kerja standar), langkah demi langkah:
+   tes dulu (harus gagal sebelum perubahan), lalu kode minimal yang membuat tes lulus, tanpa memperluas cakupan.
+   Ikuti gaya berkas yang diubah. Jangan refactor, rename, atau "rapikan" kode di luar paket.
+
+C. LARANGAN MUTLAK: mengubah berkas di config/promotion_lock.json, membuat catatan promosi, mengubah Risk Governor
+   atau batas 35%, mengaktifkan DEMO/LIVE atau jalur order, menambah observer/worker/thread, menambah dependensi,
+   akses jaringan/MT5 di tes, mengubah VPS atau berkas di luar repo, merge sendiri, force-push, menonaktifkan tes.
+
+D. SEBELUM MEMBUKA/MENANDAI PR SIAP:
+   1. Jalankan SEMUA perintah R2 langkah 6. Semua harus lulus; manifest harus MATCH. Jika ada yang gagal karena
+      lingkungan (mis. numpy tidak terpasang), perbaiki lingkungannya dan ulangi; jangan melaporkan "lulus sebagian".
+   2. Periksa diri sendiri dengan daftar R7 butir 1–6 dan salin daftarnya ke deskripsi PR dengan tanda [x] hanya
+      untuk butir yang benar-benar kamu verifikasi.
+   3. Dokumen sesuai R2 langkah 7: roadmap HANYA baris paket di tabel R5 (+ satu-dua kalimat paragraf "Alat" bila
+      ada CLI/modul baru). Jangan menambah sub-bagian atau log kerja ke roadmap.
+
+E. DESKRIPSI PR memakai templat ini (bahasa Indonesia):
+   ## Pemahaman      (dari langkah A3)
+   ## Perubahan      (tabel: berkas | apa yang diubah | alasan)
+   ## Keamanan       (berkas terkunci tidak berubah; LIVE OFF; tanpa perubahan VPS; tanpa dependensi baru)
+   ## Pengujian      (angka persis: unit/static/integration, audit, promotion gate, manifest; tes baru apa saja
+                      dan bukti bahwa tes itu gagal sebelum perubahan)
+   ## Daftar periksa R7   (butir [x]/[ ])
+   ## Belum yakin / pertanyaan
+   Log kerja rinci, kegagalan yang ditemui dan cara memperbaikinya ditulis di sini, tidak di berkas repo.
+
+F. Setelah PR dibuka: berhenti. Jangan mulai paket berikutnya. Tunggu review Claude.
+```
 
 **Perintah WP1**
 ```text
 Kamu mengerjakan repo GitHub alfaauliau-katarinaAI/Katarina-AI (Python, dokumen berbahasa Indonesia).
-1. Baca berurutan: CLAUDE.md, lalu docs/ROADMAP.md bagian "Rencana kerja perbaikan" sub-bagian R1, R2, R3 dan
+1. Baca berurutan: CLAUDE.md, lalu docs/ROADMAP.md "Lampiran A — Rencana kerja perbaikan" sub-bagian R1, R2, R3 dan
    "WP1 — Daftar simbol eksplisit untuk observer". Ikuti R2 langkah demi langkah tanpa melompat.
 2. Kerjakan HANYA WP1, satu PR ke main berjudul "WP1: daftar simbol eksplisit untuk observer".
-3. Dilarang: mengubah berkas di config/promotion_lock.json, membuat catatan promosi, mengubah Risk Governor atau batas
-   35%, mengaktifkan DEMO/LIVE, menambah observer/worker/thread, menambah dependensi, mengubah VPS, merge sendiri.
-4. Sebelum membuka PR jalankan semua perintah di R2 langkah 6; semua harus lulus dan manifest MATCH.
-5. Deskripsi PR: Ringkasan, daftar berkas diubah beserta alasannya, Keamanan (berkas terkunci tidak berubah, LIVE OFF,
-   tanpa perubahan VPS), Pengujian (salin jumlah tes dan hasil audit), dan hal yang belum yakin.
-6. Isi HANYA baris WP1 di tabel R5 docs/ROADMAP.md (status "PR dibuka", nomor PR, satu kalimat). Log kerja dan
-   hasil tes rinci ditulis di deskripsi PR, jangan di roadmap (R2 langkah 7).
-Jika ada langkah yang tidak bisa dikerjakan tanpa melanggar butir 3, berhenti dan tulis alasannya di PR.
+3. Ikuti seluruh R6.0 Aturan umum (A–F): pemahaman dulu, larangan, pengecekan, templat PR, dan berhenti setelah PR.
+4. Isi HANYA baris WP1 di tabel R5 docs/ROADMAP.md (status "PR dibuka", nomor PR, satu kalimat).
 ```
 
 **Perintah WP2**
 ```text
 Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP1 sudah di-merge).
-1. Baca CLAUDE.md, lalu docs/ROADMAP.md bagian "Rencana kerja perbaikan": R2, R3 dan "WP2 — Pengunduh tick hemat
+1. Baca CLAUDE.md, lalu docs/ROADMAP.md "Lampiran A — Rencana kerja perbaikan": R2, R3 dan "WP2 — Pengunduh tick hemat
    memori". Baca seluruh src/katarina/intelligence/operations/observation_ledger.py dan
    tests/unit/intelligence/test_observation_ledger.py sebelum mengubah apa pun.
 2. Kerjakan HANYA WP2, satu PR "WP2: pengunduh tick streaming hemat memori".
 3. Wajib: hasil berkas dan sha256 byte-identik dengan implementasi lama (buktikan dengan tes pembanding yang menyalin
    fungsi lama ke berkas tes), tracemalloc puncak < 50 MB untuk 2.000.000 tick/hari, tes lama tidak diubah.
-4. Larangan, pengecekan, isi PR dan pembaruan tabel R5 sama seperti perintah WP1 butir 3–6.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini di tabel R5.
 ```
 
 **Perintah WP3**
 ```text
 Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
-1. Baca CLAUDE.md, lalu docs/ROADMAP.md bagian "Rencana kerja perbaikan": R1 (T5), R2, R3 dan "WP3 — Diagnosis jalur
+1. Baca CLAUDE.md, lalu docs/ROADMAP.md "Lampiran A — Rencana kerja perbaikan": R1 (T5), R2, R3 dan "WP3 — Diagnosis jalur
    berita". Baca fungsi load_articles dan prepare_news di src/katarina/intelligence/cognition/observer.py,
    src/katarina/intelligence/news/news_intelligence.py dan src/katarina/intelligence/operations/data_health.py.
 2. Kerjakan HANYA WP3, satu PR "WP3: diagnosis jalur berita observer".
 3. Wajib: hanya menambah penghitung/laporan/tabel ledger; logika blackout, ambang, FRESH_SECONDS dan keputusan TIDAK
    berubah; verdict data_health tidak berubah (buktikan dengan tes).
-4. Larangan, pengecekan, isi PR dan pembaruan tabel R5 sama seperti perintah WP1 butir 3–6.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini di tabel R5.
 ```
 
 **Perintah WP4**
 ```text
 Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP1–WP3 sudah di-merge).
-1. Baca CLAUDE.md, lalu docs/ROADMAP.md bagian "Rencana kerja perbaikan": R1 (T4, T6), R2, R3 dan "WP4 — Jurnal
+1. Baca CLAUDE.md, lalu docs/ROADMAP.md "Lampiran A — Rencana kerja perbaikan": R1 (T4, T6), R2, R3 dan "WP4 — Jurnal
    kandidat riset". Baca dataclass ContextDecision di
    src/katarina/intelligence/cognition/contextual_decision_intelligence.py (JANGAN diubah; berkas terkunci),
    src/katarina/research/validation.py (format Trade) dan src/katarina/research/context_export.py (cara membaca tick
@@ -601,27 +640,28 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP1–WP
 3. Wajib: action/keputusan observer tidak berubah (tes membuktikan kartu sama sebelum/sesudah), orders_submitted 0,
    data_until <= entry_at selalu, aturan exit dibaca dari spec hipotesis terdaftar (tanpa default di kode),
    replay hanya membaca bar yang diekspor dan menulis ke build/.
-4. Larangan, pengecekan, isi PR dan pembaruan tabel R5 sama seperti perintah WP1 butir 3–6.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini di tabel R5.
 ```
 
 **Perintah WP5**
 ```text
 Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP4 sudah di-merge).
-1. Baca CLAUDE.md, docs/ROADMAP.md bagian "Rencana kerja perbaikan": R2, R3, "WP5 — Hipotesis perankingan antarpair",
+1. Baca CLAUDE.md, docs/ROADMAP.md "Lampiran A — Rencana kerja perbaikan": R2, R3, "WP5 — Hipotesis perankingan antarpair",
    docs/research/VALIDATION_PROTOCOL.md, docs/research/MARKET_INTELLIGENCE.md, src/katarina/engines/opportunity.py
    (JANGAN diubah) dan src/katarina/research/market_intelligence.py.
 2. Kerjakan HANYA WP5, satu PR "WP5: hipotesis perankingan antarpair (riset)".
 3. Wajib: semua bobot dan ambang dibaca dari parameters spec yang terdaftar di HypothesisRegistry; setiap varian
    bobot adalah hipotesis baru (jumlah percobaan bertambah); korelasi dihitung kausal dari data sebelum entry;
    tidak ada perubahan pada jalur keputusan observer.
-4. Larangan, pengecekan, isi PR dan pembaruan tabel R5 sama seperti perintah WP1 butir 3–6.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
 ```text
 Repo alfaauliau-katarinaAI/Katarina-AI. Buka PR #<nomor> dan baca semua komentar review.
-Perbaiki setiap poin di branch PR yang sama (commit baru, jangan force-push), ikuti docs/ROADMAP.md R2, jalankan
-ulang semua pengecekan R2 langkah 6, lalu balas setiap komentar dengan apa yang diubah (atau alasan bila tidak diubah).
+Perbaiki setiap poin di branch PR yang sama (commit baru, jangan force-push), ikuti R6.0 Aturan umum dan R2,
+jalankan ulang semua pengecekan R2 langkah 6, perbarui bagian Pengujian dan Daftar periksa R7 di deskripsi PR, lalu
+balas setiap komentar dengan apa yang diubah (atau alasan bila tidak diubah). Jangan memperluas cakupan PR.
 ```
 
 ### R7. Daftar periksa review Claude (dipakai saat meninjau PR pelaksana)
