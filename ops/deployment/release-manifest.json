@@ -760,6 +760,11 @@
       "normalized_sha256": "1a150ad5f82b2caf1bca6b8a8b4f6e35b6c32f588c3db0cb52d3d00652d73925",
       "sha256": "1a150ad5f82b2caf1bca6b8a8b4f6e35b6c32f588c3db0cb52d3d00652d73925"
     },
+    "src/katarina/governance/promotion_gate.py": {
+      "bytes": 4726,
+      "normalized_sha256": "f84c0883ae8230b0046cb4d94dca369be240a4b83099f899b2b41ad2f0dd20af",
+      "sha256": "f84c0883ae8230b0046cb4d94dca369be240a4b83099f899b2b41ad2f0dd20af"
+    },
     "src/katarina/governance/self_evolution_audit.py": {
       "bytes": 5798,
       "normalized_sha256": "0ebe6f06ab93687c017b48f87879be86635a0e43219d57bd5fb26ebd702c14fe",
