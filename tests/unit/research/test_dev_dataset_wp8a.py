@@ -104,6 +104,23 @@ class DevDatasetTests(unittest.TestCase):
             self.assertEqual((Path(first) / "EURUSD.vx/M5.csv.gz").read_bytes(),
                              (Path(second) / "EURUSD.vx/M5.csv.gz").read_bytes())
 
+    def test_archives_are_hashed_and_loaded_without_reading_entire_gzip(self):
+        from unittest.mock import patch
+
+        original = Path.read_bytes
+
+        def reject_full_archive_read(path):
+            if path.name.endswith(".csv.gz"):
+                raise AssertionError("unbounded_archive_read")
+            return original(path)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.object(Path, "read_bytes", reject_full_archive_read):
+                export_dev_bars(FakeBroker(), ("EURUSD.vx",), start=DAY,
+                                end=DAY + timedelta(days=1), out=tmp)
+                dataset = load_dev_dataset(tmp)
+        self.assertEqual(len(dataset["EURUSD.vx"]["M5"]), 2)
+
     def test_tampered_file_or_manifest_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
