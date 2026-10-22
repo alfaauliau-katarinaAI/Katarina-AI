@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — aturan perapian baru dan path VPS di dokumen
+
+- `docs/maintenance/CLEANUP_PLAN.md` ditulis ulang: aturan "arsipkan, jangan hapus" diganti keputusan Owner
+  "hapus langsung lewat PR, riwayat di Git", daftar identitas Katarina yang dipertahankan, status semua tahap,
+  dan sisa perapian yang diketahui. Bagian perapian di CLAUDE.md dan aturan `config/` disesuaikan.
+- Tiga dokumen arsitektur (full system test, portable host, unified cognitive cycle) kini memakai layout VPS
+  sekarang (`C:\Katarina\code`, `C:\Katarina\python312`, `C:\Katarina\state`) alih-alih `C:\KatarinaDev`.
+  Tidak ada perubahan kode.
+
 ## 2026-10-22 — sinkronisasi stop drawdown harian 35% dan status proyek
 
 - Stop entry baru di drawdown harian **35%** (keputusan Owner) kini sama di semua tempat: `config/risk_governor_v2.json`,

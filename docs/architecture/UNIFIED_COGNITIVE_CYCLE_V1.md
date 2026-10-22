@@ -52,7 +52,7 @@ production self-code writer, trading order source, or external LLM impersonation
 $env:PYTHONPATH = "src;."
 py -3 -B -m unittest tests.unit.intelligence.test_unified_cognitive_cycle -q
 py -3 -B -m unittest tests.integration.test_unified_katarina_stack -q
-py -3 -B scripts/ai/verify_unified_katarina.py --shadow-db "C:\KatarinaDev\artifacts\contextual-observer\context.sqlite3"
+py -3 -B scripts/ai/verify_unified_katarina.py --shadow-db "C:\Katarina\state\readonly-observer\context.sqlite3"
 ```
 
 The checker and optional shadow DB probe are **strictly read-only** and never
@@ -60,11 +60,11 @@ start MT5. The cognitive ledger does not appear in the original data unless
 the already-existing canonical observer is *independently authorized and
 actually invoked* with terminal trading disabled.
 
-For live-data-like persistence tests, the owner VPS contains an isolated
-SQLite **backup** and acceptance evidence in
-`C:\KatarinaDev\artifacts\cognitive-v1-20261014\`. This is a
-research snapshot of 7 observations, **not** live broker execution. The
-original `context.sqlite3` is unchanged by this test.
+The 14 Oct 2026 persistence evidence (an isolated SQLite backup of 7 research
+observations, **not** live broker execution) lived in the old VPS layout
+`C:\KatarinaDev\artifacts\cognitive-v1-20261014\`, which no longer exists. On the
+current VPS the observer state is `C:\Katarina\state\readonly-observer\`; the probe
+above only reads it and never changes the original `context.sqlite3`.
 
 ## Release acceptance constraints
 

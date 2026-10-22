@@ -23,7 +23,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 | VPS (Windows Server 2012 R2) | Diakses lewat Desktop Commander. Runtime: `C:\Katarina\code` (checkout `main`), Python 3.12 di `C:\Katarina\python312`, peluncur observer `C:\Katarina\run-observer.ps1`. Tooling VPS lama dihapus 22 Okt |
 | `scripts/pc/`, `scripts/deployment/` | Environment privat PC, redeploy + `release_manifest.py` |
 | `mt5/` | EA dan include MQL5 (`Experts/`, `Include/`, `Tests/`) |
-| `config/` | Konfigurasi JSON (dimuat lewat nama dinamis; `config/stages/stageNN.json` dibaca per nomor) — jangan hapus walau tampak tak dirujuk |
+| `config/` | Konfigurasi JSON. `config/stages/stageNN.json` dibaca per nomor (jangan dihapus); config lain hanya boleh dihapus jika tidak ada kode yang memuat namanya |
 | `protocol/` | Skema pesan KAT1 — kontrak validation/health engine (implementasi transport sudah dipensiunkan) |
 | `website/` | Situs statis publik (Cloudflare Pages); JSON di dalamnya ditulis workflow |
 | `sites/runtime-monitor/`, `functions/api/`, `oauth_gateway/`, `services/` | Worker monitor runtime, API Pages, gateway OAuth, relay monitor |
@@ -61,21 +61,13 @@ hygiene dan dependency links PASS.
   (`.gitignore` + `audit_repo_hygiene.py` menjaganya).
 - Satu otak canonical: jangan menambah observer/worker paralel atau jalur eksekusi tersembunyi.
 
-## Rencana perapian bertahap
+## Aturan dan status perapian
 
-Rencana 8 tahap Owner ada di `docs/maintenance/CLEANUP_PLAN.md` (aturan wajib di bagian atasnya:
-tanpa perubahan perilaku, satu tahap satu PR, arsipkan bukan hapus, perbarui CLAUDE.md dan CHANGELOG).
-
-| Tahap | Status |
-|---|---|
-| 1. Peta modul runtime | Selesai 21 Okt — `docs/maintenance/RUNTIME_MODULE_MAP.md` |
-| 2. Pensiunkan otak lama | Selesai: `intelligence/brain.py` (`KatarinaAIBrain`) + dependennya diarsipkan (2a); otak berversi diganti nama kemampuan di Tahap 3 |
-| 3. Subpaket `intelligence/` | Selesai: modul dipindah dan semua rujukan aktif diganti (3a); shim lokasi lama dihapus (3b). Import `katarina.intelligence.<nama_lama>` kini gagal — pakai path subpaket |
-| 4. Nama fungsi `body/stageNN` | Selesai: `body/stageNN.py` → nama fungsi (mis. `stage16` → `risk_governor`), manifest `implementation_module` diperbarui, nama file manifest tetap. Alias `katarina.body.stageNN` sudah dihapus 21 Okt |
-| 5. Sederhanakan workflow | Selesai: 12 workflow `stage07-*` → `stage07-transport.yml`, 4 workflow stage06/08/09 → `stage06-09-clearance.yml` (pemicu manual, tidak digabung ke Body CI karena pemicunya beda). Lima workflow riset lama tanpa run 30 hari (v9, v10, tournament, replay, frozen-xau) → `archive/.github/workflows/` |
-| 6. Logika script ke `src` | Selesai: `verify_unified_katarina` → `katarina.governance.unified_verification`, `audit_self_evolution_runner` → `katarina.governance.self_evolution_audit`; script tinggal CLI tipis. Dikecualikan: `hf_archive_sync.py` (layanan mandiri stdlib, dimuat lewat path dari venv HF terpisah, systemd, installer), `mt5_shadow_lab.py` (sudah CLI argparse yang mendelegasikan ke `src`). `scripts/research` tidak diubah logikanya; 3 script dari workflow riset yang diarsipkan ikut diarsipkan |
-| 7. Website ke repo sendiri | Disiapkan, **menunggu Owner**: `scripts/deployment/export_website_repo.py` + langkah di `docs/deployment/STANDALONE_WEBSITE_EXTRACTION.md`. Pembuatan repo via integrasi GitHub ditolak 403; `website/` dkk. tetap di sini sampai Cloudflare Pages terbukti deploy dari repo baru |
-| 8. Satu sumber status | Selesai: `docs/PROJECT_STATUS.md` ditulis ulang sebagai satu-satunya status; README hanya ringkas + tautan; status 16 Okt, `CURRENT_PROJECT_HANDOFF.md`, handoff 10/13 Okt, snapshot 11 Okt → `archive/docs/` |
+Aturan wajib ada di `docs/maintenance/CLEANUP_PLAN.md` (diperbarui 22 Okt): tanpa perubahan perilaku,
+satu kelompok perubahan satu PR, **yang tidak dipakai dihapus langsung — bukan diarsipkan** (keputusan Owner
+22 Okt; tidak ada folder/branch/tag arsip baru), jaga daftar identitas Katarina di dokumen itu, perbarui
+CLAUDE.md dan CHANGELOG. Rencana 8 tahap 21 Okt dan perampingan A–E 22 Okt sudah selesai; hanya Tahap 7
+(website ke repo sendiri) yang menunggu Owner. Sisa yang diketahui juga tercatat di sana.
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`
