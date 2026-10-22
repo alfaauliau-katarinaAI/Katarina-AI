@@ -138,6 +138,12 @@ regime, hash); walk-forward; penguncian holdout yang ditegakkan kode; model biay
 slippage dan komisi; pembanding baseline (tidak trading, entry acak dengan exit yang sama, aturan tren sederhana);
 pencatatan jumlah percobaan.
 
+Alat (repo, 22 Okt 2026): `katarina.research.validation` + `scripts/research/validate_strategy.py`, protokol tertulis
+di [`docs/research/VALIDATION_PROTOCOL.md`](research/VALIDATION_PROTOCOL.md): registry hipotesis berantai hash (jumlah
+percobaan), pemisahan pengembangan/holdout/CELAH ber-hash, `HoldoutVault` (dibuka sekali, tercatat), model biaya dari
+spread teramati, penolakan kebocoran, tiga pembanding, walk-forward, bootstrap blok mingguan terkoreksi, laporan
+ber-hash. Kriteria di bawah dibuktikan oleh `tests/unit/research/test_validation.py`.
+
 Kriteria kelulusan:
 - Hasil uji deterministik: dijalankan dua kali pada data dan kode yang sama menghasilkan angka identik.
 - Holdout tidak bisa dibaca tanpa membuat catatan pembukaan (dibuktikan dengan tes).

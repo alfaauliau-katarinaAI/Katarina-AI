@@ -1,5 +1,17 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — Tahap 1: alat validasi ilmiah
+
+- `katarina.research.validation`: registry hipotesis append-only berantai hash (ID = hash definisi; definisi berubah =
+  percobaan baru), `DataSplit` pengembangan/holdout/CELAH ber-hash, `HoldoutVault` (holdout hanya keluar lewat
+  pembukaan tercatat, satu kali per hipotesis, setelah periode selesai), `CostModel` (½ spread entry + ½ spread exit +
+  slippage + komisi → R bersih), penolakan kebocoran (data setelah entry, lintas batas periode, CELAH, tumpang
+  tindih), pembanding tanpa trade / sisi acak / tren sederhana, walk-forward 28 hari, bootstrap blok mingguan dengan
+  koreksi Bonferroni, laporan deterministik ber-hash. Holdout: ≥100 trade, PF ≥1,2, batas bawah >0; sampel kurang =
+  PENDING.
+- `scripts/research/validate_strategy.py` (register / development / holdout) dan protokol
+  `docs/research/VALIDATION_PROTOCOL.md`. Tidak ada strategi baru dan tidak ada berkas terkunci yang diubah.
+
 ## 2026-10-22 — Tahap 0: ledger observasi, tick broker, pemeriksa kesehatan data
 
 - `katarina.intelligence.operations.observation_ledger`: observer mencatat bid/ask/spread setiap simbol setiap siklus

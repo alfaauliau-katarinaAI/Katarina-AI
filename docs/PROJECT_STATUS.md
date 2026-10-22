@@ -24,7 +24,8 @@ hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
 1. **Tahap 0 — Observer & data** (sedang dikerjakan): alat repo selesai 22 Okt (ledger snapshot per siklus,
    pengunduh tick broker per hari, `scripts/ai/check_stage0_health.py`). Sisa: Owner login akun demo di MT5 VPS
    (Algo Trading OFF), konfigurasi koneksi privat, observer read-only diaktifkan, lalu 10 hari bursa data.
-2. **Tahap 1 — Validasi ilmiah:** protokol uji, walk-forward, holdout terkunci, biaya bersih, baseline.
+2. **Tahap 1 — Validasi ilmiah:** alat dan protokol selesai 22 Okt (`katarina.research.validation`,
+   [protokol](research/VALIDATION_PROTOCOL.md)); kriterianya dibuktikan tes. Dipakai untuk semua strategi berikutnya.
 3. Tahap 2–5 (market intelligence, risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan,
    masing-masing dengan kriteria kelulusan di roadmap.
 4. Keputusan Owner di luar roadmap: repo private atau pemisahan website (Tahap 7 perapian), 15 folder lama
