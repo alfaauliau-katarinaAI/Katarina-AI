@@ -866,20 +866,20 @@ Menunggu Owner · Dikerjakan Claude.
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
 | WP1 | Selesai (merge); penerapan VPS di WP6 | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
-| WP2 | Sedang dikerjakan — ChatGPT, PR #190 (draft) | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | – |
-| WP3 | Sedang dikerjakan — ChatGPT, PR #191 (draft) | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | – |
+| WP2 | Sedang dikerjakan — ChatGPT, PR #190 (draft) | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | Konflik `dirty` terhadap `main`; Claude selaraskan #190 lebih dulu, ulang CI dan verifikasi manifest resmi `MATCH`. |
+| WP3 | Sedang dikerjakan — ChatGPT, PR #191 (draft) | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | Konflik `dirty`; revisi #191 menangani `published_utc=None`. Claude selaraskan setelah WP2, ulang CI pada HEAD, dan verifikasi manifest `MATCH`. |
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP6 | Menunggu prasyarat (WP11) | – | Tahap A 22 Okt 19:58–22:02 UTC: RAM bebas 853 MB, siklus 1–4 dtk, 0 quote FAILED, tetapi semua siklus gagal saat jeda emas/indeks (T9). Dijeda: berkas VPS diganti nama `observer_universe.json.wp6-paused`; dilanjutkan Claude setelah WP11 |
-| WP8a | Sedang dikerjakan — ChatGPT, PR #195 (draft) | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | – |
+| WP8a | Sedang dikerjakan — ChatGPT, PR #195 (draft) | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | Konflik `dirty`; revisi #195 mengganti `read_bytes()` arsip gzip dengan hash/pembacaan streaming. Claude ulang CI pada HEAD, verifikasi manifest `MATCH`; loader hasil bar masih memakai RAM. |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
-| WP9a | Sedang dikerjakan — ChatGPT, PR #196 (draft) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | – |
+| WP9a | Sedang dikerjakan — ChatGPT, PR #196 (draft) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | Konflik `dirty`; #196 tetap diagnosis WAIT baca-saja (tanpa optimasi dari holdout). Claude selaraskan, ulang CI pada HEAD, dan verifikasi manifest `MATCH`. |
 | WP9b | Menunggu prasyarat (WP3) | – | – |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Menunggu prasyarat (WP2) | – | – |
 | WP10b | Menunggu prasyarat (WP8a) | – | – |
-| WP11 | Siap dikerjakan (prioritas; paralel) | – | – |
+| WP11 | Siap dikerjakan (prioritas; paralel) | – | PR #201 `clean`, CI Ubuntu/Windows lulus (1.240 unit, 71 static, 211 integrasi). Tes pasar tutup nyata menunjukkan 3 quote `OK` + 2 `FAILED`, bertentangan dengan butir WP11.3–4; Claude putuskan kriteria/penanganan sebelum merge dan WP6. |
 | WP7 | Menunggu Owner | – | – |
 
 ### R6. Perintah siap pakai untuk pelaksana
