@@ -47,6 +47,44 @@ Pengembangan boleh berjalan **paralel**: alat validasi Tahap 1 (dan persiapan ta
 Tahap 0 mengumpulkan data. Yang wajib **berurutan** adalah **kelulusan tahap dan pemberian kewenangan**. Pekerjaan
 paralel tidak boleh membuka holdout, mengubah strategi aktif, atau melonggarkan Risk Governor.
 
+## Catatan implementasi — 22 Oktober 2026
+
+Catatan untuk review Claude/Owner: pekerjaan berikut sudah diimplementasikan pada branch PR,
+tetapi **belum digabung ke `main` pada saat pencatatan**. Ini kemajuan perangkat lunak, bukan
+kelulusan tahap, bukti profit, atau izin mengirim order. Pengumpulan ≥ 10 hari bursa Tahap 0
+tetap berjalan; persiapan tahap berikutnya tidak perlu menunggu pengumpulan tersebut selesai.
+
+| Tahap | Perubahan yang tersedia | Bukti / PR | Status |
+|---|---|---|---|
+| 0–1 | Deduplicasi pemulihan reconnect, timeout sejak kegagalan pertama; penolakan outcome masa depan, CELAH, baseline tidak lengkap, mismatch hash kode dan penggunaan ulang holdout pasca-paparan | [#177](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/177) | Penguatan alat; bukan kelulusan observasi/strategi |
+| 2 | Eksperimen filter pasar pada data pengembangan memakai registry, split, biaya dan validasi Tahap 1; alasan WAIT dan perbandingan sebelum/sesudah filter | [#178](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/178), [panduan](research/MARKET_INTELLIGENCE.md) | Persiapan riset; filter aktif belum diubah |
+| 3 | Adapter pembatas risiko DEMO dan laporan deterministik dari outbox existing secara baca-saja | [#179](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/179), [panduan](research/DEMO_READINESS.md) | Implementasi persiapan diuji; belum dihubungkan ke worker aktif |
+
+Urutan integrasi PR bertumpuk: **#177 → #178 → #179**. Untuk memeriksa seluruh perubahan,
+gunakan branch `codex/roadmap-demo-risk`; membaca `main` saja belum mencakup PR tersebut.
+
+Rincian Tahap 3 untuk review:
+
+- `src/katarina/research/demo_readiness.py`: `DemoRiskOverlay` mempertahankan veto Risk Governor,
+  hanya menurunkan anggaran risiko atau menghentikan entry. Nilai batas wajib eksplisit;
+  **0,5% per trade / 3% stop harian masih usulan dan parameter tes**, bukan profil final Owner.
+- `scripts/research/check_demo_readiness.py`: laporan expectancy bersih, profit factor, drawdown
+  terealisasi menurut urutan observasi, win rate BUY/SELL per regime, biaya, slippage per simbol,
+  alasan WAIT, order ditolak dan status rekonsiliasi tersimpan. Win rate bukan akurasi probabilitas.
+- Hanya CLOSED valid masuk metrik hasil. Status tak jelas, outcome invalid, dan posisi duplikat
+  membuat rekonsiliasi tidak lengkap. Data kosong tidak dianggap lulus. Laporan ini bukan audit broker
+  langsung atau bukti bahwa rekonsiliasi demo nyata sudah 100%; drawdown tidak mencakup posisi terbuka.
+- Bukti implementasi commit `c0f90edddc5ff4ae57aea2936e1f86332386d890`: 13 tes baru;
+  regresi lokal 1.218 unit, 71 static (4 skip), 205 integration lulus.
+  [CI 39729427927](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/39729427927)
+  lulus untuk Body, portable Windows dan Ubuntu. Bukti ini merujuk commit implementasi sebelum
+  penambahan catatan roadmap ini.
+
+Yang masih harus dibuktikan: kelulusan data Tahap 0, hasil validasi/filter dari data yang sah,
+profil DEMO final dari Owner, dan rekonsiliasi broker nyata sesuai kriteria tahap.
+Holdout privat tetap `BLOCKED_PRIVATE_INPUT_FILES_NOT_PROVIDED`; tidak ada klaim alpha lulus.
+Kelulusan tahap dan promosi tetap berurutan; LIVE OFF dan batas utama 35% tetap berlaku.
+
 ## Pemisahan data
 
 - **Periode pengembangan** dan **periode holdout** ditentukan berdasarkan tanggal sebelum data dilihat, dan

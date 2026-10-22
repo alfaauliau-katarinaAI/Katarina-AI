@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — catatan roadmap untuk review Claude/Owner
+
+- Roadmap mencatat implementasi PR #177–#179, urutan integrasi, branch review, bukti tes/CI
+  Tahap 3 dan pekerjaan yang belum terbukti. CLAUDE.md menunjuk catatan tersebut.
+- Status persiapan alat dibedakan dari kelulusan tahap; kriteria roadmap dan kebijakan risiko tetap.
+
 ## 2026-10-22 — persiapan Tahap 3: pembatas DEMO dan laporan outbox
 
 - Adapter `DemoRiskOverlay` mempertahankan veto governor lalu membatasi anggaran dan DD harian lebih ketat;

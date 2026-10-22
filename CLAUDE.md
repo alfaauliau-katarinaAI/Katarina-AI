@@ -6,6 +6,12 @@ riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktob
 
 ## Apa ini
 
+**Handoff roadmap 22 Okt:** baca `docs/ROADMAP.md`, bagian "Catatan implementasi".
+PR #177 → #178 → #179 memuat penguatan Tahap 0–1 dan persiapan Tahap 2–3;
+seluruhnya tersedia di branch `codex/roadmap-demo-risk`, belum digabung ke `main` saat dicatat.
+Bukti tes/CI dan pekerjaan yang masih menunggu data/validasi tercantum di roadmap.
+Implementasi alat tidak berarti tahap lulus atau trading diaktifkan.
+
 Sistem riset trading MT5 berbasis Python (bahasa dokumen utama: Indonesia).
 **Research-only / LIVE OFF**: tidak ada jalur kirim order live. Mode DEMO forward dan
 lab riset VPS ada, tetapi Risk Governor (`src/katarina/engines/risk.py`) independen dan
