@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — rencana kerja perbaikan di roadmap
+
+- `docs/ROADMAP.md`: bagian "Rencana kerja perbaikan" berisi temuan VPS 22 Okt (3 simbol saja, 100% WAIT dengan 7
+  pemblokir permanen, jalur berita tanpa artikel, pengunduh tick memakan memori) dan paket kerja WP1–WP7 untuk
+  pelaksana (daftar simbol eksplisit 7 simbol inti, tick streaming, diagnosis berita, jurnal kandidat riset,
+  hipotesis perankingan antarpair, penerapan VPS bertahap, keputusan Owner), cara kerja standar Claude untuk
+  pelaksana (urutan kerja, standar kode, pengecekan, PR), peta alur berkas observer, urutan pengerjaan (R0),
+  perintah siap pakai per paket (R6) dan daftar periksa review (R7). Tidak ada perubahan kode.
+
 ## 2026-10-22 — ekspor konteks Tahap 2 ber-lineage dari tick broker Tahap 0
 
 - `katarina.research.context_export` + `scripts/research/export_market_contexts.py` membangun `contexts.jsonl`
