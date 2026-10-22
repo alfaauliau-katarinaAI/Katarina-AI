@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP8a: ekspor bar data pengembangan saja (#195)
+
+- Tambah ekspor historis M5, M15, H1, H4 untuk core simbol observer, simpan spread point, gap dan metadata broker.
+- Tambah dataset gzip deterministik + manifest SHA-256 serta pemuat offline yang memeriksa hash, bar tertutup dan cutoff
+  13 Okt 2026 00:00 UTC; tes sintetis menolak holdout di kedua jalur dan modifikasi data.
+- CLI hanya untuk eksekusi manual Claude saat pasar tutup; file terkunci tetap, LIVE OFF; tidak mengubah VPS.
+
+
 ## 2026-10-23 — roadmap: WP9 membongkar tembok blokir keputusan
 
 - Lampiran A ditambah WP9 (prioritas Owner): klasifikasi pemblokir (A input observer, B syarat bukti terkunci,

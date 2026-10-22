@@ -752,7 +752,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP6 | Sedang dikerjakan — Claude: tahap A 5 simbol sejak 22 Okt 19:58 UTC; 7 simbol setelah cek 2 jam | – | Dimajukan sebelum WP2 karena RAM terukur cukup (±150 MB/hari tick XAUUSD vs ±700 MB bebas); jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
-| WP8a | Siap dikerjakan (paralel dengan WP2/WP3) | – | – |
+| WP8a | Sedang dikerjakan — ChatGPT, PR #195 (draft) | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | Ekspor M5–H4, cutoff holdout pada ekspor/muat, SHA-256 manifest, uji broker sintetis; belum merge/deploy |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
 | WP9a | Siap dikerjakan (prioritas; paralel) | – | – |
 | WP9b | Menunggu prasyarat (WP3) | – | – |
