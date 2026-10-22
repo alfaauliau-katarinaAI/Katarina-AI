@@ -766,9 +766,10 @@ kelas A berjalan di balik opsi yang default-nya perilaku lama; perubahan kelas B
    sampai Claude menambahkan catatan yang disetujui Owner. Tandai PR "menunggu persetujuan Owner".
 
 **WP9d — Detektor entry teknis + counterfactual kelas C (setelah WP4 replay dan WP8b)**
-- Tidak ada perubahan langsung. Usulan perbaikan detektor didaftarkan sebagai hipotesis (WP8), diuji pada data
-  pengembangan + holdout historis, lalu dipromosikan lewat gerbang promosi bila lulus. Paket rinci ditulis Claude
-  setelah hasil WP4/WP8 ada.
+- Tidak ada perubahan langsung. Usulan perbaikan detektor didaftarkan sebagai hipotesis (WP8). Semua varian
+  dibandingkan **hanya** pada data pengembangan; holdout dibuka **satu kali** untuk satu kandidat final setelah
+  pemilihan selesai (bagian 5), tidak pernah untuk membandingkan varian. Bila lulus, kandidat dipromosikan lewat
+  gerbang promosi. Paket rinci ditulis Claude setelah hasil WP4/WP8 ada.
 - Counterfactual ("seandainya detektor tidak memblokir"): varian detektor didaftarkan sebagai hipotesis dan
   disimulasikan **hanya** pada `dev_dataset` (< cutoff), dibandingkan dengan detektor asli pada periode yang sama.
   Kartu WAIT forward (`contextual_decisions`, `decision_shadow`) dan laporan WP9a **tidak boleh** dipakai untuk
@@ -870,9 +871,9 @@ Menunggu Owner · Dikerjakan Claude.
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP6 | Menunggu prasyarat (WP11) | – | Tahap A 22 Okt 19:58–22:02 UTC: RAM bebas 853 MB, siklus 1–4 dtk, 0 quote FAILED, tetapi semua siklus gagal saat jeda emas/indeks (T9). Dijeda: berkas VPS diganti nama `observer_universe.json.wp6-paused`; dilanjutkan Claude setelah WP11 |
-| WP8a | Siap dikerjakan (paralel dengan WP2/WP3) | – | – |
+| WP8a | Sedang dikerjakan — ChatGPT, PR #195 (draft) | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | – |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
-| WP9a | Siap dikerjakan (prioritas; paralel) | – | – |
+| WP9a | Sedang dikerjakan — ChatGPT, PR #196 (draft) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | – |
 | WP9b | Menunggu prasyarat (WP3) | – | – |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |

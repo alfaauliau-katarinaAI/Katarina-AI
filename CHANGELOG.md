@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: holdout WP9d satu kali, R5 WP8a/WP9a sinkron
+
+- WP9d: varian detektor hanya dibandingkan pada data pengembangan; holdout dibuka satu kali untuk kandidat final.
+- R5: WP8a dan WP9a ditandai sedang dikerjakan (#195, #196) agar tidak diambil dua kali.
+
 ## 2026-10-23 — WP6 dijeda; WP11 jam broker saat sebagian pasar tutup
 
 - Mode 5 simbol di VPS (22 Okt 19:58–22:02 UTC): RAM dan durasi siklus aman, tetapi 21:00–22:02 UTC semua siklus
