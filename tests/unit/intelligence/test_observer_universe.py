@@ -46,6 +46,17 @@ class ObserverUniverseTests(unittest.TestCase):
                                   "GBPUSD.vx", "USDJPY.vx", "AUDUSD.vx"))
         self.assertEqual(seen, [(3, ("XAUUSD.vx", "EURUSD.vx"))])
 
+    def test_rotation_never_fills_missing_core_with_extra_slots(self):
+        universe = ObserverUniverse(
+            ("XAUUSD.vx", "NAS100.vx", "US30.vx", "JPN225.vx"), 2)
+        catalog = [sym(x) for x in
+                   ("XAUUSD.vx", "A.vx", "B.vx", "C.vx", "D.vx")]
+        chosen, missing = select_symbols(
+            universe, catalog,
+            rotation=lambda budget, exclude: ["A.vx", "B.vx", "C.vx", "D.vx"])
+        self.assertEqual(chosen, ("XAUUSD.vx", "A.vx", "B.vx"))
+        self.assertEqual(missing, ("NAS100.vx", "US30.vx", "JPN225.vx"))
+
     def test_bad_config_is_rejected_before_mt5(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / "u.json"
