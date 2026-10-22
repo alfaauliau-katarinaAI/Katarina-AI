@@ -289,6 +289,23 @@ class BrainObserver:
                 "live_execution_authorized":False,"orders_submitted":0,"symbols":{},
                  "broker_account_monitor":inspect_broker_account(
                      mt5,observed_at_utc=now)}
+        # Discovery is optional research telemetry within THIS observer.
+        # It never enters the Stage-0 quote ledger, setup decision or risk gate.
+        if os.environ.get("KATARINA_DISCOVER_ALL_BROKER_MARKETS") == "1":
+            try:
+                from katarina.intelligence.broker.market_discovery import (
+                    discover_quote_batch,
+                )
+                report["broker_market_discovery"] = discover_quote_batch(
+                    mt5, store.db, catalog, now, clock_shift_hours=offset,
+                    budget=12, deep_symbols=symbols,
+                )
+            except Exception:
+                # A survey failure must not interrupt canonical data collection.
+                report["broker_market_discovery"] = {
+                    "status": "BROKER_DISCOVERY_UNAVAILABLE",
+                    "entries_authorized": 0, "orders_submitted": 0,
+                }
         # Historical quote-only simulations NEVER count as independently
         # settled forward broker fills. Missing/corrupt files fail closed.
         try:
