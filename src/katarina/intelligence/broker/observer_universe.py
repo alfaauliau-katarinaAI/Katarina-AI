@@ -70,9 +70,11 @@ def select_symbols(universe: ObserverUniverse, catalog, *,
         proposed = rotation(universe.rotating_slots, universe.core)
         if not isinstance(proposed, (list, tuple)):
             raise ValueError("INVALID_OBSERVER_ROTATION")
+        selected_rotating = 0
         for name in proposed:
             if (name in available and name not in universe.core
                     and name not in selected
-                    and len(selected) < len(universe.core) + universe.rotating_slots):
+                    and selected_rotating < universe.rotating_slots):
                 selected.append(name)
+                selected_rotating += 1
     return tuple(selected), tuple(missing)
