@@ -328,6 +328,11 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | 2 | WP2 — tick streaming hemat memori | Pelaksana | WP1 | ±2 berkas, ±250 baris | Sedang dikerjakan (#190) |
 | 2 (paralel) | WP3 — diagnosis jalur berita | Pelaksana | WP1 (di-merge setelah WP2) | ±4 berkas, ±200 baris | Sedang dikerjakan (#191) |
 | 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Siap dikerjakan |
+| 2 (paralel, prioritas) | WP9a — peta tembok blokir (baca-saja) | Pelaksana | — | ±3 berkas, ±250 baris | Siap dikerjakan |
+| 3b | WP9b — input keputusan jujur + evaluasi bayangan | Pelaksana | WP3 di-merge | ±6 berkas, ±400 baris | — |
+| 3c | Jalankan WP9a di VPS; aktifkan `measured_inputs` bila Owner setuju | Claude + Owner | WP9a, WP9b | — | — |
+| 5b | WP9c — syarat bukti proporsional (berkas terkunci, gerbang promosi) | Pelaksana → Claude + Owner | WP9a + WP9b + ≥ 3 hari bursa data `decision_shadow` | ±3 berkas, ±250 baris | — |
+| 6b | WP9d — detektor entry teknis (hipotesis) | Claude menulis paket | WP4 + WP8b | — | — |
 | 3 | Review + merge WP2, WP3, WP8a | Claude | PR dibuka | — | — |
 | 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP1 (dimajukan; RAM cukup, terukur) | — | Tahap A berjalan (5 simbol) |
 | 4 (paralel) | Ekspor dataset pengembangan di VPS (akhir pekan, pasar tutup) | Claude | WP8a | — | — |
@@ -358,9 +363,9 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | T1 | Observer hanya mengamati `EURUSD.vx`, `GBPUSD.vx`, `USDJPY.vx`. Program holdout butuh 7 simbol; Tahap 4 mulai dari XAUUSD | `BrainObserver.run` memotong `resolve_broker_symbols(catalog).symbols[:max_symbols]`; urutan tetap `MAJORS, CROSSES, OPTIONAL_MARKETS` di `broker/broker_scan_universe.py`; `JPN225` tidak ada di universe | Sebagian: WP1 di `main`; VPS 5 simbol sejak 22 Okt 19:58 UTC (WP6 tahap A); 7 simbol menunggu cek |
 | T2 | Ketujuh simbol tersedia dan bisa ditrade: `XAUUSD.vx`, `NAS100.vx`, `US30.vx`, `JPN225.vx`, `EURUSD.vx`, `GBPUSD.vx`, `USDJPY.vx` (`trade_mode=4`). Versi tanpa `.vx` ada tetapi `trade_mode=0` | Probe baca-saja: baca 4 timeframe + tick 90 dtk ≈ 0,2–1,4 dtk/simbol (±5 dtk untuk 7); RAM bebas ±885 MB dari 2 GB; spread XAUUSD 0,33, NAS100 3,4, US30 3,3, JPN225 9,5 | Dipakai sebagai dasar WP1/WP6 |
 | T3 | Tick satu hari XAUUSD ≈ 355 ribu (3 dtk). `collect_tick_days` menampung seluruh hari dalam dict/list sebelum menulis (±100–150 MB) | `operations/observation_ledger.py::_fetch_day`, `_write_ticks`, `reconcile` | Terbuka → WP2 (#190) |
-| T4 | 100% keputusan WAIT (381 baris) dengan 7 pemblokir di setiap baris: `system_unhealthy`, `insufficient_verified_forward_experience`, `no_verified_relevant_news`, `high_impact_news_blackout`, `macro_event_risk_too_high`, `macro_policy_transmission_not_verified`, `no_confirmed_closed_candle_entry` | Tabel `contextual_decisions` (`blockers_json`) | Terbuka → diagnosis WP3/WP4; perubahan logika hanya lewat gerbang promosi |
-| T5 | Tanpa berita segar yang cocok, `MultiSourceNewsEngine.assess` mengembalikan `ready=False, blackout=True, risk=1.0`, walau kalender `calendar_verified_clear`. Artikel resmi tersimpan: 0; feed Fed/ECB/BoE terambil OK. `load_articles` melewati item yang lebih tua dari `FRESH_SECONDS` (6 jam) **tanpa mencatat diagnosis**, sehingga `full_article_checks` kosong | `news/news_intelligence.py` (cabang `if not matched`), `cognition/observer.py::load_articles`, `news/verified_policy_context.py` | Terbuka → WP3 (#191) |
-| T6 | Observer selalu mengirim `system_healthy=False` dan `resolved_experience=[]` (sengaja fail-closed); `technical_signal` tidak pernah BUY/SELL selama 10 jam di 3 pasangan | `cognition/observer.py` di sekitar `RiskSituation(...)`; logika di `cognition/contextual_decision_intelligence.py` (terkunci) | Terbuka → WP4 (replay sinyal) |
+| T4 | 100% keputusan WAIT (381 baris) dengan 7 pemblokir di setiap baris: `system_unhealthy`, `insufficient_verified_forward_experience`, `no_verified_relevant_news`, `high_impact_news_blackout`, `macro_event_risk_too_high`, `macro_policy_transmission_not_verified`, `no_confirmed_closed_candle_entry` | Tabel `contextual_decisions` (`blockers_json`) | Terbuka → WP9 (a: peta, b: input jujur, c: syarat bukti terkunci, d: detektor) |
+| T5 | Tanpa berita segar yang cocok, `MultiSourceNewsEngine.assess` mengembalikan `ready=False, blackout=True, risk=1.0`, walau kalender `calendar_verified_clear`. Artikel resmi tersimpan: 0; feed Fed/ECB/BoE terambil OK. `load_articles` melewati item yang lebih tua dari `FRESH_SECONDS` (6 jam) **tanpa mencatat diagnosis**, sehingga `full_article_checks` kosong | `news/news_intelligence.py` (cabang `if not matched`), `cognition/observer.py::load_articles`, `news/verified_policy_context.py` | Terbuka → WP3 (#191), WP9b |
+| T6 | Observer selalu mengirim `system_healthy=False` dan `resolved_experience=[]` (sengaja fail-closed); `technical_signal` tidak pernah BUY/SELL selama 10 jam di 3 pasangan | `cognition/observer.py` di sekitar `RiskSituation(...)`; logika di `cognition/contextual_decision_intelligence.py` (terkunci) | Terbuka → WP4 (replay sinyal), WP9b/9d |
 | T7 | `engines/opportunity.py::MultiMarketOpportunityEngine` hanya dipakai tes; bobot skornya (0,65/0,35/0,55, penalti spread/korelasi/berita) belum divalidasi; membuang kandidat bila `news.ready` salah | `docs/maintenance/RUNTIME_MODULE_MAP.md` kategori B | Terbuka → WP5 (riset) |
 | T8 | `KATARINA_ALL_MARKET_RESEARCH=1` merotasi simbol paling lama tak dikunjungi (`lab/continuous_research_lab.py::select_batch`) dan menyalakan `ResearchPool`, `NetworkDoctor`, koneksi broker tambahan. Tidak cocok untuk cakupan per siklus 7 simbol inti dan RAM 2 GB | `cognition/continuous_observation.py` | Ditangani WP1 (mode all-market ditolak bersama `--universe`) |
 | T9 | VPS tertinggal dari `main`; tugas `Katarina-Readonly-Observer` hanya berjalan saat Administrator login (trigger logon) | Task Scheduler VPS | Sebagian: kode VPS = `main` 23 Okt; auto-start setelah restart VPS masih WP6 |
@@ -645,6 +650,81 @@ masuk ke otak aktif tanpa holdout + gerbang promosi.
 Kriteria selesai: alat dan tes lulus; satu contoh hipotesis per keluarga setup (sintetis di tes, bukan klaim pasar).
 Hipotesis nyata didaftarkan dan dijalankan oleh Claude/Owner setelah dataset diekspor (WP8b, bukan bagian PR).
 
+#### WP9 — Membongkar "tembok blokir" keputusan (Tahap 0–2; prioritas Owner 23 Okt)
+
+**Masalah (R1 T4–T6).** Di VPS 100% keputusan WAIT. Setiap kartu memuat tujuh pemblokir yang selalu muncul, sehingga
+otak tidak pernah menghasilkan satu pun kandidat (bahkan untuk paper/riset). `ContextualDecisionIntelligence.evaluate`
+(`cognition/contextual_decision_intelligence.py`, **terkunci**) mengumpulkan **semua** alasan lalu memberi
+`action="WAIT"` bila ada satu saja (`PAPER_OBSERVATION_ONLY` bila kosong), jadi daftar `blocking_reasons` tiap kartu
+lengkap dan bisa dianalisis.
+
+**Klasifikasi pemblokir (dasar seluruh WP9):**
+
+| Kelas | Pemblokir | Sumber | Sifat | Tindakan |
+|---|---|---|---|---|
+| A — input salah dari observer | `system_unhealthy` | `observer.py` mengirim `system_healthy=False` tetap | Pengaman kaku, bukan pengukuran | WP9b: hitung dari pemeriksaan nyata (tidak terkunci) |
+| A | `high_impact_news_blackout`, `macro_event_risk_too_high` | `news_intelligence.py`: tanpa berita segar → `blackout=True, risk=1.0` walau kalender `calendar_verified_clear` | Ketiadaan berita diperlakukan sama dengan berita berbahaya | WP9b: blackout/risk hanya dari kalender atau berita berdampak nyata (tidak terkunci) |
+| B — syarat bukti di logika terkunci | `no_verified_relevant_news`, `macro_policy_transmission_not_verified` | `contextual_decision_intelligence.py` mewajibkan berita/makro terverifikasi untuk **setiap** keputusan | Terlalu ketat untuk paper; berguna bila ada berita | WP9c: wajib hanya bila ada berita/makro relevan; lewat gerbang promosi |
+| B | `insufficient_verified_forward_experience` | observer mengirim `resolved_experience=[]`; syarat ≥ 45 hasil forward terekonsiliasi | Benar untuk eksekusi, mustahil dipenuhi tanpa trade | WP9c: berlaku untuk tingkat eksekusi (demo/riil), tidak untuk `PAPER_OBSERVATION_ONLY`; lewat gerbang promosi |
+| M — filter pasar yang sah | `spread_exceeds_M15_volatility_budget`, `uncertain_or_shock_regime`, `no_market_appropriate_playbook`, `stale_quote`, `broker_session_closed` dan sejenisnya | logika keputusan (terkunci) | Pengaman yang memang diinginkan (biaya/volatilitas/sesi) | Tidak dilonggarkan di WP9; hanya lewat Tahap 2 (filter terdaftar + validasi) |
+| C — persepsi | `no_confirmed_closed_candle_entry` (+ `risk_reward_geometry_not_favorable`, `technical_evidence_not_sufficient`) | detektor entry di modul persepsi terkunci | Belum diketahui apakah terlalu ketat atau pasar memang tidak memberi setup | WP4 replay + WP8 riset; perubahan hanya lewat hipotesis → validasi → promosi (WP9d) |
+
+**Aturan WP9 (tambahan R6.0):** tidak ada jalur order baru; Risk Governor dan batas 35% tidak disentuh; perubahan
+kelas A berjalan di balik opsi yang default-nya perilaku lama; perubahan kelas B/C mengubah berkas terkunci dan
+**hanya** di-merge bersama catatan promosi yang dibuat Claude setelah Owner menyetujui. Hasil terbaik WP9 adalah
+`PAPER_OBSERVATION_ONLY` (kandidat paper untuk riset/belajar), **bukan** izin order.
+
+**WP9a — Peta tembok blokir (baca-saja; boleh paralel sekarang)**
+1. Modul `src/katarina/research/blocker_ladder.py` + CLI `scripts/research/blocker_ladder.py --state-dir DIR
+   [--since ISO] --output build/research/blocker_ladder.json`. Membaca tabel `contextual_decisions` (`blockers_json`,
+   symbol, method, observed_utc) dari `context.sqlite3` dengan `mode=ro`.
+2. Laporan per simbol dan total: frekuensi tiap pemblokir; jumlah kartu yang **hanya** terblokir oleh kelas A;
+   oleh A+B; oleh A+B+C (kelas M selalu dihitung terpisah dan tidak pernah dianggap "diperbaiki"; tangga kumulatif: "bila kelas X diperbaiki, berapa kartu tersisa yang masih terblokir dan
+   oleh apa"); 10 kombinasi pemblokir terbanyak. Pemetaan kode → kelas berupa konstanta di modul (tabel di atas);
+   kode yang tidak dikenal masuk kelas `UNKNOWN` dan dilaporkan, tidak dibuang.
+3. Tes: data sintetis di SQLite sementara; hasil deterministik; kode tidak dikenal tercatat; koneksi ditutup.
+4. Selesai bila: laporan bisa dijalankan Claude di VPS dan menjawab "pemblokir mana yang benar-benar mengikat".
+
+**WP9b — Input keputusan yang jujur (tidak terkunci; setelah WP3 di-merge karena sama-sama mengubah `observer.py`)**
+1. Config baru `config/decision_inputs.json`: `{"schema_version": 1, "mode": "legacy_fail_closed"}`; nilai lain yang
+   sah hanya `"measured_inputs"`. Dimuat oleh `src/katarina/intelligence/cognition/decision_inputs.py`
+   (`load_decision_inputs(path) -> DecisionInputs`, tolak nilai lain dengan `ValueError`).
+2. `DecisionInputs.system_healthy(...)` pada mode `measured_inputs` bernilai `True` hanya bila **semua** benar:
+   quote segar (`quote_fresh`), bar tertutup terbaru (`recent`), `trade_mode in (1,2,4)`, jam broker terverifikasi
+   (`clock.suitable_for_readonly_snapshot`), dan siklus ledger sebelumnya tercatat. Mode `legacy_fail_closed` selalu
+   `False` (perilaku sekarang).
+3. `DecisionInputs.news_context(news, calendar)` pada mode `measured_inputs`: bila mesin berita tidak menemukan item
+   segar yang cocok **dan** kalender `ready=True, blackout=False`, kembalikan `NewsContext` dengan `blackout=False`,
+   `risk_score=0.0`, `ready=False`, alasan `no_fresh_relevant_news_calendar_clear` (tetap `ready=False` agar
+   `no_verified_relevant_news` tetap muncul sampai WP9c). Bila ada item segar, atau kalender tidak siap/blackout,
+   hasil mesin berita dipakai apa adanya. Jangan mengubah `news_intelligence.py`.
+4. Observer: opsi CLI `--decision-inputs PATH` diteruskan sepanjang rantai R3 seperti `universe` di WP1 (default
+   `None` = legacy). Setiap siklus, untuk tiap simbol, observer mengevaluasi **kedua** mode: kartu aktif memakai mode
+   config; kartu mode lain dicatat di tabel ledger baru `decision_shadow(cycle_id, symbol, mode, action,
+   conditional_side, blockers_json, UNIQUE(cycle_id, symbol, mode))` lewat `observation_ledger.record_decision_shadow`.
+   Evaluasi kedua memakai fungsi yang sama (tanpa salinan logika) dan dibatasi waktu (tes durasi).
+5. Tes: mode legacy identik dengan sekarang (kartu sama persis); mode measured hanya menghapus `system_unhealthy`,
+   `high_impact_news_blackout`, `macro_event_risk_too_high` pada kondisi yang ditentukan dan tidak pada kondisi
+   lain (kalender blackout, quote basi, jam tidak terverifikasi); tabel shadow terisi; 0 order.
+6. Mengaktifkan `measured_inputs` di VPS **bukan** bagian PR: Claude melakukannya setelah Owner setuju (catat di R5).
+
+**WP9c — Syarat bukti yang proporsional (berkas terkunci; setelah WP9a/9b memberi data)**
+1. Di `contextual_decision_intelligence.py`: `no_verified_relevant_news` dan `macro_policy_transmission_not_verified`
+   hanya ditambahkan bila **ada** item berita/makro relevan yang belum terverifikasi (berita relevan yang ada tetap
+   wajib terverifikasi; ketiadaan berita + kalender bersih tidak memblokir).
+2. `insufficient_verified_forward_experience` tetap dihitung, tetapi untuk keputusan paper dilaporkan sebagai
+   `execution_gate_pending_forward_experience` di `confirming_evidence`/catatan, bukan pemblokir; tingkat eksekusi
+   (demo/riil) tetap mewajibkannya (diperiksa di jalur eksekusi dan dibuktikan tes).
+3. PR menyertakan: tes perilaku lama vs baru; laporan bukti (`build/research/wp9c_evidence.json`) dari WP9a + data
+   `decision_shadow` VPS yang dibekukan hash; draf isi catatan promosi di deskripsi PR. **Jangan** menjalankan
+   `promotion_gate.py --write-lock` atau membuat berkas di `docs/governance/promotions/`; CI gerbang promosi akan merah
+   sampai Claude menambahkan catatan yang disetujui Owner. Tandai PR "menunggu persetujuan Owner".
+
+**WP9d — Detektor entry teknis (kelas C; setelah WP4 replay dan WP8b)**
+- Tidak ada perubahan langsung. Usulan perbaikan detektor didaftarkan sebagai hipotesis (WP8), diuji pada data
+  pengembangan + holdout historis, lalu dipromosikan lewat gerbang promosi bila lulus. Paket rinci ditulis Claude
+  setelah hasil WP4/WP8 ada.
+
 #### WP7 — Keputusan Owner (bukan kode)
 
 - Profil DEMO final Tahap 3 (usulan 0,5%/trade, 3%/hari sebagai lapisan pengetat di atas batas utama 35%).
@@ -674,6 +754,10 @@ Menunggu Owner · Dikerjakan Claude.
 | WP6 | Sedang dikerjakan — Claude: tahap A 5 simbol sejak 22 Okt 19:58 UTC; 7 simbol setelah cek 2 jam | – | Dimajukan sebelum WP2 karena RAM terukur cukup (±150 MB/hari tick XAUUSD vs ±700 MB bebas); jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8a | Siap dikerjakan (paralel dengan WP2/WP3) | – | – |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
+| WP9a | Siap dikerjakan (prioritas; paralel) | – | – |
+| WP9b | Menunggu prasyarat (WP3) | – | – |
+| WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
+| WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP7 | Menunggu Owner | – | – |
 
 ### R6. Perintah siap pakai untuk pelaksana
@@ -819,6 +903,49 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sud
    semua trade; batas 5 hipotesis per instrumen per sisi; tidak pernah memanggil perintah holdout; keluaran berlabel
    "RISET — data pengembangan, bukan kelulusan".
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini (WP8a/WP8b) di tabel R5.
+```
+
+**Perintah WP9a (peta tembok blokir)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, docs/ROADMAP.md Lampiran A: R1 (T4–T6), R2, R3, R8, R9, R10 dan
+   "WP9 — Membongkar tembok blokir" (tabel klasifikasi, aturan WP9, WP9a). Baca fungsi `evaluate` di
+   src/katarina/intelligence/cognition/contextual_decision_intelligence.py (TERKUNCI, jangan diubah) dan
+   src/katarina/intelligence/shadow/contextual_observation_journal.py (skema tabel contextual_decisions).
+2. Kerjakan HANYA WP9a, satu PR "WP9a: peta tembok blokir keputusan (baca-saja)".
+3. Wajib: baca-saja (SQLite mode=ro); pemetaan kode→kelas sebagai konstanta sesuai tabel WP9; kode tak dikenal
+   dilaporkan sebagai UNKNOWN; tangga kumulatif A → A+B → A+B+C; deterministik; tanpa perubahan observer.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP9a di tabel R5.
+```
+
+**Perintah WP9b (input keputusan jujur + evaluasi bayangan)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP3 sudah di-merge).
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, docs/ROADMAP.md Lampiran A: R1, R2, R3, R8, R9, R10, "WP1" (contoh cara
+   meneruskan opsi lewat rantai R3) dan "WP9" (tabel, aturan, WP9b). Baca seluruh cognition/observer.py,
+   news/news_intelligence.py, operations/observation_ledger.py, dan dataclass RiskSituation/NewsContext.
+   Jalankan promotion_gate.py --hashes: berkas terkunci tidak boleh diubah.
+2. Kerjakan HANYA WP9b, satu PR "WP9b: input keputusan terukur dan evaluasi bayangan".
+3. Wajib: default = perilaku lama (tes membuktikan kartu identik); mode measured_inputs hanya menghapus tiga
+   pemblokir kelas A pada kondisi yang ditulis di WP9b dan tidak pada kondisi lain; evaluasi kedua memakai fungsi
+   yang sama (tanpa menyalin logika); tabel decision_shadow; tanpa jalur order; tidak mengubah news_intelligence.py
+   atau berkas terkunci; tidak mengaktifkan mode baru di VPS.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP9b di tabel R5.
+```
+
+**Perintah WP9c (syarat bukti proporsional — berkas terkunci)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP9a dan WP9b sudah di-merge; Claude sudah
+menyerahkan laporan WP9a dan data decision_shadow ber-hash).
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, bagian 6 "Gerbang promosi", Lampiran A: R2, R8, R9, R10 dan "WP9"
+   (aturan, WP9c). Baca seluruh cognition/contextual_decision_intelligence.py dan tesnya.
+2. Kerjakan HANYA WP9c, satu PR "WP9c: syarat bukti proporsional (menunggu persetujuan Owner)".
+3. Wajib: perubahan hanya dua butir WP9c; tes lama vs baru; syarat pengalaman forward tetap ditegakkan untuk
+   eksekusi (buktikan dengan tes); laporan bukti build/research/wp9c_evidence.json; draf catatan promosi di
+   deskripsi PR. DILARANG menjalankan promotion_gate.py --write-lock atau membuat berkas di
+   docs/governance/promotions/. CI gerbang promosi boleh merah; tulis "menunggu persetujuan Owner" di PR.
+4. Ikuti seluruh R6.0 Aturan umum (A–F) kecuali butir D1 untuk gerbang promosi (merah yang disengaja);
+   isi HANYA baris WP9c di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
