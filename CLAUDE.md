@@ -11,6 +11,8 @@ riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktob
 yang **lulus**. Alat tersedia ≠ tahap lulus ≠ trading diaktifkan.
 
 Sistem riset trading MT5 berbasis Python (bahasa dokumen utama: Indonesia).
+**WP1 Tahap 0 (PR review):** modul `broker/observer_universe.py`, config `config/observer_universe.json` (tujuh core dengan XAUUSD di urutan pertama), dan CLI `run_contextual_market_observer.py --universe PATH` menambah observasi core eksplisit tanpa memotongnya ke budget host. Tanpa opsi, default lama identik. Tidak dipasang ke VPS sampai WP1–WP3 disetujui menurut roadmap WP6.
+
 **Research-only / LIVE OFF**: tidak ada jalur kirim order live. Mode DEMO forward dan
 lab riset VPS ada, tetapi Risk Governor (`src/katarina/engines/risk.py`) independen dan
 tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + CI.
