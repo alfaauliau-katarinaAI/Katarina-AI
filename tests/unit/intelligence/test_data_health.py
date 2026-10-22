@@ -57,6 +57,19 @@ class DataHealthTest(unittest.TestCase):
         self.assertEqual(criteria["broker_ticks_per_day"]["status"], "NOT_MET")
         self.assertEqual(report["verdict"], "IN_PROGRESS")
 
+    def test_cycle_runtime_longer_than_interval_still_covers_the_day(self):
+        start = datetime(2026, 11, 9, tzinfo=UTC)
+        fill(self.db, start, 1, every=85)
+        criteria = by_name(data_health.assess(self.db, start + timedelta(days=1, hours=1), interval_seconds=60))
+        self.assertEqual(criteria["consecutive_trading_days"]["covered_days"], ["2026-11-09"])
+
+    def test_long_outage_breaks_day_coverage(self):
+        start = datetime(2026, 11, 9, tzinfo=UTC)
+        fill(self.db, start, 1, every=60)
+        self.db.execute("DELETE FROM observer_cycles WHERE observed_utc BETWEEN '2026-11-09T06' AND '2026-11-09T09'")
+        criteria = by_name(data_health.assess(self.db, start + timedelta(days=1, hours=1), interval_seconds=60))
+        self.assertEqual(criteria["consecutive_trading_days"]["covered_days"], [])
+
     def test_frequent_failures_do_not_meet_success_rate(self):
         start = datetime(2026, 11, 9, tzinfo=UTC)
         fill(self.db, start, 2, every=300, fail_every=10)

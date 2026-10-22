@@ -192,19 +192,14 @@ def tick_path(root, symbol: str, day: str) -> Path:
 
 def _due_days(db, now: datetime):
     """Observed (symbol, day) pairs whose UTC day is over and not yet settled."""
-    rows = db.execute(
-        "SELECT DISTINCT symbol, substr(observed_utc,1,10) FROM observer_quotes WHERE status='OK' "
-        "ORDER BY 2, 1").fetchall()
-    due = []
-    for symbol, day in rows:
-        day_end = datetime.fromisoformat(day).replace(tzinfo=timezone.utc) + timedelta(days=1)
-        if now.timestamp() < day_end.timestamp() + DAY_SETTLE_SECONDS:
-            continue
-        state = db.execute("SELECT status, next_epoch FROM broker_tick_days WHERE symbol=? AND day=?",
-                           (symbol, day)).fetchone()
-        if state is None or (state[0] == "RETRY" and state[1] <= now.timestamp()):
-            due.append((symbol, day))
-    return due
+    # A day is due once day_end + settle time has passed, i.e. it is before this cut-off date.
+    cutoff = (now - timedelta(seconds=DAY_SETTLE_SECONDS)).date().isoformat()
+    return db.execute(
+        "SELECT q.symbol, q.day FROM (SELECT DISTINCT symbol, substr(observed_utc,1,10) AS day "
+        "FROM observer_quotes WHERE status='OK' AND observed_utc < ?) q "
+        "LEFT JOIN broker_tick_days b ON b.symbol=q.symbol AND b.day=q.day "
+        "WHERE b.symbol IS NULL OR (b.status='RETRY' AND b.next_epoch<=?) ORDER BY q.day, q.symbol",
+        (cutoff, now.timestamp())).fetchall()
 
 
 def _record_gap(db, stream, symbol, start: datetime, end: datetime, reason, now: datetime):

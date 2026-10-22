@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
 
 from katarina.intelligence.operations.observation_ledger import fx_session_open
@@ -52,9 +53,20 @@ def _near_dst(moment: datetime) -> bool:
     return any(abs((day - change).days) <= DST_TOLERANCE_DAYS for change in dst_transitions(day.year))
 
 
-def _session_seconds(day: date) -> int:
+def _day_coverage(day: date, stamps, window_seconds) -> float:
+    """Share of the day's session minutes with a cycle in the preceding window."""
     start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
-    return sum(60 for minute in range(24 * 60) if fx_session_open(start + timedelta(minutes=minute)))
+    total = covered = 0
+    for minute in range(24 * 60):
+        moment = start + timedelta(minutes=minute)
+        if not fx_session_open(moment):
+            continue
+        total += 1
+        point = moment.timestamp()
+        index = bisect_right(stamps, point) - 1
+        if index >= 0 and point - stamps[index] <= window_seconds:
+            covered += 1
+    return covered / total if total else 0.0
 
 
 def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
@@ -82,18 +94,16 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     report["first_cycle_utc"] = cycles[0][0].isoformat() if cycles else None
     report["last_cycle_utc"] = cycles[-1][0].isoformat() if cycles else None
 
-    # 1. consecutive trading days with near-complete session coverage
-    per_day = {}
-    for stamp, *_ in session:
-        per_day[stamp.date()] = per_day.get(stamp.date(), 0) + 1
+    # 1. consecutive trading days with near-complete session coverage: a session minute is covered
+    #    when a counted cycle happened within the previous 3 intervals (cycle time + idle varies).
+    stamps = [c[0].timestamp() for c in cycles]
     streak = best = 0
     covered_days = []
     if cycles:
         day = cycles[0][0].date()
         while day < now.date():
             if day.weekday() < 5:
-                expected = _session_seconds(day) / interval_seconds
-                if per_day.get(day, 0) >= DAY_COVERAGE * expected:
+                if _day_coverage(day, stamps, 3 * interval_seconds) >= DAY_COVERAGE:
                     streak += 1
                     covered_days.append(day.isoformat())
                 else:
