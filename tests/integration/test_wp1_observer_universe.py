@@ -50,7 +50,7 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
 
     def test_missing_core_is_wait_with_failed_quote_ledger_reason(self):
         result, report, rows, orders = self.observe(
-            ObserverUniverse(("XAUUSD", "EURUSD", "UNLISTED")), max_symbols=2)
+            ObserverUniverse(("XAUUSD", "EURUSD", "GBPUSD", "UNLISTED")), max_symbols=2)
         self.assertEqual(report["unavailable_symbols"], ["UNLISTED"])
         self.assertEqual(report["symbols"]["UNLISTED"]["action"], "WAIT")
         self.assertEqual(report["symbols"]["UNLISTED"]["sensor_reason"],
