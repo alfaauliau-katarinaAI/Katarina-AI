@@ -70,6 +70,30 @@ tetapi tidak mengunduh atau membuktikan keaslian sumber tersebut. Penghasil data
 atas lineage, candle tertutup, kelengkapan tick, dan konversi waktu broker ke UTC. Konteks hilang
 menghasilkan `WAIT_MISSING_CONTEXT` dan `INCOMPLETE_CONTEXT`, bukan bukti perbaikan filter.
 
+### Menghasilkan `contexts.jsonl` dari data Tahap 0
+
+`scripts/research/export_market_contexts.py` (logika di `katarina.research.context_export`) membangun baris
+konteks dari file tick broker yang dikumpulkan ledger Tahap 0, dengan lineage yang bisa diperiksa:
+
+```bash
+python scripts/research/export_market_contexts.py --state-dir C:\Katarina\state\readonly-observer \
+  --workspace W --symbol XAUUSD --trades development.jsonl \
+  --lookback-minutes 60 --bar-minutes 5 --atr-bars 6 --output W/contexts.jsonl
+```
+
+- Hanya hari tick berstatus `STORED`/`STORED_WITH_GAPS` di `broker_tick_days` yang dipakai, dan SHA-256 isi
+  file wajib sama dengan yang dicatat ledger (`TICK_FILE_HASH_MISMATCH` bila tidak).
+- Hanya tick **sebelum** entry; `observed_at` = tick terakhir sebelum entry. Range dan ATR dari bar
+  `--bar-minutes` yang sudah tutup; bar kosong memutus deret ATR, tidak diisi. `tick_count` = semua tick di jendela.
+- Jendela yang menyentuh `data_gaps` tick broker, CELAH split, atau keluar dari periode pengembangan **tidak
+  diberi konteks**; alasannya dicatat (`BROKER_TICK_GAP_IN_WINDOW`, `WINDOW_OUTSIDE_DEVELOPMENT_OR_IN_GAP`,
+  `TICK_DAY_NOT_STORED`, `TOO_FEW_TICKS`, `INSUFFICIENT_COMPLETE_BARS`, `ZERO_RANGE`).
+- `source_sha256` mengikat konteks ke hash file tick dan parameter ekspor. `<output>.manifest.json` mencatat
+  sumber, sinyal tanpa konteks beserta alasannya, dan hash hasil. Database ledger dibuka read-only; output
+  tidak boleh ditulis di dalam folder state observer.
+- Parameter ekspor (lookback, bar, jumlah bar ATR) termasuk definisi eksperimen: tetapkan sebelum melihat hasil
+  dan jangan dioptimalkan pada data yang sama.
+
 Setiap baris `outcomes.jsonl` terpisah dari konteks keputusan:
 
 ```json
@@ -102,7 +126,8 @@ pemilihan filter berulang di luar registry; semua percobaan harus dicatat.
 ## Status implementasi
 
 Alat, CLI, dan tes sintetis siap diuji tanpa menunggu 10 hari bursa. Penilaian pada data pasar asli,
-integrasi filter ke keputusan aktif, dan kelulusan Tahap 2 belum dilakukan. Langkah berikutnya adalah
-menyiapkan ekspor dataset pengembangan dengan lineage terverifikasi, lalu mendaftarkan eksperimen.
+integrasi filter ke keputusan aktif, dan kelulusan Tahap 2 belum dilakukan. Ekspor konteks ber-lineage
+(`export_market_contexts.py`) sudah tersedia; langkah berikutnya adalah mengumpulkan cukup hari tick Tahap 0,
+menetapkan sinyal kandidat dan parameter ekspor, lalu mendaftarkan eksperimen sebelum menjalankannya.
 Persiapan pembatas DEMO Tahap 3 juga dapat dikembangkan sambil observasi berjalan; nilai akhirnya
 tetap memerlukan keputusan Owner seperti yang tercantum di roadmap.

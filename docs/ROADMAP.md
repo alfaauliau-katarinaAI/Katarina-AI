@@ -57,7 +57,7 @@ tetap berjalan; persiapan tahap berikutnya tidak perlu menunggu pengumpulan ters
 | Tahap | Perubahan yang tersedia | Bukti / PR | Status |
 |---|---|---|---|
 | 0–1 | Deduplicasi pemulihan reconnect, timeout sejak kegagalan pertama; penolakan outcome masa depan, CELAH, baseline tidak lengkap, mismatch hash kode dan penggunaan ulang holdout pasca-paparan | [#177](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/177) | Penguatan alat; bukan kelulusan observasi/strategi |
-| 2 | Eksperimen filter pasar pada data pengembangan memakai registry, split, biaya dan validasi Tahap 1; alasan WAIT dan perbandingan sebelum/sesudah filter | [#178](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/178), [panduan](research/MARKET_INTELLIGENCE.md) | Persiapan riset; filter aktif belum diubah |
+| 2 | Eksperimen filter pasar pada data pengembangan memakai registry, split, biaya dan validasi Tahap 1; alasan WAIT dan perbandingan sebelum/sesudah filter. Ekspor `contexts.jsonl` ber-lineage dari tick broker Tahap 0 (`export_market_contexts.py`) | [#178](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/178), [panduan](research/MARKET_INTELLIGENCE.md) | Persiapan riset; filter aktif belum diubah |
 | 3 | Adapter pembatas risiko DEMO dan laporan deterministik dari outbox existing secara baca-saja | [#179](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/179), [panduan](research/DEMO_READINESS.md) | Implementasi persiapan diuji; belum dihubungkan ke worker aktif |
 
 
