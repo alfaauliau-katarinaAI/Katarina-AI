@@ -353,7 +353,7 @@ Tujuan: bahan riset untuk Tahap 1/2 walau semua keputusan WAIT. **Tidak** mengub
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP1 | Belum dimulai | – | – |
+| WP1 | PR dibuka (menunggu review) | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Menunggu review Claude, belum merge/deploy |
 | WP2 | Belum dimulai | – | – |
 | WP3 | Belum dimulai | – | – |
 | WP4 | Belum dimulai | – | – |
