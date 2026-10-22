@@ -14,7 +14,7 @@ from tests.integration.test_automatic_connection import AccountBroker, config
 
 class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
     @staticmethod
-    def observe(universe=None, *, max_symbols=1):
+    def observe(universe=None, *, max_symbols=3):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             native = AccountBroker()
@@ -33,11 +33,11 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
                     "ORDER BY symbol").fetchall()
             return result, report, rows, native.orders
 
-    def test_universe_preserves_core_order_and_ignores_host_budget_1(self):
+    def test_universe_preserves_core_order_and_ignores_budget_2(self):
         result, report, rows, orders = self.observe(
-            ObserverUniverse(("XAUUSD", "EURUSD")))
-        self.assertEqual(list(report["symbols"]), ["XAUUSD", "EURUSD"])
-        self.assertEqual([x[0] for x in rows], ["EURUSD", "XAUUSD"])
+            ObserverUniverse(("XAUUSD", "EURUSD", "GBPUSD")), max_symbols=2)
+        self.assertEqual(list(report["symbols"]), ["XAUUSD", "EURUSD", "GBPUSD"])
+        self.assertEqual([x[0] for x in rows], ["EURUSD", "GBPUSD", "XAUUSD"])
         self.assertTrue(all(x[1] == "OK" for x in rows))
         self.assertEqual(result["orders_submitted"], 0)
         self.assertFalse(result["live_execution_authorized"])
@@ -45,7 +45,7 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
 
     def test_missing_core_is_wait_with_failed_quote_ledger_reason(self):
         result, report, rows, orders = self.observe(
-            ObserverUniverse(("XAUUSD", "UNLISTED")))
+            ObserverUniverse(("XAUUSD", "EURUSD", "UNLISTED")), max_symbols=2)
         self.assertEqual(report["unavailable_symbols"], ["UNLISTED"])
         self.assertEqual(report["symbols"]["UNLISTED"]["action"], "WAIT")
         self.assertEqual(report["symbols"]["UNLISTED"]["sensor_reason"],
@@ -54,10 +54,10 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
         self.assertEqual(orders, 0)
         self.assertEqual(result["orders_submitted"], 0)
 
-    def test_old_path_still_selects_one_symbol_without_universe(self):
+    def test_old_path_still_selects_three_symbols_without_universe(self):
         _, report, rows, orders = self.observe()
-        self.assertEqual(len(report["symbols"]), 1)
-        self.assertEqual(len(rows), 1)
+        self.assertEqual(len(report["symbols"]), 3)
+        self.assertEqual(len(rows), 3)
         self.assertEqual(orders, 0)
 
 
