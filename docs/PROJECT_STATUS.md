@@ -21,8 +21,9 @@ Satu-satunya sumber status proyek. Diperbarui **22 Oktober 2026**. Rincian per p
 Pengembangan mengikuti **[Roadmap berbasis bukti](ROADMAP.md)** (ditetapkan Owner 22 Okt 2026): validasi adalah
 hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
 
-1. **Tahap 0 — Observer & data** (sedang dikerjakan): Owner login akun demo di MT5 VPS (Algo Trading OFF),
-   konfigurasi koneksi privat, observer read-only diaktifkan, pemeriksa kesehatan data disiapkan.
+1. **Tahap 0 — Observer & data** (sedang dikerjakan): alat repo selesai 22 Okt (ledger snapshot per siklus,
+   pengunduh tick broker per hari, `scripts/ai/check_stage0_health.py`). Sisa: Owner login akun demo di MT5 VPS
+   (Algo Trading OFF), konfigurasi koneksi privat, observer read-only diaktifkan, lalu 10 hari bursa data.
 2. **Tahap 1 — Validasi ilmiah:** protokol uji, walk-forward, holdout terkunci, biaya bersih, baseline.
 3. Tahap 2–5 (market intelligence, risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan,
    masing-masing dengan kriteria kelulusan di roadmap.

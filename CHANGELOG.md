@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — Tahap 0: ledger observasi, tick broker, pemeriksa kesehatan data
+
+- `katarina.intelligence.operations.observation_ledger`: observer mencatat bid/ask/spread setiap simbol setiap siklus
+  (WAIT ikut dicatat; simbol gagal dengan alasan) dan jam broker; loop kontinu menutup setiap siklus dengan status
+  `OK`/`PARTIAL`/`NO_MARKET_DATA`/`FAILED` beserta alasan. Tick broker hari UTC yang selesai dan diamati diunduh per
+  jam (maks satu simbol-hari per siklus, di thread pemilik), disimpan gzip CSV deterministik, celah dicatat tanpa
+  interpolasi, dicoba ulang 3 kali, lalu direkonsiliasi dengan snapshot observer.
+- `katarina.intelligence.operations.data_health` + `scripts/ai/check_stage0_health.py`: menilai sembilan kriteria
+  Tahap 0 dari ledger secara read-only dengan hash laporan deterministik. Tidak ada berkas terkunci yang diubah;
+  keputusan dan risiko tidak berubah; LIVE tetap OFF.
+
 ## 2026-10-22 — gerbang promosi ditegakkan CI
 
 - `config/promotion_lock.json` mengunci SHA-256 19 berkas yang menentukan keputusan dan risiko aktif (otak keputusan,

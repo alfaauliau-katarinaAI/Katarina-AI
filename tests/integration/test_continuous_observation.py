@@ -145,6 +145,31 @@ class ContinuousObservationTests(unittest.TestCase):
         self.assertFalse(report['live_execution_authorized'])
         self.assertEqual(report['orders_submitted'], 0)
 
+    def test_stage0_ledger_records_every_cycle_and_failure_reason(self):
+        import sqlite3
+        from tests.integration.test_automatic_connection import AccountBroker, config
+        from katarina.adapters.automatic_connection import BoundLocalBroker
+        native = AccountBroker()
+        attempts = []
+        def factory(c):
+            attempts.append(1)
+            if len(attempts) == 2:
+                raise ConnectionUnavailable('LOCAL_CONNECT_FAILED')
+            return BoundLocalBroker(native, c)
+        run_continuous(self.root, config=config(priority=('local',), attempts=1),
+            max_cycles=3, factories={'local': factory}, wait=lambda _:None)
+        report = json.loads((self.root/'latest.json').read_text())
+        self.assertEqual(report['observation_ledger']['status'], 'RECORDED')
+        with sqlite3.connect(self.root/'context.sqlite3') as db:
+            cycles = db.execute("SELECT status, reason, symbols_observed, symbols_with_quote, orders_submitted "
+                                "FROM observer_cycles ORDER BY observed_utc").fetchall()
+            quotes = db.execute("SELECT COUNT(*), SUM(spread>=0) FROM observer_quotes WHERE status='OK'").fetchone()
+        self.assertEqual([c[0] for c in cycles], ['OK', 'FAILED', 'OK'])
+        self.assertTrue(cycles[1][1])
+        self.assertEqual(cycles[0][2:], (3, 3, 0))
+        self.assertEqual(quotes, (6, 6))
+        self.assertEqual(native.orders, 0)
+
     def test_disabled_news_fetch_does_not_fetch_uncached_article_from_cached_feed(self):
         from datetime import datetime, timezone
         from katarina.intelligence.cognition.observer import load_articles

@@ -440,6 +440,21 @@ class BrainObserver:
             x["action"] for x in report["symbols"].values()))
         report["observed_symbols"]=len(report["symbols"])
         report["received_market_data_symbols"]=len(latest_quotes)
+        # Stage 0 ledger: every cycle's bid/ask/spread (WAIT included) and, with a bounded
+        # budget, the broker's own ticks of completed observed days. Read-only.
+        from katarina.intelligence.operations import observation_ledger as ledger
+        ledger_cycle=None
+        try:
+            ledger_cycle=ledger.record_snapshot(store.db,observed_utc=now,clock_shift_hours=offset,
+                cards=report["symbols"],quotes=latest_quotes)
+            report["observation_ledger"]={"status":"RECORDED","cycle_id":ledger_cycle}
+        except Exception as ex:
+            report["observation_ledger"]={"status":"FAILED","error":type(ex).__name__}
+        try:
+            report["broker_tick_collection"]=ledger.collect_tick_days(
+                store.db,mt5,root,datetime.now(timezone.utc),budget=1)
+        except Exception as ex:
+            report["broker_tick_collection"]={"status":"FAILED","error":type(ex).__name__}
         from katarina.intelligence.perception.observational_associations import observe_associations
         emit('ASSOCIATION','STARTED')
         report['observational_associations'] = observe_associations(store.db, latest_quotes, now)
@@ -474,6 +489,7 @@ class BrainObserver:
                 "journal":report["quote_journal"]["counts"],
                 "paper_virtual":report["virtual_shadow_summary"]["counts"],
                 "hypotheses":len(paper_hypotheses),
+                "ledger_cycle_id":ledger_cycle,
                 "orders":0, "orders_submitted":report["orders_submitted"],
                 "live_execution_authorized":report["live_execution_authorized"],
                 "production_execution":report["production_execution"]}
