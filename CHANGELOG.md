@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP6 dijeda; WP11 jam broker saat sebagian pasar tutup
+
+- Mode 5 simbol di VPS (22 Okt 19:58–22:02 UTC): RAM dan durasi siklus aman, tetapi 21:00–22:02 UTC semua siklus
+  gagal `BROKER_CLOCK_NOT_VERIFIED` karena emas/indeks jeda harian (R1 T9). VPS kembali ke 3 simbol.
+- Lampiran A: temuan T9, paket WP11 (pecahan mayoritas jam dihitung atas suara segar) dengan perintah R6; WP6
+  menunggu WP11. PROJECT_STATUS dan cakupan simbol di "Pemisahan data" diperbarui.
+
 ## 2026-10-23 — roadmap: WP10 biaya trading, counterfactual di WP9d, R0 dirapikan
 
 - Lampiran A ditambah WP10: WP10a profil spread broker deskriptif (label `DESCRIPTIVE_ONLY_NOT_FOR_TUNING`,
