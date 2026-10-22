@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP6 tahap A di VPS; status roadmap diperbarui
+
+- VPS: kode = `main` 23 Okt (manifest MATCH); `run-observer.ps1` memakai `--universe` bila
+  `C:\Katarina\private\observer_universe.json` ada; observer mengamati 5 simbol (+XAUUSD, NAS100) sejak 22 Okt
+  19:58 UTC. WP6 dimajukan sebelum WP2 karena RAM terukur cukup; jalan mundur dengan mengganti nama berkas itu.
+- Roadmap: kolom Status di R1, status WP6 di R0/R5, cakupan simbol forward + CELAH per simbol di "Pemisahan data".
+  PROJECT_STATUS: 100% WAIT dan penyebabnya, cakupan simbol, angka tes terbaru.
+
 ## 2026-10-23 — roadmap: aturan PR paralel yang menyentuh berkas sama
 
 - R0: WP2 dan WP3 sama-sama mengubah `observation_ledger.py` dan semua PR membuat ulang manifest; Claude me-merge
