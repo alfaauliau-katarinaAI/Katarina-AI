@@ -626,7 +626,7 @@ Hipotesis nyata didaftarkan dan dijalankan oleh Claude/Owner setelah dataset die
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
 | WP1 | Selesai (merge), belum diterapkan ke VPS (WP6) | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
-| WP2 | Belum dimulai | – | – |
+| WP2 | PR draft dibuka; menunggu verifikasi CI dan review | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | Unduh tick per jam; byte-identik, rekonsiliasi, dan memori diuji di PR |
 | WP3 | Belum dimulai | – | – |
 | WP4 | Belum dimulai | – | – |
 | WP5 | Belum dimulai | – | – |
