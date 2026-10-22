@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP3: diagnosis jalur berita observer (#191)
+
+- Catat item feed usang/tanggal invalid, umur item terbaru, serta kegagalan artikel tanpa mengubah pemilihan atau blackout.
+- Ringkasan per siklus disimpan di `observer_news`; laporan Tahap 0 memisahkan tanpa rilis vs gagal ambil.
+- Tes sintetis memastikan `data_health.verdict` dan keputusan tetap; berkas terkunci tak berubah, LIVE OFF, VPS tak diubah.
+
 ## 2026-10-23 — roadmap: titik masuk pelaksana AI, cara mengambil paket, standar teknis (R10)
 
 - Bagian baru "Mulai di sini — untuk pelaksana AI" di awal roadmap: lima langkah dari membaca aturan sampai berhenti
