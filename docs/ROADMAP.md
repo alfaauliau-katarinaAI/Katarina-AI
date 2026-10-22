@@ -83,6 +83,113 @@ profil DEMO final dari Owner, dan rekonsiliasi broker nyata sesuai kriteria taha
 Holdout privat tetap `BLOCKED_PRIVATE_INPUT_FILES_NOT_PROVIDED`; tidak ada klaim alpha lulus.
 Kelulusan tahap dan promosi tetap berurutan; LIVE OFF dan batas utama 35% tetap berlaku.
 
+## Rencana kerja perbaikan — 22 Oktober 2026 (untuk pelaksana)
+
+Disusun dari pemeriksaan VPS dan repo 22 Okt malam, plus usulan "Multi-Pair Opportunity Hunter" dari review PM
+(Yura). Pelaksana (ChatGPT/Codex) mengerjakan paket di bawah **berurutan**; Claude meninjau dan menyempurnakan
+setiap PR sebelum merge. Rencana ini tidak mengubah tahap, kriteria kelulusan, atau aturan di dokumen ini.
+
+### Temuan yang mendasari (bukti 22 Okt, VPS `30d043c`, 600+ siklus)
+
+| # | Temuan | Bukti |
+|---|---|---|
+| T1 | Observer hanya mengamati `EURUSD.vx`, `GBPUSD.vx`, `USDJPY.vx`. Program holdout butuh 7 simbol; Tahap 4 mulai dari XAUUSD | `--max-symbols 3` memotong urutan tetap `MAJORS` di `broker/broker_scan_universe.py`; `JPN225` tidak ada di universe sama sekali |
+| T2 | Ketujuh simbol tersedia dan bisa ditrade di broker: `XAUUSD.vx`, `NAS100.vx`, `US30.vx`, `JPN225.vx`, `EURUSD.vx`, `GBPUSD.vx`, `USDJPY.vx` (`trade_mode=4`; versi tanpa `.vx` `trade_mode=0`) | Probe baca-saja: baca 4 timeframe + tick 90 dtk ≈ 0,2–1,4 dtk/simbol (±5 dtk untuk 7); RAM bebas ±885 MB dari 2 GB |
+| T3 | Tick satu hari penuh XAUUSD ≈ 355 ribu; `collect_tick_days` menampung seluruh hari di memori (±100–150 MB) sebelum menulis | `operations/observation_ledger.py::_fetch_day` |
+| T4 | 100% keputusan WAIT dengan 7 pemblokir permanen: `system_unhealthy`, `insufficient_verified_forward_experience`, `no_verified_relevant_news`, `high_impact_news_blackout`, `macro_event_risk_too_high`, `macro_policy_transmission_not_verified`, `no_confirmed_closed_candle_entry` | Tabel `contextual_decisions`, 381 baris |
+| T5 | "Tidak ada berita segar yang cocok" diperlakukan sebagai blackout dengan risiko 1,0, padahal kalender `calendar_verified_clear`. Artikel resmi tersimpan: 0 (feed Fed/ECB/BoE terambil OK 41×); kemungkinan karena tidak ada rilis dalam jendela 6 jam, belum terdiagnosis | `news/news_intelligence.py::assess` (cabang `if not matched`), `cognition/observer.py::load_articles`, `news/verified_policy_context.py::FRESH_SECONDS` |
+| T6 | Observer selalu mengirim `system_healthy=False` dan `resolved_experience=[]` (sengaja fail-closed). Akibatnya jurnal tidak pernah berisi kandidat BUY/SELL untuk riset | `cognition/observer.py` sekitar `RiskSituation(...)` |
+| T7 | `engines/opportunity.py::MultiMarketOpportunityEngine` hanya dipakai tes; bobot skornya (0,65/0,35/0,55/…) belum pernah divalidasi dan ia membuang kandidat bila `news.ready` salah | Peta modul kategori B |
+| T8 | Mode `KATARINA_ALL_MARKET_RESEARCH` merotasi 3 simbol per siklus dari 73 (paling lama tak dikunjungi) dan menyalakan worker riset + koneksi tambahan; memutus data per siklus 7 simbol inti dan berat untuk RAM 2 GB | `lab/continuous_research_lab.py::select_batch`, `cognition/continuous_observation.py` |
+| T9 | VPS tertinggal dari `main`; tugas observer hanya jalan saat Administrator login | `git log` VPS, Task Scheduler (trigger logon) |
+
+### Aturan untuk pelaksana (wajib)
+
+1. Satu paket = satu PR ke `main`, judul diawali `WPn:`. Jangan menggabungkan paket.
+2. **Dilarang** mengubah berkas di `config/promotion_lock.json`, membuat catatan promosi, mengubah Risk
+   Governor/batas 35%, mengaktifkan DEMO/LIVE, atau menambah observer/worker paralel. Jika sebuah paket ternyata
+   membutuhkan perubahan berkas terkunci, berhenti dan tulis usulan di deskripsi PR.
+3. Setiap PR menjalankan dan mencantumkan hasil: tiga suite tes (lihat `CLAUDE.md`), `audit_repo_hygiene.py`,
+   `audit_dependency_links.py`, `promotion_gate.py --check`, dan manifest rilis dibuat ulang lalu `MATCH`
+   (jalankan `git add` dulu; generator ikut membaca berkas yang belum di-commit).
+4. Perbarui `CHANGELOG.md`, `CLAUDE.md` (bila struktur/CLI berubah) dan bagian status paket di tabel bawah.
+5. Tidak ada perubahan VPS di PR. Penerapan ke VPS dilakukan Claude setelah merge (paket WP6).
+6. Tes memakai broker palsu; tidak ada akses jaringan atau MT5 di tes.
+
+### Paket kerja
+
+**WP1 — Daftar simbol eksplisit untuk observer (Tahap 0, prioritas tertinggi)**
+- Tambah `config/observer_universe.json`: `core` = 7 simbol program dengan urutan
+  `XAUUSD.vx, NAS100.vx, US30.vx, JPN225.vx, EURUSD.vx, GBPUSD.vx, USDJPY.vx` (salin dari
+  `config/research/alpha_regime_program_v1.json`, jangan diketik ulang berbeda), `rotating_slots` = 0 (default).
+- `run_contextual_market_observer.py`: opsi `--universe PATH`. Bila dipakai, observer mengamati **semua** simbol
+  `core` setiap siklus (tidak dipotong `--max-symbols`) ditambah `rotating_slots` simbol lain via `select_batch`
+  yang **tidak** menyertakan simbol core. Tanpa `--universe`, perilaku lama tidak berubah.
+- Validasi ke katalog broker: simbol harus ada dan `trade_mode in (1,2,4)`; simbol core yang hilang/nonaktif
+  dicatat di laporan siklus (`unavailable_symbols`) dan di ledger sebagai baris `FAILED` beralasan, tidak diganti
+  diam-diam.
+- Batas: total simbol per siklus ≤ 17 (aturan yang sama dengan `max_17_broker_markets`).
+- Tes: urutan core dipertahankan; core tidak ikut rotasi; simbol hilang menjadi FAILED beralasan; tanpa
+  `--universe` hasil sama seperti sekarang; `test_module_connectivity` tetap lulus.
+- Kriteria selesai: tes di atas + `--universe` terdokumentasi di Tahap 0 roadmap.
+
+**WP2 — Pengunduh tick hemat memori (Tahap 0)**
+- `observation_ledger._fetch_day`/`_write_ticks`: tulis per jam secara streaming ke gzip (urut, dedup per jam,
+  tanpa menampung seluruh hari), hitung SHA-256 dari isi CSV tak terkompresi secara bertahap; hasil harus
+  **byte-identik** dengan implementasi sekarang untuk input yang sama (tambahkan tes pembanding).
+- Rekonsiliasi snapshot tetap benar tanpa memuat semua tick (mis. baca ulang per jam atau indeks waktu per jam).
+- Tes: 2 juta tick sintetis/hari tetap lulus dengan memori puncak terukur (`tracemalloc`) < 50 MB.
+
+**WP3 — Diagnosis jalur berita (Tahap 0–2, hanya diagnosis + observabilitas)**
+- Catat di laporan siklus untuk tiap sumber: jumlah item feed, item terbaru `published_utc`, jumlah yang masuk
+  jendela `FRESH_SECONDS`, jumlah percobaan ambil artikel, hasil (OK/HTTP/parse/backoff).
+- Tambah kriteria informatif (bukan kriteria kelulusan) di `data_health`: `news_pipeline` dengan angka di atas.
+- **Jangan** mengubah logika blackout atau ambang. Keluaran paket ini adalah laporan yang membedakan
+  "tidak ada rilis resmi" dari "pengambilan gagal".
+
+**WP4 — Jurnal kandidat riset terpisah dari izin entry (Tahap 1–2)**
+- Modul baru `intelligence/operations/candidate_ledger.py`, dipanggil observer setelah keputusan dibuat:
+  untuk setiap simbol catat sinyal teknis mentah yang **sudah ada** di kartu (sisi, `selected_method`, regime,
+  `evidence_score`, `rr_after_spread_estimate`, invalidation/target, spread, waktu candle tertutup) beserta
+  daftar pemblokir. Tidak ada logika keputusan baru, tidak ada skor baru, tidak memengaruhi `action`.
+- Ekspor ke format `Trade` Tahap 1 (`research/validation.py`) dengan exit dari tick broker Tahap 0 (aturan
+  exit harus didaftarkan sebagai hipotesis; contoh di dokumen, bukan default aktif).
+- Tes: kandidat tercatat walau `action=WAIT`; observer tetap 0 order; `data_until ≤ entry_at` dijamin.
+
+**WP5 — Hipotesis perankingan antarpair (Tahap 2, riset saja)**
+- Script `scripts/research/rank_candidates.py` yang membaca jurnal WP4, menerapkan
+  `MultiMarketOpportunityEngine` (atau varian berparameter) **dalam mode riset**, dan menyiapkan input
+  `validate_strategy.py market-filter`. Bobot ranking, filter korelasi dan batas portofolio didaftarkan sebagai
+  hipotesis di registry (jumlah percobaan tercatat) sebelum dijalankan.
+- Tidak dipasang ke jalur keputusan. Pemasangan hanya lewat gerbang promosi setelah lulus Tahap 2/4 dan disetujui
+  Owner.
+
+**WP6 — Penerapan VPS bertahap (dikerjakan Claude setelah WP1–WP3 merge)**
+- Tarik `main`, manifest `MATCH`, restart observer dengan `--universe`.
+- Tahap A: core 5 simbol (3 sekarang + XAUUSD, NAS100) selama ≥ 2 jam; lanjut ke 7 hanya jika durasi siklus
+  < 20 dtk, RAM bebas > 500 MB, 0 siklus gagal, dan unduhan tick hari penuh selesai tanpa error.
+- Ubah tugas terjadwal agar observer tetap jalan setelah VPS restart (trigger startup + sesi MT5 yang login
+  otomatis, atau auto-logon) dan uji sekali dengan restart terencana di akhir pekan.
+- Catat di ROADMAP: tanggal mulai cakupan 7 simbol (periode sebelumnya untuk 4 simbol baru = CELAH).
+
+**WP7 — Keputusan Owner (bukan kode)**
+- Profil DEMO final Tahap 3 (usulan 0,5%/trade, 3%/hari sebagai lapisan pengetat di atas batas utama 35%).
+- Aturan berita: apakah "tidak ada rilis resmi" boleh dibedakan dari blackout. Perubahan ini menyentuh logika
+  keputusan; hanya boleh lewat hipotesis + validasi + catatan promosi setelah data WP3/WP4 tersedia.
+- Repo private atau tidak; status issue lama #21, #24, #29, #31.
+
+### Status paket
+
+| Paket | Status | PR | Catatan review Claude |
+|---|---|---|---|
+| WP1 | Belum dimulai | – | – |
+| WP2 | Belum dimulai | – | – |
+| WP3 | Belum dimulai | – | – |
+| WP4 | Belum dimulai | – | – |
+| WP5 | Belum dimulai | – | – |
+| WP6 | Menunggu WP1–WP3 | – | – |
+| WP7 | Menunggu Owner | – | – |
+
 ## Pemisahan data
 
 - **Periode pengembangan** dan **periode holdout** ditentukan berdasarkan tanggal sebelum data dilihat, dan
