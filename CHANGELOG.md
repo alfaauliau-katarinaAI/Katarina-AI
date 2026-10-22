@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: enam arah lanjutan dengan batas data dan prasyarat
+
+- Tambahkan arah Autonomous Research, Market Intelligence, Counterfactual, Cost Intelligence,
+  Scientific Memory dan Champion–Challenger sebagai panduan, **bukan** paket kerja baru.
+- Tegaskan counterfactual untung-rugi hanya dari data pengembangan sebelum 13 Okt 2026,
+  sedangkan kartu WAIT forward/holdout hanya untuk frekuensi pemblokir.
+- Izinkan pengukuran spread forward **deskriptif saja**, tanpa penyetelan strategi atau filter.
+  Prasyarat dan gerbang promosi tidak berubah; tidak ada perubahan kode, VPS atau trading.
+
 ## 2026-10-23 — roadmap: WP9 membongkar tembok blokir keputusan
 
 - Lampiran A ditambah WP9 (prioritas Owner): klasifikasi pemblokir (A input observer, B syarat bukti terkunci,
