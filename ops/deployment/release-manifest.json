@@ -1450,6 +1450,11 @@
       "normalized_sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da",
       "sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da"
     },
+    "src/katarina/research/market_filter.py": {
+      "bytes": 9400,
+      "normalized_sha256": "150dbdfadac2b40fab5ae3331654cf8c402fbf19da2ba4fb23d7d9457e1ba3ca",
+      "sha256": "150dbdfadac2b40fab5ae3331654cf8c402fbf19da2ba4fb23d7d9457e1ba3ca"
+    },
     "src/katarina/research/research.py": {
       "bytes": 604,
       "normalized_sha256": "7417441db02f700376529452a5154fda49bf1d4d981f9abf473950a157b50157",

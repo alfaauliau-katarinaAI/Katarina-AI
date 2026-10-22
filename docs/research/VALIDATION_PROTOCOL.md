@@ -61,3 +61,20 @@ mengalahkan semuanya.
   bawah bootstrap > 0. Sampel kurang dari 100 di akhir holdout = **PENDING_INSUFFICIENT_SAMPLE**, tidak pernah PASS.
 - Data dan kode yang sama selalu menghasilkan laporan identik (`report_sha256`). `write_report` mengembalikan hash
   berkas yang dipakai `validation.report_sha256` pada catatan promosi.
+
+## 8. Filter market intelligence (Tahap 2)
+
+- Alat: `katarina.research.market_filter` dan `scripts/research/evaluate_market_filter.py`.
+- Filter didaftarkan sebagai hipotesis `playbook = "MARKET_FILTER"` di registry yang sama (`filter_spec`), terikat ke
+  ID hipotesis dasar, **sebelum** dievaluasi; ia menambah jumlah percobaan.
+- Kondisi yang tersedia (semua dari informasi saat entry): `max_spread_to_range`, `max_spread_to_risk`,
+  `session_hours_utc` (jendela `[mulai, akhir)` jam UTC), `min_volatility_ratio`, `max_volatility_ratio`,
+  `min_ticks_per_minute`. Konteks per sinyal (`MarketContext`): `context_until`, `typical_range`,
+  `volatility_ratio`, `ticks_per_minute` (opsional), `favorable_move`.
+- Konteks dengan `context_until` setelah entry = `LOOKAHEAD_CONTEXT_AFTER_ENTRY`, laporan FAIL. `favorable_move`
+  (diketahui setelah exit) hanya untuk metrik perbandingan, tidak pernah untuk keputusan filter.
+- Setiap WAIT punya minimal satu alasan; laporan memuat hitungan per alasan.
+- PASS jika: alasan lengkap, tanpa look-ahead, tanpa sinyal ditolak penjaga kebocoran, dan median biaya / median gerak
+  menguntungkan pada sinyal yang lolos **lebih kecil** daripada pada semua sinyal. Laporan pengembangan Tahap 1 untuk
+  sinyal yang lolos disertakan (`stage1_development_report_sha256`). Holdout tidak pernah dibaca.
+

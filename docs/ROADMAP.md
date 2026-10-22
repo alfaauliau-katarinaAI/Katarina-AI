@@ -161,6 +161,15 @@ Tujuan: Katarina tahu kapan pasar tidak layak ditradingkan, walau pola entry ter
 Pekerjaan: perkuat filter yang ada (biaya terhadap range, rasio spread terhadap risiko) dengan spread aktual,
 sesi pasar, volatilitas, dan likuiditas dari data Tahap 0.
 
+Alat (repo, 22 Okt 2026): `katarina.research.market_filter` + `scripts/research/evaluate_market_filter.py`
+(protokol bagian 8 di [`VALIDATION_PROTOCOL.md`](research/VALIDATION_PROTOCOL.md)). Filter adalah hipotesis
+`MARKET_FILTER` di registry Tahap 1 (terhitung percobaan, terikat hash hipotesis dasarnya), hanya membaca periode
+pengembangan, menolak konteks yang lebih baru dari entry, dan mencatat alasan setiap WAIT (`SPREAD_TOO_WIDE_FOR_RANGE`,
+`SPREAD_TOO_WIDE_FOR_RISK`, `OUTSIDE_SESSION`, `VOLATILITY_TOO_LOW/HIGH`, `LIQUIDITY_TOO_LOW`, `CONTEXT_MISSING`).
+Laporan membandingkan median biaya / median gerak menguntungkan dengan dan tanpa filter dan menyertakan laporan
+pengembangan Tahap 1 untuk sinyal yang lolos. Kriteria alat dibuktikan `tests/unit/research/test_market_filter.py`;
+**tahap belum lulus** sampai filter nyata dinilai dengan data pengembangan dari Tahap 0.
+
 Kriteria kelulusan:
 - Filter didefinisikan hanya dari data pengembangan dan didaftarkan sebelum diuji.
 - Pada data pengembangan, rasio biaya terhadap gerak menguntungkan pada sinyal yang lolos filter **lebih baik**

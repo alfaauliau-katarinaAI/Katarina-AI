@@ -26,9 +26,11 @@ hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
    bursa data berturut-turut dan uji putus-sambung ≥ 3 kali, dinilai dengan `check_stage0_health.py`.
 2. **Tahap 1 — Validasi ilmiah:** alat dan protokol selesai 22 Okt (`katarina.research.validation`,
    [protokol](research/VALIDATION_PROTOCOL.md)); kriterianya dibuktikan tes. Dipakai untuk semua strategi berikutnya.
-3. Tahap 2–5 (market intelligence, risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan,
-   masing-masing dengan kriteria kelulusan di roadmap.
-4. Keputusan Owner di luar roadmap: repo private atau pemisahan website (Tahap 7 perapian), 15 folder lama
+3. **Tahap 2 — Market intelligence:** alat filter selesai 22 Okt (`katarina.research.market_filter`); menunggu data
+   pengembangan dari Tahap 0 untuk menilai filter nyata.
+4. Tahap 3–5 (risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan, masing-masing dengan
+   kriteria kelulusan di roadmap.
+5. Keputusan Owner di luar roadmap: repo private atau pemisahan website (Tahap 7 perapian), 15 folder lama
    terkunci di `C:\` VPS.
 
 ## Panduan terkait

@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — alat filter market intelligence (roadmap Tahap 2, tanpa perubahan perilaku)
+
+- `katarina.research.market_filter` + `scripts/research/evaluate_market_filter.py`: filter WAIT/lolos berdasarkan
+  spread terhadap range/risiko, sesi UTC, volatilitas, dan likuiditas saat entry; didaftarkan sebagai hipotesis
+  `MARKET_FILTER` di registry Tahap 1, hanya membaca data pengembangan, menolak konteks look-ahead, dan mencatat alasan
+  setiap WAIT. Laporan deterministik membandingkan median biaya / gerak menguntungkan dengan dan tanpa filter.
+- 8 tes alat. Protokol validasi bagian 8 dan roadmap Tahap 2 diperbarui. Tidak ada berkas terkunci gerbang promosi
+  yang diubah; filter belum dipakai sistem aktif.
+
 ## 2026-10-22 — Tahap 0: uji putus-sambung tercatat; observer VPS aktif
 
 - Observer read-only berjalan di VPS sejak 22 Okt 04:24 UTC (akun demo, Algo Trading OFF); CELAH holdout
