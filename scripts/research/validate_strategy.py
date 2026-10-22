@@ -34,6 +34,7 @@ def main(argv=None) -> int:
     parser.add_argument("--trades", help="JSON lines, one trade per line (see katarina.research.validation.Trade)")
     parser.add_argument("--opened-by")
     parser.add_argument("--reason")
+    parser.add_argument("--code-sha256", help="Hash of evaluated strategy code; must match the registered definition")
     args = parser.parse_args(argv)
     workspace = Path(args.workspace)
     now = datetime.now(timezone.utc)
@@ -46,14 +47,20 @@ def main(argv=None) -> int:
     split = v.DataSplit(split_raw["development_start"], split_raw["development_end"], split_raw["holdout_start"],
                         split_raw["holdout_end"], gaps=tuple(tuple(g) for g in split_raw.get("gaps", ())))
     costs = v.CostModel(**load(workspace / "costs.json"))
-    lines = Path(args.trades).read_text(encoding="utf-8").splitlines()
-    trades = [v.Trade.from_dict(json.loads(line)) for line in lines if line.strip()]
-    vault = v.HoldoutVault(trades, split, registry, workspace / "holdout-openings.jsonl")
+    def read_trades():
+        lines = Path(args.trades).read_text(encoding="utf-8").splitlines()
+        return [v.Trade.from_dict(json.loads(line)) for line in lines if line.strip()]
+
+    # Holdout bytes must not be read until authorization checks and the opening receipt exist.
+    vault = v.HoldoutVault(read_trades() if args.command == "development" else (), split, registry,
+                          workspace / "holdout-openings.jsonl",
+                          holdout_loader=read_trades if args.command == "holdout" else None)
     if args.command == "development":
-        report = v.evaluate_development(vault, args.hypothesis, costs=costs, as_of=now)
+        report = v.evaluate_development(vault, args.hypothesis, costs=costs, as_of=now,
+                                        code_sha256=args.code_sha256)
     else:
         report = v.evaluate_holdout(vault, args.hypothesis, costs=costs, opened_by=args.opened_by or "",
-                                    reason=args.reason or "", now=now)
+                                    reason=args.reason or "", now=now, code_sha256=args.code_sha256)
     name = f"{args.command}-{args.hypothesis[:12]}-{now.strftime('%Y%m%dT%H%M%SZ')}.json"
     digest = v.write_report(report, workspace / "reports" / name)
     print("VERDICT", report["verdict"], "trades", report["statistics"]["trades"],

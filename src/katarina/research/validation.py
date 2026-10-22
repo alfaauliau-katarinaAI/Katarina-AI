@@ -239,7 +239,8 @@ class CostModel:
         return self.gross_r(trade, side) - self.cost_r(trade)
 
 
-def guard_trades(trades, split: DataSplit, period: str, *, expected_side: str | None = None):
+def guard_trades(trades, split: DataSplit, period: str, *, expected_side: str | None = None,
+                 as_of: datetime | None = None):
     """Leakage guard. Returns (accepted, rejected) where rejected is [(trade_id, reason)]."""
     accepted, rejected, seen = [], [], set()
     last_exit = None
@@ -256,12 +257,16 @@ def guard_trades(trades, split: DataSplit, period: str, *, expected_side: str | 
             reason = "LOOKAHEAD_DATA_AFTER_ENTRY"
         elif not trade.entry_at < trade.exit_at <= trade.known_at:
             reason = "OUTCOME_KNOWN_BEFORE_EXIT"
+        elif as_of is not None and trade.known_at > _utc(as_of):
+            reason = "OUTCOME_NOT_YET_KNOWN"
         elif split.period(trade.entry_at) == "GAP":
             reason = "ENTRY_IN_GAP"
         elif split.period(trade.entry_at) != period:
             reason = "OUTSIDE_PERIOD"
         elif trade.exit_at > split.end_of(period):
             reason = "CROSSES_PERIOD_END"
+        elif any(trade.entry_at < end and trade.exit_at >= start for start, end, _ in split.gaps):
+            reason = "POSITION_CROSSES_GAP"
         elif last_exit is not None and trade.entry_at < last_exit:
             reason = "OVERLAPPING_POSITION"
         if reason:
@@ -278,32 +283,52 @@ def guard_trades(trades, split: DataSplit, period: str, *, expected_side: str | 
 class HoldoutVault:
     """Holds the trades of one data source; holdout trades only leave through :meth:`open`."""
 
-    def __init__(self, trades, split: DataSplit, registry: HypothesisRegistry, ledger_path):
+    def __init__(self, trades, split: DataSplit, registry: HypothesisRegistry, ledger_path, *, holdout_loader=None):
         self.split = split
         self.registry = registry
         self.ledger = _ChainedLedger(ledger_path)
         self.__trades = tuple(trades)
+        self.__holdout_loader = holdout_loader
 
     def development(self) -> tuple:
-        return tuple(t for t in self.__trades if self.split.period(t.entry_at) == "DEVELOPMENT")
+        # Keep GAP rows inside the requested date range so the guard rejects them visibly.
+        return tuple(t for t in self.__trades
+                     if self.split.development_start <= t.entry_at < self.split.development_end)
 
     def openings(self) -> list[dict]:
         return self.ledger.entries()
 
     def open(self, hypothesis_id: str, *, opened_by: str, now: datetime, reason: str) -> tuple:
         now = _utc(now)
-        if self.registry.get(hypothesis_id) is None:
+        registered = self.registry.get(hypothesis_id)
+        if registered is None:
             raise ValidationError("holdout_requires_registered_hypothesis")
+        registered_at = _utc(registered["registered_utc"])
+        if registered_at > now:
+            raise ValidationError("hypothesis_registered_in_future")
         if now < self.split.holdout_end:
             raise ValidationError("holdout_not_finished")
         if not str(opened_by).strip() or not str(reason).strip():
             raise ValidationError("holdout_opening_requires_who_and_why")
-        if any(e["hypothesis_id"] == hypothesis_id for e in self.ledger.entries()):
+        openings = self.ledger.entries()
+        if any(e["hypothesis_id"] == hypothesis_id for e in openings):
             raise HoldoutAlreadyOpened(hypothesis_id)
+        for previous in openings:
+            # A revised hypothesis registered after exposure needs a new, disjoint holdout.
+            # Legacy receipts lack dates: conservatively refuse reuse after exposure.
+            start, end = previous.get("holdout_start"), previous.get("holdout_end")
+            overlaps = (start is None or end is None or
+                        self.split.holdout_start < _utc(end) and _utc(start) < self.split.holdout_end)
+            if registered_at >= _utc(previous["opened_utc"]) and overlaps:
+                raise ValidationError("new_hypothesis_requires_unseen_holdout")
         self.ledger.append({"kind": "HOLDOUT_OPENED", "hypothesis_id": hypothesis_id,
                             "opened_utc": now.isoformat(), "opened_by": str(opened_by), "reason": str(reason),
-                            "split_sha256": self.split.sha256})
-        return tuple(t for t in self.__trades if self.split.period(t.entry_at) == "HOLDOUT")
+                            "split_sha256": self.split.sha256,
+                            "holdout_start": self.split.holdout_start.isoformat(),
+                            "holdout_end": self.split.holdout_end.isoformat()})
+        trades = self.__holdout_loader() if self.__holdout_loader is not None else self.__trades
+        return tuple(t for t in trades
+                     if self.split.holdout_start <= t.entry_at < self.split.holdout_end)
 
 
 # --------------------------------------------------------------------------- statistics
@@ -405,6 +430,7 @@ def evaluate_development(vault: HoldoutVault, hypothesis_id: str, *, costs: Cost
 def evaluate_holdout(vault: HoldoutVault, hypothesis_id: str, *, costs: CostModel, opened_by: str, reason: str,
                      now: datetime, code_sha256: str | None = None) -> dict:
     """Open the holdout (recorded, once per hypothesis) and report on it."""
+    _registered_evaluation(vault.registry, hypothesis_id, now, code_sha256)
     trades = vault.open(hypothesis_id, opened_by=opened_by, now=now, reason=reason)
     evaluation = Evaluation(hypothesis_id, "HOLDOUT", vault.split, costs)
     report = _build_report(evaluation, trades, vault.registry, as_of=now, code_sha256=code_sha256,
@@ -412,19 +438,31 @@ def evaluate_holdout(vault: HoldoutVault, hypothesis_id: str, *, costs: CostMode
     return report
 
 
+def _registered_evaluation(registry, hypothesis_id, as_of, code_sha256):
+    entry = registry.get(hypothesis_id)
+    if entry is None:
+        raise ValidationError("hypothesis_not_registered")
+    if _utc(entry["registered_utc"]) > _utc(as_of):
+        raise ValidationError("hypothesis_registered_in_future")
+    if code_sha256 is not None and not re.fullmatch("[0-9a-f]{64}", str(code_sha256)):
+        raise ValidationError("evaluation_code_sha256_invalid")
+    if entry["spec"].get("code_sha256") is not None and code_sha256 != entry["spec"]["code_sha256"]:
+        raise ValidationError("evaluation_code_does_not_match_registered_hypothesis")
+    return entry
+
+
 def _build_report(evaluation: Evaluation, trades, registry: HypothesisRegistry, *, as_of: datetime,
                   code_sha256: str | None = None, opening: dict | None = None) -> dict:
     """Deterministic report for one hypothesis on one period ("DEVELOPMENT" or "HOLDOUT")."""
     if (evaluation.period == "HOLDOUT") != (opening is not None):
         raise ValidationError("holdout_report_requires_recorded_opening")
-    entry = registry.get(evaluation.hypothesis_id)
-    if entry is None:
-        raise ValidationError("hypothesis_not_registered")
+    entry = _registered_evaluation(registry, evaluation.hypothesis_id, as_of, code_sha256)
     if evaluation.period not in ("DEVELOPMENT", "HOLDOUT"):
         raise ValidationError("period_must_be_DEVELOPMENT_or_HOLDOUT")
     spec = entry["spec"]
+    as_of = _utc(as_of)
     split, costs = evaluation.split, evaluation.costs
-    accepted, rejected = guard_trades(trades, split, evaluation.period, expected_side=spec["side"])
+    accepted, rejected = guard_trades(trades, split, evaluation.period, expected_side=spec["side"], as_of=as_of)
     values = [costs.net_r(t) for t in accepted]
     trials = registry.trial_count()
     seed = evaluation.hypothesis_id + evaluation.period + split.sha256
@@ -436,8 +474,11 @@ def _build_report(evaluation: Evaluation, trades, registry: HypothesisRegistry, 
     base = baselines(accepted, costs, seed)
     expectancy = stats["expectancy_r"]
     comparators = [0.0, base["random_side_same_timing"]["expected_expectancy_r"], base["trend_rule"]["expectancy_r"]]
-    beats = expectancy is not None and all(expectancy > c for c in comparators if c is not None)
+    baseline_complete = bool(accepted) and base["trend_rule"]["labelled_trades"] == len(accepted)
+    beats = (baseline_complete and expectancy is not None
+             and all(c is not None and expectancy > c for c in comparators))
     gates = {
+        "all_baselines_available": baseline_complete,
         "net_expectancy_positive": expectancy is not None and expectancy > 0,
         "beats_all_baselines": beats,
         "no_rejected_trades": not rejected,
@@ -448,7 +489,9 @@ def _build_report(evaluation: Evaluation, trades, registry: HypothesisRegistry, 
             "profit_factor": stats["profit_factor"] is not None and stats["profit_factor"] >= PROMOTION_MIN_PROFIT_FACTOR,
             "bootstrap_lower_bound_positive": lower is not None and lower > 0,
         })
-    if evaluation.period == "HOLDOUT" and not gates["min_trades"]:
+    if rejected:
+        verdict = "FAIL"
+    elif evaluation.period == "HOLDOUT" and not gates["min_trades"]:
         verdict = "PENDING_INSUFFICIENT_SAMPLE"
     elif not accepted:
         verdict = "NO_TRADES"
