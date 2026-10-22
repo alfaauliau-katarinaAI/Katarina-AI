@@ -50,5 +50,29 @@ class PartialClockCycleTests(unittest.TestCase):
         self.assertEqual(broker.shutdowns, 1)
 
 
+    def test_closed_markets_without_recent_history_are_recorded_failed(self):
+        class ClosedHistoryBroker(PartiallyClosedBroker):
+            def copy_ticks_range(self, symbol, start, end, flags):
+                return () if symbol in ("XAUUSD", "NAS100") else super().copy_ticks_range(
+                    symbol, start, end, flags)
+
+        broker = ClosedHistoryBroker()
+        with tempfile.TemporaryDirectory() as root:
+            result = UnifiedKatarinaBrain.observe_once(Path(root), broker=broker,
+                                                        fetch_news=False)
+            self.assertEqual(result["observed_symbols"], 5)
+            self.assertEqual(result["received_market_data_symbols"], 3)
+            report = json.loads((Path(root) / "latest.json").read_text(encoding="utf-8"))
+            with closing(sqlite3.connect(Path(root) / "context.sqlite3")) as db:
+                quotes = dict(db.execute(
+                    "SELECT symbol,status FROM observer_quotes"))
+            self.assertEqual(sorted(quotes.values()), ["FAILED", "FAILED", "OK", "OK", "OK"])
+            for symbol in ("XAUUSD", "NAS100"):
+                self.assertEqual(quotes[symbol], "FAILED")
+                self.assertEqual(report["symbols"][symbol]["action"], "WAIT")
+            self.assertEqual(report["orders_submitted"], 0)
+        self.assertEqual(broker.orders, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
