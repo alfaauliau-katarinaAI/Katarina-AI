@@ -51,6 +51,20 @@ class NewsPipelineTests(unittest.TestCase):
         finally:
             store.db.close()
 
+    def test_missing_feed_timestamp_is_diagnostic_not_sort_failure(self):
+        old = (NOW - timedelta(hours=8)).isoformat()
+        store = FakeStore(sqlite3.connect(":memory:"), {
+            "fed": [entry(None, "https://www.federalreserve.gov/invalid"),
+                    entry(old, "https://www.federalreserve.gov/old")],
+        })
+        try:
+            articles, diag = load_articles(store, NOW, allow_fetch=False)
+            self.assertEqual(articles, [])
+            self.assertEqual(diag["fed_item_invalid_time"], 1)
+            self.assertEqual(diag["fed_items_older_than_window"], 1)
+        finally:
+            store.db.close()
+
     def test_article_fetch_failure_is_not_mislabelled_as_no_release(self):
         fresh = (NOW - timedelta(minutes=20)).isoformat()
         store = FakeStore(sqlite3.connect(":memory:"), {
