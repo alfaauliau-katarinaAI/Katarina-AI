@@ -120,8 +120,9 @@ paralel tidak boleh membuka holdout, mengubah strategi aktif, atau melonggarkan 
 - Observer read-only kembali aktif di VPS pada **22 Okt 2026 04:24 UTC** (akun demo, Algo Trading OFF). CELAH holdout
   yang tercatat: **13 Okt 2026 00:00 UTC – 22 Okt 2026 04:24 UTC**; ledger Tahap 0 aktif sejak kode #173 dipasang.
 - Audit holdout privat program 70 sel saat ini `BLOCKED_PRIVATE_INPUT_FILES_NOT_PROVIDED`; tidak ada klaim alpha lulus.
-- Cakupan simbol observer forward: EURUSD/GBPUSD/USDJPY sejak 22 Okt 04:24 UTC; XAUUSD dan NAS100 sejak 22 Okt 19:58 UTC;
-  US30 dan JPN225 menyusul (WP6). Periode sebelum simbol mulai diamati = **CELAH** untuk simbol itu.
+- Cakupan simbol observer forward: EURUSD/GBPUSD/USDJPY sejak 22 Okt 04:24 UTC (lubang 22 Okt 21:00–22:02 UTC);
+  XAUUSD dan NAS100 hanya 22 Okt 19:58–21:00 UTC, lalu dijeda (R1 T9); US30 dan JPN225 belum. Periode di luar cakupan
+  = **CELAH** untuk simbol itu; tanggal mulai baru dicatat di sini saat WP6 dilanjutkan setelah WP11.
 - Jika sampai akhir periode holdout jumlah sampel belum memenuhi kriteria, hasilnya **PENDING** — tidak boleh
   dinyatakan lulus, diperpanjang diam-diam, atau dilengkapi dengan data dari periode lain.
 - Holdout hanya boleh dibuka **satu kali per strategi yang sudah final**. Setiap pembukaan dicatat (strategi,
@@ -374,7 +375,8 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | 3b (paralel) | WP10a — profil spread deskriptif | Pelaksana | WP2 di-merge | ±4 berkas, ±250 baris | — |
 | 3b (paralel) | WP10b — swap + sensitivitas biaya di alat validasi | Pelaksana | WP8a di-merge | ±3 berkas, ±250 baris | — |
 | 3c | Jalankan WP9a di VPS; aktifkan `measured_inputs` bila Owner setuju | Claude + Owner | WP9a, WP9b | — | — |
-| 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP1 (dimajukan; RAM cukup, terukur) | — | Tahap A berjalan (5 simbol) |
+| 3b (paralel, prioritas) | WP11 — jam broker saat sebagian pasar tutup | Pelaksana | — (berkas berbeda dari WP2/WP3) | ±2 berkas, ±120 baris | — |
+| 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP1 + WP11 di-merge | — | Dijeda (R1 T9) |
 | 4 (paralel) | Ekspor dataset pengembangan + profil spread di VPS (akhir pekan, pasar tutup) | Claude | WP8a; WP10a | — | — |
 | 5 | WP8b — setup BUY/SELL, simulasi, perbandingan | Pelaksana | WP8a (sebaiknya setelah WP10b) | ±8 berkas, ±600 baris | — |
 | 5 (paralel) | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP6 tahap A berjalan | ±6 berkas, ±450 baris | — |
@@ -410,6 +412,7 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | T6 | Observer selalu mengirim `system_healthy=False` dan `resolved_experience=[]` (sengaja fail-closed); `technical_signal` tidak pernah BUY/SELL selama 10 jam di 3 pasangan | `cognition/observer.py` di sekitar `RiskSituation(...)`; logika di `cognition/contextual_decision_intelligence.py` (terkunci) | Terbuka → WP4 (replay sinyal), WP9b/9d |
 | T7 | `engines/opportunity.py::MultiMarketOpportunityEngine` hanya dipakai tes; bobot skornya (0,65/0,35/0,55, penalti spread/korelasi/berita) belum divalidasi; membuang kandidat bila `news.ready` salah | `docs/maintenance/RUNTIME_MODULE_MAP.md` kategori B | Terbuka → WP5 (riset) |
 | T8 | `KATARINA_ALL_MARKET_RESEARCH=1` merotasi simbol paling lama tak dikunjungi (`lab/continuous_research_lab.py::select_batch`) dan menyalakan `ResearchPool`, `NetworkDoctor`, koneksi broker tambahan. Tidak cocok untuk cakupan per siklus 7 simbol inti dan RAM 2 GB | `cognition/continuous_observation.py` | Ditangani WP1 (mode all-market ditolak bersama `--universe`) |
+| T9 | Mode 5 simbol, 22 Okt 21:00–22:02 UTC: 7 siklus `FAILED BROKER_CLOCK_NOT_VERIFIED`, 0 data untuk **semua** simbol ±62 menit. XAUUSD/NAS100 jeda harian ±21:00–22:00 UTC (DST AS); hanya 3/5 quote segar = 60% < ambang 70% dari **semua** simbol. Dengan 7 simbol: 3/7. Backoff ×2 sampai 16 menit memperpanjang lubang | `broker/broker_clock_alignment.py::infer_clock_shift` (`frac=count/considered`), `cognition/observer.py` (raise bila tidak `suitable_for_readonly_snapshot`), `cognition/continuous_observation.py` (backoff) | Terbuka → WP11; VPS kembali 3 simbol 22 Okt 22:02 UTC |
 | T9 | VPS tertinggal dari `main`; tugas `Katarina-Readonly-Observer` hanya berjalan saat Administrator login (trigger logon) | Task Scheduler VPS | Sebagian: kode VPS = `main` 23 Okt; auto-start setelah restart VPS masih WP6 |
 
 ### R2. Cara kerja standar (wajib untuk setiap paket)
@@ -819,6 +822,27 @@ broker yang **deskriptif**. Tidak ada perubahan pada observer, keputusan, atau b
 6. Tes: malam melintasi perubahan DST, akhir pekan, triple Rabu; kredit diabaikan; sisi acak memakai swap sisinya;
    blok sensitivitas dan `cost_verdict` untuk ketiga kasus; verdict lama tidak berubah.
 
+#### WP11 — Jam broker saat sebagian pasar tutup (Tahap 0; prioritas; prasyarat WP6)
+
+**Masalah (R1 T9).** `infer_clock_shift` menghitung pecahan mayoritas atas **semua** simbol yang punya quote. Saat emas
+dan indeks jeda harian, quote FX yang segar tidak mencapai 70%, sehingga seluruh siklus gagal dan tidak ada data
+untuk simbol mana pun. Perbaikan hanya di inferensi jam; keputusan, ledger, backoff, dan kriteria Tahap 0 tetap.
+
+1. `src/katarina/intelligence/broker/broker_clock_alignment.py` (tidak terkunci): pecahan mayoritas dihitung atas
+   simbol yang memberi suara segar (`sum(votes.values())`), bukan atas `considered`. Syarat lain tidak berubah:
+   minimal `min_symbols` (3) suara untuk jam yang sama, `majority_fraction` 0,70, umur −15…180 detik, rentang
+   −12…14 jam. `confidence_fraction` = suara jam terpilih / semua suara.
+2. `ClockFinding` mendapat field terakhir `stale_symbols: tuple[str, ...] = ()` (urut abjad): simbol yang
+   dipertimbangkan tetapi tidak memberi suara. Pemanggil lain tidak diubah.
+3. Observer tidak diubah. Simbol yang sedang tutup tetap diamati: quote-nya tercatat di ledger dengan
+   `quote_age_seconds` besar dan logika keputusan yang ada memberinya `stale_quote`.
+4. Tes (`tests/unit/intelligence/test_broker_clock_alignment.py`; tes lama tidak diubah dan tetap lulus):
+   3 segar + 2 basi 1 jam → valid, shift benar, `stale_symbols` berisi 2; 3 segar + 4 basi → valid; 2 segar + 3 basi
+   → tidak valid; 3 segar vs 2 segar dengan jam berbeda → tidak valid (0,6); 3 benar + 1 jam salah → valid dengan jam
+   mayoritas. Tambah satu tes observer dengan MT5 palsu (pola `tests/integration/test_brain_owned_workflow.py`): 3 FX segar + 2 simbol basi → siklus OK,
+   5 baris quote, simbol basi tidak `FAILED`.
+5. Menerapkan di VPS bukan bagian PR: Claude melanjutkan WP6 (5 simbol, dipantau melewati 21:00–22:00 UTC, lalu 7).
+
 #### WP7 — Keputusan Owner (bukan kode)
 
 - Profil DEMO final Tahap 3 (usulan 0,5%/trade, 3%/hari sebagai lapisan pengetat di atas batas utama 35%).
@@ -845,7 +869,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP3 | Sedang dikerjakan — ChatGPT, PR #191 (draft) | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | – |
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
-| WP6 | Sedang dikerjakan — Claude: tahap A 5 simbol sejak 22 Okt 19:58 UTC; 7 simbol setelah cek 2 jam | – | Dimajukan sebelum WP2 karena RAM terukur cukup (±150 MB/hari tick XAUUSD vs ±700 MB bebas); jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
+| WP6 | Menunggu prasyarat (WP11) | – | Tahap A 22 Okt 19:58–22:02 UTC: RAM bebas 853 MB, siklus 1–4 dtk, 0 quote FAILED, tetapi semua siklus gagal saat jeda emas/indeks (T9). Dijeda: berkas VPS diganti nama `observer_universe.json.wp6-paused`; dilanjutkan Claude setelah WP11 |
 | WP8a | Siap dikerjakan (paralel dengan WP2/WP3) | – | – |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
 | WP9a | Siap dikerjakan (prioritas; paralel) | – | – |
@@ -854,6 +878,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Menunggu prasyarat (WP2) | – | – |
 | WP10b | Menunggu prasyarat (WP8a) | – | – |
+| WP11 | Siap dikerjakan (prioritas; paralel) | – | – |
 | WP7 | Menunggu Owner | – | – |
 
 ### R6. Perintah siap pakai untuk pelaksana
@@ -1069,6 +1094,19 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sud
    memakai swap sisinya; blok cost_sensitivity hanya informasi — verdict dan aturannya tidak berubah;
    market_intelligence.py tidak diubah.
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP10b di tabel R5.
+```
+
+**Perintah WP11 (jam broker saat sebagian pasar tutup)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, Lampiran A: R1 (T9), R2, R3, R8, R9, R10 dan "WP11". Baca seluruh
+   src/katarina/intelligence/broker/broker_clock_alignment.py dan tesnya, serta bagian infer_clock_shift di
+   src/katarina/intelligence/cognition/observer.py dan tests/integration/test_brain_owned_workflow.py (MT5 palsu).
+2. Kerjakan HANYA WP11, satu PR "WP11: jam broker tetap terverifikasi saat sebagian pasar tutup".
+3. Wajib: hanya penyebut pecahan mayoritas yang berubah (suara segar, bukan semua simbol); min 3 suara, 70%, jendela
+   umur dan rentang jam tetap; field stale_symbols; observer, backoff dan data_health tidak diubah; tes lama tidak
+   diubah; tes baru sesuai WP11 butir 4.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP11 di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
