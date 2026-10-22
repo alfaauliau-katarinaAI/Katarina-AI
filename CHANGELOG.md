@@ -1,5 +1,18 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — roadmap disempurnakan; dokumen lama disinkronkan
+
+- `docs/ROADMAP.md`: Tahap 0 membedakan **snapshot observer** dan **tick broker** (disimpan terpisah, celah dicatat
+  tanpa interpolasi, pemulihan diverifikasi); aturan **paralel vs berurutan** (pengembangan boleh paralel, kelulusan
+  dan kewenangan tetap berurutan); periode tanpa data observer asli sejak 13 Okt dicatat sebagai **CELAH**, backfill
+  tidak pernah dihitung forward, sampel kurang di akhir holdout = **PENDING**; profil DEMO ditegaskan sebagai lapisan
+  tambahan di atas profil utama.
+- `docs/architecture/RISK_PROFILE_V2.md`: hubungan profil DEMO dengan profil tunggal dan Stage 38.
+- Dokumen/config yang masih menggambarkan transport ZeroMQ/TCP (`KATARINA_FINAL_WORKFLOW.md`,
+  `config/transport_policy.json`, `config/execution_workflow.json`, draf bridge MT5) ditandai dipensiunkan dan
+  menyebut jalur sekarang (paket MetaTrader5 Python); `KATARINA_ENVIRONMENT_RECOVERY.md` tidak lagi menyebut
+  `pyzmq`/`tornado`. Tidak ada perubahan perilaku.
+
 ## 2026-10-22 — roadmap berbasis bukti
 
 - `docs/ROADMAP.md` ditetapkan Owner sebagai dasar pengembangan: prinsip "kewenangan bertambah berdasarkan bukti",
