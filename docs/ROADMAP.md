@@ -361,6 +361,160 @@ Tujuan: bahan riset untuk Tahap 1/2 walau semua keputusan WAIT. **Tidak** mengub
 | WP6 | Menunggu WP1–WP3 | – | – |
 | WP7 | Menunggu Owner | – | – |
 
+
+### R5A. Log pekerjaan pelaksana untuk diperiksa Owner — 23 Oktober 2026 WIB
+
+**Jenis catatan:** audit pekerjaan nyata dari GitHub dan uji pada checkout VPS **terpisah**, bukan klaim kelulusan
+tahap. Waktu commit GitHub memakai UTC 22 Oktober 2026 (23 Oktober dini hari WIB).
+Catatan ini ditulis **pada branch PR #184**, sehingga baru akan muncul pada `main` setelah PR direview
+dan digabung sesuai R0/R2. Rujukan lengkap: [PR #184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184),
+[daftar commit PR #184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184/commits),
+[CI WP1 terakhir](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/39824790896).
+**Tidak ada approval Owner atau review Claude yang diasumsikan.**
+
+#### 1. Apa yang diminta dan batas otoritas
+
+Owner meminta seluruh pekerjaan roadmap dijalankan, dengan tujuan Katarina dapat mencari peluang terbaik
+di berbagai pair **tanpa entry paksa**. Roadmap versi `main` yang ditinjau sudah menetapkan urutan
+WP1 → review/merge → WP2 dan WP3 → review/merge → WP6 → WP4 → WP5; WP7 memerlukan
+keputusan Owner. Karena itu **WP1 saja** yang boleh diserahkan sekarang.
+Cakupan WP1 adalah **tujuh simbol inti program holdout per siklus**, **bukan**
+klaim pemindaian/setup optimal seluruh pair broker, dan **bukan** izin trading.
+
+Hal yang tetap: satu `UnifiedKatarinaBrain`, observer canonical, aturan keputusan BUY/SELL/WAIT,
+semua file yang dilindungi `config/promotion_lock.json`, Risk Governor dan batas drawdown 35%,
+ketentuan holdout, profil DEMO (masih usulan), serta **LIVE OFF / tidak mengirim order**.
+Tidak ada perubahan pada terminal MT5, peluncur observer aktif, atau checkout `C:\Katarina\code` yang berjalan.
+
+#### 2. Riwayat PR, branch, dan alasan perubahan arah
+
+| Bukti | Status / penjelasan |
+|---|---|
+| Baseline `main` | `69de5a3f00925173f5e3163946e29ff657bbf195`; roadmap WP1–WP7 masuk melalui [#182](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/182) |
+| Eksperimen awal [#183](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/183) | Menambahkan survei quote seluruh simbol broker secara bergiliran, opsi lingkungan, tes dan panduan. **DITUTUP tanpa merge** ketika diketahui roadmap terbaru mewajibkan WP1 terlebih dahulu. Kode eksperimen **tidak masuk main atau VPS aktif** |
+| Branch kerja WP1 | `feat/wp1-observer-universe-20261022`, dibuat dari `main` `69de5a3` |
+| [PR #184 — WP1](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | **OPEN, belum merge**. Review Claude belum tercatat pada saat pemeriksaan ini. Semua perubahan WP1 masih di branch PR |
+| Batas paket berikutnya | WP2 belum dimulai karena WP1 belum merge; WP3–WP6 mengikuti prasyarat R0; WP7 tetap keputusan Owner |
+
+**Pelajaran dari #183:** prototipe riset yang secara teknis lulus beberapa tes tidak otomatis
+selaras dengan urutan roadmap. Prototipe sengaja tidak dipromosikan dan tidak disatukan dengan WP1.
+
+#### 3. Daftar lengkap berkas yang berubah pada PR #184
+
+Berikut seluruh **16 berkas** yang ditampilkan oleh GitHub pada diff PR sebelum log ini
+diperpanjang (penambahan catatan audit ini tetap berada di `docs/ROADMAP.md`).
+
+| Berkas | Apa yang dilakukan dan alasannya |
+|---|---|
+| `config/observer_universe.json` **(baru)** | Mendaftarkan simbol persis milik broker: `XAUUSD.vx`, `NAS100.vx`, `US30.vx`, `JPN225.vx`, `EURUSD.vx`, `GBPUSD.vx`, `USDJPY.vx`; XAUUSD pertama, `rotating_slots=0`. Cocok dengan simbol program holdout |
+| `src/katarina/intelligence/broker/observer_universe.py` **(baru)** | `ObserverUniverse`, `load_universe`, `select_symbols`; validasi JSON, core tidak kosong/duplikat, batas 17, nama broker persis, mode trade yang layak, pelaporan core yang hilang, pembatas slot rotasi |
+| `src/katarina/intelligence/cognition/observer.py` | Opsi `universe` memilih semua core yang tersedia tanpa pemotongan `max_symbols` lama; yang hilang masuk kartu `WAIT` dengan `sensor_reason=CORE_SYMBOL_UNAVAILABLE` dan ledger quote `FAILED`. Tanpa `universe`, jalur lama dipertahankan |
+| `src/katarina/intelligence/cognition/continuous_observation.py` | Meneruskan konfigurasi ke satu observer existing; menolak kombinasi `universe` dan `KATARINA_ALL_MARKET_RESEARCH=1` **sebelum** worker dimulai |
+| `src/katarina/intelligence/cognition/unified_brain.py` | Meneruskan `universe` pada one-pass dan observer terhubung; validasi jenis dan mempertahankan satu otak |
+| `src/katarina/adapters/automatic_connection.py` | Meneruskan `universe` melalui jalur koneksi broker baca-saja; jalur tanpa opsi tetap kompatibel |
+| `scripts/ai/run_contextual_market_observer.py` | Menambah CLI `--universe PATH`, validasi config, dan penolakan bentrok dengan mode all-market-research |
+| `src/katarina/intelligence/broker/data_recovery.py` | Menambah kode alasan stabil `CORE_SYMBOL_UNAVAILABLE` supaya kegagalan sensor tidak kehilangan sebab |
+| `src/katarina/intelligence/lab/continuous_research_lab.py` | `select_batch(..., exclude=())` agar slot rotasi tidak mengulang core. Nilai default tidak mengubah perilaku lama |
+| `tests/unit/intelligence/test_observer_universe.py` **(baru)** | Memeriksa kesamaan dengan program holdout, urutan core, simbol tidak tersedia/nontradeable, konfigurasi invalid, exclude, pembatas slot saat core hilang |
+| `tests/integration/test_wp1_observer_universe.py` **(baru)** | Memakai broker sintetis untuk memeriksa alur observer dan ledger `FAILED`, mode lama, urutan core, penolakan mode worker bentrok, dan 0 order |
+| `docs/ROADMAP.md` | Contoh CLI `--universe` dan status R5 WP1, kemudian log kerja R5A ini |
+| `CLAUDE.md` | Memperbarui peta modul/CLI dan mencatat WP1 belum dideploy |
+| `CHANGELOG.md` | Mencatat perubahan material WP1, alasan, batas keamanan dan nomor PR |
+| `docs/maintenance/RUNTIME_MODULE_MAP.md` | Regenerasi peta impor runtime setelah penambahan modul |
+| `ops/deployment/release-manifest.json` | Regenerasi hash inventaris deployable sesuai kode WP1; pemeriksaan `MATCH` |
+
+Tidak ada berkas `config/promotion_lock.json`, strategi aktif, `market_decision`,
+`contextual_decision_intelligence`, konfigurasi risiko atau eksekusi yang disentuh.
+`core` tepat 7 adalah syarat data Tahap 0; masih perlu pembuktian kinerja broker di WP6.
+
+#### 4. Cara pelaksana mengerjakan, urutan dan pembuktian
+
+1. **Pemeriksaan awal baca-saja:** membaca `CLAUDE.md`, roadmap `R0–R7`, file observer,
+   jalur CLI → koneksi → `run_continuous` → `UnifiedKatarinaBrain` → `BrainObserver.run`,
+   daftar simbol holdout, dan file yang dikunci gerbang promosi. Dikonfirmasi bahwa observer
+   VPS sedang mengamati 3 simbol default.
+2. **Branch aman:** membuat branch WP1 dari `main` terbaru, tanpa checkout branch
+   pada direktori kode produksi VPS.
+3. **Tes lebih dahulu (RED):** commit [`ee75949`](https://github.com/alfaauliau-katarinaAI/Katarina-AI/commit/ee75949ad4466c3be462224be0da6badf5bc623f)
+   menambahkan tes WP1. Pelaksanaan pertama memang gagal `ModuleNotFoundError` karena
+   `observer_universe.py` belum ada — kegagalan yang disengaja untuk membuktikan tes efektif.
+4. **Implementasi inti:** menambahkan daftar core eksplisit dan `ObserverUniverse`,
+   menghubungkan parameter melalui **jalur yang sudah ada**, mempertahankan default,
+   menambahkan alasan WAIT untuk core hilang, dan opsi rotasi terpisah dari core.
+5. **Tes integrasi dan diagnosis:** pengujian awal untuk core yang tidak tersedia gagal
+   sebelum publikasi `latest.json`, ternyata broker sintetis hanya memiliki dua simbol
+   untuk verifikasi jam. Ledger menunjukkan `BROKER_CLOCK_NOT_VERIFIED`.
+   **Tes diperbaiki** agar tetap menyediakan tiga simbol sah untuk kuorum jam
+   dan satu simbol core tambahan yang hilang. Tidak mengendurkan pengecekan waktu broker
+   atau membuat data sintetis menjadi bukti pasar nyata.
+6. **Audit regresi tambahan:** ditemukan bentrok `universe` + `ALL_MARKET_RESEARCH` baru
+   ditolak terlalu lambat (worker mungkin mulai terlebih dahulu). Ditambah tes RED lalu
+   dipindah menjadi penolakan awal **sebelum host lock / worker startup**
+   (commit [`b727d5a`](https://github.com/alfaauliau-katarinaAI/Katarina-AI/commit/b727d5a1976d50c7308b7f088b115a45dbc7d6a9)).
+7. **Batas rotasi diperbaiki:** jika beberapa core hilang, perhitungan lama bisa memasukkan
+   simbol rotasi melebihi `rotating_slots`. Tes regresi baru dan perbaikan
+   `selected_rotating` memastikan batas yang dikonfigurasi selalu dihormati
+   (commit [`9018dee`](https://github.com/alfaauliau-katarinaAI/Katarina-AI/commit/9018dee898eb0f2cc93ae79f208c220d78a0918b)).
+8. **Dokumentasi dan hash:** memperbarui roadmap, changelog, peta untuk Claude,
+   regenerasi `RUNTIME_MODULE_MAP.md` dan `release-manifest.json`. Penyesuaian
+   dilakukan pada branch PR, **bukan** memodifikasi konfigurasi trader aktif.
+9. **Pengujian dan review:** menjalankan tes pada
+   `C:\Katarina\_roadmap_validation\wp1-pr` (Git worktree terpisah),
+   audit repo/dependensi/promosi, serta CI Body + portable Ubuntu/Windows GitHub.
+   PR dibuka untuk review Claude, **tidak di-merge sendiri**, dan WP2 tidak dimulai.
+
+#### 5. Hasil pengujian, termasuk kegagalan yang tidak disembunyikan
+
+| Uji / sumber | Hasil yang dapat diperiksa |
+|---|---|
+| Unit + integrasi khusus WP1 pada Python VPS, setelah dua perbaikan | **12 tes lulus**, sekitar 3 detik, 0 kegagalan; tes baru dan fixture memakai data sintetis, bukan bukti hasil trading |
+| GitHub Actions commit terakhir sebelum audit ini | [Run **39824790896**](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/39824790896): **Body PASS, Portable Ubuntu PASS, Portable Windows PASS**; job opsional tanpa konfigurasi yang sesuai berstatus SKIPPED |
+| Audit hygiene | **PASS_REPOSITORY_HYGIENE**: `forbidden=0`, `tracked_junk=0`, `empty_source=0` |
+| Audit link dependensi | **PASS_LOCAL_DEPENDENCY_LINKS** pada checkout uji |
+| Gerbang promosi | **PASS_PROMOTION_GATE**; file strategi/risk terkunci tetap tidak diubah |
+| Manifest | **MATCH**, **301** berkas kode, tidak ada berkas hilang, berubah tanpa manifest, atau tambahan tak tercatat pada pemeriksaan |
+| Full unit suite Python pada VPS terpisah | **1227 tes dijalankan; FAILED: 1 failure, 3 errors, 2 skipped**. Hasil ini **bukan PASS**: lingkungan Python VPS yang dipakai uji tidak memiliki `numpy`, dua pengujian menemui file SQLite sementara terkunci di Windows, dan satu tes gagal karena perbedaan representasi path 8.3 `ADMINI~1` vs `Administrator`. CI terpisah GitHub lulus. Tidak mengubah paket production untuk menutupi kegagalan tersebut |
+| Kelulusan Tahap 0, uji broker 7 simbol aktual | **BELUM**. Tes kode tidak menggantikan 10 hari bursa observasi, bukti unduhan tick lengkap atau pemantauan sumber daya WP6 |
+
+Audit ini mencatat hasil sesuai saat diperiksa, **bukan** mengklaim semua tes manual VPS,
+demonstrasi broker tujuh simbol, atau profit factor strategi sudah lulus. CI pada commit
+dokumentasi sesudahnya perlu diperiksa ulang bila review mensyaratkan.
+
+#### 6. Keadaan VPS aktif dan batas pemasangan
+
+Pada pemeriksaan baca-saja terakhir sebelum catatan ini, `C:\Katarina\code` masih di
+`30d043c`; status observer pada **22 Oktober 2026 17:34 UTC (23 Oktober 00:34 WIB)**
+menunjukkan **749 siklus berhasil, 3 simbol berdata, 0 kegagalan beruntun, 0 order,
+`live_execution_authorized=false`**. Snapshot tersebut adalah **rekaman pada waktu itu**,
+bukan klaim status real-time berkelanjutan.
+
+Pekerjaan yang dilakukan pada VPS hanya berupa **checkout/worktree uji terpisah**
+(`C:\Katarina\_roadmap_validation\...`), fetch Git untuk mengambil branch,
+pengujian sintetis, serta generator dokumentasi/manifest pada worktree.
+Tidak ada merge, restart observer, perubahan `run-observer.ps1`, aktivasi Algo Trading,
+atau perubahan file produksi Katarina. Runtime masih harus melalui WP6 dengan syarat
+monitor 5→7 simbol, beban RAM, durasi siklus, dan kualitas tick.
+
+#### 7. Yang belum dikerjakan, urutan dan tindakan pemeriksaan
+
+| Paket/tahap | Status objektif | Prasyarat berikutnya |
+|---|---|---|
+| WP1 | Kode + tes + dokumentasi pada [PR #184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184); **belum review/merge/deploy** | Claude review diff, berkas terkunci, tes, dan manifest; perbaiki komentar pada branch yang sama |
+| WP2 | **Belum mulai** | WP1 harus merge, lalu pengunduh tick streaming dengan bukti byte-identik dan puncak memori sesuai R4 |
+| WP3 | **Belum mulai** | Mulai sesuai urutan R0 (boleh paralel WP2), hanya diagnosis berita tanpa mengubah blackout/keputusan |
+| WP6 | **Belum mulai** | WP1–WP3 merge dan CI hijau; uji VPS core 5 selama ≥ 2 jam baru 7 bila kriteria aman |
+| WP4 | **Belum mulai** | WP6 tahap A berjalan; jurnal kandidat/replay teknis tanpa perubahan action atau order |
+| WP5 | **Belum mulai** | WP4 merge dan ≥ 5 hari bursa data kandidat; ranking hanya riset, diuji alat Tahap 1 |
+| WP7 | **Belum diputuskan** | Owner menetapkan profil DEMO, aturan berita bila diusulkan, dan status repo/issue |
+| Tahap 0–5 | **Belum ada kelulusan keseluruhan** | Evaluasi data pasar, holdout, forward test, dan approval sesuai kriteria tiap tahap; tidak bisa dilompati |
+
+**Cara Owner memeriksa:** buka [PR #184 → Files changed](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184/files)
+untuk seluruh diff, **Commits** untuk sejarah perbaikan, **Checks** untuk CI,
+dan bagian R5A ini pada [ROADMAP branch WP1](https://github.com/alfaauliau-katarinaAI/Katarina-AI/blob/feat/wp1-observer-universe-20261022/docs/ROADMAP.md).
+Status di `main` boleh berbeda sampai PR disetujui dan digabung; **jangan anggap isi
+branch sudah aktif di VPS**.
+
+
 ### R6. Perintah siap pakai untuk pelaksana
 
 Salin satu blok utuh ke pelaksana. Setiap blok berdiri sendiri; pelaksana tidak perlu konteks percakapan lain.
