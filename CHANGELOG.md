@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — review dan penggabungan alat roadmap Tahap 0–3
+
+- PR #177 (penguatan reconnect/validasi), #178 (eksperimen filter Tahap 2), #179 (pembatas DEMO + laporan outbox
+  Tahap 3) direview dan digabung berurutan; PR #176 (alat filter alternatif) ditutup sebagai duplikat #178.
+- Catatan "belum digabung" di roadmap dan CLAUDE.md diperbarui; peta script di CLAUDE.md mencakup
+  `validate_strategy.py market-filter` dan `check_demo_readiness.py`. Tidak ada perubahan kode.
+
 ## 2026-10-22 — catatan roadmap untuk review Claude/Owner
 
 - Roadmap mencatat implementasi PR #177–#179, urutan integrasi, branch review, bukti tes/CI
