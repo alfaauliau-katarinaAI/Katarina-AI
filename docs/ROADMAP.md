@@ -239,7 +239,8 @@ Kriteria kelulusan:
 
 Tujuan: strategi BUY dan SELL berbeda sesuai regime, dengan bukti.
 
-Pekerjaan: mulai dari **XAUUSD dan satu instrumen pembanding**. Kandidat (mis. market structure,
+Pekerjaan: mulai dari **XAUUSD dan satu instrumen pembanding**. Persiapan riset dari data pengembangan sebelum
+13 Okt 2026 ada di Lampiran A WP8 (hasilnya riset, bukan kelulusan). Kandidat (mis. market structure,
 supply-demand, liquidity sweep, pullback) didaftarkan dulu; **maksimal 5 kandidat per instrumen per sisi**.
 
 Kriteria kelulusan (gerbang promosi ke DEMO), per strategi:
@@ -281,6 +282,7 @@ di dokumen ini. Bila ada yang bertentangan, aturan di bagian lain roadmap dan `C
 
 Owner cukup mengirim **R6.0 Aturan umum + perintah paket** dari **R6** ke pelaksana, satu paket per kali, sesuai urutan berikut.
 Paket berikutnya baru dimulai setelah PR paket sebelumnya **di-merge** (bukan hanya dibuka), kecuali disebut paralel.
+Baris "P" berjalan paralel dengan urutan bernomor (pengembangan paralel, validasi berurutan).
 
 | Urutan | Paket | Dikerjakan oleh | Syarat mulai | Perkiraan ukuran PR | Hasil yang diserahkan |
 |---|---|---|---|---|---|
@@ -294,6 +296,8 @@ Paket berikutnya baru dimulai setelah PR paket sebelumnya **di-merge** (bukan ha
 | 8 | Review WP4 lalu terapkan ke VPS | Claude | PR WP4 dibuka | — | Merge + restart observer |
 | 9 | WP5 — hipotesis perankingan antarpair | Pelaksana | WP4 di-merge dan ≥ 5 hari bursa data kandidat | ±4 berkas, ±350 baris | PR `WP5: ...` hijau |
 | 10 | Review WP5 | Claude | PR WP5 dibuka | — | Merge; hasil riset dilaporkan ke Owner |
+| P | WP8 — riset historis setup BUY/SELL antarpair (alat) | Pelaksana | boleh paralel dengan WP2/WP3 (berkas berbeda) | ±10 berkas, ±800 baris; boleh dipecah WP8a ekspor+dataset, WP8b setup+simulasi+perbandingan | PR `WP8a: ...`, `WP8b: ...` hijau |
+| P+1 | Ekspor dataset pengembangan di VPS + hipotesis nyata | Claude | WP8a di-merge; akhir pekan (pasar tutup) | — | Dataset ber-hash, laporan perbandingan setup (riset) |
 | — | WP7 — keputusan Owner | Owner | kapan saja | — | Keputusan tertulis di roadmap |
 
 Aturan alur: bila review Claude meminta perubahan, Owner meneruskan komentar review ke pelaksana dengan perintah
@@ -534,6 +538,66 @@ Tujuan: bahan riset untuk Tahap 1/2 walau semua keputusan WAIT. **Tidak** mengub
    sekali dengan restart terencana di akhir pekan.
 5. Catat di roadmap tanggal mulai cakupan 7 simbol; periode sebelumnya untuk 4 simbol baru = CELAH.
 
+#### WP8 — Riset historis setup BUY/SELL antarpair (data pengembangan saja; Tahap 1–2, persiapan Tahap 4)
+
+Tujuan: sambil Tahap 0 mengumpulkan data forward, Katarina meneliti setup mana (liquidity sweep, pullback, Fibonacci,
+struktur pasar) yang punya expectancy bersih positif per instrumen, per sisi, dan per kondisi pasar — memakai alat
+Tahap 1 yang sama — tanpa memaksa entry dan tanpa menyentuh holdout. Hasil WP8 berstatus **riset**; tidak ada yang
+masuk ke otak aktif tanpa holdout + gerbang promosi.
+
+**Aturan data (wajib, ditegakkan kode):**
+- Data pengembangan = bar broker **sebelum 13 Okt 2026 00:00 UTC** (`DEV_CUTOFF_UTC = 2026-10-13T00:00:00+00:00`).
+  Setiap bar/tick dengan waktu ≥ cutoff ditolak saat ekspor **dan** saat dimuat (`ValidationError("holdout_data_forbidden")`).
+- Data holdout (13 Okt 2026 – 30 Apr 2027) dan data observer forward Tahap 0 **tidak boleh** dipakai untuk memilih
+  strategi, menyetel parameter, atau menentukan peringkat setup.
+- Dataset dibekukan: setiap berkas punya SHA-256 di `manifest.json`; laporan menyertakan hash manifest.
+
+**Aturan hipotesis:**
+- BUY dan SELL **diuji terpisah**: satu hipotesis = satu instrumen + satu sisi + satu setup + satu set parameter
+  (sesuai `REQUIRED_SPEC_FIELDS` di `research/validation.py`). Aturan BUY tidak harus cermin aturan SELL.
+- Setiap varian (parameter berbeda) adalah percobaan baru di `HypothesisRegistry`; jumlah percobaan mengetatkan
+  batas keyakinan otomatis.
+- **Maksimal 5 hipotesis per instrumen per sisi** (batas Tahap 4). Ini **batas atas, bukan target**: jika hanya satu
+  hipotesis yang masuk akal, uji satu. Daftarkan sebelum melihat hasil; jangan menambah varian setelah melihat hasil
+  kecuali dicatat sebagai percobaan baru dengan alasan di spec (`rules`).
+
+**Langkah:**
+1. `scripts/research/export_dev_bars.py` (dijalankan Claude di VPS pada akhir pekan, baca-saja, dengan anggaran kecil):
+   ekspor bar M5, M15, H1, H4 broker (`copy_rates_range`, termasuk kolom `spread` dalam point) untuk 7 simbol inti dari
+   `config/observer_universe.json`, rentang yang ditentukan argumen `--start` (default 2024-01-01) sampai **sebelum**
+   cutoff, ke `<out>/<SIMBOL>/<TF>.csv.gz` (gzip `mtime=0`, urut waktu, tanpa duplikat) + `manifest.json`
+   (simbol, TF, jumlah bar, waktu pertama/terakhir, `point`, `trade_tick_size`, `trade_contract_size`, sha256).
+   Celah data dicatat di manifest, tidak diisi. Tes dengan broker palsu; tolak bar ≥ cutoff.
+2. Modul `src/katarina/research/dev_dataset.py`: `load_dev_dataset(path)` memverifikasi semua hash manifest, menolak
+   bar ≥ cutoff, mengembalikan bar tertutup per simbol/TF. Tidak ada akses MT5/jaringan.
+3. Paket `src/katarina/research/setups/` (baru; **jangan** mengubah berkas terkunci — boleh mengimpor fungsi
+   persepsi yang ada secara baca-saja): satu modul per keluarga setup — `liquidity_sweep.py`, `pullback.py`,
+   `fibonacci.py`, `market_structure.py`. Setiap modul punya satu fungsi murni
+   `detect(bars_by_tf, as_of, params, side) -> list[Signal]` yang hanya memakai bar yang **sudah tertutup** pada
+   `as_of`. `Signal` memuat: waktu entry (`open` bar berikutnya), sisi, harga entry (mid), invalidation, target,
+   `data_until` (waktu tutup bar terakhir yang dipakai), regime label kausal, dan `trend_side` kausal (untuk
+   pembanding tren Tahap 1). Semua angka (panjang swing, level Fibonacci, RR minimum, dll.) dibaca dari `params`
+   spec hipotesis — tidak ada default tersembunyi di kode.
+4. `scripts/research/simulate_setups.py`: untuk hipotesis terdaftar, jalankan `detect` maju bar demi bar pada
+   dataset pengembangan, simulasikan exit dari bar berikutnya (target, invalidation, batas waktu dari `params`; bila
+   target dan invalidation tersentuh di bar yang sama, anggap **invalidation dulu**), satu posisi per hipotesis pada
+   satu waktu, spread entry/exit dari kolom `spread` bar × `point`. Keluarannya `trades.jsonl` format `Trade`
+   (`research/validation.py`) dengan `data_until ≤ entry_at`.
+5. Uji tiap hipotesis dengan `validate_strategy.py development` (split: `development_start` = awal dataset,
+   `development_end` = cutoff, holdout = periode program; biaya `costs.json` dengan slippage konservatif yang
+   dicatat). Jangan pernah memanggil perintah `holdout` di WP8.
+6. `scripts/research/compare_setups.py`: gabungkan laporan pengembangan menjadi satu tabel per instrumen × sisi ×
+   setup × regime: trades, expectancy bersih, PF, batas bawah bootstrap, biaya rata-rata R, hasil vs semua
+   pembanding, jumlah percobaan. Urutkan per instrumen; tulis `build/research/setup_comparison.json` + ringkasan
+   Markdown. Label wajib: "RISET — data pengembangan, bukan kelulusan".
+7. Tes: penolakan bar ≥ cutoff (ekspor dan muat), hash salah ditolak, detektor tidak memakai bar yang belum
+   tertutup (tes dengan bar masa depan yang sengaja diubah tidak boleh mengubah sinyal), urutan invalidation-dulu,
+   satu posisi per hipotesis, `trend_side` ada untuk semua trade, batas 5 hipotesis per instrumen per sisi
+   ditolak pada pendaftaran ke-6, perbandingan deterministik.
+
+Kriteria selesai: alat dan tes lulus; satu contoh hipotesis per keluarga setup (sintetis di tes, bukan klaim pasar).
+Hipotesis nyata didaftarkan dan dijalankan oleh Claude/Owner setelah dataset diekspor (WP8b, bukan bagian PR).
+
 #### WP7 — Keputusan Owner (bukan kode)
 
 - Profil DEMO final Tahap 3 (usulan 0,5%/trade, 3%/hari sebagai lapisan pengetat di atas batas utama 35%).
@@ -551,6 +615,7 @@ Tujuan: bahan riset untuk Tahap 1/2 walau semua keputusan WAIT. **Tidak** mengub
 | WP4 | Belum dimulai | – | – |
 | WP5 | Belum dimulai | – | – |
 | WP6 | Menunggu WP1–WP3 | – | – |
+| WP8 | Belum dimulai (boleh paralel WP2/WP3) | – | – |
 | WP7 | Menunggu Owner | – | – |
 
 ### R6. Perintah siap pakai untuk pelaksana
@@ -662,6 +727,36 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP4 suda
    bobot adalah hipotesis baru (jumlah percobaan bertambah); korelasi dihitung kausal dari data sebelum entry;
    tidak ada perubahan pada jalur keputusan observer.
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini di tabel R5.
+```
+
+**Perintah WP8a (ekspor + dataset pengembangan)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
+1. Baca R6.0, CLAUDE.md, docs/ROADMAP.md Lampiran A: R2, R3, dan "WP8 — Riset historis" (aturan data, aturan
+   hipotesis, langkah 1–2, dan tes langkah 7 yang terkait ekspor/dataset). Baca juga src/katarina/research/validation.py,
+   src/katarina/research/context_export.py, config/observer_universe.json dan
+   src/katarina/adapters/mt5_readonly_market.py.
+2. Kerjakan HANYA langkah 1–2 WP8 (export_dev_bars.py + research/dev_dataset.py + tesnya), satu PR
+   "WP8a: ekspor dan dataset pengembangan historis".
+3. Wajib: semua bar >= 2026-10-13T00:00:00Z ditolak saat ekspor DAN saat dimuat; manifest ber-hash diverifikasi;
+   tes memakai broker palsu, tanpa MT5/jaringan. Jangan menjalankan ekspor ke VPS.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP8 di tabel R5.
+```
+
+**Perintah WP8b (setup, simulasi, perbandingan)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sudah di-merge).
+1. Baca R6.0, CLAUDE.md, docs/ROADMAP.md Lampiran A: R2, R3, "WP8 — Riset historis" (semua aturan dan langkah 3–7),
+   docs/research/VALIDATION_PROTOCOL.md, src/katarina/research/validation.py dan src/katarina/research/dev_dataset.py.
+   Jalankan `python scripts/governance/promotion_gate.py --hashes`: berkas persepsi yang terkunci boleh DIIMPOR,
+   tidak boleh diubah.
+2. Kerjakan HANYA langkah 3–7 WP8, satu PR "WP8b: setup BUY/SELL, simulasi dan perbandingan antarpair (riset)".
+   Boleh dipecah menjadi dua PR (setup+simulasi; perbandingan) bila lebih dari ±600 baris.
+3. Wajib: BUY dan SELL terpisah; semua angka dari params spec (tanpa default tersembunyi); detektor hanya memakai bar
+   tertutup (buktikan dengan tes bar masa depan); invalidation-dulu bila target dan stop di bar sama; trend_side untuk
+   semua trade; batas 5 hipotesis per instrumen per sisi; tidak pernah memanggil perintah holdout; keluaran berlabel
+   "RISET — data pengembangan, bukan kelulusan".
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP8 di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
