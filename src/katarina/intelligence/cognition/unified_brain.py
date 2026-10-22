@@ -92,7 +92,7 @@ class UnifiedKatarinaBrain:
                     lock.close()
 
     @classmethod
-    def observe_once(cls, root, *, broker=None, max_symbols=17, fetch_news=True):
+    def observe_once(cls, root, *, broker=None, max_symbols=17, fetch_news=True, universe=None):
         """Own exactly one bounded observation, including cleanup on every failure."""
         from pathlib import Path
         from katarina.intelligence.cognition.observer import BrainObserver, lock_worker
@@ -103,6 +103,10 @@ class UnifiedKatarinaBrain:
             raise ValueError("max_17_broker_markets")
         if type(fetch_news) is not bool:
             raise ValueError("invalid_news_fetch_mode")
+        if universe is not None:
+            from katarina.intelligence.broker.observer_universe import ObserverUniverse
+            if not isinstance(universe, ObserverUniverse):
+                raise ValueError('INVALID_OBSERVER_UNIVERSE')
         if broker is None:
             import MetaTrader5 as broker
         root = Path(root)
@@ -123,7 +127,8 @@ class UnifiedKatarinaBrain:
             brain.shadow_book = ProspectiveShadowBook(context.db)
             brain.observer = BrainObserver(brain, broker, root)
             brain.control.audit_phase("OBSERVING")
-            result = brain.observer.run(max_symbols=max_symbols, fetch_news=fetch_news)
+            result = brain.observer.run(max_symbols=max_symbols, fetch_news=fetch_news,
+                **({'universe': universe} if universe is not None else {}))
             brain.control.audit_phase("COMPLETE")
             brain.control.checkpoint()
             return result
@@ -258,13 +263,17 @@ class UnifiedKatarinaBrain:
         if self.shadow_book is None:
             self.shadow_book = ProspectiveShadowBook(self.shadow_db)
 
-    def observe_connected_market(self, root, broker, *, max_symbols=3, fetch_news=False):
+    def observe_connected_market(self, root, broker, *, max_symbols=3, fetch_news=False, universe=None):
         """A dialog-owned sensor pass reuses its brain, DB and already-held host lock."""
         from katarina.intelligence.cognition.observer import BrainObserver
         if self.context_store is None:
             raise RuntimeError('brain_context_store_required')
         if type(max_symbols) is not int or not 1 <= max_symbols <= 17:
             raise ValueError('max_17_broker_markets')
+        if universe is not None:
+            from katarina.intelligence.broker.observer_universe import ObserverUniverse
+            if not isinstance(universe, ObserverUniverse):
+                raise ValueError('INVALID_OBSERVER_UNIVERSE')
         from pathlib import Path
         root = Path(root)
         root.mkdir(parents=True, exist_ok=True)
@@ -278,7 +287,8 @@ class UnifiedKatarinaBrain:
             self.prepare_research()
             self.observer = BrainObserver(self, broker, root)
             self.control.audit_phase('OBSERVING')
-            result = self.observer.run(max_symbols=max_symbols, fetch_news=fetch_news)
+            result = self.observer.run(max_symbols=max_symbols, fetch_news=fetch_news,
+                **({'universe': universe} if universe is not None else {}))
             self.control.audit_phase('COMPLETE')
             self.control.checkpoint()
             return result

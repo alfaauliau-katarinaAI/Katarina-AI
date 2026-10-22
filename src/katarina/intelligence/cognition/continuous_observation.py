@@ -33,9 +33,15 @@ RECOVERABLE_SENSOR = frozenset(('BROKER_CATALOG_NOT_FOUND',
 
 def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                    max_cycles=None, factories=None, brain_type=UnifiedKatarinaBrain,
-                   wait=time.sleep, surface_factory=None, fetch_news=False):
+                   wait=time.sleep, surface_factory=None, fetch_news=False, universe=None):
     if type(fetch_news) is not bool:
         raise ValueError('invalid_news_fetch_mode')
+    if universe is not None:
+        from katarina.intelligence.broker.observer_universe import ObserverUniverse
+        if not isinstance(universe, ObserverUniverse):
+            raise ValueError('INVALID_OBSERVER_UNIVERSE')
+        if os.environ.get('KATARINA_ALL_MARKET_RESEARCH') == '1':
+            raise ValueError('universe_and_all_market_research_exclusive')
     if config is None:
         raise ValueError('continuous_account_binding_required')
     if type(max_symbols) is not int or not 1 <= max_symbols <= 17:
@@ -158,7 +164,8 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                         broker = factories[route](config)
                         attach_demo(broker)
                         result = brain.observe_connected_market(root, broker,
-                            max_symbols=max_symbols, fetch_news=fetch_news)
+                            max_symbols=max_symbols, fetch_news=fetch_news,
+                            **({'universe': universe} if universe is not None else {}))
                         break
                     except ConnectionUnavailable as exc:
                         fault = diagnostic_code(exc, route)

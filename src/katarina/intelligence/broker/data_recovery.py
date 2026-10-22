@@ -11,7 +11,8 @@ REASONS=frozenset(('symbol_select_denied','invalid_symbol_or_quote','no_past_bro
  'stale_market_tick','broker_tick_from_future','insufficient_past_only_closed_bars',
  'insufficient_completed_bars_as_of_mt5_tick','insufficient_closed_M5','insufficient_closed_M15',
  'insufficient_closed_H1','INPUTS_READY_AWAIT_OBSERVATION','SENSOR_READ_FAILED',
- 'SYMBOL_DISABLED','SYMBOL_CLOSE_ONLY','HISTORY_AVAILABLE_LIVE_QUOTE_MISSING','STALE_CLOSED_BARS'))
+ 'SYMBOL_DISABLED','SYMBOL_CLOSE_ONLY','HISTORY_AVAILABLE_LIVE_QUOTE_MISSING','STALE_CLOSED_BARS',
+ 'CORE_SYMBOL_UNAVAILABLE'))
 def reason_code(error):
     return str(error) if str(error) in REASONS else 'SENSOR_READ_FAILED'
 

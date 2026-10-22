@@ -26,7 +26,7 @@ Lampiran A — [Rencana kerja perbaikan](#lampiran-a--rencana-kerja-perbaikan-un
 
 | Tahap | Alat di `main` | Kelulusan |
 |---|---|---|
-| 0 — Observer & data | Ledger siklus, tick broker harian, uji putus-sambung, `check_stage0_health.py`; observer VPS aktif sejak 22 Okt 04:24 UTC (3 simbol; 7 simbol menunggu WP1/WP6) | Belum — 10 hari bursa paling cepat ±6 Nov |
+| 0 — Observer & data | Ledger siklus, tick broker harian, uji putus-sambung, `check_stage0_health.py`; observer VPS aktif sejak 22 Okt 04:24 UTC (3 simbol; 7 simbol siap lewat WP1, menunggu penerapan WP6) | Belum — 10 hari bursa paling cepat ±6 Nov |
 | 1 — Validasi ilmiah | `research/validation.py`, `validate_strategy.py`, [protokol](research/VALIDATION_PROTOCOL.md) | Belum — belum ada hipotesis terdaftar |
 | 2 — Market intelligence | `research/market_intelligence.py` (`market-filter`), `research/context_export.py` | Belum — butuh data Tahap 0 |
 | 3 — Risk & execution | `research/demo_readiness.py` (`DemoRiskOverlay`), `check_demo_readiness.py` | Belum — profil DEMO menunggu Owner |
@@ -146,7 +146,10 @@ simbol-hari per siklus, mengunduh tick broker hari UTC yang sudah selesai dan me
 `<state>/broker-ticks/SIMBOL/YYYY-MM-DD.csv.gz` (`broker_tick_days`, celah di `data_gaps`, rekonsiliasi dengan
 snapshot dalam satu tick size). Uji putus-sambung dicatat dengan `scripts/ai/record_reconnect_test.py` (lulus bila
 siklus OK berikutnya ≤ 10 menit setelah gangguan). `python scripts/ai/check_stage0_health.py --state-dir <state>` menilai kriteria di
-bawah (PASS / NOT_MET / NO_DATA) secara read-only. Statistik siklus memakai jendela konservatif Senin 00:00 – Jumat
+bawah (PASS / NOT_MET / NO_DATA) secara read-only. Simbol inti dipilih dengan `--universe config/observer_universe.json` (WP1, #184): ketujuh simbol program diamati
+setiap siklus dengan XAUUSD pertama; simbol inti yang tidak tersedia menjadi WAIT dan baris ledger `FAILED` beralasan
+`CORE_SYMBOL_UNAVAILABLE`, tidak pernah diganti diam-diam; tanpa opsi, perilaku lama tetap.
+Statistik siklus memakai jendela konservatif Senin 00:00 – Jumat
 20:00 UTC tanpa rollover 20:45–21:15 UTC. Status tahap: **belum lulus**; observer read-only berjalan di VPS sejak 22 Okt 2026 04:24 UTC.
 
 Kriteria kelulusan:
@@ -537,7 +540,7 @@ Tujuan: bahan riset untuk Tahap 1/2 walau semua keputusan WAIT. **Tidak** mengub
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP1 | PR dibuka, dalam review Claude | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | – |
+| WP1 | Selesai (merge), belum diterapkan ke VPS (WP6) | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
 | WP2 | Belum dimulai | – | – |
 | WP3 | Belum dimulai | – | – |
 | WP4 | Belum dimulai | – | – |

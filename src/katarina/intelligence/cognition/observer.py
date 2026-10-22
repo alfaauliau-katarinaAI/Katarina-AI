@@ -210,7 +210,7 @@ class BrainObserver:
     def __init__(self, brain, broker, root):
         self.brain, self.broker, self.root = brain, broker, root
 
-    def run(self, *, max_symbols=17, fetch_news=True):
+    def run(self, *, max_symbols=17, fetch_news=True, universe=None):
         brain, mt5, root = self.brain, self.broker, self.root
         trace = getattr(brain,'activity_trace',None)
         emit = trace.emit if trace is not None else lambda *a,**k:None
@@ -252,11 +252,22 @@ class BrainObserver:
         catalog=mt5.symbols_get()
         if catalog is None:raise RuntimeError("BROKER_CATALOG_NOT_FOUND")
         selection=resolve_broker_symbols(catalog)
-        symbols=list(selection.symbols)[:max_symbols]
         full_research = os.environ.get('KATARINA_ALL_MARKET_RESEARCH') == '1'
-        if full_research:
-            from katarina.intelligence.lab.continuous_research_lab import select_batch
-            symbols = select_batch(store.db, catalog, max_symbols, now)
+        if universe is not None and full_research:
+            raise ValueError("universe_and_all_market_research_exclusive")
+        missing_core=()
+        if universe is not None:
+            from katarina.intelligence.broker.observer_universe import select_symbols
+            def rotate_slots(budget, exclude):
+                from katarina.intelligence.lab.continuous_research_lab import select_batch
+                return select_batch(store.db, catalog, budget, now, exclude=exclude)
+            selected, missing_core=select_symbols(universe,catalog,rotation=rotate_slots)
+            symbols=list(selected)
+        else:
+            symbols=list(selection.symbols)[:max_symbols]
+            if full_research:
+                from katarina.intelligence.lab.continuous_research_lab import select_batch
+                symbols = select_batch(store.db, catalog, max_symbols, now)
         if not symbols:raise RuntimeError("NO_ELIGIBLE_BROKER_SYMBOLS")
         for sym in symbols:mt5.symbol_select(sym,True)
         ticks={sym:mt5.symbol_info_tick(sym) for sym in symbols}
@@ -281,7 +292,7 @@ class BrainObserver:
                 "media_alone_never_authorizes_entry":True,
                 "news_policy_method":"OFFICIAL_PUBLISHER_FULL_ARTICLE_CONDITIONAL_ONLY",
                 "broker_symbol_matches":selection.matches,
-                "unavailable_symbols":list(selection.unavailable),
+                "unavailable_symbols":list(missing_core) if universe is not None else list(selection.unavailable),
                 "news_body_missing_never_replaced_by_headline":True,
                 "real_account_risk_not_connected":True,
                 "forward_trade_outcomes_not_verified":True,
@@ -289,6 +300,14 @@ class BrainObserver:
                 "live_execution_authorized":False,"orders_submitted":0,"symbols":{},
                  "broker_account_monitor":inspect_broker_account(
                      mt5,observed_at_utc=now)}
+        for missing_symbol in missing_core:
+            report["symbols"][missing_symbol] = {
+                "action": "WAIT", "conditional_side": "WAIT",
+                "market_state": "UNKNOWN",
+                "blocking_reasons": ["CORE_SYMBOL_UNAVAILABLE"],
+                "sensor_reason": "CORE_SYMBOL_UNAVAILABLE",
+                "live_execution_authorized": False,
+            }
         # Historical quote-only simulations NEVER count as independently
         # settled forward broker fills. Missing/corrupt files fail closed.
         try:

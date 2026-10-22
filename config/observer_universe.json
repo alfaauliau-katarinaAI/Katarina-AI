@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "description": "Simbol inti observer Tahap 0 = simbol program holdout (config/research/alpha_regime_program_v1.json)",
+  "core": [
+    "XAUUSD.vx",
+    "NAS100.vx",
+    "US30.vx",
+    "JPN225.vx",
+    "EURUSD.vx",
+    "GBPUSD.vx",
+    "USDJPY.vx"
+  ],
+  "rotating_slots": 0
+}
