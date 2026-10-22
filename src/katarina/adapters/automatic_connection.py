@@ -202,13 +202,17 @@ def cloud_factory(config):
 
 
 def run_connected(brain_type, root, *, config=None, max_symbols=17, fetch_news=True,
-                  factories=None):
+                  factories=None, universe=None):
     """Retry whole passes only; locks/state cleanup stay owned by the brain.
 
     A connection fault never resumes half a pass or replays an order. At most
     three attempts per configured route; no daemon, sleep or background worker.
     Application/data-integrity errors propagate rather than being called offline.
     """
+    if universe is not None:
+        from katarina.intelligence.broker.observer_universe import ObserverUniverse
+        if not isinstance(universe, ObserverUniverse):
+            raise ValueError('INVALID_OBSERVER_UNIVERSE')
     if config is None:
         result = brain_type.research_once(root)
         result['connection'] = {'route':'offline','reason':'ACCOUNT_BINDING_NOT_CONFIGURED',
@@ -222,7 +226,8 @@ def run_connected(brain_type, root, *, config=None, max_symbols=17, fetch_news=T
             broker = None
             try:
                 broker = factories[route](config)
-                result = brain_type.observe_once(root,broker=broker,max_symbols=max_symbols,fetch_news=fetch_news)
+                result = brain_type.observe_once(root,broker=broker,max_symbols=max_symbols,fetch_news=fetch_news,
+                    **({'universe': universe} if universe is not None else {}))
                 result['connection'] = {'route':route,'attempt':attempt+1,
                     'prior_faults':faults,
                     'receiving_market_data':result.get('received_market_data_symbols', 0) > 0,
