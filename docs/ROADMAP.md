@@ -879,7 +879,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Menunggu prasyarat (WP2) | – | – |
 | WP10b | Menunggu prasyarat (WP8a) | – | – |
-| WP11 | Siap dikerjakan (prioritas; paralel) | – | – |
+| WP11 | Sedang dikerjakan — ChatGPT, PR #201 (draft) | [#201](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/201) | Hitung suara jam segar, laporkan simbol basi; tes sintetis, menunggu review Claude |
 | WP7 | Menunggu Owner | – | – |
 
 ### R6. Perintah siap pakai untuk pelaksana
