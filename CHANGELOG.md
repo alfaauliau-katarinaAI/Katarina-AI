@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: WP9 membongkar tembok blokir keputusan
+
+- Lampiran A ditambah WP9 (prioritas Owner): klasifikasi pemblokir (A input observer, B syarat bukti terkunci,
+  C persepsi, M filter pasar sah), WP9a peta tembok blokir baca-saja, WP9b input keputusan terukur + evaluasi
+  bayangan di balik opsi (default perilaku lama), WP9c syarat bukti proporsional di berkas terkunci lewat gerbang
+  promosi, WP9d detektor entry lewat hipotesis. Perintah siap pakai WP9a–WP9c di R6; R0/R1/R5 diperbarui.
+  Hasil terbaik WP9 adalah kandidat paper, bukan izin order. Tidak ada perubahan kode.
+
 ## 2026-10-23 — WP6 tahap A di VPS; status roadmap diperbarui
 
 - VPS: kode = `main` 23 Okt (manifest MATCH); `run-observer.ps1` memakai `--universe` bila
