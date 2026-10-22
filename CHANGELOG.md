@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: aturan PR paralel yang menyentuh berkas sama
+
+- R0: WP2 dan WP3 sama-sama mengubah `observation_ledger.py` dan semua PR membuat ulang manifest; Claude me-merge
+  berurutan (WP2 → WP3 → WP8a) dan membuat ulang manifest/peta modul dengan alatnya. Kosakata status R5 wajib dipakai
+  persis. Status WP2 (#190) dan WP3 (#191) diperbarui; rujukan basi di `CLAUDE.md` diperbaiki. Tidak ada perubahan kode.
+
 ## 2026-10-23 — roadmap: titik masuk pelaksana AI, cara mengambil paket, standar teknis (R10)
 
 - Bagian baru "Mulai di sini — untuk pelaksana AI" di awal roadmap: lima langkah dari membaca aturan sampai berhenti
