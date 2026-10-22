@@ -45,7 +45,7 @@ dan berhenti. Menebak dianggap kesalahan.
 5. [Pemisahan data](#pemisahan-data) · 6. [Gerbang promosi](#gerbang-promosi) ·
 7. [Urutan pengembangan dan kriteria kelulusan](#urutan-pengembangan-dan-kriteria-kelulusan) (Tahap 0–5) ·
 8. [Sebelum akun riil](#sebelum-akun-riil-di-luar-roadmap-ini) ·
-9. [Arah lanjutan](#arah-lanjutan--bukan-paket-kerja-baru) ·
+9. [Arah lanjutan](#arah-lanjutan) ·
 Lampiran A — [Rencana kerja perbaikan](#lampiran-a--rencana-kerja-perbaikan-untuk-pelaksana) ·
 [Mulai di sini untuk pelaksana AI](#mulai-di-sini--untuk-pelaksana-ai-chatgpt-codex-atau-ai-lain)
 
@@ -299,11 +299,12 @@ DEMO forward **≥ 3 bulan** dan **≥ 200 trade** dengan expectancy bersih posi
 rekonsiliasi dan kepatuhan risiko 100%, evaluasi ulang batas 35% berdasarkan hasil tersebut, dan otorisasi
 eksplisit Owner. LIVE tetap OFF sampai semua itu terpenuhi.
 
-## Arah lanjutan — bukan paket kerja baru
+## Arah lanjutan
 
 Enam arah ini adalah **catatan pengembangan jangka panjang**, bukan izin mengubah strategi, menambah worker,
-atau membuka tahap. Dahulukan review/merge WP2, WP3, WP8a dan WP9a; lanjut WP9b setelah WP3 merge,
-lalu pembuktian biaya dan riset sesuai prasyarat. Kriteria kelulusan Tahap 0–5 serta gerbang promosi tetap berlaku.
+atau membuka tahap. Yang sudah punya paket kerja: arah 3 → WP9d, arah 4 → WP10 (Lampiran A R4). Arah lain baru
+ditulis menjadi paket oleh Claude setelah prasyaratnya terpenuhi. Kriteria kelulusan Tahap 0–5 serta gerbang
+promosi tetap berlaku.
 
 1. **Autonomous Research (Tahap 5; terakhir).** Audit dahulu `run_autonomous_strategy_discovery` dan modul riset
    yang sudah ada; jangan membuat mesin paralel. Baru perluas setelah alur validasi stabil, setiap hipotesis
@@ -316,14 +317,15 @@ lalu pembuktian biaya dan riset sesuai prasyarat. Kriteria kelulusan Tahap 0–5
    **forward/holdout** hanya boleh menghitung *frekuensi alasan*, tanpa markout untung-rugi untuk seleksi.
    Analisis keuntungan/kerugian 'seandainya penghambat X hilang' hanya memakai data **pengembangan sebelum cutoff**,
    dimulai dari pemblokir teknis kelas C. Jika berita/kalender historis yang dapat diverifikasi tidak ada,
-   jangan melakukan counterfactual untung-rugi untuk pemblokir berita.
+   jangan melakukan counterfactual untung-rugi untuk pemblokir berita. Paket: WP9d.
 4. **Trading Cost Intelligence (Tahap 1–2; setelah WP2 dan dataset pengembangan tersedia).** Perluas `CostModel`
    yang sudah mencakup spread/komisi dengan swap, slippage dan biaya broker terukur; tetap uji expectancy **neto**.
    **Pengecualian sempit:** distribusi spread dari tick observer forward boleh *diukur dan dilaporkan secara
    deskriptif* sebagai kondisi broker/diagnostik operasional, dengan sumber dan periode tercatat. Data tersebut
    **tidak boleh** digunakan untuk memilih strategi, mengkalibrasi ambang/filter/parameter, menentukan peringkat
    setup, atau memasukkan hasil forward ke validasi pengembangan. Untuk penyetelan model biaya/strategi, gunakan
-   data pengembangan yang diizinkan. Aturan ini tidak membuka holdout untuk riset.
+   data pengembangan yang diizinkan. Aturan ini tidak membuka holdout untuk riset. Paket: WP10a (profil spread),
+   WP10b (swap + sensitivitas biaya). Slippage tetap konstanta konservatif sampai ada fill DEMO (Tahap 3).
 5. **Scientific Memory (Tahap 4–5; setelah ada strategi yang benar-benar lulus).** Gunakan `HypothesisRegistry`
    berantai hash yang sudah ada, bukan penyimpanan hipotesis kedua. Tambahkan alasan kegagalan terstruktur;
    deteksi penurunan kualitas (*drift*) hanya setelah tersedia bukti performa strategi tervalidasi yang memadai.
@@ -333,9 +335,8 @@ lalu pembuktian biaya dan riset sesuai prasyarat. Kriteria kelulusan Tahap 0–5
    champion yang lulus, tidak ada promosi challenger. Penggantian strategi aktif mensyaratkan validasi terdaftar,
    holdout independen dan persetujuan eksplisit Owner.
 
-**Prioritas terdekat tetap:** menyelesaikan WP2/WP3/WP8a/WP9a → WP9b dan pengukuran biaya
-→ riset teknis pada data pengembangan → memori/challenger sesudah ada bukti → riset otomatis terakhir.
-Arah ini **tidak** mengubah status R5, membuat WP baru, atau memberi kewenangan trading.
+**Prioritas terdekat:** WP2/WP3/WP8a/WP9a → WP9b, WP10a, WP10b → riset teknis pada data pengembangan (WP8b, WP9d)
+→ memori/challenger sesudah ada bukti → riset otomatis terakhir. Arah ini tidak memberi kewenangan trading.
 
 ## Lampiran A — Rencana kerja perbaikan (untuk pelaksana)
 
@@ -366,18 +367,20 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | 1 | WP1 — daftar simbol inti | Pelaksana → Claude | — | ±6 berkas | Selesai (#184) |
 | 2 | WP2 — tick streaming hemat memori | Pelaksana | WP1 | ±2 berkas, ±250 baris | Sedang dikerjakan (#190) |
 | 2 (paralel) | WP3 — diagnosis jalur berita | Pelaksana | WP1 (di-merge setelah WP2) | ±4 berkas, ±200 baris | Sedang dikerjakan (#191) |
-| 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Siap dikerjakan |
-| 2 (paralel, prioritas) | WP9a — peta tembok blokir (baca-saja) | Pelaksana | — | ±3 berkas, ±250 baris | Siap dikerjakan |
+| 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Sedang dikerjakan (#195) |
+| 2 (paralel, prioritas) | WP9a — peta tembok blokir (baca-saja) | Pelaksana | — | ±3 berkas, ±250 baris | Sedang dikerjakan (#196) |
+| 3 | Review + merge WP2 → WP3 → WP8a → WP9a | Claude | PR siap review | — | — |
 | 3b | WP9b — input keputusan jujur + evaluasi bayangan | Pelaksana | WP3 di-merge | ±6 berkas, ±400 baris | — |
+| 3b (paralel) | WP10a — profil spread deskriptif | Pelaksana | WP2 di-merge | ±4 berkas, ±250 baris | — |
+| 3b (paralel) | WP10b — swap + sensitivitas biaya di alat validasi | Pelaksana | WP8a di-merge | ±3 berkas, ±250 baris | — |
 | 3c | Jalankan WP9a di VPS; aktifkan `measured_inputs` bila Owner setuju | Claude + Owner | WP9a, WP9b | — | — |
-| 5b | WP9c — syarat bukti proporsional (berkas terkunci, gerbang promosi) | Pelaksana → Claude + Owner | WP9a + WP9b + ≥ 3 hari bursa data `decision_shadow` | ±3 berkas, ±250 baris | — |
-| 6b | WP9d — detektor entry teknis (hipotesis) | Claude menulis paket | WP4 + WP8b | — | — |
-| 3 | Review + merge WP2, WP3, WP8a | Claude | PR dibuka | — | — |
 | 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP1 (dimajukan; RAM cukup, terukur) | — | Tahap A berjalan (5 simbol) |
-| 4 (paralel) | Ekspor dataset pengembangan di VPS (akhir pekan, pasar tutup) | Claude | WP8a | — | — |
-| 5 | WP8b — setup BUY/SELL, simulasi, perbandingan | Pelaksana | WP8a | ±8 berkas, ±600 baris | — |
+| 4 (paralel) | Ekspor dataset pengembangan + profil spread di VPS (akhir pekan, pasar tutup) | Claude | WP8a; WP10a | — | — |
+| 5 | WP8b — setup BUY/SELL, simulasi, perbandingan | Pelaksana | WP8a (sebaiknya setelah WP10b) | ±8 berkas, ±600 baris | — |
 | 5 (paralel) | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP6 tahap A berjalan | ±6 berkas, ±450 baris | — |
+| 5b | WP9c — syarat bukti proporsional (berkas terkunci, gerbang promosi) | Pelaksana → Claude + Owner | WP9a + WP9b + ≥ 3 hari bursa data `decision_shadow` | ±3 berkas, ±250 baris | — |
 | 6 | Review + merge WP8b, WP4; WP4 diterapkan ke VPS | Claude | PR dibuka | — | — |
+| 6b | WP9d — detektor entry teknis + counterfactual kelas C (hipotesis, data pengembangan) | Claude menulis paket | WP4 + WP8b | — | — |
 | 7 | Daftarkan hipotesis nyata + laporan perbandingan setup (riset) | Claude, disetujui Owner | WP8b + dataset | — | — |
 | 8 | WP5 — hipotesis perankingan antarpair | Pelaksana | WP4 + ≥ 5 hari bursa data kandidat | ±4 berkas, ±350 baris | — |
 | 9 | Review + merge WP5; hasil riset ke Owner | Claude | PR dibuka | — | — |
@@ -759,10 +762,62 @@ kelas A berjalan di balik opsi yang default-nya perilaku lama; perubahan kelas B
    `promotion_gate.py --write-lock` atau membuat berkas di `docs/governance/promotions/`; CI gerbang promosi akan merah
    sampai Claude menambahkan catatan yang disetujui Owner. Tandai PR "menunggu persetujuan Owner".
 
-**WP9d — Detektor entry teknis (kelas C; setelah WP4 replay dan WP8b)**
+**WP9d — Detektor entry teknis + counterfactual kelas C (setelah WP4 replay dan WP8b)**
 - Tidak ada perubahan langsung. Usulan perbaikan detektor didaftarkan sebagai hipotesis (WP8), diuji pada data
   pengembangan + holdout historis, lalu dipromosikan lewat gerbang promosi bila lulus. Paket rinci ditulis Claude
   setelah hasil WP4/WP8 ada.
+- Counterfactual ("seandainya detektor tidak memblokir"): varian detektor didaftarkan sebagai hipotesis dan
+  disimulasikan **hanya** pada `dev_dataset` (< cutoff), dibandingkan dengan detektor asli pada periode yang sama.
+  Kartu WAIT forward (`contextual_decisions`, `decision_shadow`) dan laporan WP9a **tidak boleh** dipakai untuk
+  menghitung untung-rugi atau memilih varian. Counterfactual kelas A/B (berita, makro) tidak dilakukan selama data
+  berita/kalender historis terverifikasi tidak ada.
+
+#### WP10 — Biaya trading terukur (Tahap 1–2; arah lanjutan 4)
+
+Tujuan: alat validasi menolak setup yang bagus secara teknis tetapi tidak ekonomis. `CostModel` sekarang hanya
+memotong spread entry/exit, slippage konstan, dan komisi. WP10 menambah swap, sensitivitas biaya, dan profil spread
+broker yang **deskriptif**. Tidak ada perubahan pada observer, keputusan, atau berkas terkunci.
+
+**WP10a — Profil spread deskriptif (baca-saja; setelah WP2 di-merge)**
+1. `research/context_export.py`: tambah fungsi publik `iter_verified_ticks(root, record)`. Pass 1 menghitung sha256
+   isi terdekompresi secara streaming dan membandingkannya dengan `record["sha256"]` (`TICK_FILE_HASH_MISMATCH`);
+   pass 2 menghasilkan `(time_msc, bid, ask)` dengan filter baris yang sama seperti `_ticks`. `_ticks` diubah memakai
+   fungsi ini; keluarannya identik (tes pembanding). Jangan menulis pembaca tick kedua.
+2. Modul `src/katarina/research/spread_profile.py` + CLI `scripts/research/spread_profile.py --state-dir DIR
+   --since YYYY-MM-DD --until YYYY-MM-DD --output build/research/spread_profile.json`. Membaca `broker_tick_days`
+   (SQLite `mode=ro`; hanya status di `USABLE_TICK_DAY_STATUSES` milik `context_export.py`) lalu berkas lewat
+   `iter_verified_ticks`. Sampel = quote terakhir tiap menit UTC yang punya
+   tick (bobot waktu, bukan bobot tick). Laporan per simbol × jam UTC 0–23 dan ringkasan per simbol: jumlah menit,
+   spread p50/p90/p99/maks dalam satuan harga (persentil nearest-rank, deterministik). Satu berkas diproses sekali
+   jalan tanpa menampung seluruh hari dalam list.
+3. JSON wajib memuat `"usage": "DESCRIPTIVE_ONLY_NOT_FOR_TUNING"`, label "DESKRIPTIF — data forward, bukan untuk
+   penyetelan", periode, dan daftar sumber (simbol, hari, sha256).
+4. Pagar (tes statis): tidak ada berkas di `src/katarina/` dan `scripts/` selain CLI-nya yang mengimpor
+   `research.spread_profile`. Profil tidak boleh dibaca otomatis oleh `costs.json`, filter, atau simulasi.
+5. Tes: data sintetis; hash salah ditolak; satu sampel per menit; persentil deterministik; rentang tanggal dihormati;
+   tracemalloc puncak < 50 MB untuk 2.000.000 tick; koneksi ditutup.
+6. Menjalankan di VPS bukan bagian PR: Claude menjalankannya saat pasar tutup dan menyimpan hasil di luar repo
+   (data broker).
+
+**WP10b — Swap dan sensitivitas biaya di alat validasi (setelah WP8a di-merge)**
+1. `CostModel` (`research/validation.py`, tidak terkunci) mendapat field baru berdefault 0:
+   `swap_long_per_night`, `swap_short_per_night` (satuan harga per malam; ≥ 0 = biaya; kredit swap ditulis 0 —
+   konservatif) dan `triple_swap_weekday` (default 2 = Rabu, `weekday()` Python dari tanggal New York).
+2. Rollover = 17:00 New York: 21:00 UTC selama DST AS, 22:00 UTC di luar itu. Pakai ulang aturan DST AS yang sudah
+   ada (`_nth_sunday` di `operations/data_health.py`; jadikan publik bila perlu, perilaku tetap); tanpa
+   `zoneinfo`/tzdata. Satu malam dihitung untuk setiap rollover Senin–Jumat dengan `entry_at < t <= exit_at`;
+   rollover pada `triple_swap_weekday` dihitung 3 malam.
+3. `cost_r(trade, side=None)` menambah `malam × swap sisi`; `net_r` meneruskan sisi sehingga pembanding sisi acak
+   memakai swap sisi yang ditarik. `market_intelligence.py` tidak diubah.
+4. Laporan pengembangan dan holdout mendapat blok `cost_sensitivity`: `net_expectancy_r` pada pengali biaya 1,5 dan
+   2,0; `breakeven_cost_multiple` = gross rata-rata / biaya rata-rata (null bila biaya 0 atau gross ≤ 0);
+   `cost_verdict` ∈ `NO_GROSS_EDGE` (gross ≤ 0) · `NOT_ECONOMIC_AFTER_COSTS` (gross > 0, net ≤ 0) ·
+   `POSITIVE_AFTER_COSTS`. Blok ini informasi saja: `verdict` dan aturannya **tidak berubah** (tes).
+5. `costs.json` lama tanpa field baru tetap diterima dan menghasilkan angka identik (tes pembanding).
+   `docs/research/VALIDATION_PROTOCOL.md`: paragraf biaya diperbarui — nilai swap diambil dari spesifikasi kontrak
+   broker dengan sumber dan tanggal dicatat, tidak pernah dari hasil uji.
+6. Tes: malam melintasi perubahan DST, akhir pekan, triple Rabu; kredit diabaikan; sisi acak memakai swap sisinya;
+   blok sensitivitas dan `cost_verdict` untuk ketiga kasus; verdict lama tidak berubah.
 
 #### WP7 — Keputusan Owner (bukan kode)
 
@@ -797,6 +852,8 @@ Menunggu Owner · Dikerjakan Claude.
 | WP9b | Menunggu prasyarat (WP3) | – | – |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
+| WP10a | Menunggu prasyarat (WP2) | – | – |
+| WP10b | Menunggu prasyarat (WP8a) | – | – |
 | WP7 | Menunggu Owner | – | – |
 
 ### R6. Perintah siap pakai untuk pelaksana
@@ -985,6 +1042,33 @@ menyerahkan laporan WP9a dan data decision_shadow ber-hash).
    docs/governance/promotions/. CI gerbang promosi boleh merah; tulis "menunggu persetujuan Owner" di PR.
 4. Ikuti seluruh R6.0 Aturan umum (A–F) kecuali butir D1 untuk gerbang promosi (merah yang disengaja);
    isi HANYA baris WP9c di tabel R5.
+```
+
+**Perintah WP10a (profil spread deskriptif)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP2 sudah di-merge).
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, bagian 5 "Pemisahan data", "Arah lanjutan" butir 4, Lampiran A: R2, R8,
+   R9, R10 dan "WP10" (tujuan, WP10a). Baca seluruh src/katarina/research/context_export.py dan tesnya, serta
+   fungsi setup/collect_tick_days di src/katarina/intelligence/operations/observation_ledger.py (skema broker_tick_days).
+2. Kerjakan HANYA WP10a, satu PR "WP10a: profil spread broker deskriptif (baca-saja)".
+3. Wajib: iter_verified_ticks memverifikasi hash sebelum menghasilkan baris; _ticks keluarannya identik; sampel per
+   menit; JSON berlabel DESCRIPTIVE_ONLY_NOT_FOR_TUNING; tes statis bahwa hanya CLI-nya yang mengimpor
+   research.spread_profile; SQLite mode=ro; tanpa MT5/jaringan; tidak dijalankan ke VPS.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP10a di tabel R5.
+```
+
+**Perintah WP10b (swap dan sensitivitas biaya)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sudah di-merge).
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, Lampiran A: R2, R8, R9, R10 dan "WP10" (tujuan, WP10b). Baca seluruh
+   src/katarina/research/validation.py, scripts/research/validate_strategy.py, docs/research/VALIDATION_PROTOCOL.md,
+   tests/unit/research/test_validation.py dan fungsi DST di src/katarina/intelligence/operations/data_health.py.
+2. Kerjakan HANYA WP10b, satu PR "WP10b: swap dan sensitivitas biaya di alat validasi".
+3. Wajib: field baru berdefault 0 sehingga costs.json lama menghasilkan angka identik (tes pembanding); rollover
+   17:00 New York memakai ulang aturan DST yang ada (tanpa zoneinfo/tzdata); kredit swap = 0; pembanding sisi acak
+   memakai swap sisinya; blok cost_sensitivity hanya informasi — verdict dan aturannya tidak berubah;
+   market_intelligence.py tidak diubah.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP10b di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
