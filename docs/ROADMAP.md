@@ -323,8 +323,8 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | Fase | Paket | Oleh | Prasyarat | Ukuran perkiraan | Status (rinci di R5) |
 |---|---|---|---|---|---|
 | 1 | WP1 — daftar simbol inti | Pelaksana → Claude | — | ±6 berkas | Selesai (#184) |
-| 2 | WP2 — tick streaming hemat memori | Pelaksana | WP1 | ±2 berkas, ±250 baris | Siap dikerjakan |
-| 2 (paralel) | WP3 — diagnosis jalur berita | Pelaksana | WP1 | ±4 berkas, ±200 baris | Siap dikerjakan |
+| 2 | WP2 — tick streaming hemat memori | Pelaksana | WP1 | ±2 berkas, ±250 baris | Sedang dikerjakan (#190) |
+| 2 (paralel) | WP3 — diagnosis jalur berita | Pelaksana | WP1 (di-merge setelah WP2) | ±4 berkas, ±200 baris | Sedang dikerjakan (#191) |
 | 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Siap dikerjakan |
 | 3 | Review + merge WP2, WP3, WP8a | Claude | PR dibuka | — | — |
 | 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP2 + WP3 | — | — |
@@ -341,6 +341,11 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 **Aturan alur:**
 - Satu paket = satu branch dari `origin/main` = satu PR. Jangan menumpuk PR di atas PR lain.
 - PR paralel hanya mengubah **baris paketnya sendiri** di tabel R5; konflik di dokumen diselesaikan Claude.
+- Paket paralel bisa menyentuh berkas yang sama (WP2 dan WP3 sama-sama menambah ke `operations/observation_ledger.py`;
+  semua PR membuat ulang `release-manifest.json`). Itu boleh: Claude me-merge berurutan (WP2 dulu, lalu WP3, lalu
+  WP8a), menggabungkan `main` ke branch berikutnya, dan membuat ulang manifest/peta modul dengan alatnya — manifest
+  tidak pernah diedit tangan. Pelaksana tidak perlu menyelaraskan PR satu sama lain.
+- Pakai kosakata status R5 persis (Sedang dikerjakan · Dalam review · …); keterangan bebas masuk kolom catatan.
 - Bila paket ternyata butuh berkas terkunci atau keputusan Owner, pelaksana berhenti dan menulis pertanyaan di PR.
 - Kelulusan tahap tidak pernah dipercepat: pengembangan paralel, validasi berurutan.
 
@@ -660,8 +665,8 @@ Menunggu Owner · Dikerjakan Claude.
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
 | WP1 | Selesai (merge); penerapan VPS di WP6 | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
-| WP2 | Siap dikerjakan | – | – |
-| WP3 | Siap dikerjakan | – | – |
+| WP2 | Sedang dikerjakan — ChatGPT, PR #190 (draft) | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | – |
+| WP3 | Sedang dikerjakan — ChatGPT, PR #191 (draft) | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | – |
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP6 | Dikerjakan Claude setelah WP2 + WP3 | – | – |
