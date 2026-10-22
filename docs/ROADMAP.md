@@ -754,7 +754,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP6 | Sedang dikerjakan — Claude: tahap A 5 simbol sejak 22 Okt 19:58 UTC; 7 simbol setelah cek 2 jam | – | Dimajukan sebelum WP2 karena RAM terukur cukup (±150 MB/hari tick XAUUSD vs ±700 MB bebas); jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8a | Siap dikerjakan (paralel dengan WP2/WP3) | – | – |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
-| WP9a | Siap dikerjakan (prioritas; paralel) | – | – |
+| WP9a | Sedang dikerjakan — ChatGPT, PR #196 (draft) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | Tangga alasan A→A+B→A+B+C dari SQLite ro, kelas M/UNKNOWN tetap mengikat; menunggu review Claude |
 | WP9b | Menunggu prasyarat (WP3) | – | – |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
