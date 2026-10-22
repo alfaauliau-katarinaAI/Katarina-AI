@@ -84,14 +84,23 @@ def load_articles(store,now, *, allow_fetch=True):
             diagnostics[source+"_feed_"+str(snap["reason"])]+=1
             continue
         articles=snap.get("payload",{}).get("items",[])
+        diagnostics[source+"_feed_items"]=len(articles)
         newest=sorted(articles,key=lambda x:x.get("published_utc",""),reverse=True)
+        newest_age=None
         for item in newest[:6]:
             try:
                 published=parse_utc(item["published_utc"])
-            except (ValueError,KeyError):
+            except (ValueError,KeyError,TypeError):
+                diagnostics[source+"_item_invalid_time"]+=1
                 continue
-            if not 0<=(now-published).total_seconds()<=FRESH_SECONDS:
+            age=(now-published).total_seconds()
+            if newest_age is None or age < newest_age:
+                newest_age=age
+            if not 0<=age<=FRESH_SECONDS:
+                if age>FRESH_SECONDS:
+                    diagnostics[source+"_items_older_than_window"]+=1
                 continue
+            diagnostics[source+"_items_in_window"]+=1
             url=item.get("url","")
             exists=store.db.execute(
                 "SELECT 1 FROM contextual_official_articles WHERE source=? AND url=?",
@@ -124,6 +133,8 @@ def load_articles(store,now, *, allow_fetch=True):
                         VALUES(?,?,?,?)""",(source,url,now.isoformat(),
                                               type(exc).__name__))
             break  # bounded external fetch and CPU, no scraping loops
+        if newest_age is not None:
+            diagnostics[source+"_newest_item_age_hours"]=round(newest_age/3600,1)
     results=[]
     for source,url,title,published,observed,digest,body in store.db.execute(
         """SELECT source,url,title,published,observed,body_digest,body
@@ -139,6 +150,32 @@ def load_articles(store,now, *, allow_fetch=True):
         except (ValueError,KeyError,TypeError):
             diagnostics["cached_article_invalid"]+=1
     return results,dict(diagnostics)
+
+
+def news_pipeline_summary(diagnostics, articles):
+    """WP3 reporting only: summarize official feed attempts, never approve news."""
+    verified=Counter(item.source_id for item in articles)
+    summary={}
+    for source in ("fed","ecb","boe"):
+        prefix=source+"_"
+        failures={}
+        for key,value in diagnostics.items():
+            if not key.startswith(prefix):
+                continue
+            suffix=key[len(prefix):]
+            if (suffix.startswith("feed_") and suffix!="feed_items"
+                    or suffix.startswith("article_unavailable_")
+                    or suffix in ("article_fetch_disabled","article_retry_backoff")):
+                failures[suffix]=value
+        summary[source]={
+            "feed_items":int(diagnostics.get(prefix+"feed_items",0)),
+            "newest_age_hours":diagnostics.get(prefix+"newest_item_age_hours"),
+            "in_window":int(diagnostics.get(prefix+"items_in_window",0)),
+            "verified":verified[source],
+            "failures":dict(sorted(failures.items())),
+        }
+    return summary
+
 
 def calendar_status(store,now,currencies):
     snap=store.latest("calendar",now)
@@ -224,6 +261,7 @@ class BrainObserver:
         # the original feed_started_at is before those snapshots, so using it
         # to query the cache would silently hide every newly fetched article.
         articles,article_diag=load_articles(store,datetime.now(timezone.utc), allow_fetch=fetch_news)
+        news_pipeline=news_pipeline_summary(article_diag,articles)
         # Media article body provides contextual interpretation only.
         # NEVER convert it into an official monetary-policy trade signal.
         media_analysis,media_status=collect_market_articles(
@@ -287,6 +325,7 @@ class BrainObserver:
                 "historical_clock_shift_verified":False,
                 "broker_clock_confirming_symbols":clock.confirming_symbols,
                 "news_feed_status":feed_status,"full_article_checks":article_diag,
+                "news_pipeline":news_pipeline,
                 "media_article_status":list(media_status),
                 "media_articles_analyzed_from_body":media_analysis[:8],
                 "media_alone_never_authorizes_entry":True,
@@ -467,6 +506,10 @@ class BrainObserver:
             ledger_cycle=ledger.record_snapshot(store.db,observed_utc=now,clock_shift_hours=offset,
                 cards=report["symbols"],quotes=latest_quotes)
             report["observation_ledger"]={"status":"RECORDED","cycle_id":ledger_cycle}
+            try:
+                ledger.record_news(store.db,ledger_cycle,news_pipeline)
+            except Exception as ex:
+                report["news_pipeline_ledger"]={"status":"FAILED","error":type(ex).__name__}
         except Exception as ex:
             report["observation_ledger"]={"status":"FAILED","error":type(ex).__name__}
         try:
