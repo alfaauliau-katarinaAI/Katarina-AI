@@ -70,6 +70,43 @@ def _day_coverage(day: date, stamps, window_seconds) -> float:
     return covered / total if total else 0.0
 
 
+def _news_pipeline(db) -> dict:
+    """WP3 informational diagnosis, never an exit criterion."""
+    stats=dict(cycles_with_news_rows=0, cycles_without_verified_articles=0,
+               no_recent_release_cycles=0, retrieval_failed_cycles=0,
+               no_recent_release_percent=None, retrieval_failed_percent=None,
+               verdict_effect="NONE")
+    if not {"observer_news","observer_cycles"} <= _tables(db):
+        return stats
+    by_cycle={}
+    for cycle,window,verified,failures_json in db.execute(
+            "SELECT n.cycle_id,n.in_window,n.verified,n.failures_json "
+            "FROM observer_news n JOIN observer_cycles c ON c.cycle_id=n.cycle_id "
+            f"WHERE {COUNTED} ORDER BY n.cycle_id,n.source"):
+        item=by_cycle.setdefault(cycle,{"window":0,"verified":0,"failure":False})
+        item["window"]+=window
+        item["verified"]+=verified
+        try:
+            item["failure"]|=bool(json.loads(failures_json))
+        except (TypeError,ValueError):
+            item["failure"]=True
+    stats["cycles_with_news_rows"]=len(by_cycle)
+    absent=[r for r in by_cycle.values() if r["verified"]==0]
+    stats["cycles_without_verified_articles"]=len(absent)
+    for row in absent:
+        if row["failure"]:
+            stats["retrieval_failed_cycles"]+=1
+        elif row["window"]==0:
+            stats["no_recent_release_cycles"]+=1
+    if absent:
+        denominator=len(absent)
+        stats["no_recent_release_percent"]=round(
+            100*stats["no_recent_release_cycles"]/denominator,1)
+        stats["retrieval_failed_percent"]=round(
+            100*stats["retrieval_failed_cycles"]/denominator,1)
+    return stats
+
+
 def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     if now.tzinfo is None:
         raise ValueError("aware_clock_required")
@@ -81,6 +118,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
               "session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 20:45-21:15 UTC rollover",
               "live_execution_authorized": False, "criteria": []}
     criteria = report["criteria"]
+    report["news_pipeline"] = _news_pipeline(db)
     if not {"observer_cycles", "observer_quotes"} <= _tables(db):
         criteria.append(_criterion("ledger_present", "NO_DATA", reason="OBSERVATION_LEDGER_MISSING"))
         return _finish(report)
