@@ -1,6 +1,6 @@
 # Perubahan material Katarina AI
 
-## 2026-10-22 — WP1: daftar simbol inti observer (PR #184, menunggu review)
+## 2026-10-23 — WP1: daftar simbol inti observer (PR #184)
 
 - Menambah `config/observer_universe.json` dengan tujuh simbol program holdout (XAUUSD pertama),
   serta `observer_universe` yang mempertahankan nama broker persis dan mencatat simbol hilang.
@@ -8,6 +8,17 @@
   Slot rotasi dikecualikan dari core, dan simbol tidak tersedia menjadi kartu WAIT dengan ledger FAILED.
 - Tes unit dan integrasi baru menjaga batas read-only serta tidak ada order.
   Tidak ada berkas terkunci diubah; LIVE tetap OFF. VPS aktif tidak diubah.
+
+## 2026-10-23 — roadmap dirapikan
+
+- `docs/ROADMAP.md` disusun ulang: aturan tetap (prinsip, kewenangan, pemisahan data, gerbang promosi, Tahap 0–5)
+  di depan, rencana kerja pelaksana menjadi **Lampiran A** di akhir. Ditambah cara membaca, daftar isi, dan tabel
+  posisi saat ini. Bagian "Catatan implementasi 22 Okt" dilebur ke paragraf "Alat" Tahap 2 dan 3 (rinciannya sudah
+  ada di CHANGELOG); kalimat basi Tahap 0 diperbarui.
+- Aturan dokumentasi pelaksana (R2 langkah 7, R6, R7): log kerja dan hasil tes rinci ditulis di deskripsi PR, bukan
+  di roadmap; roadmap hanya diubah di tabel R5 dan paragraf "Alat" tahap terkait. Isi aturan dan kriteria tahap
+  tidak berubah. R6 diberi blok "R6.0 Aturan umum" (pahami dulu, larangan, pengecekan wajib, templat PR,
+  daftar periksa R7, berhenti setelah PR) yang selalu dikirim bersama perintah paket; rujukan bagian diperbaiki.
 
 ## 2026-10-22 — rencana kerja perbaikan di roadmap
 
