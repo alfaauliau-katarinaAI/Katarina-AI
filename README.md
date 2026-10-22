@@ -20,6 +20,7 @@ Fokus KATARINA AI adalah menghadirkan pengalaman analisis yang praktis, terukur,
 observer read-only di VPS uji sedang disiapkan ulang (menunggu login akun demo), DEMO forward belum berjalan.
 
 [**Status lengkap**](docs/PROJECT_STATUS.md) ·
+[**Roadmap**](docs/ROADMAP.md) ·
 [**Perubahan**](CHANGELOG.md) ·
 [**Diagram satu otak**](docs/architecture/KATARINA_SINGLE_BRAIN_WORKFLOW_20261016.md) ·
 [**Akses GitHub lintas perangkat**](docs/operations/GITHUB_ACCESS.md)

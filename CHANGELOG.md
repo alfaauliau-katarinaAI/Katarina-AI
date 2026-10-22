@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-22 — roadmap berbasis bukti
+
+- `docs/ROADMAP.md` ditetapkan Owner sebagai dasar pengembangan: prinsip "kewenangan bertambah berdasarkan bukti",
+  empat keputusan Owner, tangga kewenangan (level 0–4), aturan pemisahan data dan holdout sekali-buka, gerbang
+  promosi (catatan kelulusan validasi + persetujuan Owner), serta Tahap 0–5 dengan kriteria kelulusan berangka.
+- Batas drawdown harian 35% tidak berubah; profil DEMO direncanakan sebagai lapisan tambahan yang hanya memperketat.
+- `PROJECT_STATUS.md`, README, dan CLAUDE.md menautkan roadmap. Tidak ada perubahan kode.
+
 ## 2026-10-22 — aturan perapian baru dan path VPS di dokumen
 
 - `docs/maintenance/CLEANUP_PLAN.md` ditulis ulang: aturan "arsipkan, jangan hapus" diganti keputusan Owner
