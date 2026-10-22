@@ -179,6 +179,7 @@ siklus OK berikutnya ≤ 10 menit setelah gangguan). `python scripts/ai/check_st
 bawah (PASS / NOT_MET / NO_DATA) secara read-only. Simbol inti dipilih dengan `--universe config/observer_universe.json` (WP1, #184): ketujuh simbol program diamati
 setiap siklus dengan XAUUSD pertama; simbol inti yang tidak tersedia menjadi WAIT dan baris ledger `FAILED` beralasan
 `CORE_SYMBOL_UNAVAILABLE`, tidak pernah diganti diam-diam; tanpa opsi, perilaku lama tetap.
+Usulan WP3 di [PR #191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) menambah diagnostik berita per sumber dan per siklus, tanpa mengubah keputusan atau kriteria Tahap 0; belum merge atau diterapkan ke VPS.
 Statistik siklus memakai jendela konservatif Senin 00:00 – Jumat
 20:00 UTC tanpa rollover 20:45–21:15 UTC. Status tahap: **belum lulus**; observer read-only berjalan di VPS sejak 22 Okt 2026 04:24 UTC.
 
@@ -661,7 +662,7 @@ Menunggu Owner · Dikerjakan Claude.
 |---|---|---|---|
 | WP1 | Selesai (merge); penerapan VPS di WP6 | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
 | WP2 | Siap dikerjakan | – | – |
-| WP3 | Sedang dikerjakan — ChatGPT, PR #191 | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | Diagnostik feed dan ledger berita; menunggu review Claude |
+| WP3 | Sedang dikerjakan — ChatGPT, PR #191 (draft) | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | Hitung item basi/waktu invalid/kegagalan fetch, tabel observer_news, laporan informatif tanpa ubah verdict; CI 1238 unit/71 static/209 integrasi lulus; manifest CLI dan review belum |
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP6 | Dikerjakan Claude setelah WP2 + WP3 | – | – |
