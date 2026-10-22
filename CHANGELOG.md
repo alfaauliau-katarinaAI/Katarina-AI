@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP2: tick broker streaming per jam (PR #190)
+
+- Mengganti koleksi tick sehari dalam RAM dengan `_download_day`: satu jam per batch, CSV gzip deterministik,
+  dedup, SHA-256, indeks baris per jam dan file sementara atomik; alasan gap dipertahankan.
+- Rekonsiliasi snapshot hanya mendekode jam relevan, tanpa menampung semua tick satu hari.
+- Tes pembanding terhadap penulis sebelum WP2 dan uji memori dua juta tick ada di PR.
+  Tidak ada berkas terkunci diubah; LIVE tetap OFF, VPS tidak diubah.
+
 ## 2026-10-23 — roadmap: alur kerja lengkap, cara menulis kode (R8) dan dokumen (R9)
 
 - Lampiran A R0 ditulis ulang: siklus tujuh langkah satu paket (Owner → pelaksana → Claude review → merge → VPS) dan
