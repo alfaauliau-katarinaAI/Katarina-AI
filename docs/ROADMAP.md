@@ -150,7 +150,7 @@ Alat (repo, 22 Okt 2026): `katarina.intelligence.operations.observation_ledger` 
 (tabel `observer_cycles`, `observer_quotes`, termasuk WAIT; kegagalan selalu dengan alasan) dan, dengan anggaran satu
 simbol-hari per siklus, mengunduh tick broker hari UTC yang sudah selesai dan memang diamati ke
 `<state>/broker-ticks/SIMBOL/YYYY-MM-DD.csv.gz` (`broker_tick_days`, celah di `data_gaps`, rekonsiliasi dengan
-snapshot dalam satu tick size). Uji putus-sambung dicatat dengan `scripts/ai/record_reconnect_test.py` (lulus bila
+snapshot dalam satu tick size). Usulan WP2 di [PR #190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) mengubah unduhan menjadi streaming per jam dengan hash dan rekonsiliasi terbatasi memori; belum merge atau diterapkan ke VPS. Uji putus-sambung dicatat dengan `scripts/ai/record_reconnect_test.py` (lulus bila
 siklus OK berikutnya ≤ 10 menit setelah gangguan). `python scripts/ai/check_stage0_health.py --state-dir <state>` menilai kriteria di
 bawah (PASS / NOT_MET / NO_DATA) secara read-only. Simbol inti dipilih dengan `--universe config/observer_universe.json` (WP1, #184): ketujuh simbol program diamati
 setiap siklus dengan XAUUSD pertama; simbol inti yang tidak tersedia menjadi WAIT dan baris ledger `FAILED` beralasan
@@ -626,7 +626,7 @@ Hipotesis nyata didaftarkan dan dijalankan oleh Claude/Owner setelah dataset die
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
 | WP1 | Selesai (merge), belum diterapkan ke VPS (WP6) | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
-| WP2 | PR draft dibuka; menunggu verifikasi CI dan review | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | Unduh tick per jam; byte-identik, rekonsiliasi, dan memori diuji di PR |
+| WP2 | Sedang dikerjakan — ChatGPT, PR #190 (draft) | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | Gzip tick per jam, SHA-256, rekonsiliasi; CI 1237 unit/71 static/209 integrasi lulus, uji 2 juta tick <50 MiB; verifikasi manifest CLI dan review belum |
 | WP3 | Belum dimulai | – | – |
 | WP4 | Belum dimulai | – | – |
 | WP5 | Belum dimulai | – | – |
