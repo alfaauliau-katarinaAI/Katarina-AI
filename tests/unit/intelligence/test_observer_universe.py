@@ -69,6 +69,19 @@ class ObserverUniverseTests(unittest.TestCase):
         self.assertEqual(chosen, ())
         self.assertEqual(missing, ("XAUUSD.vx", "NAS100.vx"))
 
+    def test_existing_lab_rotation_can_exclude_core(self):
+        import sqlite3
+        from contextlib import closing
+        from datetime import datetime, timezone
+        from katarina.intelligence.lab.continuous_research_lab import select_batch
+        now = datetime(2026, 10, 22, 12, 0, tzinfo=timezone.utc)
+        catalog = [sym(x) for x in
+                   ("XAUUSD.vx", "EURUSD.vx", "USDJPY.vx", "GBPUSD.vx")]
+        with closing(sqlite3.connect(":memory:")) as db:
+            chosen = select_batch(db, catalog, 2, now,
+                                  exclude=("XAUUSD.vx", "EURUSD.vx"))
+        self.assertEqual(chosen, ["GBPUSD.vx", "USDJPY.vx"])
+
     def test_invalid_universe_instance_is_rejected(self):
         with self.assertRaises(ValueError):
             ObserverUniverse(("A", "A"))
