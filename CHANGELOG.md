@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: alur kerja lengkap, cara menulis kode (R8) dan dokumen (R9)
+
+- Lampiran A R0 ditulis ulang: siklus tujuh langkah satu paket (Owner → pelaksana → Claude review → merge → VPS) dan
+  urutan fase terkini (WP2, WP3, WP8a paralel; WP6 dan ekspor dataset; WP8b dan WP4; hipotesis nyata; WP5).
+- R8 menjelaskan cara Claude menulis kode (pahami dulu, diff minimal, tes gagal dulu, kode mudah diaudit, akar
+  masalah, periksa diff sendiri). R9 menetapkan tempat dan batas panjang dokumen/PR, dengan contoh buruk (R5A) dan
+  contoh baik. R6.0 dan R7 merujuk R8/R9. Tidak ada perubahan kode.
+
 ## 2026-10-23 — roadmap: WP8 riset historis setup BUY/SELL antarpair
 
 - Lampiran A ditambah WP8 (paralel dengan WP2/WP3): ekspor bar broker pengembangan ber-hash (WP8a), detektor setup
