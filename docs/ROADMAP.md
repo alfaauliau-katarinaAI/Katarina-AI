@@ -10,8 +10,9 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
   tiap tahap. Mengubahnya butuh persetujuan Owner dan catatan di `CHANGELOG.md`.
 - **Lampiran A** adalah **rencana kerja berjalan** untuk pelaksana (AI lain atau manusia): urutan paket, cara kerja
   standar, peta berkas, langkah per paket, perintah siap pakai, dan daftar periksa review.
-- Status harian ada di [PROJECT_STATUS](PROJECT_STATUS.md), riwayat perubahan di [CHANGELOG](../CHANGELOG.md),
-  aturan perapian di [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md). **Log kerja tidak ditulis di roadmap.**
+- Pembagian dokumen: roadmap = arah dan aturan; [PROJECT_STATUS](PROJECT_STATUS.md) = status terkini (satu-satunya
+  sumber status operasional); deskripsi PR = bukti dan log kerja; [CHANGELOG](../CHANGELOG.md) = riwayat perubahan;
+  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian. **Log kerja tidak ditulis di roadmap.**
 
 **Daftar isi**
 
@@ -22,17 +23,21 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 8. [Sebelum akun riil](#sebelum-akun-riil-di-luar-roadmap-ini) ·
 Lampiran A — [Rencana kerja perbaikan](#lampiran-a--rencana-kerja-perbaikan-untuk-pelaksana)
 
-**Posisi saat ini (23 Okt 2026)**
+**Peta alat per tahap** (status operasional terkini — observer, VPS, tanggal, perkiraan — hanya di
+[PROJECT_STATUS](PROJECT_STATUS.md); tabel ini hanya berubah bila alat baru masuk `main` atau sebuah tahap lulus)
 
-| Tahap | Alat di `main` | Kelulusan |
+| Tahap | Alat yang sudah ada di `main` | Kelulusan resmi menurut roadmap |
 |---|---|---|
-| 0 — Observer & data | Ledger siklus, tick broker harian, uji putus-sambung, `check_stage0_health.py`; observer VPS aktif sejak 22 Okt 04:24 UTC (3 simbol; 7 simbol siap lewat WP1, menunggu penerapan WP6) | Belum — 10 hari bursa paling cepat ±6 Nov |
-| 1 — Validasi ilmiah | `research/validation.py`, `validate_strategy.py`, [protokol](research/VALIDATION_PROTOCOL.md) | Belum — belum ada hipotesis terdaftar |
-| 2 — Market intelligence | `research/market_intelligence.py` (`market-filter`), `research/context_export.py` | Belum — butuh data Tahap 0 |
-| 3 — Risk & execution | `research/demo_readiness.py` (`DemoRiskOverlay`), `check_demo_readiness.py` | Belum — profil DEMO menunggu Owner |
-| 4–5 | — | Belum dimulai |
+| 0 — Observer & data | Ledger siklus, tick broker harian, uji putus-sambung, `check_stage0_health.py`, simbol inti `--universe` (WP1) | Belum lulus (pengumpulan data berjalan) |
+| 1 — Validasi ilmiah | `research/validation.py`, `validate_strategy.py`, [protokol](research/VALIDATION_PROTOCOL.md) | Belum lulus |
+| 2 — Market intelligence | `research/market_intelligence.py` (`market-filter`), `research/context_export.py` | Belum lulus |
+| 3 — Risk & execution | `research/demo_readiness.py` (`DemoRiskOverlay`), `check_demo_readiness.py` | Belum lulus |
+| 4 — Adaptive strategy | Modul riset/adaptasi lama di `intelligence/`: `perception/adaptive_regime.py`, `lab/adaptive_strategy_library.py`, `lab/adaptive_walkforward.py`, `lab/autonomous_strategy_discovery.py` | Pembuktian resmi **belum dimulai** (butuh Tahap 0–3 dan kandidat terdaftar) |
+| 5 — Confidence & riset mandiri | Modul riset lama di `intelligence/`: `lab/autonomous_research.py`, `lab/continuous_research_lab.py`, `lab/research_reports.py` | Pembuktian resmi **belum dimulai** (butuh ≥ 300 hasil out-of-sample) |
 
-Kewenangan saat ini: **Level 0** (mengamati dan mencatat). LIVE OFF; batas drawdown utama 35%.
+Modul yang sudah ada **bukan** bukti kelulusan: sebuah tahap lulus hanya bila kriteria di bagian 7 terpenuhi dengan
+laporan yang dapat direproduksi dan disetujui Owner. Kewenangan saat ini: **Level 0** (mengamati dan mencatat);
+LIVE OFF; batas drawdown utama 35%.
 
 ## Prinsip utama
 
