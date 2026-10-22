@@ -1,7 +1,7 @@
 # CLAUDE.md — peta cepat repositori Katarina AI
 
 Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~800 berkas setelah perampingan 22 Okt).
-Diperbarui 22 Oktober 2026. Status rinci (satu sumber): `docs/PROJECT_STATUS.md`; perubahan di `CHANGELOG.md`;
+Diperbarui 22 Oktober 2026. Status rinci (satu sumber): `docs/PROJECT_STATUS.md`; **arah pengembangan: `docs/ROADMAP.md`** (wajib diikuti: tahap 0–5, kriteria kelulusan, gerbang promosi, aturan holdout); perubahan di `CHANGELOG.md`;
 riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktober).
 
 ## Apa ini
@@ -60,6 +60,8 @@ hygiene dan dependency links PASS.
 - Jangan commit runtime state, data broker, kredensial, atau snapshot heartbeat VPS
   (`.gitignore` + `audit_repo_hygiene.py` menjaganya).
 - Satu otak canonical: jangan menambah observer/worker paralel atau jalur eksekusi tersembunyi.
+- Ikuti `docs/ROADMAP.md`: tidak ada strategi/parameter keputusan yang masuk sistem aktif tanpa catatan
+  kelulusan validasi + persetujuan Owner; holdout hanya dibuka sekali per strategi final; kerjakan tahap berurutan.
 
 ## Aturan dan status perapian
 

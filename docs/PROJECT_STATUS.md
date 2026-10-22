@@ -18,13 +18,16 @@ Satu-satunya sumber status proyek. Diperbarui **22 Oktober 2026**. Rincian per p
 
 ## Pekerjaan berikutnya
 
-1. **Nyalakan observer read-only di VPS.** Owner login akun demo di MT5 dan mematikan Algo Trading;
-   konfigurasi koneksi ditulis ke `C:\Katarina\private`, koneksi read-only diuji, lalu tugas observer diaktifkan.
-2. **Kumpulkan data forward** dari observer selama beberapa minggu, tanpa order.
-3. **Riset edge yang fokus:** 1–2 instrumen (XAUUSD kandidat utama), aturan uji ditetapkan sebelum melihat hasil,
-   biaya bid/ask riil. Ini penentu apakah Katarina boleh trading otomatis.
-4. **DEMO forward** hanya setelah observer stabil dan dengan izin eksplisit Owner.
-5. Keputusan Owner: repo private atau pemisahan website (Tahap 7), serta 15 folder lama terkunci di `C:\` VPS.
+Pengembangan mengikuti **[Roadmap berbasis bukti](ROADMAP.md)** (ditetapkan Owner 22 Okt 2026): validasi adalah
+hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
+
+1. **Tahap 0 — Observer & data** (sedang dikerjakan): Owner login akun demo di MT5 VPS (Algo Trading OFF),
+   konfigurasi koneksi privat, observer read-only diaktifkan, pemeriksa kesehatan data disiapkan.
+2. **Tahap 1 — Validasi ilmiah:** protokol uji, walk-forward, holdout terkunci, biaya bersih, baseline.
+3. Tahap 2–5 (market intelligence, risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan,
+   masing-masing dengan kriteria kelulusan di roadmap.
+4. Keputusan Owner di luar roadmap: repo private atau pemisahan website (Tahap 7 perapian), 15 folder lama
+   terkunci di `C:\` VPS.
 
 ## Panduan terkait
 
