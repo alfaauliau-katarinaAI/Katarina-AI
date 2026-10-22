@@ -27,7 +27,7 @@ def bar(at, *, spread=12):
 
 
 class FakeBroker:
-    def __init__(self, *, contaminated=False, wrong_hash=False):
+    def __init__(self, *, contaminated=False):
         self.calls = []
         self.contaminated = contaminated
 
