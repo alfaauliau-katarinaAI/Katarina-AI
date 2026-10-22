@@ -86,9 +86,32 @@ Kelulusan tahap dan promosi tetap berurutan; LIVE OFF dan batas utama 35% tetap 
 ## Rencana kerja perbaikan — 22 Oktober 2026 (untuk pelaksana)
 
 Disusun Claude dari pemeriksaan VPS dan repo 22 Okt malam, ditambah usulan "Multi-Pair Opportunity Hunter" dari
-review PM (Yura). Pelaksana (ChatGPT/Codex/AI lain) mengerjakan paket di bawah **berurutan**; Claude meninjau dan
+review PM (Yura). Pelaksana (ChatGPT/Codex/AI lain) mengerjakan paket di bawah **berurutan** sesuai R0, memakai perintah siap pakai di R6; Claude meninjau dan
 menyempurnakan setiap PR sebelum merge. Rencana ini **tidak** mengubah tahap, kriteria kelulusan, atau aturan lain
 di dokumen ini. Bila ada yang bertentangan, aturan di bagian lain roadmap dan `CLAUDE.md` yang berlaku.
+
+### R0. Urutan pengerjaan (baca ini dulu)
+
+Owner cukup mengirim perintah siap pakai di **R6** ke pelaksana, satu paket per kali, sesuai urutan berikut.
+Paket berikutnya baru dimulai setelah PR paket sebelumnya **di-merge** (bukan hanya dibuka), kecuali disebut paralel.
+
+| Urutan | Paket | Dikerjakan oleh | Syarat mulai | Perkiraan ukuran PR | Hasil yang diserahkan |
+|---|---|---|---|---|---|
+| 1 | WP1 — daftar simbol eksplisit | Pelaksana | — | ±6 berkas, ±300 baris | PR `WP1: ...` hijau |
+| 2 | Review WP1 | Claude | PR WP1 dibuka | — | Perbaikan/komentar, lalu merge |
+| 3 | WP2 — tick streaming | Pelaksana | WP1 di-merge | ±2 berkas, ±250 baris | PR `WP2: ...` hijau |
+| 4 | WP3 — diagnosis berita | Pelaksana | boleh paralel dengan WP2 (berkas berbeda) | ±4 berkas, ±200 baris | PR `WP3: ...` hijau |
+| 5 | Review WP2 dan WP3 | Claude | PR dibuka | — | Merge |
+| 6 | WP6 — terapkan ke VPS bertahap | Claude | WP1–WP3 di-merge | — | Laporan 5→7 simbol, catatan roadmap |
+| 7 | WP4 — jurnal kandidat riset + replay sinyal | Pelaksana | WP6 tahap A berjalan | ±6 berkas, ±450 baris | PR `WP4: ...` hijau |
+| 8 | Review WP4 lalu terapkan ke VPS | Claude | PR WP4 dibuka | — | Merge + restart observer |
+| 9 | WP5 — hipotesis perankingan antarpair | Pelaksana | WP4 di-merge dan ≥ 5 hari bursa data kandidat | ±4 berkas, ±350 baris | PR `WP5: ...` hijau |
+| 10 | Review WP5 | Claude | PR WP5 dibuka | — | Merge; hasil riset dilaporkan ke Owner |
+| — | WP7 — keputusan Owner | Owner | kapan saja | — | Keputusan tertulis di roadmap |
+
+Aturan alur: bila review Claude meminta perubahan, Owner meneruskan komentar review ke pelaksana dengan perintah
+"Perbaiki PR #N sesuai komentar review, ikuti R2" lalu Claude meninjau ulang. Bila pelaksana menemukan bahwa paket
+memerlukan berkas terkunci, ia berhenti dan menuliskannya di PR; Owner meneruskan ke Claude.
 
 ### R1. Temuan yang mendasari (bukti 22 Okt, VPS `30d043c`, 600+ siklus)
 
@@ -337,6 +360,94 @@ Tujuan: bahan riset untuk Tahap 1/2 walau semua keputusan WAIT. **Tidak** mengub
 | WP5 | Belum dimulai | – | – |
 | WP6 | Menunggu WP1–WP3 | – | – |
 | WP7 | Menunggu Owner | – | – |
+
+### R6. Perintah siap pakai untuk pelaksana
+
+Salin satu blok utuh ke pelaksana. Setiap blok berdiri sendiri; pelaksana tidak perlu konteks percakapan lain.
+
+**Perintah WP1**
+```text
+Kamu mengerjakan repo GitHub alfaauliau-katarinaAI/Katarina-AI (Python, dokumen berbahasa Indonesia).
+1. Baca berurutan: CLAUDE.md, lalu docs/ROADMAP.md bagian "Rencana kerja perbaikan" sub-bagian R1, R2, R3 dan
+   "WP1 — Daftar simbol eksplisit untuk observer". Ikuti R2 langkah demi langkah tanpa melompat.
+2. Kerjakan HANYA WP1, satu PR ke main berjudul "WP1: daftar simbol eksplisit untuk observer".
+3. Dilarang: mengubah berkas di config/promotion_lock.json, membuat catatan promosi, mengubah Risk Governor atau batas
+   35%, mengaktifkan DEMO/LIVE, menambah observer/worker/thread, menambah dependensi, mengubah VPS, merge sendiri.
+4. Sebelum membuka PR jalankan semua perintah di R2 langkah 6; semua harus lulus dan manifest MATCH.
+5. Deskripsi PR: Ringkasan, daftar berkas diubah beserta alasannya, Keamanan (berkas terkunci tidak berubah, LIVE OFF,
+   tanpa perubahan VPS), Pengujian (salin jumlah tes dan hasil audit), dan hal yang belum yakin.
+6. Isi baris WP1 di tabel R5 docs/ROADMAP.md: status "PR dibuka", nomor PR.
+Jika ada langkah yang tidak bisa dikerjakan tanpa melanggar butir 3, berhenti dan tulis alasannya di PR.
+```
+
+**Perintah WP2**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP1 sudah di-merge).
+1. Baca CLAUDE.md, lalu docs/ROADMAP.md bagian "Rencana kerja perbaikan": R2, R3 dan "WP2 — Pengunduh tick hemat
+   memori". Baca seluruh src/katarina/intelligence/operations/observation_ledger.py dan
+   tests/unit/intelligence/test_observation_ledger.py sebelum mengubah apa pun.
+2. Kerjakan HANYA WP2, satu PR "WP2: pengunduh tick streaming hemat memori".
+3. Wajib: hasil berkas dan sha256 byte-identik dengan implementasi lama (buktikan dengan tes pembanding yang menyalin
+   fungsi lama ke berkas tes), tracemalloc puncak < 50 MB untuk 2.000.000 tick/hari, tes lama tidak diubah.
+4. Larangan, pengecekan, isi PR dan pembaruan tabel R5 sama seperti perintah WP1 butir 3–6.
+```
+
+**Perintah WP3**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
+1. Baca CLAUDE.md, lalu docs/ROADMAP.md bagian "Rencana kerja perbaikan": R1 (T5), R2, R3 dan "WP3 — Diagnosis jalur
+   berita". Baca fungsi load_articles dan prepare_news di src/katarina/intelligence/cognition/observer.py,
+   src/katarina/intelligence/news/news_intelligence.py dan src/katarina/intelligence/operations/data_health.py.
+2. Kerjakan HANYA WP3, satu PR "WP3: diagnosis jalur berita observer".
+3. Wajib: hanya menambah penghitung/laporan/tabel ledger; logika blackout, ambang, FRESH_SECONDS dan keputusan TIDAK
+   berubah; verdict data_health tidak berubah (buktikan dengan tes).
+4. Larangan, pengecekan, isi PR dan pembaruan tabel R5 sama seperti perintah WP1 butir 3–6.
+```
+
+**Perintah WP4**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP1–WP3 sudah di-merge).
+1. Baca CLAUDE.md, lalu docs/ROADMAP.md bagian "Rencana kerja perbaikan": R1 (T4, T6), R2, R3 dan "WP4 — Jurnal
+   kandidat riset". Baca dataclass ContextDecision di
+   src/katarina/intelligence/cognition/contextual_decision_intelligence.py (JANGAN diubah; berkas terkunci),
+   src/katarina/research/validation.py (format Trade) dan src/katarina/research/context_export.py (cara membaca tick
+   Tahap 0 yang terverifikasi hash).
+2. Kerjakan HANYA WP4, satu PR "WP4: jurnal kandidat riset dan replay sinyal teknis".
+3. Wajib: action/keputusan observer tidak berubah (tes membuktikan kartu sama sebelum/sesudah), orders_submitted 0,
+   data_until <= entry_at selalu, aturan exit dibaca dari spec hipotesis terdaftar (tanpa default di kode),
+   replay hanya membaca bar yang diekspor dan menulis ke build/.
+4. Larangan, pengecekan, isi PR dan pembaruan tabel R5 sama seperti perintah WP1 butir 3–6.
+```
+
+**Perintah WP5**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP4 sudah di-merge).
+1. Baca CLAUDE.md, docs/ROADMAP.md bagian "Rencana kerja perbaikan": R2, R3, "WP5 — Hipotesis perankingan antarpair",
+   docs/research/VALIDATION_PROTOCOL.md, docs/research/MARKET_INTELLIGENCE.md, src/katarina/engines/opportunity.py
+   (JANGAN diubah) dan src/katarina/research/market_intelligence.py.
+2. Kerjakan HANYA WP5, satu PR "WP5: hipotesis perankingan antarpair (riset)".
+3. Wajib: semua bobot dan ambang dibaca dari parameters spec yang terdaftar di HypothesisRegistry; setiap varian
+   bobot adalah hipotesis baru (jumlah percobaan bertambah); korelasi dihitung kausal dari data sebelum entry;
+   tidak ada perubahan pada jalur keputusan observer.
+4. Larangan, pengecekan, isi PR dan pembaruan tabel R5 sama seperti perintah WP1 butir 3–6.
+```
+
+**Perintah perbaikan setelah review**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Buka PR #<nomor> dan baca semua komentar review.
+Perbaiki setiap poin di branch PR yang sama (commit baru, jangan force-push), ikuti docs/ROADMAP.md R2, jalankan
+ulang semua pengecekan R2 langkah 6, lalu balas setiap komentar dengan apa yang diubah (atau alasan bila tidak diubah).
+```
+
+### R7. Daftar periksa review Claude (dipakai saat meninjau PR pelaksana)
+
+1. Diff tidak menyentuh berkas di `config/promotion_lock.json`; `promotion_gate.py --check` PASS.
+2. Perilaku tanpa opsi baru identik; tes lama tidak diubah kecuali paket memintanya.
+3. Tidak ada jalur order, thread/worker baru, jaringan di tes, atau dependensi baru.
+4. Waktu UTC ber-zona, fail-closed dengan kode alasan, SQLite di `with db:`, hasil deterministik.
+5. Tes baru benar-benar gagal tanpa perubahan (diverifikasi dengan membalik perubahan secara lokal).
+6. CI Body, Portable Ubuntu dan Windows hijau; manifest `MATCH`; CHANGELOG, CLAUDE.md dan tabel R5 diperbarui.
+7. Untuk paket yang diterapkan ke VPS: rencana WP6 dan batas pemantauan dipenuhi sebelum dinaikkan.
 
 ## Pemisahan data
 
