@@ -1,6 +1,6 @@
 # Perubahan material Katarina AI
 
-## 2026-10-22 — WP1: daftar simbol inti observer (PR review)
+## 2026-10-22 — WP1: daftar simbol inti observer (PR #184, menunggu review)
 
 - Menambah `config/observer_universe.json` dengan tujuh simbol program holdout (XAUUSD pertama),
   serta `observer_universe` yang mempertahankan nama broker persis dan mencatat simbol hilang.
