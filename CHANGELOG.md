@@ -1,5 +1,15 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap dirapikan
+
+- `docs/ROADMAP.md` disusun ulang: aturan tetap (prinsip, kewenangan, pemisahan data, gerbang promosi, Tahap 0–5)
+  di depan, rencana kerja pelaksana menjadi **Lampiran A** di akhir. Ditambah cara membaca, daftar isi, dan tabel
+  posisi saat ini. Bagian "Catatan implementasi 22 Okt" dilebur ke paragraf "Alat" Tahap 2 dan 3 (rinciannya sudah
+  ada di CHANGELOG); kalimat basi Tahap 0 diperbarui.
+- Aturan dokumentasi pelaksana (R2 langkah 7, R6, R7): log kerja dan hasil tes rinci ditulis di deskripsi PR, bukan
+  di roadmap; roadmap hanya diubah di tabel R5 dan paragraf "Alat" tahap terkait. Isi aturan dan kriteria tahap
+  tidak berubah.
+
 ## 2026-10-22 — rencana kerja perbaikan di roadmap
 
 - `docs/ROADMAP.md`: bagian "Rencana kerja perbaikan" berisi temuan VPS 22 Okt (3 simbol saja, 100% WAIT dengan 7
