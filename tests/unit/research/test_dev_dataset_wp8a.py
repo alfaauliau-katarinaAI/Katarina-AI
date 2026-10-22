@@ -83,6 +83,17 @@ class DevDatasetTests(unittest.TestCase):
             self.assertEqual(manifest["files"]["EURUSD.vx/M5.csv.gz"]["bars"], 2)
             self.assertFalse(manifest["live_execution_authorized"])
 
+    def test_missing_bars_are_gaps_not_interpolated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = export_dev_bars(FakeBroker(), ("EURUSD.vx",), start=DAY,
+                                       end=DAY + timedelta(days=1), out=tmp)
+            gaps = manifest["files"]["EURUSD.vx/M5.csv.gz"]["gaps"]
+            self.assertIn({
+                "start_utc": "2026-10-12T00:10:00+00:00",
+                "end_utc": "2026-10-13T00:00:00+00:00",
+                "reason": "BROKER_BAR_GAP"}, gaps)
+            self.assertEqual(len(load_dev_dataset(tmp)["EURUSD.vx"]["M5"]), 2)
+
     def test_same_broker_data_produces_identical_gzip_and_manifest_hash(self):
         with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
             a = export_dev_bars(FakeBroker(), ("EURUSD.vx",),
