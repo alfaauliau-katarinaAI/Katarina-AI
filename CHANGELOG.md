@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: titik masuk pelaksana AI, cara mengambil paket, standar teknis (R10)
+
+- Bagian baru "Mulai di sini — untuk pelaksana AI" di awal roadmap: lima langkah dari membaca aturan sampai berhenti
+  setelah PR; R6.0 berlaku walau tidak dikirim terpisah. `CLAUDE.md` menunjuk ke bagian ini.
+- R5: cara mengambil paket (pilih "Siap dikerjakan", cek belum diambil, tandai lewat PR draft) dan status baku;
+  WP8 dipecah WP8a/WP8b. R10: standar teknis (Python 3.12, Linux + Windows, batas VPS, struktur/penamaan, data dan
+  waktu, Git/PR, keamanan). R7 merujuk R10. Tidak ada perubahan kode.
+
 ## 2026-10-23 — roadmap: alur kerja lengkap, cara menulis kode (R8) dan dokumen (R9)
 
 - Lampiran A R0 ditulis ulang: siklus tujuh langkah satu paket (Owner → pelaksana → Claude review → merge → VPS) dan

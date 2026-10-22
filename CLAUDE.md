@@ -1,5 +1,7 @@
 # CLAUDE.md — peta cepat repositori Katarina AI
 
+**Pelaksana AI (ChatGPT/Codex/lainnya): mulai dari `docs/ROADMAP.md` bagian "Mulai di sini" dan ikuti Lampiran A (R0–R10).**
+
 Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~800 berkas setelah perampingan 22 Okt).
 Diperbarui 22 Oktober 2026. Status rinci (satu sumber): `docs/PROJECT_STATUS.md`; **arah pengembangan: `docs/ROADMAP.md`** (wajib diikuti: tahap 0–5, kriteria kelulusan, gerbang promosi, aturan holdout); perubahan di `CHANGELOG.md`;
 riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktober).
