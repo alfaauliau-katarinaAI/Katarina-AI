@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — roadmap: WP8 riset historis setup BUY/SELL antarpair
+
+- Lampiran A ditambah WP8 (paralel dengan WP2/WP3): ekspor bar broker pengembangan ber-hash (WP8a), detektor setup
+  liquidity sweep/pullback/Fibonacci/struktur pasar per sisi, simulasi ke format `Trade`, uji dengan alat Tahap 1, dan
+  tabel perbandingan antarpair setelah biaya (WP8b). Data hanya sebelum 13 Okt 2026 00:00 UTC (ditolak kode bila
+  melewati), BUY/SELL terpisah, tiap varian = percobaan, maks. 5 hipotesis per instrumen per sisi (batas, bukan
+  target), hasil berlabel riset. Perintah siap pakai WP8a/WP8b di R6. Masukan review PM. Tidak ada perubahan kode.
+
 ## 2026-10-23 — roadmap: peta alat per tahap, status hanya di PROJECT_STATUS
 
 - Tabel "Posisi saat ini" di roadmap diganti "Peta alat per tahap" tanpa tanggal/perkiraan; status operasional

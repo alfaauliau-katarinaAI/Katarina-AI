@@ -41,7 +41,8 @@ hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
    biaya, slippage, WAIT dan kelengkapan rekonsiliasi. Belum terpasang pada worker aktif; nilai profil final
    dan bukti broker nyata masih diperlukan. Panduan: [DEMO readiness](research/DEMO_READINESS.md).
 4. **Rencana kerja perbaikan WP1–WP7** (22 Okt) ada di [roadmap](ROADMAP.md#lampiran-a--rencana-kerja-perbaikan-untuk-pelaksana):
-   prioritas WP1 (observer mengamati 7 simbol program, XAUUSD pertama) dan WP2–WP3.
+   WP1 selesai (#184); berikutnya WP2–WP3 (ChatGPT) dan, paralel, WP8 riset historis setup BUY/SELL antarpair
+   dari data pengembangan sebelum 13 Okt 2026.
 5. Keputusan Owner di luar roadmap: repo private atau pemisahan website (Tahap 7 perapian), 15 folder lama
    terkunci di `C:\` VPS.
 
