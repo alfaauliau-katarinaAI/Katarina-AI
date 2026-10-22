@@ -5,7 +5,8 @@
 - `docs/ROADMAP.md`: bagian "Rencana kerja perbaikan" berisi temuan VPS 22 Okt (3 simbol saja, 100% WAIT dengan 7
   pemblokir permanen, jalur berita tanpa artikel, pengunduh tick memakan memori) dan paket kerja WP1–WP7 untuk
   pelaksana (daftar simbol eksplisit 7 simbol inti, tick streaming, diagnosis berita, jurnal kandidat riset,
-  hipotesis perankingan antarpair, penerapan VPS bertahap, keputusan Owner). Tidak ada perubahan kode.
+  hipotesis perankingan antarpair, penerapan VPS bertahap, keputusan Owner), cara kerja standar Claude untuk
+  pelaksana (urutan kerja, standar kode, pengecekan, PR) dan peta alur berkas observer. Tidak ada perubahan kode.
 
 ## 2026-10-22 — ekspor konteks Tahap 2 ber-lineage dari tick broker Tahap 0
 
