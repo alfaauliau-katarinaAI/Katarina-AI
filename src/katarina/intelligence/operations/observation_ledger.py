@@ -262,7 +262,7 @@ def _download_day(mt5, symbol: str, day_start: datetime, path: Path):
     digest = hashlib.sha256()
     flag = getattr(mt5, "COPY_TICKS_ALL", getattr(mt5, "COPY_TICKS_INFO", 0))
     buffer = io.StringIO()
-    writer = csv.writer(buffer, lineterminator="\\n")
+    writer = csv.writer(buffer, lineterminator="\n")
 
     def flush(archive):
         raw = buffer.getvalue().encode("ascii")
