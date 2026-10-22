@@ -10,7 +10,6 @@ import sqlite3
 import tempfile
 import unittest
 from contextlib import closing
-from datetime import datetime, timezone
 from pathlib import Path
 
 from katarina.research.blocker_ladder import (
