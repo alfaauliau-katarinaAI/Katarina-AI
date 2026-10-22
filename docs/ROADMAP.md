@@ -298,6 +298,44 @@ DEMO forward **≥ 3 bulan** dan **≥ 200 trade** dengan expectancy bersih posi
 rekonsiliasi dan kepatuhan risiko 100%, evaluasi ulang batas 35% berdasarkan hasil tersebut, dan otorisasi
 eksplisit Owner. LIVE tetap OFF sampai semua itu terpenuhi.
 
+## Arah lanjutan — bukan paket kerja baru
+
+Enam arah ini adalah **catatan pengembangan jangka panjang**, bukan izin mengubah strategi, menambah worker,
+atau membuka tahap. Dahulukan review/merge WP2, WP3, WP8a dan WP9a; lanjut WP9b setelah WP3 merge,
+lalu pembuktian biaya dan riset sesuai prasyarat. Kriteria kelulusan Tahap 0–5 serta gerbang promosi tetap berlaku.
+
+1. **Autonomous Research (Tahap 5; terakhir).** Audit dahulu `run_autonomous_strategy_discovery` dan modul riset
+   yang sudah ada; jangan membuat mesin paralel. Baru perluas setelah alur validasi stabil, setiap hipotesis
+   **otomatis didaftarkan sebelum hasil dibaca** di `HypothesisRegistry`, setiap varian dihitung sebagai percobaan,
+   dan koreksi banyak percobaan berlaku. Riset hanya data pengembangan; tidak boleh promosi otomatis.
+2. **Market Intelligence (Tahap 2/4; setelah WP8a dan WP8b sesuai gerbangnya).** Bandingkan regime, sisi BUY/SELL,
+   liquidity sweep, pullback, Fibonacci dan struktur pasar per instrumen, dengan data sebelum
+   **13 Okt 2026 00:00 UTC** dan biaya penuh. Hipotesis didaftarkan lebih dahulu; hasil riset bukan filter aktif.
+3. **Counterfactual Learning (Tahap 2/4; setelah WP8a, WP8b dan diagnosis WP9a).** WP9a pada kartu WAIT
+   **forward/holdout** hanya boleh menghitung *frekuensi alasan*, tanpa markout untung-rugi untuk seleksi.
+   Analisis keuntungan/kerugian 'seandainya penghambat X hilang' hanya memakai data **pengembangan sebelum cutoff**,
+   dimulai dari pemblokir teknis kelas C. Jika berita/kalender historis yang dapat diverifikasi tidak ada,
+   jangan melakukan counterfactual untung-rugi untuk pemblokir berita.
+4. **Trading Cost Intelligence (Tahap 1–2; setelah WP2 dan dataset pengembangan tersedia).** Perluas `CostModel`
+   yang sudah mencakup spread/komisi dengan swap, slippage dan biaya broker terukur; tetap uji expectancy **neto**.
+   **Pengecualian sempit:** distribusi spread dari tick observer forward boleh *diukur dan dilaporkan secara
+   deskriptif* sebagai kondisi broker/diagnostik operasional, dengan sumber dan periode tercatat. Data tersebut
+   **tidak boleh** digunakan untuk memilih strategi, mengkalibrasi ambang/filter/parameter, menentukan peringkat
+   setup, atau memasukkan hasil forward ke validasi pengembangan. Untuk penyetelan model biaya/strategi, gunakan
+   data pengembangan yang diizinkan. Aturan ini tidak membuka holdout untuk riset.
+5. **Scientific Memory (Tahap 4–5; setelah ada strategi yang benar-benar lulus).** Gunakan `HypothesisRegistry`
+   berantai hash yang sudah ada, bukan penyimpanan hipotesis kedua. Tambahkan alasan kegagalan terstruktur;
+   deteksi penurunan kualitas (*drift*) hanya setelah tersedia bukti performa strategi tervalidasi yang memadai.
+   Jangan melakukan pembelajaran ulang dari holdout yang sudah dibuka.
+6. **Champion–Challenger (Tahap 4–5; setelah champion disetujui).** Perkuat alur kandidat, pengujian,
+   walk-forward dan gerbang promosi yang sudah ada, bukan membangun engine baru. Sebelum ada strategi
+   champion yang lulus, tidak ada promosi challenger. Penggantian strategi aktif mensyaratkan validasi terdaftar,
+   holdout independen dan persetujuan eksplisit Owner.
+
+**Prioritas terdekat tetap:** menyelesaikan WP2/WP3/WP8a/WP9a → WP9b dan pengukuran biaya
+→ riset teknis pada data pengembangan → memori/challenger sesudah ada bukti → riset otomatis terakhir.
+Arah ini **tidak** mengubah status R5, membuat WP baru, atau memberi kewenangan trading.
+
 ## Lampiran A — Rencana kerja perbaikan (untuk pelaksana)
 
 Disusun Claude 22 Okt 2026 dari pemeriksaan VPS dan repo, ditambah usulan "Multi-Pair Opportunity Hunter" dari
