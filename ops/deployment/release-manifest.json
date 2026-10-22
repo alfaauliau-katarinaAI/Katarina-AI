@@ -846,9 +846,9 @@
       "sha256": "34e422327cc6785fbb155e151f3997b39c8a0ef85b954f6018d60438785b230c"
     },
     "src/katarina/intelligence/broker/observer_universe.py": {
-      "bytes": 3342,
-      "normalized_sha256": "e864b605b65551aa49ecbe9da5ee34e048b0bc0235e9607438650db88aa365ef",
-      "sha256": "e864b605b65551aa49ecbe9da5ee34e048b0bc0235e9607438650db88aa365ef"
+      "bytes": 3394,
+      "normalized_sha256": "ee247c1d61783eda7374f1eb137ff8e26fbc53233febea17bf814dc67baed9f0",
+      "sha256": "ee247c1d61783eda7374f1eb137ff8e26fbc53233febea17bf814dc67baed9f0"
     },
     "src/katarina/intelligence/cognition/__init__.py": {
       "bytes": 80,
