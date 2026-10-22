@@ -17,7 +17,7 @@ tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + C
 |---|---|
 | `src/katarina/` | Paket utama. `intelligence/` (77 modul dalam 8 subpaket: `cognition/` otak canonical `cognition/unified_brain.py` → `UnifiedKatarinaBrain` beserta kemampuannya, `perception/` fitur/regime/playbook, `broker/` sensor read-only, `news/`, `demo/`, `shadow/` (buku prospektif), `lab/` riset offline, `operations/`), `engines/` (risk, setup quality, eksekusi riset), `monitoring/` (feed status/PnL/entry untuk website), `adapters/` (MT5 read-only, koneksi otomatis, dialog owner; transport KAT1/ZMQ dipensiunkan 22 Okt), `body/` (stage 11–40 "body framework", modul bernama fungsi; nomor→modul di `katarina.body.STAGE_MODULES` dan `docs/maintenance/BODY_STAGE_MAP.md`), `core/` (orchestrator), `memory/`, `persistence/`, `governance/`, `research/` |
 | `katarina_pc.py` + `SETUP_/START_KATARINA.bat` | Entry point uji PC (Python 3.12): `setup, repair, test, doctor, observe, chat, ui, pretrial` |
-| `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical), demo worker, HF archive sync, publisher monitor, tombstone `run_market_brain.py`/`run_decision_brain_v3.py` |
+| `scripts/ai/` | CLI tipis runtime/CI (logika di `src`): `run_contextual_market_observer.py` (observer canonical), `check_stage0_health.py` (kriteria Tahap 0 dari ledger `operations/observation_ledger.py`), demo worker, HF archive sync, publisher monitor, tombstone `run_market_brain.py`/`run_decision_brain_v3.py` |
 | `scripts/research/` | Hanya 4 skrip yang dipakai workflow/operasional: `audit_private_alpha_holdout`, `run_adaptive_walkforward`, `run_autonomous_strategy_discovery`, `probe_current_market_analogs` |
 | `scripts/governance/` | Audit CI: hygiene, dependency links, constitution guard, branch inventory |
 | VPS (Windows Server 2012 R2) | Diakses lewat Desktop Commander. Runtime: `C:\Katarina\code` (checkout `main`), Python 3.12 di `C:\Katarina\python312`, peluncur observer `C:\Katarina\run-observer.ps1`. Tooling VPS lama dihapus 22 Okt |
@@ -42,7 +42,7 @@ python scripts/governance/audit_repo_hygiene.py --repo-root . --output build/rep
 python scripts/governance/audit_dependency_links.py --repo-root . --output build/validation/dependency-links.json
 ```
 
-Hasil 22 Oktober 2026 (setelah perampingan A–E, sinkronisasi DD 35%, gerbang promosi): unit 1.143 OK, static 71 OK (4 skip), integration 204 OK,
+Hasil 22 Oktober 2026 (setelah perampingan A–E, sinkronisasi DD 35%, gerbang promosi, alat Tahap 0): unit 1.163 OK, static 71 OK (4 skip), integration 205 OK,
 hygiene dan dependency links PASS.
 
 ## Aturan penting saat mengubah
@@ -50,7 +50,7 @@ hygiene dan dependency links PASS.
 - Jangan menghapus berkas hanya karena tidak ditemukan rujukan nama: `config/stages/stageNN.json` dimuat per nomor,
   workflow adalah entry point, website disajikan langsung, `scripts/ai/run_market_brain.py` dan
   `run_decision_brain_v3.py` sengaja jadi stub penolak (tombstone) legacy.
-- Berkas yang tercatat di `ops/deployment/release-manifest.json` (291 berkas, dibuat ulang
+- Berkas yang tercatat di `ops/deployment/release-manifest.json` (295 berkas, dibuat ulang
   22 Oktober) diverifikasi saat redeploy. Setelah mengubah kode di `src/katarina`, `scripts/ai`,
   `scripts/deployment`, `scripts/memory` atau `mt5`, buat ulang dengan
   `python scripts/deployment/release_manifest.py --manifest ops/deployment/release-manifest.json --generate`
@@ -77,7 +77,7 @@ CLAUDE.md dan CHANGELOG. Rencana 8 tahap 21 Okt dan perampingan A–E 22 Okt sud
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`
-(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil 22 Okt: A=183, B=40, C=8, D=3. Sebagian besar B adalah modul tahap 11–40 (engines, governance, perception dasar, research) yang hanya diuji tes — itu identitas body Katarina, **jangan dihapus**. D = paket kosong `domain`, `entrypoints`, `ports` (tercantum di kontrak arsitektur beku `config/repository_architecture.json`).
+(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil 22 Okt: A=184, B=40, C=8, D=3. Sebagian besar B adalah modul tahap 11–40 (engines, governance, perception dasar, research) yang hanya diuji tes — itu identitas body Katarina, **jangan dihapus**. D = paket kosong `domain`, `entrypoints`, `ports` (tercantum di kontrak arsitektur beku `config/repository_architecture.json`).
 Nama baru bekas otak berversi: `brain_observer` → `cognition/observer`, `market_decision_brain_v3` →
 `cognition/market_decision`, `adaptive_brain_v2` → `cognition/adaptive_observation`, `multi_market_brain` →
 `perception/screening`. Modul lain di `intelligence/` mempertahankan nama berkasnya di subpaket barunya.

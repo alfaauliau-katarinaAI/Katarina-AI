@@ -108,6 +108,14 @@ Ada dua aliran data yang **wajib dibedakan** dan disimpan terpisah:
 Pekerjaan: login akun demo di MT5 VPS (Algo Trading OFF), konfigurasi koneksi privat, aktifkan observer read-only,
 pengunduh tick broker per periode, dan pemeriksa kesehatan data untuk kedua aliran.
 
+Alat (repo, 22 Okt 2026): `katarina.intelligence.operations.observation_ledger` mencatat setiap siklus observer
+(tabel `observer_cycles`, `observer_quotes`, termasuk WAIT; kegagalan selalu dengan alasan) dan, dengan anggaran satu
+simbol-hari per siklus, mengunduh tick broker hari UTC yang sudah selesai dan memang diamati ke
+`<state>/broker-ticks/SIMBOL/YYYY-MM-DD.csv.gz` (`broker_tick_days`, celah di `data_gaps`, rekonsiliasi dengan
+snapshot dalam satu tick size). `python scripts/ai/check_stage0_health.py --state-dir <state>` menilai kriteria di
+bawah (PASS / NOT_MET / NO_DATA) secara read-only. Statistik siklus memakai jendela konservatif Senin 00:00 – Jumat
+20:00 UTC tanpa rollover 20:45–21:15 UTC. Status tahap tetap **belum lulus** sampai observer berjalan di VPS.
+
 Kriteria kelulusan:
 - Observer berjalan **≥ 10 hari bursa berturut-turut**.
 - **≥ 98%** siklus selesai tanpa error saat pasar buka; setiap kegagalan punya alasan tercatat.

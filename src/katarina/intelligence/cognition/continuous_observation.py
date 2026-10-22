@@ -180,6 +180,7 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
             if stop.exists():
                 break
             status['cycles'] += 1
+            close_ledger_cycle(context.db, result, fault)
             if result is not None:
                 if (result.get('orders_submitted') != 0
                         or result.get('live_execution_authorized') is not False
@@ -273,6 +274,19 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
             surfaces.close()
         finally:
             _close_stores(memory, context, lock)
+
+
+def close_ledger_cycle(db, result, fault):
+    """Stage 0: every loop iteration ends with one ledger cycle and, on failure, its reason."""
+    from katarina.intelligence.operations import observation_ledger as ledger
+    finished = datetime.now(timezone.utc)
+    if result is None:
+        ledger.close_cycle(db, finished_utc=finished, status='FAILED', reason=fault)
+        return
+    state, reason = ledger.cycle_status(result)
+    orders = result.get('orders_submitted')
+    ledger.close_cycle(db, finished_utc=finished, cycle_id=result.get('ledger_cycle_id'),
+                       status=state, reason=reason, orders_submitted=orders if type(orders) is int else 0)
 
 
 def _close_stores(memory, context, lock):
