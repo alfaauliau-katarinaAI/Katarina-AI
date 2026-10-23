@@ -126,6 +126,7 @@ class DemoForwardTests(unittest.TestCase):
 
     def test_horizon_exit_is_owned_and_reconciled(self):
         self.step();self.step();self.now+=4*3600+1
+        self.write_clock()  # A current verified reference is required before any broker quote.
         self.assertEqual(self.step()['status'],'DEMO_POSITION_MONITORING')
         self.assertEqual(self.native.sent[-1]['position'],456)
         self.assertEqual(self.step(execute=False)['closed_outcomes'],1)
