@@ -47,13 +47,13 @@ class SyntheticBroker:
     def symbols_get(self):
         return [SimpleNamespace(name=s, trade_mode=4) for s in ('EURUSD', 'GBPUSD', 'XAUUSD')]
     def symbol_info_tick(self, symbol):
-        return SimpleNamespace(time=self.now, bid=2000., ask=2000.1)
+        return SimpleNamespace(time=self.now+10800, bid=2000., ask=2000.1)
     def symbol_info(self, symbol):return SimpleNamespace(trade_mode=4)
     def symbol_select(self, symbol, value):return True
     def copy_ticks_range(self, symbol, start, end, flags):
-        return [{'time_msc':self.now * 1000, 'bid':2000., 'ask':2000.1}]
+        return [{'time_msc':(self.now+10800) * 1000, 'bid':2000., 'ask':2000.1}]
     def copy_rates_from_pos(self, symbol, frame, offset, count):
-        last = (self.now // (frame * 60)) * frame * 60
+        last = ((self.now+10800) // (frame * 60)) * frame * 60
         return [dict(time=last-(130-i)*frame*60, open=1990+i*.05,
                      high=1991+i*.05, low=1989+i*.05, close=1990.2+i*.05,
                      tick_volume=100) for i in range(130)]
