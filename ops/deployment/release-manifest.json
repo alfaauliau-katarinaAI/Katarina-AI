@@ -901,9 +901,9 @@
       "sha256": "78d277a63cefa7b44f19d9cc1b0c2adcad7e7355da2525db45daf2446dd369aa"
     },
     "src/katarina/intelligence/cognition/observer.py": {
-      "bytes": 33596,
-      "normalized_sha256": "0d3d930c1d90a96f1cf1a5fa6187a2c5a50e61c94136387d0b38579ef9fbacf0",
-      "sha256": "0d3d930c1d90a96f1cf1a5fa6187a2c5a50e61c94136387d0b38579ef9fbacf0"
+      "bytes": 33658,
+      "normalized_sha256": "667593120863316e45f5da1886c3dde8d3d6ee2b8a9f1c5d8a390009d7ee64d5",
+      "sha256": "667593120863316e45f5da1886c3dde8d3d6ee2b8a9f1c5d8a390009d7ee64d5"
     },
     "src/katarina/intelligence/cognition/owner_research_review.py": {
       "bytes": 8306,
