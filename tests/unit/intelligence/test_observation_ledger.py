@@ -150,6 +150,36 @@ class ObservationLedgerTest(unittest.TestCase):
         self.assertEqual(self.db.execute("SELECT reason FROM data_gaps").fetchone()[0],
                          "NO_BROKER_TICKS_FOR_OBSERVED_DAY")
 
+    def test_server_plus_three_is_stored_as_utc_and_reconciled(self):
+        when = datetime(2026, 10, 20, 10, 0, 5, tzinfo=UTC)
+        epoch = (int(when.timestamp()) // 10) * 10
+        bid = FakeTicks.price((epoch + 10800) * 1000)
+        snapshot(self.db, when, {"EURUSD": (bid, round(bid + .00012, 5),
+                                            float(epoch))}, shift=3)
+        result = ledger.collect_tick_days(self.db, FakeTicks(), self.root,
+            datetime(2026, 10, 21, 3, 0, tzinfo=UTC), server_shift_hours=3)
+        self.assertEqual(result["collected"][0]["status"], "STORED")
+        row = self.db.execute("SELECT file,first_epoch,snapshots_matched,server_shift_hours "
+                              "FROM broker_tick_days").fetchone()
+        self.assertEqual(row[1], datetime(2026, 10, 20, tzinfo=UTC).timestamp())
+        self.assertEqual(row[2:], (1, 3))
+        self.assertEqual(ledger.read_ticks(self.root / row[0])[0][0],
+                         int(row[1] * 1000))
+
+    def test_mixed_verified_shifts_do_not_create_guess_archive(self):
+        start = datetime(2026, 10, 20, 10, 0, tzinfo=UTC)
+        for minutes, shift in ((0, 3), (1, 2)):
+            moment = start + timedelta(minutes=minutes)
+            snapshot(self.db, moment, {"EURUSD": (1.1, 1.10012,
+                                                  moment.timestamp())}, shift=shift)
+        mt5 = FakeTicks()
+        out = ledger.collect_tick_days(self.db, mt5, self.root,
+            datetime(2026, 10, 21, 3, 0, tzinfo=UTC), server_shift_hours=3)
+        self.assertEqual(out["collected"][0]["status"], "GAP")
+        self.assertEqual(mt5.calls, 0)
+        self.assertEqual(self.db.execute("SELECT reason FROM broker_tick_days").fetchone()[0],
+                         "BROKER_SHIFT_CHANGED_DURING_DAY")
+
     def test_tick_archive_is_byte_identical_for_identical_ticks(self):
         first = self.root / "a.csv.gz"
         second = self.root / "b.csv.gz"
