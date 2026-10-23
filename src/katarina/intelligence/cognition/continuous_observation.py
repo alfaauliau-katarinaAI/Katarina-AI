@@ -33,7 +33,8 @@ RECOVERABLE_SENSOR = frozenset(('BROKER_CATALOG_NOT_FOUND',
 
 def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                    max_cycles=None, factories=None, brain_type=UnifiedKatarinaBrain,
-                   wait=time.sleep, surface_factory=None, fetch_news=False, universe=None):
+                   wait=time.sleep, surface_factory=None, fetch_news=False, universe=None,
+                   decision_inputs=None):
     if type(fetch_news) is not bool:
         raise ValueError('invalid_news_fetch_mode')
     if universe is not None:
@@ -165,7 +166,8 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                         attach_demo(broker)
                         result = brain.observe_connected_market(root, broker,
                             max_symbols=max_symbols, fetch_news=fetch_news,
-                            **({'universe': universe} if universe is not None else {}))
+                            **({'universe': universe} if universe is not None else {}),
+                            **({'decision_inputs': decision_inputs} if decision_inputs is not None else {}))
                         break
                     except ConnectionUnavailable as exc:
                         fault = diagnostic_code(exc, route)

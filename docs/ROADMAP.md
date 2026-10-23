@@ -922,7 +922,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP8a | Sedang dikerjakan — ChatGPT, PR #195 (perbaikan diminta) | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | Dua butir wajib di komentar PR: (1) `import io` hilang, 7 tes error di HEAD; (2) jam bar server belum diverifikasi → butir "Jam bar" di WP8 langkah 1. Kirim "Perintah perbaikan setelah review" |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
 | WP9a | Selesai (merge); laporan VPS oleh Claude (fase 3c) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | Diterima. Semua kode alasan di `contextual_decision_intelligence.py` terpetakan; kode baru → `UNKNOWN`. SQLite `mode=ro` + `query_only`. Manifest dibuat ulang dengan generator |
-| WP9b | Siap dikerjakan (prioritas) | – | – |
+| WP9b | Sedang dikerjakan — ChatGPT, PR #205 | [#205](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/205) | Masukan `legacy_fail_closed` vs `measured_inputs` dan decision shadow; default lama, belum mengaktifkan VPS |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Siap dikerjakan (paralel) | – | – |
