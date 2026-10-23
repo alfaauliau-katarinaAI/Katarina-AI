@@ -835,13 +835,14 @@ untuk simbol mana pun. Perbaikan hanya di inferensi jam; keputusan, ledger, back
    −12…14 jam. `confidence_fraction` = suara jam terpilih / semua suara.
 2. `ClockFinding` mendapat field terakhir `stale_symbols: tuple[str, ...] = ()` (urut abjad): simbol yang
    dipertimbangkan tetapi tidak memberi suara. Pemanggil lain tidak diubah.
-3. Observer tidak diubah. Simbol yang sedang tutup tetap diamati: quote-nya tercatat di ledger dengan
-   `quote_age_seconds` besar dan logika keputusan yang ada memberinya `stale_quote`.
+3. Observer tidak diubah. Simbol yang sedang tutup tetap diamati: bila riwayat tick kausalnya masih ada, quote
+   tercatat `OK`; bila tidak ada tick sama sekali, quote tercatat `FAILED` dengan alasan dan kartunya `WAIT` (jujur,
+   tanpa tick buatan). Siklus tetap OK selama ≥ 3 simbol segar.
 4. Tes (`tests/unit/intelligence/test_broker_clock_alignment.py`; tes lama tidak diubah dan tetap lulus):
    3 segar + 2 basi 1 jam → valid, shift benar, `stale_symbols` berisi 2; 3 segar + 4 basi → valid; 2 segar + 3 basi
    → tidak valid; 3 segar vs 2 segar dengan jam berbeda → tidak valid (0,6); 3 benar + 1 jam salah → valid dengan jam
    mayoritas. Tambah satu tes observer dengan MT5 palsu (pola `tests/integration/test_brain_owned_workflow.py`): 3 FX segar + 2 simbol basi → siklus OK,
-   5 baris quote, simbol basi tidak `FAILED`.
+   5 baris quote; tanpa riwayat tick, 3 `OK` + 2 `FAILED` beralasan.
 5. Menerapkan di VPS bukan bagian PR: Claude melanjutkan WP6 (5 simbol, dipantau melewati 21:00–22:00 UTC, lalu 7).
 
 #### WP7 — Keputusan Owner (bukan kode)
@@ -879,7 +880,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Menunggu prasyarat (WP2) | – | – |
 | WP10b | Menunggu prasyarat (WP8a) | – | – |
-| WP11 | Siap dikerjakan (prioritas; paralel) | – | – |
+| WP11 | Selesai (merge); penerapan VPS di WP6 | [#201](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/201) | Diterima. `FAILED` beralasan untuk pasar yang benar-benar tutup adalah perilaku benar; kriteria R4 butir 3–4 dikoreksi. Manifest dibuat ulang dengan generator (tidak diedit tangan). Dampak ke `quote_every_cycle` (≥ 98%) diukur di WP6 |
 | WP7 | Menunggu Owner | – | – |
 
 ### R6. Perintah siap pakai untuk pelaksana
