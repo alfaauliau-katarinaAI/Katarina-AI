@@ -927,7 +927,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Siap dikerjakan (paralel) | – | – |
 | WP10b | Menunggu prasyarat (WP8a) | – | – |
-| WP12 | Sedang dikerjakan — ChatGPT, PR #204 (draft) | [#204](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/204) | Konversi tick jam server→UTC, karantina arsip lama dan DST; menunggu review Claude serta CI/manifest. |
+| WP12 | Koreksi inti diuji; **ditunda atas instruksi Owner**, review Claude belum selesai | [#204](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/204) | Bukti VPS: tick server ≈ UTC+3j (5 simbol; `copy_ticks_range` 3 FX); tes WP12 3/3 PASS; manifest resmi MATCH 302/302 pada clone terisolasi. **Evaluasi berikutnya (Claude):** audit `perception/screening.py` dan `scripts/ai/run_readonly_decisions.py` (timestamp mentah, tentukan pemanggil aktif dan perbaiki/karantina); uji offset historis/DST, harga tick dan batas kausal; regresi penuh Linux/Windows (suite lokal VPS 2 GB dihentikan, bukan PASS), review PR sebelum merge/deploy. Observer VPS tidak diubah, LIVE OFF. Bukti rinci di komentar PR #204. |
 | WP11 | Selesai (merge); penerapan VPS di WP6 | [#201](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/201) | Diterima. `FAILED` beralasan untuk pasar yang benar-benar tutup adalah perilaku benar; kriteria R4 butir 3–4 dikoreksi. Manifest dibuat ulang dengan generator (tidak diedit tangan). Dampak ke `quote_every_cycle` (≥ 98%) diukur di WP6 |
 | WP7 | Menunggu Owner | – | – |
 
