@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP9b: input keputusan terukur dan shadow (#205)
+
+- Mode baru opsional `measured_inputs`; default `legacy_fail_closed` mempertahankan blokir lama.
+- Bandingkan keputusan aktif dan bayangan melalui evaluasi kontekstual yang sama; alasan shadow tersimpan di SQLite.
+- Syarat quote, bar, izin simbol, jam broker dan siklus ledger sebelumnya wajib terpenuhi;
+  kalender bersih tanpa artikel tidak otomatis diartikan sebagai berita berdampak tinggi.
+- Tes konfigurasi, risiko kalender dan broker sintetis. Berkas terkunci tidak berubah;
+  LIVE tetap OFF, tanpa order baru, tanpa perubahan VPS.
+
 ## 2026-10-23 — status setelah merge; temuan T11 dan paket WP12
 
 - WP2, WP3, WP9a, WP11 di-merge dan diterapkan ke VPS (`d8b003a`, manifest MATCH); 5 simbol sejak 00:16 UTC.
