@@ -20,6 +20,7 @@ import csv
 import gzip
 import hashlib
 import io
+import json
 import math
 import os
 from bisect import bisect_right
@@ -62,6 +63,15 @@ def setup(db) -> None:
         reason TEXT,
         UNIQUE(cycle_id, symbol));
     CREATE INDEX IF NOT EXISTS observer_quotes_symbol_day ON observer_quotes(symbol, observed_utc);
+    CREATE TABLE IF NOT EXISTS observer_news(
+        cycle_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        feed_items INTEGER NOT NULL,
+        newest_age_hours REAL,
+        in_window INTEGER NOT NULL,
+        verified INTEGER NOT NULL,
+        failures_json TEXT NOT NULL,
+        PRIMARY KEY(cycle_id, source));
     CREATE TABLE IF NOT EXISTS broker_tick_days(
         symbol TEXT NOT NULL,
         day TEXT NOT NULL,
@@ -150,6 +160,40 @@ def record_snapshot(db, *, observed_utc: datetime, clock_shift_hours, cards: dic
             "INSERT INTO observer_quotes(cycle_id, symbol, observed_utc, tick_epoch, bid, ask, spread, "
             "quote_age_seconds, status, reason) VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
     return cycle_id
+
+
+def record_news(db, cycle_id: str, summary: dict) -> int:
+    """WP3: store per-source cycle diagnostics, never change a trading action."""
+    setup(db)
+    if not isinstance(cycle_id, str) or not cycle_id or not isinstance(summary, dict):
+        raise ValueError("INVALID_NEWS_DIAGNOSTICS")
+    rows=[]
+    for source in sorted(summary):
+        data=summary[source]
+        if not isinstance(source,str) or not source or not isinstance(data,dict):
+            raise ValueError("INVALID_NEWS_DIAGNOSTICS")
+        items=data.get("feed_items")
+        window=data.get("in_window")
+        verified=data.get("verified")
+        age=data.get("newest_age_hours")
+        failures=data.get("failures")
+        if (any(type(x) is not int or x<0 for x in (items,window,verified))
+                or not isinstance(failures,dict)
+                or any(type(k) is not str or type(v) is not int or v<0
+                       for k,v in failures.items())
+                or (age is not None and _finite(age) is None)):
+            raise ValueError("INVALID_NEWS_DIAGNOSTICS")
+        rows.append((cycle_id,source,items,age,window,verified,
+                     json.dumps(failures,sort_keys=True)))
+    with db:
+        db.executemany(
+            "INSERT INTO observer_news(cycle_id,source,feed_items,newest_age_hours,"
+            "in_window,verified,failures_json) VALUES(?,?,?,?,?,?,?) "
+            "ON CONFLICT(cycle_id,source) DO UPDATE SET "
+            "feed_items=excluded.feed_items,newest_age_hours=excluded.newest_age_hours,"
+            "in_window=excluded.in_window,verified=excluded.verified,"
+            "failures_json=excluded.failures_json",rows)
+    return len(rows)
 
 
 def close_cycle(db, *, finished_utc: datetime, cycle_id=None, status: str, reason=None,
@@ -246,35 +290,86 @@ def fx_session_open(moment: datetime) -> bool:
     return not (20 * 60 + 45 <= minutes < 21 * 60 + 15)
 
 
-def _fetch_day(mt5, symbol: str, day_start: datetime):
-    """Return (ticks, gaps). Ticks are (time_msc, bid, ask, flags) tuples, sorted and de-duplicated."""
-    ticks, gaps = {}, []
+def _download_day(mt5, symbol: str, day_start: datetime, path: Path):
+    """Stream one completed broker UTC day; never materialize a whole tick-day.
+
+    Return (count, first_ms, last_ms, CSV_sha256, gaps, hour_index).
+    Each index entry stores the *uncompressed* CSV data row boundaries.
+    """
+    day_start = _utc(day_start)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_suffix(".tmp")
+    gaps, hour_index = [], {}
+    count = 0
+    first_ms = last_ms = None
+    digest = hashlib.sha256()
     flag = getattr(mt5, "COPY_TICKS_ALL", getattr(mt5, "COPY_TICKS_INFO", 0))
-    for hour in range(24):
-        start = day_start + timedelta(hours=hour)
-        end = start + timedelta(hours=1)
-        rows = mt5.copy_ticks_range(symbol, start, end, flag)
-        if rows is None:
-            gaps.append((start, end, "BROKER_HISTORY_UNAVAILABLE"))
-            continue
-        if len(rows) > MAX_TICKS_PER_HOUR:
-            gaps.append((start, end, "TICK_HOUR_OVER_LIMIT"))
-            continue
-        lower, upper = int(start.timestamp() * 1000), int(end.timestamp() * 1000)
-        kept = 0
-        for row in rows:
-            try:
-                msc = int(row["time_msc"])
-                bid, ask = float(row["bid"]), float(row["ask"])
-                flags = int(row["flags"]) if "flags" in _names(row) else 0
-            except (KeyError, TypeError, ValueError, IndexError):
-                continue
-            if lower <= msc < upper and math.isfinite(bid) and math.isfinite(ask):
-                ticks[(msc, bid, ask)] = (msc, bid, ask, flags)
-                kept += 1
-        if kept == 0 and fx_session_open(start) and fx_session_open(end - timedelta(minutes=1)):
-            gaps.append((start, end, "BROKER_SERVER_EMPTY"))
-    return [ticks[key] for key in sorted(ticks)], gaps
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, lineterminator="\n")
+
+    def flush(archive):
+        raw = buffer.getvalue().encode("ascii")
+        if raw:
+            archive.write(raw)
+            digest.update(raw)
+            buffer.seek(0)
+            buffer.truncate(0)
+
+    try:
+        with temp.open("wb") as handle:
+            with gzip.GzipFile(filename="", fileobj=handle, mode="wb", mtime=0) as archive:
+                writer.writerow(("time_msc", "bid", "ask", "flags"))
+                for hour in range(24):
+                    start = day_start + timedelta(hours=hour)
+                    end = start + timedelta(hours=1)
+                    rows = mt5.copy_ticks_range(symbol, start, end, flag)
+                    if rows is None:
+                        gaps.append((start, end, "BROKER_HISTORY_UNAVAILABLE"))
+                        continue
+                    if len(rows) > MAX_TICKS_PER_HOUR:
+                        gaps.append((start, end, "TICK_HOUR_OVER_LIMIT"))
+                        continue
+                    lower, upper = int(start.timestamp() * 1000), int(end.timestamp() * 1000)
+                    ticks = {}
+                    kept = 0
+                    for row in rows:
+                        try:
+                            msc = int(row["time_msc"])
+                            bid, ask = float(row["bid"]), float(row["ask"])
+                            flags = int(row["flags"]) if "flags" in _names(row) else 0
+                        except (KeyError, TypeError, ValueError, IndexError):
+                            continue
+                        if lower <= msc < upper and math.isfinite(bid) and math.isfinite(ask):
+                            ticks[(msc, bid, ask)] = (msc, bid, ask, flags)
+                            kept += 1
+                    if kept == 0 and fx_session_open(start) and fx_session_open(end - timedelta(minutes=1)):
+                        gaps.append((start, end, "BROKER_SERVER_EMPTY"))
+                    if not ticks:
+                        continue
+                    sorted_keys = sorted(ticks)
+                    hour_index[hour] = {"start_row": count,
+                                        "end_row": count + len(sorted_keys),
+                                        "first_ms": sorted_keys[0][0],
+                                        "last_ms": sorted_keys[-1][0]}
+                    if first_ms is None:
+                        first_ms = sorted_keys[0][0]
+                    last_ms = sorted_keys[-1][0]
+                    for key in sorted_keys:
+                        msc, bid, ask, flags = ticks[key]
+                        writer.writerow((msc, repr(bid), repr(ask), flags))
+                        if buffer.tell() >= 65536:
+                            flush(archive)
+                    count += len(sorted_keys)
+                    del ticks
+                flush(archive)
+        if count:
+            os.replace(temp, path)
+            return count, first_ms, last_ms, digest.hexdigest(), gaps, hour_index
+        return 0, None, None, None, gaps, hour_index
+    finally:
+        # Interrupted downloads never leave a partially valid-looking archive.
+        temp.unlink(missing_ok=True)
 
 
 def _names(row):
@@ -331,6 +426,64 @@ def reconcile(db, symbol: str, day: str, ticks, tick_size) -> tuple[int, int]:
     return checked, matched
 
 
+def _match_hour_ticks(ticks, snapshots, tick_size) -> int:
+    """Match each snapshot against the latest eligible ms, including duplicates."""
+    tolerance = (float(tick_size) if _finite(tick_size) and float(tick_size) > 0 else 0.0) * 1.000001
+    times = [r[0] for r in ticks]
+    matched = 0
+    for msc, bid, ask in snapshots:
+        index = bisect_right(times, msc) - 1
+        while index >= 0:
+            _, tick_bid, tick_ask, _ = ticks[index]
+            if abs(tick_bid - bid) <= tolerance and abs(tick_ask - ask) <= tolerance:
+                matched += 1
+                break
+            if index == 0 or times[index - 1] != times[index] or times[index] != msc:
+                break
+            index -= 1
+    return matched
+
+
+def _reconcile_archive(db, symbol: str, day: str, path: Path, hour_index, tick_size):
+    """Reconcile snapshots while decoding only relevant hours into memory."""
+    snapshots = db.execute(
+        "SELECT tick_epoch, bid, ask FROM observer_quotes WHERE symbol=? AND status='OK' "
+        "AND substr(observed_utc,1,10)=?", (symbol, day)).fetchall()
+    grouped = {}
+    available = sorted(hour_index)
+    for epoch, bid, ask in snapshots:
+        msc = int(round(epoch * 1000))
+        eligible = [hour for hour in available if hour_index[hour]["first_ms"] <= msc]
+        if eligible:
+            grouped.setdefault(eligible[-1], []).append((msc, bid, ask))
+    if not grouped:
+        return len(snapshots), 0
+
+    # gzip has no random-access seek guarantee: scan rows once, but only parse
+    # hours containing snapshots, never build an all-day list of ticks.
+    ordered = sorted(grouped)
+    pending = iter(ordered)
+    current = next(pending, None)
+    hour_ticks = []
+    matched = 0
+    with gzip.open(path, "rt", encoding="ascii", newline="") as stream:
+        reader = csv.reader(stream)
+        next(reader)
+        for row_no, row in enumerate(reader):
+            if current is None:
+                break
+            while current is not None and row_no >= hour_index[current]["end_row"]:
+                matched += _match_hour_ticks(hour_ticks, grouped[current], tick_size)
+                hour_ticks = []
+                current = next(pending, None)
+            if current is not None and row_no >= hour_index[current]["start_row"]:
+                msc, bid, ask, flags = row
+                hour_ticks.append((int(msc), float(bid), float(ask), int(flags)))
+    if current is not None:
+        matched += _match_hour_ticks(hour_ticks, grouped[current], tick_size)
+    return len(snapshots), matched
+
+
 def collect_tick_days(db, mt5, root, now: datetime, *, budget: int = 1) -> dict:
     """Download at most ``budget`` completed, observed symbol-days of broker ticks."""
     setup(db)
@@ -345,8 +498,10 @@ def collect_tick_days(db, mt5, root, now: datetime, *, budget: int = 1) -> dict:
         attempts = (previous[0] if previous else 0) + 1
         info = mt5.symbol_info(symbol)
         tick_size = _finite(getattr(info, "trade_tick_size", None)) or _finite(getattr(info, "point", None))
-        ticks, gaps = _fetch_day(mt5, symbol, day_start)
-        whole_day_missing = not ticks and any(reason == "BROKER_HISTORY_UNAVAILABLE" for *_, reason in gaps)
+        path = tick_path(root, symbol, day)
+        count, first_ms, last_ms, digest, gaps, hour_index = _download_day(
+            mt5, symbol, day_start, path)
+        whole_day_missing = not count and any(reason == "BROKER_HISTORY_UNAVAILABLE" for *_, reason in gaps)
         with db:
             if whole_day_missing and attempts < TICK_MAX_ATTEMPTS:
                 db.execute("INSERT INTO broker_tick_days(symbol, day, status, attempts, next_epoch, reason) "
@@ -356,19 +511,17 @@ def collect_tick_days(db, mt5, root, now: datetime, *, budget: int = 1) -> dict:
                             "BROKER_HISTORY_UNAVAILABLE"))
                 done.append({"symbol": symbol, "day": day, "status": "RETRY", "attempts": attempts})
                 continue
-            if not ticks:
+            if not count:
                 _record_gap(db, "broker_ticks", symbol, day_start, day_start + timedelta(days=1),
                             "NO_BROKER_TICKS_FOR_OBSERVED_DAY", now)
                 status, digest, file_name = "GAP", None, None
                 checked = matched = 0
             else:
-                path = tick_path(root, symbol, day)
-                digest = _write_ticks(path, ticks)
                 file_name = path.relative_to(Path(root)).as_posix()
                 for start, end, reason in gaps:
                     _record_gap(db, "broker_ticks", symbol, start, end, reason, now)
                 status = "STORED_WITH_GAPS" if gaps else "STORED"
-                checked, matched = reconcile(db, symbol, day, ticks, tick_size)
+                checked, matched = _reconcile_archive(db, symbol, day, path, hour_index, tick_size)
             db.execute(
                 "INSERT INTO broker_tick_days(symbol, day, status, attempts, next_epoch, ticks, first_epoch, "
                 "last_epoch, sha256, file, collected_utc, reason, snapshots_checked, snapshots_matched, tick_size) "
@@ -378,11 +531,11 @@ def collect_tick_days(db, mt5, root, now: datetime, *, budget: int = 1) -> dict:
                 "file=excluded.file, collected_utc=excluded.collected_utc, reason=excluded.reason, "
                 "snapshots_checked=excluded.snapshots_checked, snapshots_matched=excluded.snapshots_matched, "
                 "tick_size=excluded.tick_size",
-                (symbol, day, status, attempts, len(ticks),
-                 ticks[0][0] / 1000 if ticks else None, ticks[-1][0] / 1000 if ticks else None,
+                (symbol, day, status, attempts, count,
+                 first_ms / 1000 if count else None, last_ms / 1000 if count else None,
                  digest, file_name, now.isoformat(), None if status == "STORED" else "GAPS_RECORDED",
                  checked, matched, tick_size))
-        done.append({"symbol": symbol, "day": day, "status": status, "ticks": len(ticks),
+        done.append({"symbol": symbol, "day": day, "status": status, "ticks": count,
                      "gaps": len(gaps), "snapshots_checked": checked, "snapshots_matched": matched})
     return {"schema_version": SCHEMA_VERSION, "collected": done,
             "pending_days": len(_due_days(db, now)), "orders_submitted": 0}
