@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — status setelah merge; temuan T11 dan paket WP12
+
+- WP2, WP3, WP9a, WP11 di-merge dan diterapkan ke VPS (`d8b003a`, manifest MATCH); 5 simbol sejak 00:16 UTC.
+- Temuan T11: jam tick MT5 = jam server (+3 jam); quote observer berumur ±3 jam. Paket WP12 (prioritas tertinggi);
+  data forward sebelum WP12 hanya bukti operasional; 10 hari Tahap 0 dihitung sejak WP12 diterapkan.
+- WP8a diminta perbaikan (`import io`, verifikasi jam bar); temuan VPS lama diberi nomor T9, temuan jam parsial T10.
+
 ## 2026-10-23 — WP9a: peta pemblokir keputusan baca-saja (#196)
 
 - Tambah `research/blocker_ladder.py` + CLI laporan SQLite mode=ro dari `contextual_decisions`.
