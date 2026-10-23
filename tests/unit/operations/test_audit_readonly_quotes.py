@@ -92,19 +92,22 @@ class ReadOnlyQuotesTests(unittest.TestCase):
 
     def test_causal_utc_reader_ignores_broker_local_raw_tick_and_no_fallback(self):
         fake = FakeMt5()
-        def historical_reader(_mt5, _symbol, _as_of, *, lookback_seconds):
+        def historical_reader(_mt5, _symbol, _as_of, *, lookback_seconds,server_shift_hours):
+            self.assertEqual(server_shift_hours,0)
             self.assertEqual(lookback_seconds, 180)
             return (2700., 2700.1, (NOW - 1000) / 1000)
         out = observe(fake, symbols=('XAUUSD.vx',), now_ms=NOW,
-                      max_age_ms=180000, historical_quote_reader=historical_reader)
+                      max_age_ms=180000, historical_quote_reader=historical_reader,
+                      server_shift_hours=0)
         self.assertEqual(out['result'], 'PASS_SINGLE_READ_ONLY_OBSERVATION')
-        self.assertEqual(out['quotes'][0]['quote_source'], 'MT5_HISTORICAL_UTC_BID_ASK_READONLY')
+        self.assertEqual(out['quotes'][0]['quote_source'], 'MT5_HISTORICAL_SERVER_CONVERTED_UTC_BID_ASK_READONLY')
         self.assertNotIn('symbol_info_tick', fake.called)
 
         missing = FakeMt5()
         blocked = observe(missing, symbols=('XAUUSD.vx',), now_ms=NOW,
                           max_age_ms=180000,
-                          historical_quote_reader=lambda *_a, **_kw: None)
+                          historical_quote_reader=lambda *_a, **_kw: None,
+                          server_shift_hours=0)
         self.assertEqual(blocked['result'], 'WAIT_INSUFFICIENT_BROKER_EVIDENCE')
         self.assertEqual(blocked['quotes'][0]['reason'], 'quote_unavailable')
         self.assertNotIn('symbol_info_tick', missing.called)
