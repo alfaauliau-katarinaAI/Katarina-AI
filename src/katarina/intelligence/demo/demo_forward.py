@@ -140,15 +140,17 @@ class DemoForwardRuntime:
         stamp=datetime.fromisoformat(reference['observed_at_utc'])
         shift=reference.get('broker_server_shift_minutes')
         if (stamp.tzinfo is None or not 0<=self.clock()-stamp.timestamp()<=180
-                or reference.get('canonical_market_clock')!='MT5_COPY_TICKS_RANGE_TIME_MSC_UTC'
+                or reference.get('canonical_market_clock')!='MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC'
                 or type(shift) is not int or not -720<=shift<=840
                 or reference.get('confirming_symbols',0)<3):
             raise ValueError('DEMO_CURRENT_CLOCK_REFERENCE_UNVERIFIED')
-        return shift*60
+        if shift % 60:raise ValueError('DEMO_CLOCK_SHIFT_NOT_INTEGER_HOUR')
+        return shift//60
 
     def _quote(self, symbol):
         from katarina.intelligence.broker.causal_broker_quotes import last_past_quote
-        quote=last_past_quote(self.native,symbol,datetime.fromtimestamp(self.clock(),timezone.utc),lookback_seconds=5)
+        quote=last_past_quote(self.native,symbol,datetime.fromtimestamp(self.clock(),timezone.utc),
+                              server_shift_hours=self._clock_shift(),lookback_seconds=5)
         if quote is None or not 0<=self.clock()-quote[2]<=2:
             raise ValueError('DEMO_QUOTE_MISSING_OR_STALE')
         return quote
