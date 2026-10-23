@@ -411,7 +411,7 @@ class BrainObserver:
                 # statistically good paper history cannot start execution.
                 risk=RiskSituation(
                     system_healthy=inputs.system_healthy(
-                        quote_fresh=quote_fresh, recent=recent,
+                        quote_fresh=bool(quote_fresh and 0 <= quote_age <= 90), recent=recent,
                         trade_mode=info.trade_mode,
                         clock_verified=clock.suitable_for_readonly_snapshot,
                         previous_ledger_cycle=previous_ledger_cycle),
@@ -435,7 +435,7 @@ class BrainObserver:
                         news_context=shadow_inputs.news_context(news,calendar),
                         macro_evidence=macro,resolved_experience=[],
                         risk_situation=replace(risk,system_healthy=shadow_inputs.system_healthy(
-                            quote_fresh=quote_fresh,recent=recent,
+                            quote_fresh=bool(quote_fresh and 0 <= quote_age <= 90),recent=recent,
                             trade_mode=info.trade_mode,
                             clock_verified=clock.suitable_for_readonly_snapshot,
                             previous_ledger_cycle=previous_ledger_cycle)))
