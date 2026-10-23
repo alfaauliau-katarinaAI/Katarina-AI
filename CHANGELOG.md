@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP12: jam tick MT5 server ke UTC (#204)
+
+- Konversi timestamp dan jendela tick menggunakan offset jam broker yang terverifikasi, tanpa menebak saat bukti hilang.
+- Arsip hari ber-offset campuran ditandai GAP; konteks riset menolak hari lama tanpa basis waktu; LIVE OFF.
+
 ## 2026-10-23 — status setelah merge; temuan T11 dan paket WP12
 
 - WP2, WP3, WP9a, WP11 di-merge dan diterapkan ke VPS (`d8b003a`, manifest MATCH); 5 simbol sejak 00:16 UTC.
