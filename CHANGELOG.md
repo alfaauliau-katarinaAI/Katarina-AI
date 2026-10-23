@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP9a: peta pemblokir keputusan baca-saja (#196)
+
+- Tambah `research/blocker_ladder.py` + CLI laporan SQLite mode=ro dari `contextual_decisions`.
+- Kelompokkan alasan A/B/C/M/UNKNOWN, hitung frekuensi, 10 kombinasi terbanyak dan tangga kumulatif
+  per simbol/total; M/UNKNOWN tidak dianggap pulih. Tes sintetis membuktikan determinisme.
+- Diagnostic-only: keputusan, Risk Governor, live/DEMO dan VPS tidak diubah.
+
 ## 2026-10-23 — WP3: diagnosis jalur berita observer (#191)
 
 - Catat item feed usang/tanggal invalid, umur item terbaru, serta kegagalan artikel tanpa mengubah pemilihan atau blackout.

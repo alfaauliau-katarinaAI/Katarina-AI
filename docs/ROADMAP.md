@@ -56,7 +56,7 @@ Lampiran A — [Rencana kerja perbaikan](#lampiran-a--rencana-kerja-perbaikan-un
 |---|---|---|
 | 0 — Observer & data | Ledger siklus, tick broker harian, uji putus-sambung, `check_stage0_health.py`, simbol inti `--universe` (WP1) | Belum lulus (pengumpulan data berjalan) |
 | 1 — Validasi ilmiah | `research/validation.py`, `validate_strategy.py`, [protokol](research/VALIDATION_PROTOCOL.md) | Belum lulus |
-| 2 — Market intelligence | `research/market_intelligence.py` (`market-filter`), `research/context_export.py` | Belum lulus |
+| 2 — Market intelligence | `research/market_intelligence.py` (`market-filter`), `research/context_export.py`, `research/blocker_ladder.py` (WP9a, diagnosis WAIT) | Belum lulus |
 | 3 — Risk & execution | `research/demo_readiness.py` (`DemoRiskOverlay`), `check_demo_readiness.py` | Belum lulus |
 | 4 — Adaptive strategy | Modul riset/adaptasi lama di `intelligence/`: `perception/adaptive_regime.py`, `lab/adaptive_strategy_library.py`, `lab/adaptive_walkforward.py`, `lab/autonomous_strategy_discovery.py` | Pembuktian resmi **belum dimulai** (butuh Tahap 0–3 dan kandidat terdaftar) |
 | 5 — Confidence & riset mandiri | Modul riset lama di `intelligence/`: `lab/autonomous_research.py`, `lab/continuous_research_lab.py`, `lab/research_reports.py` | Pembuktian resmi **belum dimulai** (butuh ≥ 300 hasil out-of-sample) |
@@ -875,7 +875,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP6 | Menunggu prasyarat (WP11) | – | Tahap A 22 Okt 19:58–22:02 UTC: RAM bebas 853 MB, siklus 1–4 dtk, 0 quote FAILED, tetapi semua siklus gagal saat jeda emas/indeks (T9). Dijeda: berkas VPS diganti nama `observer_universe.json.wp6-paused`; dilanjutkan Claude setelah WP11 |
 | WP8a | Sedang dikerjakan — ChatGPT, PR #195 (draft) | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | – |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
-| WP9a | Sedang dikerjakan — ChatGPT, PR #196 (draft) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | – |
+| WP9a | Selesai (merge); laporan VPS oleh Claude (fase 3c) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | Diterima. Semua kode alasan di `contextual_decision_intelligence.py` terpetakan; kode baru → `UNKNOWN`. SQLite `mode=ro` + `query_only`. Manifest dibuat ulang dengan generator |
 | WP9b | Menunggu prasyarat (WP3) | – | – |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
