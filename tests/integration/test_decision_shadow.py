@@ -14,7 +14,7 @@ class DecisionShadowAcceptanceTests(unittest.TestCase):
     @staticmethod
     def _observe(root, broker, config=None):
         return UnifiedKatarinaBrain.observe_once(
-            root, broker=broker, max_symbols=1, fetch_news=False,
+            root, broker=broker, max_symbols=3, fetch_news=False,
             **({"decision_inputs": str(config)} if config is not None else {}),
         )
 
@@ -38,9 +38,9 @@ class DecisionShadowAcceptanceTests(unittest.TestCase):
                     "FROM decision_shadow WHERE cycle_id=?",
                     (result["ledger_cycle_id"],),
                 ).fetchall()
-            self.assertEqual(len(rows), 1)
-            self.assertEqual(rows[0][0:3], (symbol, "measured_inputs", "WAIT"))
-            self.assertIn("system_unhealthy", json.loads(rows[0][4]))
+            self.assertEqual(len(rows), 3)
+            self.assertTrue(any(row[0:3] == (symbol, "measured_inputs", "WAIT") for row in rows))
+            self.assertTrue(all("system_unhealthy" in json.loads(row[4]) for row in rows))
             self.assertEqual(broker.orders, 0)
 
     def test_measured_active_fails_without_previous_then_uses_recorded_history(self):
@@ -61,7 +61,7 @@ class DecisionShadowAcceptanceTests(unittest.TestCase):
             card2 = next(iter(report["symbols"].values()))
             self.assertNotIn("system_unhealthy", card2["blocking_reasons"])
             self.assertIn("no_verified_relevant_news", card2["blocking_reasons"])
-            self.assertEqual(report["decision_shadow_ledger"]["rows"], 1)
+            self.assertEqual(report["decision_shadow_ledger"]["rows"], 3)
             self.assertEqual(second["orders_submitted"], 0)
             with closing(sqlite3.connect(root / "context.sqlite3")) as db:
                 row = db.execute(
@@ -76,7 +76,7 @@ class DecisionShadowAcceptanceTests(unittest.TestCase):
                         "WHERE cycle_id IN (?,?)",
                         (first["ledger_cycle_id"], second["ledger_cycle_id"]),
                     ).fetchone()[0],
-                    2,
+                    6,
                 )
             self.assertEqual(broker.orders, 0)
 
