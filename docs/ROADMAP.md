@@ -927,7 +927,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Siap dikerjakan (paralel) | – | – |
 | WP10b | Menunggu prasyarat (WP8a) | – | – |
-| WP12 | Siap dikerjakan (prioritas tertinggi) | – | – |
+| WP12 | Sedang dikerjakan — ChatGPT, PR #204 (draft) | [#204](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/204) | Konversi tick jam server→UTC, karantina arsip lama dan DST; menunggu review Claude serta CI/manifest. |
 | WP11 | Selesai (merge); penerapan VPS di WP6 | [#201](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/201) | Diterima. `FAILED` beralasan untuk pasar yang benar-benar tutup adalah perilaku benar; kriteria R4 butir 3–4 dikoreksi. Manifest dibuat ulang dengan generator (tidak diedit tangan). Dampak ke `quote_every_cycle` (≥ 98%) diukur di WP6 |
 | WP7 | Menunggu Owner | – | – |
 
