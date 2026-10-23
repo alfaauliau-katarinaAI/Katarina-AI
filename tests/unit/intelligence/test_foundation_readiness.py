@@ -11,7 +11,7 @@ def report():
         "observed_at_utc":STAMP,
         "market_snapshot_tick_utc":"2026-10-15T04:59:59+00:00",
         "time_reference":{
-            "canonical_market_clock":"MT5_COPY_TICKS_RANGE_TIME_MSC_UTC",
+            "canonical_market_clock":"MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC",
             "confirming_symbols":2,"historical_dst_verified":False,
         },
         "symbols":{
