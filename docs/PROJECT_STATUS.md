@@ -14,7 +14,7 @@ Satu-satunya sumber status proyek. Diperbarui **23 Oktober 2026**. Rincian per p
 | Riset / edge | **Edge belum terbukti.** Audit 13 Okt (17 instrumen): profit factor kandidat 0,36, 77% kandidat rugi setelah biaya. Backtest 2025–2026 (7 instrumen): tidak ada keluarga playbook yang ekspektansinya positif di kedua tahun | Biaya spread ≈ 0,24R vs gerak menguntungkan median ≈ 0,23R. Laporan aslinya ada di riwayat Git (dihapus saat perampingan 22 Okt) |
 | VPS | Windows Server 2012 R2, RAM 2 GB, diakses lewat Desktop Commander. Python 3.12.10 di `C:\Katarina\python312`, checkout `main` di `C:\Katarina\code`; `setup`, `doctor`, uji sintetis lulus. MT5 build 6274 dipasang ulang 22 Okt | Observer read-only **berjalan** sejak 22 Okt 04:24 UTC (tugas `Katarina-Readonly-Observer`, akun demo, Algo Trading OFF, siklus 60 detik). Simbol: 5 (EURUSD, GBPUSD, USDJPY, XAUUSD, NAS100) sejak 23 Okt 00:16 UTC (WP6 setelah WP11); 7 setelah pemantauan. Kode VPS = `main` `d8b003a` (WP2, WP3, WP9a, WP11), manifest MATCH. **Quote observer berumur ±3 jam sampai WP12** (R1 T11). Tugas hanya jalan saat Administrator login (auto-start pasca-restart masih WP6) |
 | Repository | `main` dilindungi (PR + Body CI wajib). Perampingan 22 Okt: ~1.211 → ~795 berkas, 11 workflow; tooling VPS lama, dokumen bertanggal, skrip riset sekali pakai, dan transport KAT1/ZMQ dipensiunkan | Repo masih **publik**; website masih di repo ini |
-| Pengujian | Unit 1.248, static 71 (4 skip), integration 211 lulus (23 Okt, setelah WP2/WP3/WP9a/WP11) | Lulus tes sumber ≠ profitabilitas atau kesiapan live |
+| Pengujian | Unit 1.255, static 71 (4 skip), integration 211 lulus (23 Okt, setelah WP2/WP3/WP9a/WP11) | Lulus tes sumber ≠ profitabilitas atau kesiapan live |
 
 ## Pekerjaan berikutnya
 
