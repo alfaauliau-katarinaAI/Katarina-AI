@@ -52,8 +52,8 @@ class ContextExportTest(unittest.TestCase):
         key = day.date().isoformat()
         path = ledger.tick_path(self.root, SYMBOL, key)
         digest = ledger._write_ticks(path, day_ticks(day))
-        self.db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file) VALUES(?,?,?,?,?)",
-                        (SYMBOL, key, status, digest, path.relative_to(self.root).as_posix()))
+        self.db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file, server_shift_hours) VALUES(?,?,?,?,?,?)",
+                        (SYMBOL, key, status, digest, path.relative_to(self.root).as_posix(), 0))
 
     def export(self, signals, **overrides):
         return export_contexts(self.db, self.root, signals, **{**PARAMS, **overrides})
