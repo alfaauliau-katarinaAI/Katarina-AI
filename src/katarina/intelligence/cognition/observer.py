@@ -91,7 +91,7 @@ def load_articles(store,now, *, allow_fetch=True):
         for item in newest[:6]:
             try:
                 published=parse_utc(item["published_utc"])
-            except (ValueError,KeyError,TypeError):
+            except (ValueError,KeyError,TypeError,AttributeError):
                 diagnostics[source+"_item_invalid_time"]+=1
                 continue
             age=(now-published).total_seconds()

@@ -6,6 +6,70 @@
 - Ringkasan per siklus disimpan di `observer_news`; laporan Tahap 0 memisahkan tanpa rilis vs gagal ambil.
 - Tes sintetis memastikan `data_health.verdict` dan keputusan tetap; berkas terkunci tak berubah, LIVE OFF, VPS tak diubah.
 
+## 2026-10-23 — WP11: verifikasi jam sebagian pasar tutup (#201)
+
+- Mayoritas jam MT5 dihitung dari quote yang bersuara segar, bukan semua simbol; minimum 3 dan ambang 70% tetap.
+- Tambah daftar simbol basi terurut di `ClockFinding`; keputusan observer, risk dan backoff tidak diubah.
+- Tes jam dan siklus broker palsu memeriksa 3 FX segar + 2 snapshot basi; LIVE OFF, VPS tidak disentuh.
+
+## 2026-10-23 — WP2: tick broker streaming per jam (PR #190)
+
+- Mengganti koleksi tick sehari dalam RAM dengan `_download_day`: satu jam per batch, CSV gzip deterministik,
+  dedup, SHA-256, indeks baris per jam dan file sementara atomik; alasan gap dipertahankan.
+- Rekonsiliasi snapshot hanya mendekode jam relevan, tanpa menampung semua tick satu hari.
+- Tes pembanding terhadap penulis sebelum WP2 dan uji memori dua juta tick ada di PR.
+  Tidak ada berkas terkunci diubah; LIVE tetap OFF, VPS tidak diubah.
+
+## 2026-10-23 — roadmap: holdout WP9d satu kali, R5 WP8a/WP9a sinkron
+
+- WP9d: varian detektor hanya dibandingkan pada data pengembangan; holdout dibuka satu kali untuk kandidat final.
+- R5: WP8a dan WP9a ditandai sedang dikerjakan (#195, #196) agar tidak diambil dua kali.
+
+## 2026-10-23 — WP6 dijeda; WP11 jam broker saat sebagian pasar tutup
+
+- Mode 5 simbol di VPS (22 Okt 19:58–22:02 UTC): RAM dan durasi siklus aman, tetapi 21:00–22:02 UTC semua siklus
+  gagal `BROKER_CLOCK_NOT_VERIFIED` karena emas/indeks jeda harian (R1 T9). VPS kembali ke 3 simbol.
+- Lampiran A: temuan T9, paket WP11 (pecahan mayoritas jam dihitung atas suara segar) dengan perintah R6; WP6
+  menunggu WP11. PROJECT_STATUS dan cakupan simbol di "Pemisahan data" diperbarui.
+
+## 2026-10-23 — roadmap: WP10 biaya trading, counterfactual di WP9d, R0 dirapikan
+
+- Lampiran A ditambah WP10: WP10a profil spread broker deskriptif (label `DESCRIPTIVE_ONLY_NOT_FOR_TUNING`,
+  pagar impor) dan WP10b swap + sensitivitas biaya di `CostModel` (default 0, verdict tidak berubah); perintah R6.
+- WP9d memuat aturan counterfactual kelas C: hanya `dev_dataset`, kartu WAIT forward dilarang untuk untung-rugi.
+- Tabel R0 diurutkan per fase; status WP8a (#195) dan WP9a (#196); "Arah lanjutan" menunjuk WP9d/WP10.
+
+## 2026-10-23 — roadmap: enam arah lanjutan dengan batas data dan prasyarat
+
+- Tambahkan arah Autonomous Research, Market Intelligence, Counterfactual, Cost Intelligence,
+  Scientific Memory dan Champion–Challenger sebagai panduan, **bukan** paket kerja baru.
+- Tegaskan counterfactual untung-rugi hanya dari data pengembangan sebelum 13 Okt 2026,
+  sedangkan kartu WAIT forward/holdout hanya untuk frekuensi pemblokir.
+- Izinkan pengukuran spread forward **deskriptif saja**, tanpa penyetelan strategi atau filter.
+  Prasyarat dan gerbang promosi tidak berubah; tidak ada perubahan kode, VPS atau trading.
+
+## 2026-10-23 — roadmap: WP9 membongkar tembok blokir keputusan
+
+- Lampiran A ditambah WP9 (prioritas Owner): klasifikasi pemblokir (A input observer, B syarat bukti terkunci,
+  C persepsi, M filter pasar sah), WP9a peta tembok blokir baca-saja, WP9b input keputusan terukur + evaluasi
+  bayangan di balik opsi (default perilaku lama), WP9c syarat bukti proporsional di berkas terkunci lewat gerbang
+  promosi, WP9d detektor entry lewat hipotesis. Perintah siap pakai WP9a–WP9c di R6; R0/R1/R5 diperbarui.
+  Hasil terbaik WP9 adalah kandidat paper, bukan izin order. Tidak ada perubahan kode.
+
+## 2026-10-23 — WP6 tahap A di VPS; status roadmap diperbarui
+
+- VPS: kode = `main` 23 Okt (manifest MATCH); `run-observer.ps1` memakai `--universe` bila
+  `C:\Katarina\private\observer_universe.json` ada; observer mengamati 5 simbol (+XAUUSD, NAS100) sejak 22 Okt
+  19:58 UTC. WP6 dimajukan sebelum WP2 karena RAM terukur cukup; jalan mundur dengan mengganti nama berkas itu.
+- Roadmap: kolom Status di R1, status WP6 di R0/R5, cakupan simbol forward + CELAH per simbol di "Pemisahan data".
+  PROJECT_STATUS: 100% WAIT dan penyebabnya, cakupan simbol, angka tes terbaru.
+
+## 2026-10-23 — roadmap: aturan PR paralel yang menyentuh berkas sama
+
+- R0: WP2 dan WP3 sama-sama mengubah `observation_ledger.py` dan semua PR membuat ulang manifest; Claude me-merge
+  berurutan (WP2 → WP3 → WP8a) dan membuat ulang manifest/peta modul dengan alatnya. Kosakata status R5 wajib dipakai
+  persis. Status WP2 (#190) dan WP3 (#191) diperbarui; rujukan basi di `CLAUDE.md` diperbaiki. Tidak ada perubahan kode.
+
 ## 2026-10-23 — roadmap: titik masuk pelaksana AI, cara mengambil paket, standar teknis (R10)
 
 - Bagian baru "Mulai di sini — untuk pelaksana AI" di awal roadmap: lima langkah dari membaca aturan sampai berhenti
