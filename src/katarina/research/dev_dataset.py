@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import gzip
 import hashlib
+import io
 import json
 import math
 import os
