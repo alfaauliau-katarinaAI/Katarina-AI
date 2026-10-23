@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP11: verifikasi jam sebagian pasar tutup (#201)
+
+- Mayoritas jam MT5 dihitung dari quote yang bersuara segar, bukan semua simbol; minimum 3 dan ambang 70% tetap.
+- Tambah daftar simbol basi terurut di `ClockFinding`; keputusan observer, risk dan backoff tidak diubah.
+- Tes jam dan siklus broker palsu memeriksa 3 FX segar + 2 snapshot basi; LIVE OFF, VPS tidak disentuh.
+
 ## 2026-10-23 — WP2: tick broker streaming per jam (PR #190)
 
 - Mengganti koleksi tick sehari dalam RAM dengan `_download_day`: satu jam per batch, CSV gzip deterministik,
