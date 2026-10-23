@@ -145,12 +145,12 @@ class DemoForwardRuntime:
                 or reference.get('confirming_symbols',0)<3):
             raise ValueError('DEMO_CURRENT_CLOCK_REFERENCE_UNVERIFIED')
         if shift % 60:raise ValueError('DEMO_CLOCK_SHIFT_NOT_INTEGER_HOUR')
-        return shift//60
+        return shift*60
 
     def _quote(self, symbol):
         from katarina.intelligence.broker.causal_broker_quotes import last_past_quote
         quote=last_past_quote(self.native,symbol,datetime.fromtimestamp(self.clock(),timezone.utc),
-                              server_shift_hours=self._clock_shift(),lookback_seconds=5)
+                              server_shift_hours=self._clock_shift()//3600,lookback_seconds=5)
         if quote is None or not 0<=self.clock()-quote[2]<=2:
             raise ValueError('DEMO_QUOTE_MISSING_OR_STALE')
         return quote
