@@ -206,9 +206,9 @@
       "sha256": "36f584a26d89dece97d9200b466847068a730b739b4ccbac9690883f5bcc9671"
     },
     "scripts/ai/run_contextual_market_observer.py": {
-      "bytes": 7471,
-      "normalized_sha256": "a2cb0d4d393df73bacc5fd4829cec0d247a1eace4191d97f0da7f3213953aad3",
-      "sha256": "a2cb0d4d393df73bacc5fd4829cec0d247a1eace4191d97f0da7f3213953aad3"
+      "bytes": 8179,
+      "normalized_sha256": "297059329320ad5421f353f83d83afcbdface108cae50300907324aff75e9a46",
+      "sha256": "297059329320ad5421f353f83d83afcbdface108cae50300907324aff75e9a46"
     },
     "scripts/ai/run_decision_brain_v3.py": {
       "bytes": 466,
@@ -311,9 +311,9 @@
       "sha256": "d064cb85db22fa8e6d0f76a5ca6d2fc1b5607f36285b4f5774eeeea0e4d35c05"
     },
     "src/katarina/adapters/automatic_connection.py": {
-      "bytes": 11250,
-      "normalized_sha256": "7ff1a9c4c375594415bd4f3f838e5e6f2c8e682d9d7431fb69e066c7edcadeae",
-      "sha256": "7ff1a9c4c375594415bd4f3f838e5e6f2c8e682d9d7431fb69e066c7edcadeae"
+      "bytes": 11373,
+      "normalized_sha256": "86f7f127316b98333d458f3e12d2b544cf9c0b7075d856629ab0312446b5e0ad",
+      "sha256": "86f7f127316b98333d458f3e12d2b544cf9c0b7075d856629ab0312446b5e0ad"
     },
     "src/katarina/adapters/brain_feedback.py": {
       "bytes": 2175,
@@ -876,9 +876,14 @@
       "sha256": "7347c79ffe39ec2ef625396cca3fa099fd9d91346de444492f39c2d219a3a8fe"
     },
     "src/katarina/intelligence/cognition/continuous_observation.py": {
-      "bytes": 16922,
-      "normalized_sha256": "1f1caca431d30b680fb9e035bb7852ffb24bef751d7654643d87cd943a237bd7",
-      "sha256": "1f1caca431d30b680fb9e035bb7852ffb24bef751d7654643d87cd943a237bd7"
+      "bytes": 17072,
+      "normalized_sha256": "51388f7c618e81160eda5ac6c218e830d64e263f35f71c2d6739403975f30912",
+      "sha256": "51388f7c618e81160eda5ac6c218e830d64e263f35f71c2d6739403975f30912"
+    },
+    "src/katarina/intelligence/cognition/decision_inputs.py": {
+      "bytes": 2855,
+      "normalized_sha256": "b098afd4f7200da1e71de8d900da709430665d8391f6db24d1caf65105f40eba",
+      "sha256": "b098afd4f7200da1e71de8d900da709430665d8391f6db24d1caf65105f40eba"
     },
     "src/katarina/intelligence/cognition/explainable_market_decision.py": {
       "bytes": 17436,
@@ -896,9 +901,9 @@
       "sha256": "78d277a63cefa7b44f19d9cc1b0c2adcad7e7355da2525db45daf2446dd369aa"
     },
     "src/katarina/intelligence/cognition/observer.py": {
-      "bytes": 30784,
-      "normalized_sha256": "09f7170bc984b3a16a678546cae59c0ab0557d40908a8ff1d8000ee843b13f49",
-      "sha256": "09f7170bc984b3a16a678546cae59c0ab0557d40908a8ff1d8000ee843b13f49"
+      "bytes": 33596,
+      "normalized_sha256": "0d3d930c1d90a96f1cf1a5fa6187a2c5a50e61c94136387d0b38579ef9fbacf0",
+      "sha256": "0d3d930c1d90a96f1cf1a5fa6187a2c5a50e61c94136387d0b38579ef9fbacf0"
     },
     "src/katarina/intelligence/cognition/owner_research_review.py": {
       "bytes": 8306,
@@ -916,9 +921,9 @@
       "sha256": "26b37d9c6b429e0eb298c7427d2317c5d71444acacce50f57b7ff96ab72e6ee2"
     },
     "src/katarina/intelligence/cognition/unified_brain.py": {
-      "bytes": 22310,
-      "normalized_sha256": "fb0103cebf37efc7e7c44c10632e660c561f32a9d2adaf3f919805ab92cf3ca7",
-      "sha256": "fb0103cebf37efc7e7c44c10632e660c561f32a9d2adaf3f919805ab92cf3ca7"
+      "bytes": 22548,
+      "normalized_sha256": "ab247a4b4337a1b9c03309dd3759897b2201ca924c36effc25140f6f6ac46bf6",
+      "sha256": "ab247a4b4337a1b9c03309dd3759897b2201ca924c36effc25140f6f6ac46bf6"
     },
     "src/katarina/intelligence/cognition/unified_cognitive_cycle.py": {
       "bytes": 18896,
@@ -1091,9 +1096,9 @@
       "sha256": "7226231d1cd5778e92088d422dae8754135ccef1c1f019ea8442a7c2eb07d0eb"
     },
     "src/katarina/intelligence/operations/observation_ledger.py": {
-      "bytes": 25209,
-      "normalized_sha256": "7e8612b89da2f3aa82a152a00073dd5f6cc4cd584d1a5122561cb7a11281d9bc",
-      "sha256": "7e8612b89da2f3aa82a152a00073dd5f6cc4cd584d1a5122561cb7a11281d9bc"
+      "bytes": 27135,
+      "normalized_sha256": "53882411beb890f60a93b9fc6b9aa662d1a126d20b6270d37e297d2de6f592aa",
+      "sha256": "53882411beb890f60a93b9fc6b9aa662d1a126d20b6270d37e297d2de6f592aa"
     },
     "src/katarina/intelligence/operations/parallel_storage.py": {
       "bytes": 727,
