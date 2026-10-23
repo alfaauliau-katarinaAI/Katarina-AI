@@ -62,7 +62,7 @@ class CausalBrokerQuotesTests(unittest.TestCase):
             last_past_quote(FakeMT5([]),"XAUUSD.vx",NOW.replace(tzinfo=None),server_shift_hours=0)
         self.assertIsNone(last_past_quote(
             FakeMT5([row(NOW.timestamp())]*(MAX_TICKS_PER_QUERY+1)),
-            "XAUUSD.vx",NOW))
+            "XAUUSD.vx",NOW,server_shift_hours=0))
 
     def test_mt5_tick_is_decision_clock_even_when_vps_ahead(self):
         from types import SimpleNamespace
