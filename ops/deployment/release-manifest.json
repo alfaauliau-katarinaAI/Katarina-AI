@@ -1092,8 +1092,8 @@
     },
     "src/katarina/intelligence/operations/observation_ledger.py": {
       "bytes": 23190,
-      "sha256": "65152fb1ef2bd6739620ee629b0f28867684da5483b16b1bc07b1bb663885f95",
-      "normalized_sha256": "65152fb1ef2bd6739620ee629b0f28867684da5483b16b1bc07b1bb663885f95"
+      "normalized_sha256": "65152fb1ef2bd6739620ee629b0f28867684da5483b16b1bc07b1bb663885f95",
+      "sha256": "65152fb1ef2bd6739620ee629b0f28867684da5483b16b1bc07b1bb663885f95"
     },
     "src/katarina/intelligence/operations/parallel_storage.py": {
       "bytes": 727,
