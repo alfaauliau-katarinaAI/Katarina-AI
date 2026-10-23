@@ -16,11 +16,16 @@ from collections import Counter
 import json
 import os
 import sys
+import time
 
 from katarina.intelligence.news.public_context import utc as parse_utc
 from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
 from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift, capture_time_reference
 from katarina.intelligence.cognition.contextual_decision_intelligence import RiskSituation
+from katarina.intelligence.cognition.decision_inputs import (
+    DecisionInputs, load_decision_inputs,
+)
+from katarina.intelligence.operations import observation_ledger as ledger
 from katarina.intelligence.news.news_intelligence import (
     MultiSourceNewsEngine,
 )
@@ -248,11 +253,13 @@ class BrainObserver:
     def __init__(self, brain, broker, root):
         self.brain, self.broker, self.root = brain, broker, root
 
-    def run(self, *, max_symbols=17, fetch_news=True, universe=None):
+    def run(self, *, max_symbols=17, fetch_news=True, universe=None, decision_inputs=None):
         brain, mt5, root = self.brain, self.broker, self.root
         trace = getattr(brain,'activity_trace',None)
         emit = trace.emit if trace is not None else lambda *a,**k:None
         store = brain.context_store
+        inputs = load_decision_inputs(decision_inputs)
+        shadow_inputs = DecisionInputs(inputs.shadow_mode)
         journal = brain.quote_journal
         emit('NEWS','STARTED')
         feed_started_at=datetime.now(timezone.utc)
@@ -361,6 +368,8 @@ class BrainObserver:
         latest_quotes={}
         market_clock_epochs=[]
         paper_hypotheses=[]
+        previous_ledger_cycle = ledger.previous_cycle_recorded(store.db, before_utc=now)
+        shadow_rows = {}
         for symbol in symbols:
             emit('TECHNICAL','STARTED',symbol=symbol)
             tick=ticks.get(symbol)
@@ -401,16 +410,41 @@ class BrainObserver:
                 # retrieved. Mark system_healthy FALSE so even a future
                 # statistically good paper history cannot start execution.
                 risk=RiskSituation(
-                    system_healthy=False,broker_session_open=quote_ok,
+                    system_healthy=inputs.system_healthy(
+                        quote_fresh=quote_fresh, recent=recent,
+                        trade_mode=info.trade_mode,
+                        clock_verified=clock.suitable_for_readonly_snapshot,
+                        previous_ledger_cycle=previous_ledger_cycle),
+                    broker_session_open=quote_ok,
                     quote_fresh=quote_fresh,drawdown_fraction=0,
                     realized_daily_loss_r=0,open_positions=0,
                     gross_exposure_fraction=0)
                 decision=brain.evaluate_contextually(
                     symbol=symbol,candles=bars,as_of_utc=market_at,
-                    actual_spread=observed_spread,news_context=news,
+                    actual_spread=observed_spread,news_context=inputs.news_context(news,calendar),
                     macro_evidence=macro,resolved_experience=[],
                     risk_situation=risk)
                 card=decision.to_dict()
+                # Same evaluation path for the opposite mode, not a second brain.
+                # The published active card and research hypothesis remain unchanged.
+                started=time.monotonic()
+                try:
+                    alternate=brain.evaluate_contextually(
+                        symbol=symbol,candles=bars,as_of_utc=market_at,
+                        actual_spread=observed_spread,
+                        news_context=shadow_inputs.news_context(news,calendar),
+                        macro_evidence=macro,resolved_experience=[],
+                        risk_situation=replace(risk,system_healthy=shadow_inputs.system_healthy(
+                            quote_fresh=quote_fresh,recent=recent,
+                            trade_mode=info.trade_mode,
+                            clock_verified=clock.suitable_for_readonly_snapshot,
+                            previous_ledger_cycle=previous_ledger_cycle)))
+                    shadow_rows[symbol]=(alternate.action,alternate.conditional_side,
+                                         alternate.blocking_reasons)
+                    if time.monotonic()-started > 2.0:
+                        shadow_rows[symbol]=("WAIT","WAIT",("SHADOW_EVALUATION_BUDGET_EXCEEDED",))
+                except Exception as ex:
+                    shadow_rows[symbol]=("WAIT","WAIT",("SHADOW_EVALUATION_FAILED_"+type(ex).__name__,))
                 card["sensor_quality"]={"quote_fresh":quote_fresh,"closed_bars_recent":recent,"trade_mode":int(info.trade_mode)}
                 card["broker_quote_age_seconds"]=round(quote_age,2)
                 card["market_timestamp_utc"]=market_at.isoformat()
@@ -469,6 +503,7 @@ class BrainObserver:
                     except (ValueError,TypeError):
                         card["journal_status"]="REJECTED_INVALID_TIMESTAMP_OR_QUOTE"
             except Exception as ex:
+                shadow_rows.setdefault(symbol,("WAIT","WAIT",("SHADOW_SENSOR_UNAVAILABLE",)))
                 from katarina.intelligence.broker.data_recovery import reason_code
                 emit('TECHNICAL','FAILED',symbol=symbol,action=reason_code(ex))
                 report["symbols"][symbol]={
@@ -501,12 +536,20 @@ class BrainObserver:
         report["received_market_data_symbols"]=len(latest_quotes)
         # Stage 0 ledger: every cycle's bid/ask/spread (WAIT included) and, with a bounded
         # budget, the broker's own ticks of completed observed days. Read-only.
-        from katarina.intelligence.operations import observation_ledger as ledger
         ledger_cycle=None
         try:
             ledger_cycle=ledger.record_snapshot(store.db,observed_utc=now,clock_shift_hours=offset,
                 cards=report["symbols"],quotes=latest_quotes)
             report["observation_ledger"]={"status":"RECORDED","cycle_id":ledger_cycle}
+            try:
+                for symbol in sorted(report["symbols"]):
+                    action,side,blockers=shadow_rows.get(symbol,("WAIT","WAIT",("SHADOW_SENSOR_UNAVAILABLE",)))
+                    ledger.record_decision_shadow(
+                        store.db,ledger_cycle,symbol=symbol,mode=shadow_inputs.mode,
+                        action=action,conditional_side=side,blockers=blockers)
+                report["decision_shadow_ledger"]={"status":"RECORDED","rows":len(report["symbols"])}
+            except Exception as ex:
+                report["decision_shadow_ledger"]={"status":"FAILED","error":type(ex).__name__}
             try:
                 ledger.record_news(store.db,ledger_cycle,news_pipeline)
             except Exception as ex:
