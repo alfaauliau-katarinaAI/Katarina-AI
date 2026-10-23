@@ -42,7 +42,7 @@ class TestIncomingTimeNormalization(unittest.TestCase):
     def test_snapshot_saves_current_offset_and_utc_authority(self):
         evidence = self.clock.as_dict()
         self.assertEqual(evidence["broker_server_shift_minutes"], 180)
-        self.assertEqual(evidence["canonical_market_clock"], "MT5_COPY_TICKS_RANGE_TIME_MSC_UTC")
+        self.assertEqual(evidence["canonical_market_clock"], "MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC")
         self.assertFalse(evidence["historical_dst_verified"])
         self.assertFalse(evidence["live_execution_authorized"])
 
