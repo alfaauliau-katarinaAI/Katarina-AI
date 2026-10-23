@@ -16,7 +16,7 @@ class Broker:
     def copy_rates_range(self,*a):return self.bars()
     def copy_ticks_range(self,s,start,end,flag):
         self.calls.append((start,end))
-        valid=[self.raw-self.offset*60,self.raw+300-self.offset*60]
+        valid=[self.raw,self.raw+300]
         if not self.ambiguous and int(start.timestamp()) not in valid:return []
         return [dict(time_msc=int((start.timestamp()+i*30)*1000),bid=v,ask=v+.1) for i,v in enumerate((100.,102.,99.,100.,101.))]
 
