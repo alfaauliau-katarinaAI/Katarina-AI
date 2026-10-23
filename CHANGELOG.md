@@ -6,6 +6,14 @@
 - Tambah daftar simbol basi terurut di `ClockFinding`; keputusan observer, risk dan backoff tidak diubah.
 - Tes jam dan siklus broker palsu memeriksa 3 FX segar + 2 snapshot basi; LIVE OFF, VPS tidak disentuh.
 
+## 2026-10-23 — WP2: tick broker streaming per jam (PR #190)
+
+- Mengganti koleksi tick sehari dalam RAM dengan `_download_day`: satu jam per batch, CSV gzip deterministik,
+  dedup, SHA-256, indeks baris per jam dan file sementara atomik; alasan gap dipertahankan.
+- Rekonsiliasi snapshot hanya mendekode jam relevan, tanpa menampung semua tick satu hari.
+- Tes pembanding terhadap penulis sebelum WP2 dan uji memori dua juta tick ada di PR.
+  Tidak ada berkas terkunci diubah; LIVE tetap OFF, VPS tidak diubah.
+
 ## 2026-10-23 — roadmap: holdout WP9d satu kali, R5 WP8a/WP9a sinkron
 
 - WP9d: varian detektor hanya dibandingkan pada data pengembangan; holdout dibuka satu kali untuk kandidat final.

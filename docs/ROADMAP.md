@@ -178,7 +178,7 @@ Alat (repo, 22 Okt 2026): `katarina.intelligence.operations.observation_ledger` 
 (tabel `observer_cycles`, `observer_quotes`, termasuk WAIT; kegagalan selalu dengan alasan) dan, dengan anggaran satu
 simbol-hari per siklus, mengunduh tick broker hari UTC yang sudah selesai dan memang diamati ke
 `<state>/broker-ticks/SIMBOL/YYYY-MM-DD.csv.gz` (`broker_tick_days`, celah di `data_gaps`, rekonsiliasi dengan
-snapshot dalam satu tick size). Uji putus-sambung dicatat dengan `scripts/ai/record_reconnect_test.py` (lulus bila
+snapshot dalam satu tick size). Usulan WP2 di [PR #190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) mengubah unduhan menjadi streaming per jam dengan hash dan rekonsiliasi terbatasi memori; belum merge atau diterapkan ke VPS. Uji putus-sambung dicatat dengan `scripts/ai/record_reconnect_test.py` (lulus bila
 siklus OK berikutnya ≤ 10 menit setelah gangguan). `python scripts/ai/check_stage0_health.py --state-dir <state>` menilai kriteria di
 bawah (PASS / NOT_MET / NO_DATA) secara read-only. Simbol inti dipilih dengan `--universe config/observer_universe.json` (WP1, #184): ketujuh simbol program diamati
 setiap siklus dengan XAUUSD pertama; simbol inti yang tidak tersedia menjadi WAIT dan baris ledger `FAILED` beralasan
@@ -867,7 +867,7 @@ Menunggu Owner · Dikerjakan Claude.
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
 | WP1 | Selesai (merge); penerapan VPS di WP6 | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
-| WP2 | Sedang dikerjakan — ChatGPT, PR #190 (draft) | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | – |
+| WP2 | Selesai (merge); penerapan VPS di WP6 | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | Diterima. Hasil sama dengan algoritme lama (dedup/urut per jam setara per hari karena jam terpisah), rekonsiliasi identik; manifest dibuat ulang dengan generator |
 | WP3 | Sedang dikerjakan — ChatGPT, PR #191 (draft) | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | – |
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
