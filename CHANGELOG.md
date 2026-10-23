@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-23 — WP3: diagnosis jalur berita observer (#191)
+
+- Catat item feed usang/tanggal invalid, umur item terbaru, serta kegagalan artikel tanpa mengubah pemilihan atau blackout.
+- Ringkasan per siklus disimpan di `observer_news`; laporan Tahap 0 memisahkan tanpa rilis vs gagal ambil.
+- Tes sintetis memastikan `data_health.verdict` dan keputusan tetap; berkas terkunci tak berubah, LIVE OFF, VPS tak diubah.
+
 ## 2026-10-23 — WP11: verifikasi jam sebagian pasar tutup (#201)
 
 - Mayoritas jam MT5 dihitung dari quote yang bersuara segar, bukan semua simbol; minimum 3 dan ambang 70% tetap.

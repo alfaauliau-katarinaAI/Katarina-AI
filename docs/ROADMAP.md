@@ -183,6 +183,7 @@ siklus OK berikutnya ≤ 10 menit setelah gangguan). `python scripts/ai/check_st
 bawah (PASS / NOT_MET / NO_DATA) secara read-only. Simbol inti dipilih dengan `--universe config/observer_universe.json` (WP1, #184): ketujuh simbol program diamati
 setiap siklus dengan XAUUSD pertama; simbol inti yang tidak tersedia menjadi WAIT dan baris ledger `FAILED` beralasan
 `CORE_SYMBOL_UNAVAILABLE`, tidak pernah diganti diam-diam; tanpa opsi, perilaku lama tetap.
+Usulan WP3 di [PR #191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) menambah diagnostik berita per sumber dan per siklus, tanpa mengubah keputusan atau kriteria Tahap 0; belum merge atau diterapkan ke VPS.
 Statistik siklus memakai jendela konservatif Senin 00:00 – Jumat
 20:00 UTC tanpa rollover 20:45–21:15 UTC. Status tahap: **belum lulus**; observer read-only berjalan di VPS sejak 22 Okt 2026 04:24 UTC.
 
@@ -868,7 +869,7 @@ Menunggu Owner · Dikerjakan Claude.
 |---|---|---|---|
 | WP1 | Selesai (merge); penerapan VPS di WP6 | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
 | WP2 | Selesai (merge); penerapan VPS di WP6 | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | Diterima. Hasil sama dengan algoritme lama (dedup/urut per jam setara per hari karena jam terpisah), rekonsiliasi identik; manifest dibuat ulang dengan generator |
-| WP3 | Sedang dikerjakan — ChatGPT, PR #191 (draft) | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | – |
+| WP3 | Selesai (merge); penerapan VPS di WP6 | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | Diterima. Hanya diagnosis: seleksi artikel, ambang dan verdict tidak berubah; `published_utc=None` kini dihitung `item_invalid_time` alih-alih error. Manifest dibuat ulang dengan generator |
 | WP4 | Menunggu prasyarat (WP6 tahap A) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP6 | Menunggu prasyarat (WP11) | – | Tahap A 22 Okt 19:58–22:02 UTC: RAM bebas 853 MB, siklus 1–4 dtk, 0 quote FAILED, tetapi semua siklus gagal saat jeda emas/indeks (T9). Dijeda: berkas VPS diganti nama `observer_universe.json.wp6-paused`; dilanjutkan Claude setelah WP11 |

@@ -20,6 +20,7 @@ import csv
 import gzip
 import hashlib
 import io
+import json
 import math
 import os
 from bisect import bisect_right
@@ -62,6 +63,15 @@ def setup(db) -> None:
         reason TEXT,
         UNIQUE(cycle_id, symbol));
     CREATE INDEX IF NOT EXISTS observer_quotes_symbol_day ON observer_quotes(symbol, observed_utc);
+    CREATE TABLE IF NOT EXISTS observer_news(
+        cycle_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        feed_items INTEGER NOT NULL,
+        newest_age_hours REAL,
+        in_window INTEGER NOT NULL,
+        verified INTEGER NOT NULL,
+        failures_json TEXT NOT NULL,
+        PRIMARY KEY(cycle_id, source));
     CREATE TABLE IF NOT EXISTS broker_tick_days(
         symbol TEXT NOT NULL,
         day TEXT NOT NULL,
@@ -150,6 +160,40 @@ def record_snapshot(db, *, observed_utc: datetime, clock_shift_hours, cards: dic
             "INSERT INTO observer_quotes(cycle_id, symbol, observed_utc, tick_epoch, bid, ask, spread, "
             "quote_age_seconds, status, reason) VALUES(?,?,?,?,?,?,?,?,?,?)", rows)
     return cycle_id
+
+
+def record_news(db, cycle_id: str, summary: dict) -> int:
+    """WP3: store per-source cycle diagnostics, never change a trading action."""
+    setup(db)
+    if not isinstance(cycle_id, str) or not cycle_id or not isinstance(summary, dict):
+        raise ValueError("INVALID_NEWS_DIAGNOSTICS")
+    rows=[]
+    for source in sorted(summary):
+        data=summary[source]
+        if not isinstance(source,str) or not source or not isinstance(data,dict):
+            raise ValueError("INVALID_NEWS_DIAGNOSTICS")
+        items=data.get("feed_items")
+        window=data.get("in_window")
+        verified=data.get("verified")
+        age=data.get("newest_age_hours")
+        failures=data.get("failures")
+        if (any(type(x) is not int or x<0 for x in (items,window,verified))
+                or not isinstance(failures,dict)
+                or any(type(k) is not str or type(v) is not int or v<0
+                       for k,v in failures.items())
+                or (age is not None and _finite(age) is None)):
+            raise ValueError("INVALID_NEWS_DIAGNOSTICS")
+        rows.append((cycle_id,source,items,age,window,verified,
+                     json.dumps(failures,sort_keys=True)))
+    with db:
+        db.executemany(
+            "INSERT INTO observer_news(cycle_id,source,feed_items,newest_age_hours,"
+            "in_window,verified,failures_json) VALUES(?,?,?,?,?,?,?) "
+            "ON CONFLICT(cycle_id,source) DO UPDATE SET "
+            "feed_items=excluded.feed_items,newest_age_hours=excluded.newest_age_hours,"
+            "in_window=excluded.in_window,verified=excluded.verified,"
+            "failures_json=excluded.failures_json",rows)
+    return len(rows)
 
 
 def close_cycle(db, *, finished_utc: datetime, cycle_id=None, status: str, reason=None,
