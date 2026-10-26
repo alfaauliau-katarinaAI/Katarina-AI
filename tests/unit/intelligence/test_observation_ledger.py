@@ -180,6 +180,30 @@ class ObservationLedgerTest(unittest.TestCase):
         self.assertEqual(self.db.execute("SELECT reason FROM broker_tick_days").fetchone()[0],
                          "BROKER_SHIFT_CHANGED_DURING_DAY")
 
+    def test_historical_summer_day_keeps_its_shift_after_winter_transition(self):
+        import gzip
+        import hashlib
+        when = datetime(2026, 10, 23, 10, tzinfo=UTC)
+        epoch = int(when.timestamp())
+        bid = FakeTicks.price((epoch + 10800) * 1000)
+        snapshot(self.db, when, {"EURUSD": (bid, round(bid + .00012, 5), epoch)}, shift=3)
+        result = ledger.collect_tick_days(self.db, FakeTicks(), self.root,
+            datetime(2026, 10, 26, 12, tzinfo=UTC), server_shift_hours=2)
+        self.assertEqual(result["collected"][0]["status"], "STORED")
+        row = self.db.execute("SELECT file,sha256,server_shift_hours,snapshots_matched "
+                              "FROM broker_tick_days").fetchone()
+        raw = gzip.decompress((self.root / row[0]).read_bytes())
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), row[1])
+        self.assertEqual(row[2:], (3, 1))
+        ticks = ledger.read_ticks(self.root / row[0])
+        start = int(when.replace(hour=0).timestamp()) * 1000
+        self.assertEqual(ticks[0][0], start)
+        self.assertTrue(all(start <= tick[0] < start + 86400000 for tick in ticks))
+        original = (self.root / row[0]).read_bytes()
+        self.assertEqual(ledger.collect_tick_days(self.db, FakeTicks(), self.root,
+            datetime(2026, 10, 27, 12, tzinfo=UTC), server_shift_hours=2)["collected"], [])
+        self.assertEqual((self.root / row[0]).read_bytes(), original)
+
     def test_tick_archive_is_byte_identical_for_identical_ticks(self):
         first = self.root / "a.csv.gz"
         second = self.root / "b.csv.gz"

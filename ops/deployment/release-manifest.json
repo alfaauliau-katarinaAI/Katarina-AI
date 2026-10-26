@@ -231,9 +231,9 @@
       "sha256": "a6cd4826f60f3985fdf8629a0edb6a48139ea3e2ca5fa7bb08163b01ad1e28ee"
     },
     "scripts/ai/run_readonly_decisions.py": {
-      "bytes": 6867,
+      "bytes": 6725,
       "normalized_sha256": "ffa9064e71c83a2e040825ce10b14b7d3cc6433d186d8ace06158c8f0765c54a",
-      "sha256": "add320a3498eb3779815506135913fada1e5b850f57805ccc6d77aaea5efc2be"
+      "sha256": "ffa9064e71c83a2e040825ce10b14b7d3cc6433d186d8ace06158c8f0765c54a"
     },
     "scripts/ai/run_readonly_sensor_bridge.py": {
       "bytes": 3146,
@@ -1176,9 +1176,9 @@
       "sha256": "641377a62ddb271b173dc8ccdc6c2d9878cf2a0bef47757521fd87dcf8391e41"
     },
     "src/katarina/intelligence/perception/screening.py": {
-      "bytes": 15907,
+      "bytes": 15609,
       "normalized_sha256": "b699753079c533964bddc34c2c454007fe868b05ec9a8385cdd2227ee4a5d014",
-      "sha256": "4dddef637046f94e44687a047b90792dd2782c46ed000eabd7ef80140526be9b"
+      "sha256": "b699753079c533964bddc34c2c454007fe868b05ec9a8385cdd2227ee4a5d014"
     },
     "src/katarina/intelligence/perception/semantic_setup_truth.py": {
       "bytes": 6751,

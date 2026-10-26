@@ -44,7 +44,7 @@ Total modul: 243. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina` | runtime, ops, workflow, research, scripts, tests | 141 | 210 |
+| `katarina` | runtime, ops, workflow, research, scripts, tests | 142 | 211 |
 | `katarina.adapters` | runtime, ops, workflow, scripts, tests | 17 | 27 |
 | `katarina.adapters.agent_dashboard_page` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 15 |
@@ -124,14 +124,14 @@ Total modul: 243. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.health` | runtime, ops, workflow, scripts, tests | 2 | 4 |
 | `katarina.health.engine` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.host` | runtime, ops, workflow, scripts, tests | 2 | 7 |
-| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 51 | 117 |
-| `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 10 | 16 |
+| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 52 | 118 |
+| `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 11 | 18 |
 | `katarina.intelligence.broker.auto_calibration` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_account_monitor` | runtime, ops, workflow, scripts, tests | 3 | 4 |
-| `katarina.intelligence.broker.broker_clock_alignment` | runtime, ops, workflow, scripts, tests | 1 | 2 |
+| `katarina.intelligence.broker.broker_clock_alignment` | runtime, ops, workflow, scripts, tests | 1 | 4 |
 | `katarina.intelligence.broker.broker_history_coverage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_scan_universe` | runtime, ops, workflow, research, scripts, tests | 3 | 2 |
-| `katarina.intelligence.broker.causal_broker_quotes` | runtime, ops, workflow, scripts, tests | 3 | 3 |
+| `katarina.intelligence.broker.causal_broker_quotes` | runtime, ops, workflow, scripts, tests | 4 | 5 |
 | `katarina.intelligence.broker.data_recovery` | runtime, ops, workflow, scripts, tests | 4 | 1 |
 | `katarina.intelligence.broker.observer_universe` | runtime, ops, workflow, scripts, tests | 4 | 3 |
 | `katarina.intelligence.cognition` | runtime, ops, workflow, scripts, tests | 20 | 42 |
