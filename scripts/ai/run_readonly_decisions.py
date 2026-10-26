@@ -88,8 +88,8 @@ def main():
                 tick_age = (now.timestamp() - server_epoch_to_utc(
                     tick.time_msc / 1000, shift)) if valid_quote and shift is not None else None
                 quote_fresh = tick_age is not None and 0 <= tick_age <= 180
-                open_for_research = (False and now.weekday() < 5 and fresh
-                                     and quote_fresh and int(info.trade_mode) > 0)
+                # Clock basis for candle history is not independently verified.
+                open_for_research = False
                 spread = float(tick.ask - tick.bid) if valid_quote else float("nan")
                 read = observer.evaluate(
                     symbol=symbol, candles=bars, as_of_utc=now,
