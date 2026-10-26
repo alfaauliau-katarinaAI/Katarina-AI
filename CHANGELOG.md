@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-10-27 — usulan agentic AI untuk review Claude
+
+- Atas permintaan Owner, catat lima fondasi perbaikan, kemampuan agentic dan target auditor data di roadmap.
+- Usulan belum menjadi paket implementasi; gerbang tahap/promosi tetap, tanpa perubahan runtime, LIVE OFF.
+
 ## 2026-10-23 — WP12: jam tick MT5 server ke UTC (#204)
 
 - Konversi timestamp dan jendela tick menggunakan offset jam broker yang terverifikasi, tanpa menebak saat bukti hilang.
