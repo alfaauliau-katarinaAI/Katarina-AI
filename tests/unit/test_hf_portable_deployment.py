@@ -46,7 +46,7 @@ class PortableStorageTests(unittest.TestCase):
             archive.configure_runtime(dict(base_dir=str(Path(d)/'vault'),state_dir=str(Path(d)/'observations'),repo='team/new-archive',expected_account='new-owner'))
             self.assertEqual(archive.REPO,'team/new-archive')
             self.assertEqual(archive.EXPECTED_ACCOUNT,'new-owner')
-            self.assertEqual(archive.BASE,Path(d)/'vault')
+            self.assertEqual(archive.BASE,(Path(d)/'vault').resolve())
             for invalid in ('../escape','user/repo/../../other','https://evil/repo'):
                 with self.assertRaisesRegex(RuntimeError,'INVALID_REPOSITORY'):
                     archive.configure_runtime(dict(repo=invalid))

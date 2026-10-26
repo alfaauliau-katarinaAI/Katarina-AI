@@ -3,6 +3,7 @@
 ## 2026-10-23 — WP12: jam tick MT5 server ke UTC (#204)
 
 - Konversi timestamp dan jendela tick menggunakan offset jam broker yang terverifikasi, tanpa menebak saat bukti hilang.
+- Fixture tes Windows menutup koneksi SQLite dan membandingkan path kanonik; assertion fungsional tetap.
 - Regresi dua jalur legacy, integritas arsip +3 setelah peralihan +2, dan suite Windows lengkap ditambahkan; berkas terkunci tidak diubah.
 - Arsip hari ber-offset campuran ditandai GAP; konteks riset menolak hari lama tanpa basis waktu; LIVE OFF.
 
