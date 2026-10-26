@@ -46,6 +46,28 @@ class VerifiedServerUtcTests(unittest.TestCase):
         self.assertEqual(quote[2], due+1)
         self.assertEqual(broker.windows[0][0].timestamp(), due+10800)
 
+    def test_current_winter_shift_two_converts_without_fixed_summer_shift(self):
+        t = NOW.timestamp()
+        broker = ServerTickBroker([server_tick(t-2, shift=2)])
+        quote = last_past_quote(broker, "EURUSD.vx", NOW, server_shift_hours=2)
+        self.assertEqual(quote, (2000.0, 2000.1, t-2))
+        self.assertEqual(broker.windows[0][1], NOW + timedelta(hours=2))
+
+    def test_dst_boundary_requires_each_window_verified_shift(self):
+        before = datetime(2026, 10, 24, 12, tzinfo=UTC)
+        after = datetime(2026, 10, 26, 12, tzinfo=UTC)
+        old = ServerTickBroker([server_tick(before.timestamp()-1, shift=3)])
+        new = ServerTickBroker([server_tick(after.timestamp()-1, shift=2)])
+        self.assertEqual(last_past_quote(
+            old, "EURUSD.vx", before, server_shift_hours=3)[2],
+            before.timestamp()-1)
+        self.assertEqual(last_past_quote(
+            new, "EURUSD.vx", after, server_shift_hours=2)[2],
+            after.timestamp()-1)
+        # An old offset applied to the new window must not authorize a quote.
+        self.assertIsNone(last_past_quote(
+            new, "EURUSD.vx", after, server_shift_hours=3))
+
     def test_missing_or_invalid_shift_fails_closed(self):
         broker = ServerTickBroker([])
         with self.assertRaises(TypeError):
