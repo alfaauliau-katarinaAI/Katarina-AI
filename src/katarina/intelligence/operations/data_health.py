@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
 
@@ -191,13 +192,36 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
 
     # 4. broker clock shift recorded and stable (changes only around DST)
     shifts = [(c[0], c[3]) for c in cycles if c[3] is not None]
-    changes = [{"at_utc": b[0].isoformat(), "from": a[1], "to": b[1], "near_dst": _near_dst(b[0])}
-               for a, b in zip(shifts, shifts[1:]) if a[1] != b[1]]
+
+    def valid_shift(value):
+        # Server clock offsets are integral hours in the UTC timezone range.
+        # A nearby DST date alone does NOT justify a multi-hour jump.
+        try:
+            number = float(value)
+            return math.isfinite(number) and number.is_integer() and -12 <= number <= 14
+        except (TypeError, ValueError, OverflowError):
+            return False
+
+    changes = []
+    for a, b in zip(shifts, shifts[1:]):
+        if a[1] == b[1]:
+            continue
+        delta = b[1] - a[1]
+        nearby = _near_dst(b[0])
+        changes.append({"at_utc": b[0].isoformat(), "from": a[1],
+                        "to": b[1], "delta_hours": delta, "near_dst": nearby,
+                        "valid_step": nearby and abs(delta) == 1
+                        and valid_shift(a[1]) and valid_shift(b[1])})
     missing_shift = sum(1 for c in cycles if c[1] in ("OK", "PARTIAL") and c[3] is None)
+    invalid_shifts = sum(1 for _, value in shifts if not valid_shift(value))
     criteria.append(_criterion(
         "clock_shift_stable", "NO_DATA" if not shifts else
-        "PASS" if missing_shift == 0 and all(x["near_dst"] for x in changes) else "NOT_MET",
-        shifts_seen=sorted({s for _, s in shifts}), changes=changes, cycles_without_shift=missing_shift))
+        "PASS" if missing_shift == invalid_shifts == 0
+        and all(x["valid_step"] for x in changes) else "NOT_MET",
+        shifts_seen=sorted({s for _, s in shifts}), changes=changes,
+        invalid_shift_values=invalid_shifts,
+        invalid_transitions=sum(1 for x in changes if not x["valid_step"]),
+        cycles_without_shift=missing_shift))
 
     # 5. bid, ask and spread for every observed symbol in every cycle
     rows = [(datetime.fromisoformat(stamp), status, reason) for stamp, status, reason in db.execute(

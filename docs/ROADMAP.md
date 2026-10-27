@@ -4,6 +4,8 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 (dua aliran data, paralel vs berurutan, celah holdout dan PENDING, profil DEMO vs Stage 38) dan dirapikan
 23 Oktober 2026. Dokumen ini menjadi dasar pengembangan Katarina berikutnya.
 
+> **Audit jam Stage 0, 28 Oktober (untuk review Claude, belum merge):** pemeriksa lama salah memberi PASS untuk offset broker +3 → -4 → -7 → +2 jam karena seluruh perubahan dekat DST. Perbaikan memerlukan delta tepat 1 jam saat DST dan menolak offset noninteger. Replay ledger asli kini NOT_MET (3 transisi invalid); 18 tes unit PASS. Detail dan syarat perbaikan pemulihan observer di [handoff clock Stage 0](maintenance/STAGE0_CLOCK_HEALTH_HANDOFF_20261028.md). LIVE OFF, tidak ada perubahan VPS produksi.
+
 **Cara membaca dokumen ini**
 
 - Bagian 1–7 adalah **aturan tetap**: prinsip, kewenangan, pemisahan data, gerbang promosi, dan kriteria kelulusan

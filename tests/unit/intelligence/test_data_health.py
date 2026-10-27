@@ -139,6 +139,43 @@ class DataHealthTest(unittest.TestCase):
         criteria = by_name(data_health.assess(self.db, start + timedelta(days=5), interval_seconds=900))
         self.assertEqual(criteria["clock_shift_stable"]["status"], "PASS")
 
+    def test_large_clock_jump_near_dst_fails_closed(self):
+        start = datetime(2026, 10, 23, tzinfo=UTC)
+        fill(self.db, start, 4, every=900,
+             shift_change=(datetime(2026, 10, 24, 3, tzinfo=UTC), -4))
+        clock = by_name(data_health.assess(
+            self.db, start + timedelta(days=4), interval_seconds=900
+        ))["clock_shift_stable"]
+        self.assertEqual(clock["status"], "NOT_MET")
+        self.assertTrue(clock["changes"][0]["near_dst"])
+        self.assertEqual(clock["changes"][0]["delta_hours"], -7)
+        self.assertFalse(clock["changes"][0]["valid_step"])
+
+    def test_fractional_clock_offset_fails_closed(self):
+        start = datetime(2026, 10, 23, tzinfo=UTC)
+        fill(self.db, start, 1, every=900, shift=2.5)
+        clock = by_name(data_health.assess(
+            self.db, start + timedelta(days=1), interval_seconds=900
+        ))["clock_shift_stable"]
+        self.assertEqual(clock["status"], "NOT_MET")
+        self.assertGreater(clock["invalid_shift_values"], 0)
+
+    def test_stage0_real_shape_multi_jump_is_never_pass(self):
+        start = datetime(2026, 10, 23, tzinfo=UTC)
+        fill(self.db, start, 4, every=900)
+        for when, offset in (
+                (datetime(2026, 10, 24, 3, tzinfo=UTC), -4),
+                (datetime(2026, 10, 24, 7, tzinfo=UTC), -7),
+                (datetime(2026, 10, 25, 21, tzinfo=UTC), 2)):
+            self.db.execute(
+                "UPDATE observer_cycles SET clock_shift_hours=? WHERE observed_utc>=?",
+                (offset, when.isoformat()))
+        clock = by_name(data_health.assess(
+            self.db, start + timedelta(days=4), interval_seconds=900
+        ))["clock_shift_stable"]
+        self.assertEqual(clock["status"], "NOT_MET")
+        self.assertEqual([c["delta_hours"] for c in clock["changes"]], [-7, -3, 9])
+
     def test_dst_transitions_2026(self):
         self.assertEqual(data_health.dst_transitions(2026),
                          [date(2026, 3, 8), date(2026, 3, 29), date(2026, 10, 25), date(2026, 11, 1)])
