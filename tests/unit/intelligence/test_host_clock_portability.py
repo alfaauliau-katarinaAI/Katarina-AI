@@ -98,6 +98,15 @@ class BrokerClockPortabilityTests(unittest.TestCase):
         self.assertFalse(corroborate_clock_with_utc_history(
             finding,self.raw,{},self.now))
 
+    def test_three_fresh_two_stale_raw_symbols_still_prove_clock(self):
+        finding=infer_clock_shift(self.raw,self.now)
+        raw={**self.raw, "XAUUSD":int(self.now+3*3600-3800),
+             "NAS100":int(self.now+3*3600-3800)}
+        quotes={**self.history, "XAUUSD":(1.1,1.2,self.now-2),
+                "NAS100":(1.1,1.2,self.now-2)}
+        self.assertTrue(corroborate_clock_with_utc_history(
+            finding,raw,quotes,self.now))
+
     def test_crosscheck_rejects_mismatched_server_offset_and_stale_ticks(self):
         finding=infer_clock_shift(self.raw,self.now)
         late={x:(1.1,1.2,self.now-170) for x in self.symbols}

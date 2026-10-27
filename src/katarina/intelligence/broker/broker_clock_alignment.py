@@ -91,9 +91,11 @@ def corroborate_clock_with_utc_history(
         server_minus_utc = raw - tick_utc
         if abs(server_minus_utc - finding.observed_hours_shift * 3600) <= max_drift_seconds:
             confirmed += 1
-    return (confirmed >= min_symbols and
-            valid_history >= min_symbols and
-            confirmed / valid_history >= 0.70)
+    # Raw latest ticks can be stale for closed/quiet symbols even while
+    # three *other* symbols agree with fresh UTC history. Do not count stale
+    # snapshots as a veto against the independently fresh quorum; the
+    # candidate itself already required >=70% agreement among fresh votes.
+    return confirmed >= min_symbols
 
 
 # Canonical event-time conversion contract, recorded by the existing observer.
