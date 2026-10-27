@@ -40,7 +40,7 @@ class FakeTicks:
         return SimpleNamespace(point=0.00001, trade_tick_size=0.00001)
 
 
-def snapshot(db, when, quotes, cards=None, shift=3):
+def snapshot(db, when, quotes, cards=None, shift=0):
     cards = cards or {symbol: {"action": "WAIT"} for symbol in quotes}
     return ledger.record_snapshot(db, observed_utc=when, clock_shift_hours=shift, cards=cards, quotes=quotes)
 
@@ -59,7 +59,7 @@ class ObservationLedgerTest(unittest.TestCase):
         when = datetime(2026, 10, 20, 10, 0, 30, tzinfo=UTC)
         cycle = snapshot(self.db, when, {"EURUSD": (1.1, 1.10012, when.timestamp() - 2)},
                          cards={"EURUSD": {"action": "WAIT"},
-                                "XAUUSD": {"action": "WAIT", "sensor_reason": "no_past_broker_bidask_quote"}})
+                                "XAUUSD": {"action": "WAIT", "sensor_reason": "no_past_broker_bidask_quote"}},shift=3)
         rows = self.db.execute("SELECT symbol, status, bid, ask, round(spread,5), reason FROM observer_quotes "
                                "ORDER BY symbol").fetchall()
         self.assertEqual(rows, [("EURUSD", "OK", 1.1, 1.10012, 0.00012, None),
@@ -103,10 +103,10 @@ class ObservationLedgerTest(unittest.TestCase):
         bid = FakeTicks.price(epoch * 1000)
         snapshot(self.db, when, {"EURUSD": (bid, round(bid + 0.00012, 5), float(epoch))})
         mt5 = FakeTicks()
-        early = ledger.collect_tick_days(self.db, mt5, self.root, datetime(2026, 10, 21, 1, 0, tzinfo=UTC))
+        early = ledger.collect_tick_days(self.db, mt5, self.root, datetime(2026, 10, 21, 1, 0, tzinfo=UTC),server_shift_hours=0)
         self.assertEqual(early["collected"], [])
         self.assertEqual(mt5.calls, 0)
-        result = ledger.collect_tick_days(self.db, mt5, self.root, datetime(2026, 10, 21, 3, 0, tzinfo=UTC))
+        result = ledger.collect_tick_days(self.db, mt5, self.root, datetime(2026, 10, 21, 3, 0, tzinfo=UTC),server_shift_hours=0)
         self.assertEqual(result["collected"][0]["status"], "STORED")
         row = self.db.execute("SELECT status, ticks, snapshots_checked, snapshots_matched, file, sha256 "
                               "FROM broker_tick_days").fetchone()
@@ -114,14 +114,14 @@ class ObservationLedgerTest(unittest.TestCase):
         ticks = ledger.read_ticks(self.root / row[4])
         self.assertEqual(len(ticks), 8640)
         self.assertTrue(all(a[0] < b[0] for a, b in zip(ticks, ticks[1:])))
-        again = ledger.collect_tick_days(self.db, mt5, self.root, datetime(2026, 10, 21, 4, 0, tzinfo=UTC))
+        again = ledger.collect_tick_days(self.db, mt5, self.root, datetime(2026, 10, 21, 4, 0, tzinfo=UTC),server_shift_hours=0)
         self.assertEqual(again["collected"], [])
 
     def test_unavailable_hours_are_recorded_as_gaps_not_interpolated(self):
         when = datetime(2026, 10, 20, 10, 0, tzinfo=UTC)
         snapshot(self.db, when, {"EURUSD": (1.1, 1.10012, when.timestamp())})
         ledger.collect_tick_days(self.db, FakeTicks(unavailable_hours={4, 5}), self.root,
-                                 datetime(2026, 10, 21, 3, 0, tzinfo=UTC))
+                                 datetime(2026, 10, 21, 3, 0, tzinfo=UTC),server_shift_hours=0)
         status, ticks = self.db.execute("SELECT status, ticks FROM broker_tick_days").fetchone()
         self.assertEqual((status, ticks), ("STORED_WITH_GAPS", 8640 - 720))
         gaps = self.db.execute("SELECT start_utc, end_utc, reason FROM data_gaps ORDER BY start_utc").fetchall()
@@ -131,7 +131,7 @@ class ObservationLedgerTest(unittest.TestCase):
     def test_mismatching_snapshot_is_not_reconciled(self):
         when = datetime(2026, 10, 20, 10, 0, tzinfo=UTC)
         snapshot(self.db, when, {"EURUSD": (1.2, 1.20012, when.timestamp())})
-        ledger.collect_tick_days(self.db, FakeTicks(), self.root, datetime(2026, 10, 21, 3, 0, tzinfo=UTC))
+        ledger.collect_tick_days(self.db, FakeTicks(), self.root, datetime(2026, 10, 21, 3, 0, tzinfo=UTC),server_shift_hours=0)
         self.assertEqual(self.db.execute("SELECT snapshots_checked, snapshots_matched FROM broker_tick_days")
                          .fetchone(), (1, 0))
 
@@ -141,14 +141,68 @@ class ObservationLedgerTest(unittest.TestCase):
         mt5 = FakeTicks(unavailable_hours=set(range(24)))
         clock = datetime(2026, 10, 21, 3, 0, tzinfo=UTC)
         for attempt in range(1, 4):
-            result = ledger.collect_tick_days(self.db, mt5, self.root, clock)
+            result = ledger.collect_tick_days(self.db, mt5, self.root, clock,server_shift_hours=0)
             self.assertEqual(len(result["collected"]), 1)
-            immediate = ledger.collect_tick_days(self.db, mt5, self.root, clock + timedelta(minutes=1))
+            immediate = ledger.collect_tick_days(self.db, mt5, self.root, clock + timedelta(minutes=1),server_shift_hours=0)
             self.assertEqual(immediate["collected"], [])
             clock += timedelta(hours=2)
         self.assertEqual(self.db.execute("SELECT status, attempts FROM broker_tick_days").fetchone(), ("GAP", 3))
         self.assertEqual(self.db.execute("SELECT reason FROM data_gaps").fetchone()[0],
                          "NO_BROKER_TICKS_FOR_OBSERVED_DAY")
+
+    def test_server_plus_three_is_stored_as_utc_and_reconciled(self):
+        when = datetime(2026, 10, 20, 10, 0, 5, tzinfo=UTC)
+        epoch = (int(when.timestamp()) // 10) * 10
+        bid = FakeTicks.price((epoch + 10800) * 1000)
+        snapshot(self.db, when, {"EURUSD": (bid, round(bid + .00012, 5),
+                                            float(epoch))}, shift=3)
+        result = ledger.collect_tick_days(self.db, FakeTicks(), self.root,
+            datetime(2026, 10, 21, 3, 0, tzinfo=UTC), server_shift_hours=3)
+        self.assertEqual(result["collected"][0]["status"], "STORED")
+        row = self.db.execute("SELECT file,first_epoch,snapshots_matched,server_shift_hours "
+                              "FROM broker_tick_days").fetchone()
+        self.assertEqual(row[1], datetime(2026, 10, 20, tzinfo=UTC).timestamp())
+        self.assertEqual(row[2:], (1, 3))
+        self.assertEqual(ledger.read_ticks(self.root / row[0])[0][0],
+                         int(row[1] * 1000))
+
+    def test_mixed_verified_shifts_do_not_create_guess_archive(self):
+        start = datetime(2026, 10, 20, 10, 0, tzinfo=UTC)
+        for minutes, shift in ((0, 3), (1, 2)):
+            moment = start + timedelta(minutes=minutes)
+            snapshot(self.db, moment, {"EURUSD": (1.1, 1.10012,
+                                                  moment.timestamp())}, shift=shift)
+        mt5 = FakeTicks()
+        out = ledger.collect_tick_days(self.db, mt5, self.root,
+            datetime(2026, 10, 21, 3, 0, tzinfo=UTC), server_shift_hours=3)
+        self.assertEqual(out["collected"][0]["status"], "GAP")
+        self.assertEqual(mt5.calls, 0)
+        self.assertEqual(self.db.execute("SELECT reason FROM broker_tick_days").fetchone()[0],
+                         "BROKER_SHIFT_CHANGED_DURING_DAY")
+
+    def test_historical_summer_day_keeps_its_shift_after_winter_transition(self):
+        import gzip
+        import hashlib
+        when = datetime(2026, 10, 23, 10, tzinfo=UTC)
+        epoch = int(when.timestamp())
+        bid = FakeTicks.price((epoch + 10800) * 1000)
+        snapshot(self.db, when, {"EURUSD": (bid, round(bid + .00012, 5), epoch)}, shift=3)
+        result = ledger.collect_tick_days(self.db, FakeTicks(), self.root,
+            datetime(2026, 10, 26, 12, tzinfo=UTC), server_shift_hours=2)
+        self.assertEqual(result["collected"][0]["status"], "STORED")
+        row = self.db.execute("SELECT file,sha256,server_shift_hours,snapshots_matched "
+                              "FROM broker_tick_days").fetchone()
+        raw = gzip.decompress((self.root / row[0]).read_bytes())
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), row[1])
+        self.assertEqual(row[2:], (3, 1))
+        ticks = ledger.read_ticks(self.root / row[0])
+        start = int(when.replace(hour=0).timestamp()) * 1000
+        self.assertEqual(ticks[0][0], start)
+        self.assertTrue(all(start <= tick[0] < start + 86400000 for tick in ticks))
+        original = (self.root / row[0]).read_bytes()
+        self.assertEqual(ledger.collect_tick_days(self.db, FakeTicks(), self.root,
+            datetime(2026, 10, 27, 12, tzinfo=UTC), server_shift_hours=2)["collected"], [])
+        self.assertEqual((self.root / row[0]).read_bytes(), original)
 
     def test_tick_archive_is_byte_identical_for_identical_ticks(self):
         first = self.root / "a.csv.gz"

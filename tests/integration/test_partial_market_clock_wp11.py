@@ -25,6 +25,10 @@ class PartiallyClosedBroker(SyntheticBroker):
                                bid=2000., ask=2000.1)
 
 
+    def copy_ticks_range(self, symbol, start, end, flags):
+        return [{'time_msc': (self.now+10800) * 1000, 'bid': 2000., 'ask': 2000.1}]
+
+
 class PartialClockCycleTests(unittest.TestCase):
     def test_three_fresh_two_stale_snapshots_do_not_fail_whole_cycle(self):
         broker = PartiallyClosedBroker()

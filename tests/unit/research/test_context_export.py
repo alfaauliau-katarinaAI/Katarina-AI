@@ -52,11 +52,18 @@ class ContextExportTest(unittest.TestCase):
         key = day.date().isoformat()
         path = ledger.tick_path(self.root, SYMBOL, key)
         digest = ledger._write_ticks(path, day_ticks(day))
-        self.db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file) VALUES(?,?,?,?,?)",
-                        (SYMBOL, key, status, digest, path.relative_to(self.root).as_posix()))
+        self.db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file, server_shift_hours) VALUES(?,?,?,?,?,?)",
+                        (SYMBOL, key, status, digest, path.relative_to(self.root).as_posix(), 0))
 
     def export(self, signals, **overrides):
         return export_contexts(self.db, self.root, signals, **{**PARAMS, **overrides})
+
+    def test_legacy_tick_day_without_clock_basis_is_not_exported(self):
+        self.db.execute("UPDATE broker_tick_days SET server_shift_hours=NULL")
+        at = datetime(2026, 1, 5, 9, 0, 5, tzinfo=UTC)
+        rows, manifest = self.export([signal("legacy", at)])
+        self.assertEqual(rows, [])
+        self.assertEqual(manifest["missing"][0]["reason"], "TICK_CLOCK_BASIS_UNKNOWN")
 
     def test_contexts_are_causal_verified_and_stage2_compatible(self):
         at = datetime(2026, 1, 5, 9, 0, 5, tzinfo=UTC)

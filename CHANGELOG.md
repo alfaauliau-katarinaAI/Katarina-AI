@@ -1,5 +1,23 @@
 # Perubahan material Katarina AI
 
+## 2026-10-27 — integrasi terisolasi DC akun kedua (belum merge/deploy)
+
+- Gabungkan perbaikan UTC broker WP12 (#204) dan shadow decision WP9b (#205) di worktree terpisah, tetap `legacy_fail_closed`, 0 order; tes tertarget 5+2+5+2 PASS.
+- Port hanya 3 berkas WP8a (#195) dari branch berbasis `main` lama agar tidak menghapus WP2/WP3/WP9a/WP11; tambah prasyarat bukti offset bar historis per chunk (`INDEPENDENT_UTC`, hash sumber), query server dan cutoff setelah normalisasi; 12 tes WP8a PASS termasuk dua chunk shift DST berbeda; gabungan 66 tes tertarget PASS.
+- Bukti offset historis/DST broker independen **belum tersedia**; ekspor MT5 asli sengaja fail-closed. Static suite VPS 71 tes: 69 PASS, 2 FAIL karena Python VPS belum memiliki numpy untuk modul lama historical_analog_memory; full CI GitHub dan penerapan VPS belum dilakukan. Handoff dan urutan review di [docs/maintenance/INTEGRATION_HANDOFF_20261027.md](docs/maintenance/INTEGRATION_HANDOFF_20261027.md).
+
+## 2026-10-27 — usulan agentic AI untuk review Claude
+
+- Atas permintaan Owner, catat lima fondasi perbaikan, kemampuan agentic dan target auditor data di roadmap.
+- Usulan belum menjadi paket implementasi; gerbang tahap/promosi tetap, tanpa perubahan runtime, LIVE OFF.
+
+## 2026-10-23 — WP12: jam tick MT5 server ke UTC (#204)
+
+- Konversi timestamp dan jendela tick menggunakan offset jam broker yang terverifikasi, tanpa menebak saat bukti hilang.
+- Fixture tes Windows menutup koneksi SQLite dan membandingkan path kanonik; assertion fungsional tetap.
+- Regresi dua jalur legacy, integritas arsip +3 setelah peralihan +2, dan suite Windows lengkap ditambahkan; berkas terkunci tidak diubah.
+- Arsip hari ber-offset campuran ditandai GAP; konteks riset menolak hari lama tanpa basis waktu; LIVE OFF.
+
 ## 2026-10-23 — status setelah merge; temuan T11 dan paket WP12
 
 - WP2, WP3, WP9a, WP11 di-merge dan diterapkan ke VPS (`d8b003a`, manifest MATCH); 5 simbol sejak 00:16 UTC.

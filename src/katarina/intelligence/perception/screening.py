@@ -197,7 +197,10 @@ def screen(rows, context, now, limit=5):
 
 
 def collect(mt5, terminal_path):
-    """No order API. Uses a specified research terminal; never arbitrary default."""
+    """No order API. Legacy acquisition must not label broker bars as UTC."""
+    # WP12: closed-bar/session history has no per-batch DST clock evidence.
+    # Do not allow this deprecated path to emit misleading UTC timestamps.
+    raise RuntimeError("BROKER_BAR_CLOCK_NOT_VERIFIED_WP12")
     if not mt5.initialize(terminal_path,timeout=15000):
         raise RuntimeError("research_terminal_unavailable")
     try:

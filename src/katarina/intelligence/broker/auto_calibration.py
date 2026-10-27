@@ -81,12 +81,13 @@ def calibrate_due(context,broker,root,now,*,emit=lambda *a,**k:None):
             if len(raw)>2_000_000:raise ValueError('CLOCK_SNAPSHOT_TOO_LARGE')
             reference=json.loads(raw)['time_reference'];observed=datetime.fromisoformat(reference['observed_at_utc'])
             base=reference.get('broker_server_shift_minutes')
-            if observed.tzinfo is None or not 0<=stamp-observed.timestamp()<=180 or type(base) is not int or reference.get('confirming_symbols',0)<3 or reference.get('canonical_market_clock')!='MT5_COPY_TICKS_RANGE_TIME_MSC_UTC':
+            if observed.tzinfo is None or not 0<=stamp-observed.timestamp()<=180 or type(base) is not int or base%60 or not -720<=base<=840 or reference.get('confirming_symbols',0)<3 or reference.get('canonical_market_clock')!='MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC':
                 raise ValueError('CURRENT_CLOCK_REFERENCE_UNVERIFIED')
             info=broker.symbol_info(symbol)
             if info is None or getattr(info,'chart_mode',None)!=0:raise ValueError('BID_CHART_SOURCE_NOT_VERIFIED')
             broker.symbol_select(symbol,True)
             historical=bool(pending[3]) if pending else visits%2==1 or (visits==0 and attempt_index%2==1)
+            if historical:raise ValueError('HISTORICAL_SHIFT_REQUIRES_PROOF')
             if pending:rates=json.loads(pending[2])
             elif historical:
                 boundary=cursor or int(stamp+base*60)-270*86400
@@ -113,16 +114,16 @@ def calibrate_due(context,broker,root,now,*,emit=lambda *a,**k:None):
                     start=int(bar['time'])-offset*60;end=start+300
                     ticks=None
                     if end<=stamp:
-                        ticks=broker.copy_ticks_range(symbol,datetime.fromtimestamp(start,timezone.utc),datetime.fromtimestamp(end,timezone.utc),broker.COPY_TICKS_INFO)
+                        ticks=broker.copy_ticks_range(symbol,datetime.fromtimestamp(start+base*60,timezone.utc),datetime.fromtimestamp(end+base*60,timezone.utc),broker.COPY_TICKS_INFO)
                         # The API's right boundary may be inclusive; only the
                         # exact half-open candle interval belongs to this proof.
-                        if ticks is not None and len(ticks)<=25000:ticks=[r for r in ticks if start*1000<=int(r['time_msc'])<end*1000]
+                        if ticks is not None and len(ticks)<=25000:ticks=[{'time_msc':int(r['time_msc'])-base*60000,'bid':float(r['bid']),'ask':float(r['ask'])} for r in ticks if start*1000<=int(r['time_msc'])-base*60000<end*1000]
                     finding=compare_window(bar,ticks,offset,stamp,float(info.point))
                     finding['tick_source']='COPY_TICKS_INFO'
                     all_ticks=getattr(broker,'COPY_TICKS_ALL',None)
                     if finding['reason']=='TICK_VOLUME_COVERAGE_MISMATCH' and type(all_ticks) is int:
-                        ticks=broker.copy_ticks_range(symbol,datetime.fromtimestamp(start,timezone.utc),datetime.fromtimestamp(end,timezone.utc),all_ticks)
-                        if ticks is not None and len(ticks)<=25000:ticks=[r for r in ticks if start*1000<=int(r['time_msc'])<end*1000]
+                        ticks=broker.copy_ticks_range(symbol,datetime.fromtimestamp(start+base*60,timezone.utc),datetime.fromtimestamp(end+base*60,timezone.utc),all_ticks)
+                        if ticks is not None and len(ticks)<=25000:ticks=[{'time_msc':int(r['time_msc'])-base*60000,'bid':float(r['bid']),'ask':float(r['ask'])} for r in ticks if start*1000<=int(r['time_msc'])-base*60000<end*1000]
                         finding=compare_window(bar,ticks,offset,stamp,float(info.point))
                         finding.update(tick_source='COPY_TICKS_ALL',initial_stream_reason='TICK_VOLUME_COVERAGE_MISMATCH')
                     evidence.append(finding)

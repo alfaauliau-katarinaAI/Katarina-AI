@@ -92,7 +92,7 @@ class UnifiedKatarinaBrain:
                     lock.close()
 
     @classmethod
-    def observe_once(cls, root, *, broker=None, max_symbols=17, fetch_news=True, universe=None):
+    def observe_once(cls, root, *, broker=None, max_symbols=17, fetch_news=True, universe=None, decision_inputs=None):
         """Own exactly one bounded observation, including cleanup on every failure."""
         from pathlib import Path
         from katarina.intelligence.cognition.observer import BrainObserver, lock_worker
@@ -128,7 +128,8 @@ class UnifiedKatarinaBrain:
             brain.observer = BrainObserver(brain, broker, root)
             brain.control.audit_phase("OBSERVING")
             result = brain.observer.run(max_symbols=max_symbols, fetch_news=fetch_news,
-                **({'universe': universe} if universe is not None else {}))
+                **({'universe': universe} if universe is not None else {}),
+                **({'decision_inputs': decision_inputs} if decision_inputs is not None else {}))
             brain.control.audit_phase("COMPLETE")
             brain.control.checkpoint()
             return result
@@ -263,7 +264,7 @@ class UnifiedKatarinaBrain:
         if self.shadow_book is None:
             self.shadow_book = ProspectiveShadowBook(self.shadow_db)
 
-    def observe_connected_market(self, root, broker, *, max_symbols=3, fetch_news=False, universe=None):
+    def observe_connected_market(self, root, broker, *, max_symbols=3, fetch_news=False, universe=None, decision_inputs=None):
         """A dialog-owned sensor pass reuses its brain, DB and already-held host lock."""
         from katarina.intelligence.cognition.observer import BrainObserver
         if self.context_store is None:
@@ -288,7 +289,8 @@ class UnifiedKatarinaBrain:
             self.observer = BrainObserver(self, broker, root)
             self.control.audit_phase('OBSERVING')
             result = self.observer.run(max_symbols=max_symbols, fetch_news=fetch_news,
-                **({'universe': universe} if universe is not None else {}))
+                **({'universe': universe} if universe is not None else {}),
+                **({'decision_inputs': decision_inputs} if decision_inputs is not None else {}))
             self.control.audit_phase('COMPLETE')
             self.control.checkpoint()
             return result

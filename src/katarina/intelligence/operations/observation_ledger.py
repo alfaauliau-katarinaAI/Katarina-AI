@@ -72,6 +72,14 @@ def setup(db) -> None:
         verified INTEGER NOT NULL,
         failures_json TEXT NOT NULL,
         PRIMARY KEY(cycle_id, source));
+    CREATE TABLE IF NOT EXISTS decision_shadow(
+        cycle_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        action TEXT NOT NULL,
+        conditional_side TEXT NOT NULL,
+        blockers_json TEXT NOT NULL,
+        UNIQUE(cycle_id, symbol, mode));
     CREATE TABLE IF NOT EXISTS broker_tick_days(
         symbol TEXT NOT NULL,
         day TEXT NOT NULL,
@@ -106,6 +114,8 @@ def setup(db) -> None:
         recorded_utc TEXT NOT NULL,
         UNIQUE(stream, symbol, start_utc, end_utc));
     """)
+    if "server_shift_hours" not in {row[1] for row in db.execute("PRAGMA table_info(broker_tick_days)")}:
+        db.execute("ALTER TABLE broker_tick_days ADD COLUMN server_shift_hours INTEGER")
     db.commit()
 
 
@@ -194,6 +204,48 @@ def record_news(db, cycle_id: str, summary: dict) -> int:
             "in_window=excluded.in_window,verified=excluded.verified,"
             "failures_json=excluded.failures_json",rows)
     return len(rows)
+
+
+
+def previous_cycle_recorded(db, *, before_utc: datetime) -> bool:
+    """A distinct earlier ledger snapshot must exist; the current pass never counts."""
+    setup(db)
+    row = db.execute(
+        "SELECT 1 FROM observer_cycles WHERE observed_utc < ? "
+        "AND status != 'ATTEMPT_FAILED' LIMIT 1",
+        (_utc(before_utc).isoformat(),),
+    ).fetchone()
+    return row is not None
+
+
+def record_decision_shadow(
+    db, cycle_id: str, *, symbol: str, mode: str,
+    action: str, conditional_side: str, blockers,
+) -> None:
+    """WP9b: persist counterfactual decisions; never submit a broker order."""
+    from katarina.intelligence.cognition.decision_inputs import VALID_MODES
+
+    setup(db)
+    if (
+        not isinstance(cycle_id, str) or not cycle_id
+        or not isinstance(symbol, str) or not symbol
+        or mode not in VALID_MODES
+        or action not in ("WAIT", "PAPER_OBSERVATION_ONLY")
+        or conditional_side not in ("WAIT", "BUY", "SELL")
+        or not isinstance(blockers, (tuple, list))
+        or any(type(item) is not str for item in blockers)
+    ):
+        raise ValueError("INVALID_DECISION_SHADOW")
+    with db:
+        db.execute(
+            "INSERT INTO decision_shadow(cycle_id,symbol,mode,action,conditional_side,blockers_json) "
+            "VALUES(?,?,?,?,?,?) "
+            "ON CONFLICT(cycle_id,symbol,mode) DO UPDATE SET "
+            "action=excluded.action,conditional_side=excluded.conditional_side,"
+            "blockers_json=excluded.blockers_json",
+            (cycle_id, symbol, mode, action, conditional_side,
+             json.dumps(list(blockers), sort_keys=True)),
+        )
 
 
 def close_cycle(db, *, finished_utc: datetime, cycle_id=None, status: str, reason=None,
@@ -290,12 +342,14 @@ def fx_session_open(moment: datetime) -> bool:
     return not (20 * 60 + 45 <= minutes < 21 * 60 + 15)
 
 
-def _download_day(mt5, symbol: str, day_start: datetime, path: Path):
+def _download_day(mt5, symbol: str, day_start: datetime, path: Path, *, server_shift_hours):
     """Stream one completed broker UTC day; never materialize a whole tick-day.
 
     Return (count, first_ms, last_ms, CSV_sha256, gaps, hour_index).
     Each index entry stores the *uncompressed* CSV data row boundaries.
     """
+    from katarina.intelligence.broker.causal_broker_quotes import utc_to_server_datetime
+    utc_to_server_datetime(day_start, server_shift_hours)
     day_start = _utc(day_start)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -323,7 +377,8 @@ def _download_day(mt5, symbol: str, day_start: datetime, path: Path):
                 for hour in range(24):
                     start = day_start + timedelta(hours=hour)
                     end = start + timedelta(hours=1)
-                    rows = mt5.copy_ticks_range(symbol, start, end, flag)
+                    rows = mt5.copy_ticks_range(symbol, utc_to_server_datetime(start, server_shift_hours),
+                                                 utc_to_server_datetime(end, server_shift_hours), flag)
                     if rows is None:
                         gaps.append((start, end, "BROKER_HISTORY_UNAVAILABLE"))
                         continue
@@ -335,7 +390,7 @@ def _download_day(mt5, symbol: str, day_start: datetime, path: Path):
                     kept = 0
                     for row in rows:
                         try:
-                            msc = int(row["time_msc"])
+                            msc = int(row["time_msc"]) - server_shift_hours * 3600000
                             bid, ask = float(row["bid"]), float(row["ask"])
                             flags = int(row["flags"]) if "flags" in _names(row) else 0
                         except (KeyError, TypeError, ValueError, IndexError):
@@ -484,9 +539,11 @@ def _reconcile_archive(db, symbol: str, day: str, path: Path, hour_index, tick_s
     return len(snapshots), matched
 
 
-def collect_tick_days(db, mt5, root, now: datetime, *, budget: int = 1) -> dict:
+def collect_tick_days(db, mt5, root, now: datetime, *, server_shift_hours, budget: int = 1) -> dict:
     """Download at most ``budget`` completed, observed symbol-days of broker ticks."""
     setup(db)
+    from katarina.intelligence.broker.causal_broker_quotes import utc_to_server_datetime
+    utc_to_server_datetime(now, server_shift_hours)
     now = _utc(now)
     if type(budget) is not int or not 1 <= budget <= 7:
         raise ValueError("tick_budget_1_to_7")
@@ -496,11 +553,27 @@ def collect_tick_days(db, mt5, root, now: datetime, *, budget: int = 1) -> dict:
         previous = db.execute("SELECT attempts FROM broker_tick_days WHERE symbol=? AND day=?",
                               (symbol, day)).fetchone()
         attempts = (previous[0] if previous else 0) + 1
+        observed_shifts = {row[0] for row in db.execute(
+            "SELECT clock_shift_hours FROM observer_cycles "
+            "WHERE substr(observed_utc,1,10)=?", (day,))}
+        if (len(observed_shifts) != 1 or
+                any(x is None or x != int(x) or not -12 <= x <= 14 for x in observed_shifts)):
+            with db:
+                _record_gap(db, "broker_ticks", symbol, day_start, day_start + timedelta(days=1),
+                            "BROKER_SHIFT_CHANGED_DURING_DAY", now)
+                db.execute("INSERT INTO broker_tick_days(symbol,day,status,attempts,reason) "
+                           "VALUES(?,?,'GAP',?,?) ON CONFLICT(symbol,day) DO UPDATE SET "
+                           "status='GAP', attempts=excluded.attempts, reason=excluded.reason",
+                           (symbol, day, attempts, "BROKER_SHIFT_CHANGED_DURING_DAY"))
+            done.append({"symbol":symbol,"day":day,"status":"GAP",
+                         "reason":"BROKER_SHIFT_CHANGED_DURING_DAY"})
+            continue
+        day_shift = int(next(iter(observed_shifts)))
         info = mt5.symbol_info(symbol)
         tick_size = _finite(getattr(info, "trade_tick_size", None)) or _finite(getattr(info, "point", None))
         path = tick_path(root, symbol, day)
         count, first_ms, last_ms, digest, gaps, hour_index = _download_day(
-            mt5, symbol, day_start, path)
+            mt5, symbol, day_start, path, server_shift_hours=day_shift)
         whole_day_missing = not count and any(reason == "BROKER_HISTORY_UNAVAILABLE" for *_, reason in gaps)
         with db:
             if whole_day_missing and attempts < TICK_MAX_ATTEMPTS:
@@ -524,17 +597,17 @@ def collect_tick_days(db, mt5, root, now: datetime, *, budget: int = 1) -> dict:
                 checked, matched = _reconcile_archive(db, symbol, day, path, hour_index, tick_size)
             db.execute(
                 "INSERT INTO broker_tick_days(symbol, day, status, attempts, next_epoch, ticks, first_epoch, "
-                "last_epoch, sha256, file, collected_utc, reason, snapshots_checked, snapshots_matched, tick_size) "
-                "VALUES(?,?,?,?,0,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(symbol, day) DO UPDATE SET "
+                "last_epoch, sha256, file, collected_utc, reason, snapshots_checked, snapshots_matched, tick_size, server_shift_hours) "
+                "VALUES(?,?,?,?,0,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(symbol, day) DO UPDATE SET "
                 "status=excluded.status, attempts=excluded.attempts, next_epoch=0, ticks=excluded.ticks, "
                 "first_epoch=excluded.first_epoch, last_epoch=excluded.last_epoch, sha256=excluded.sha256, "
                 "file=excluded.file, collected_utc=excluded.collected_utc, reason=excluded.reason, "
                 "snapshots_checked=excluded.snapshots_checked, snapshots_matched=excluded.snapshots_matched, "
-                "tick_size=excluded.tick_size",
+                "tick_size=excluded.tick_size, server_shift_hours=excluded.server_shift_hours",
                 (symbol, day, status, attempts, count,
                  first_ms / 1000 if count else None, last_ms / 1000 if count else None,
                  digest, file_name, now.isoformat(), None if status == "STORED" else "GAPS_RECORDED",
-                 checked, matched, tick_size))
+                 checked, matched, tick_size, day_shift))
         done.append({"symbol": symbol, "day": day, "status": status, "ticks": count,
                      "gaps": len(gaps), "snapshots_checked": checked, "snapshots_matched": matched})
     return {"schema_version": SCHEMA_VERSION, "collected": done,

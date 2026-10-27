@@ -7,9 +7,8 @@ number, server, balance, equity, or credentials are emitted.
 Run (using an existing MT5-connected Python environment)::
     PYTHONPATH=src python scripts/mt5/audit_readonly_quotes.py --max-age-seconds 180
 
-Production observation deliberately uses bounded historical UTC Bid/Ask ticks;
-raw terminal tick timestamps can be broker-local and appear hours in the
-future. Historical ticks are quote provenance, NOT witnessed trade fills.
+Historical ticks carry broker-server labels. Without a multisymbol-verified
+current clock shift, no historical quote is accepted as UTC evidence. Historical ticks are quote provenance, NOT witnessed trade fills.
 """
 from __future__ import annotations
 
@@ -87,7 +86,7 @@ def quote_snapshot(symbol: str, info: Any, tick: Any, *, now_ms: int,
 
 def observe(mt5: Any, *, symbols: tuple[str, ...], now_ms: int,
             max_age_ms: int, terminal_path: str | None = None,
-            historical_quote_reader: Any = None) -> dict[str, Any]:
+            historical_quote_reader: Any = None, server_shift_hours=None) -> dict[str, Any]:
     """Only invokes read-only MetaTrader5 APIs; does not select symbols."""
     result: dict[str, Any] = {
         "proof_type": "KATARINA_MT5_READ_ONLY_QUOTE_SNAPSHOT",
@@ -134,15 +133,25 @@ def observe(mt5: Any, *, symbols: tuple[str, ...], now_ms: int,
         if not connected or account is None:
             result["reason"] = "terminal_disconnected_or_account_unavailable"
             return result
+        if historical_quote_reader is not None and server_shift_hours is None:
+            from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift
+            votes = {}
+            for name in symbols:
+                sample = mt5.symbol_info_tick(name)
+                if (sample is not None and getattr(sample, "bid", 0) > 0 and
+                        getattr(sample, "ask", 0) >= sample.bid):
+                    votes[name] = int(sample.time)
+            finding = infer_clock_shift(votes, now_ms / 1000)
+            server_shift_hours = finding.observed_hours_shift if finding.suitable_for_readonly_snapshot else None
         for symbol in symbols:
             info = mt5.symbol_info(symbol)
             source = "RAW_TERMINAL_TIMESTAMP_DIAGNOSTIC"
             if historical_quote_reader is not None:
-                source = "MT5_HISTORICAL_UTC_BID_ASK_READONLY"
+                source = "MT5_HISTORICAL_SERVER_CONVERTED_UTC_BID_ASK_READONLY"
                 historical = (historical_quote_reader(
                     mt5, symbol, datetime.fromtimestamp(now_ms / 1000, timezone.utc),
-                    lookback_seconds=max_age_ms / 1000)
-                    if info is not None else None)
+                    lookback_seconds=max_age_ms / 1000,server_shift_hours=server_shift_hours)
+                    if info is not None and server_shift_hours is not None else None)
                 # The existing causal reader returns (bid, ask, UTC epoch sec).
                 # Never fall back to broker-local raw timestamps on failure.
                 tick = (SimpleNamespace(bid=historical[0], ask=historical[1],

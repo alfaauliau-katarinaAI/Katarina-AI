@@ -38,7 +38,7 @@ def assess_foundation(report: dict, *, expected_symbols: int = 17) -> dict:
     counts = shadow.get("counts") or {}
     broker_clock_ok = (
         timeref.get("canonical_market_clock") ==
-        "MT5_COPY_TICKS_RANGE_TIME_MSC_UTC"
+        "MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC"
         and timeref.get("historical_dst_verified") is False
         and isinstance(timeref.get("confirming_symbols"), int)
         and timeref["confirming_symbols"] >= min(expected_symbols, 5)
