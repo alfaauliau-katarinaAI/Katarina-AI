@@ -231,7 +231,7 @@ def export_dev_bars(broker, core, *, start, out, end=DEV_CUTOFF_UTC,
     return manifest
 
 
-def _read_archive(path, record, start, end):
+def _iter_archive(path, record, start, end):
     if not path.is_file() or path.is_symlink():
         raise ValidationError("development_file_missing")
     with path.open("rb") as source:
@@ -254,7 +254,7 @@ def _read_archive(path, record, start, end):
             reader = csv.DictReader(stream)
             if tuple(reader.fieldnames or ()) != CSV_FIELDS:
                 raise ValidationError("development_csv_header_invalid")
-            rows = []
+            count, first, last, previous = 0, None, None, None
             for item in reader:
                 opened = _utc(item["time_utc"])
                 closed = _utc(item["closed_at_utc"])
@@ -269,25 +269,32 @@ def _read_archive(path, record, start, end):
                     **{col: int(item[col]) for col in ("tick_volume", "spread", "real_volume")}}
                 if _row(original, TIMEFRAMES[record["timeframe"]], start, end) is None:
                     raise ValidationError("development_bar_outside_export_range")
-                if rows and opened <= _utc(rows[-1]["time_utc"]):
+                if previous is not None and opened <= previous:
                     raise ValidationError("DEVELOPMENT_BARS_NOT_MONOTONIC")
-                rows.append({**item, "open": original["open"],
-                             "high": original["high"], "low": original["low"],
-                             "close": original["close"], "tick_volume": original["tick_volume"],
-                             "spread": original["spread"], "real_volume": original["real_volume"]})
+                count += 1
+                if count > record["bars"]:
+                    raise ValidationError("development_file_row_count_mismatch")
+                first = first or item["time_utc"]
+                last = item["time_utc"]
+                previous = opened
+                yield {**item, "open": original["open"],
+                       "high": original["high"], "low": original["low"],
+                       "close": original["close"], "tick_volume": original["tick_volume"],
+                       "spread": original["spread"], "real_volume": original["real_volume"]}
     except (OSError, EOFError, UnicodeError, csv.Error, KeyError, ValueError) as error:
         if isinstance(error, ValidationError):
             raise
         raise ValidationError("development_csv_invalid") from error
-    if (len(rows) != record["bars"]
-            or (rows[0]["time_utc"] if rows else None) != record["first_utc"]
-            or (rows[-1]["time_utc"] if rows else None) != record["last_utc"]):
+    if (count != record["bars"]
+            or first != record["first_utc"] or last != record["last_utc"]):
         raise ValidationError("development_file_row_count_mismatch")
-    return rows
 
 
-def load_dev_dataset(path):
-    """Offline verified development bars by symbol/timeframe; no MT5 or network."""
+def _read_archive(path, record, start, end):
+    return list(_iter_archive(path, record, start, end))
+
+
+def _validated_manifest(path):
     root = Path(path)
     try:
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -304,13 +311,47 @@ def load_dev_dataset(path):
     expected = {symbol + "/" + tf + ".csv.gz" for symbol in symbols for tf in TIMEFRAMES}
     if set(manifest["files"]) != expected:
         raise ValidationError("development_manifest_files_invalid")
+    for key, record in manifest["files"].items():
+        if (not isinstance(record, dict)
+                or not isinstance(record.get("symbol"), str)
+                or not isinstance(record.get("timeframe"), str)
+                or record["symbol"] + "/" + record["timeframe"] + ".csv.gz" != key
+                or type(record.get("bars")) is not int or record["bars"] < 0):
+            raise ValidationError("development_manifest_metadata_invalid")
+    return root, manifest, start, end, symbols
+
+
+def iter_dev_bars(path, symbol, timeframe):
+    """Bounded-RAM reader for one development archive; consume FULL iterator.
+
+    SHA-256 is checked before streaming. Final count and last-bar checks are
+    performed at exhaustion, so prematurely stopping cannot certify a file.
+    """
+    root, manifest, start, end, symbols = _validated_manifest(path)
+    if symbol not in symbols or timeframe not in TIMEFRAMES:
+        raise ValidationError("development_symbol_or_timeframe_invalid")
+    key = symbol + "/" + timeframe + ".csv.gz"
+    record = manifest["files"][key]
+    return _iter_archive(root / key, record, start, end)
+
+
+def load_dev_dataset(path, *, max_total_bars=100_000):
+    """Eager offline loader with a 2GB-VPS memory guard.
+
+    Large research datasets should instead use iter_dev_bars() per archive.
+    The cap covers all symbols/timeframes, not each file individually.
+    """
+    if type(max_total_bars) is not int or max_total_bars < 1:
+        raise ValidationError("development_memory_budget_invalid")
+    root, manifest, start, end, symbols = _validated_manifest(path)
+    total = sum(record["bars"] for record in manifest["files"].values())
+    if total > max_total_bars:
+        raise ValidationError("development_dataset_exceeds_memory_budget")
     output = {}
     for symbol in symbols:
         output[symbol] = {}
         for timeframe in TIMEFRAMES:
             key = symbol + "/" + timeframe + ".csv.gz"
             record = manifest["files"][key]
-            if record["symbol"] != symbol or record["timeframe"] != timeframe:
-                raise ValidationError("development_manifest_metadata_invalid")
             output[symbol][timeframe] = _read_archive(root / key, record, start, end)
     return output

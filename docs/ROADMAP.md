@@ -4,7 +4,7 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 (dua aliran data, paralel vs berurutan, celah holdout dan PENDING, profil DEMO vs Stage 38) dan dirapikan
 23 Oktober 2026. Dokumen ini menjadi dasar pengembangan Katarina berikutnya.
 
-> **Handoff teknis untuk Claude (27 Oktober 2026, DC akun kedua):** integrasi terisolasi WP12 (#204) + WP9b (#205) dan port selektif WP8a (#195) sudah diuji secara tertarget, **belum masuk `main`/VPS**. WP8a sekarang menolak arsip bar tanpa bukti per-chunk offset UTC independen, agar tidak salah melabeli jam server dan mencemari holdout. Langkah perbaikan, 66 tes tertarget yang lulus (dan 2 tes statis terkendala dependensi VPS), reproduksi, konflik manifest/peta modul, blocker bukti historis DST, dan daftar periksa reviewer tercatat di [handoff integrasi 27 Oktober](maintenance/INTEGRATION_HANDOFF_20261027.md). **LIVE OFF; jangan deploy atau merge sebelum CI penuh dan review Claude.**
+> **Handoff teknis untuk Claude (27 Oktober 2026, DC akun kedua):** integrasi terisolasi WP12 (#204) + WP9b (#205) dan port selektif WP8a (#195) sudah diuji secara tertarget, **belum masuk `main`/VPS**. WP8a sekarang menolak arsip bar tanpa bukti per-chunk offset UTC independen, agar tidak salah melabeli jam server dan mencemari holdout. Langkah perbaikan, **69 tes tertarget yang lulus** (dan 2 tes statis terkendala dependensi VPS), tambahan loader WP8a streaming dengan batas eager 100.000 bar, reproduksi, konflik manifest/peta modul, blocker bukti historis DST, dan daftar periksa reviewer tercatat di [handoff integrasi 27 Oktober](maintenance/INTEGRATION_HANDOFF_20261027.md). **LIVE OFF; jangan deploy atau merge sebelum CI penuh dan review Claude.**
 
 **Cara membaca dokumen ini**
 

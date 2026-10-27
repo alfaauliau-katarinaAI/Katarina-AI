@@ -11,7 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from katarina.research.dev_dataset import (
-    DEV_CUTOFF_UTC, export_dev_bars, load_dev_dataset,
+    DEV_CUTOFF_UTC, export_dev_bars, iter_dev_bars, load_dev_dataset,
 )
 from katarina.research.validation import ValidationError
 
@@ -109,6 +109,40 @@ class DevDatasetTests(unittest.TestCase):
             with self.assertRaisesRegex(ValidationError, "BROKER_BAR_CLOCK_NOT_VERIFIED"):
                 export_dev_bars(BadProof(), ("EURUSD.vx",),
                                 start=DAY, end=DAY + timedelta(days=1), out=tmp)
+
+    def test_streaming_reader_matches_eager_with_bounded_memory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            export_dev_bars(FakeBroker(), ("EURUSD.vx",),
+                            start=DAY, end=DAY + timedelta(days=1), out=tmp)
+            eager = load_dev_dataset(tmp)["EURUSD.vx"]["M5"]
+            stream = list(iter_dev_bars(tmp, "EURUSD.vx", "M5"))
+            self.assertEqual(eager, stream)
+
+    def test_eager_limit_is_global_and_stream_remains_available(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            export_dev_bars(FakeBroker(), ("EURUSD.vx",),
+                            start=DAY, end=DAY + timedelta(days=1), out=tmp)
+            for bad_limit in (0, -3, True, 1.4, "100"):
+                with self.subTest(limit=bad_limit), self.assertRaisesRegex(
+                        ValidationError, "development_memory_budget_invalid"):
+                    load_dev_dataset(tmp, max_total_bars=bad_limit)
+            with self.assertRaisesRegex(ValidationError, "development_dataset_exceeds_memory_budget"):
+                load_dev_dataset(tmp, max_total_bars=7)  # 4 timeframes * 2 bars
+            self.assertEqual(len(list(iter_dev_bars(tmp, "EURUSD.vx", "M5"))), 2)
+
+    def test_streaming_reader_validates_archive_count_at_end(self):
+        from katarina.research import validation as v
+        with tempfile.TemporaryDirectory() as tmp:
+            export_dev_bars(FakeBroker(), ("EURUSD.vx",),
+                            start=DAY, end=DAY + timedelta(days=1), out=tmp)
+            p = Path(tmp) / "manifest.json"
+            manifest = json.loads(p.read_text(encoding="utf-8"))
+            manifest["files"]["EURUSD.vx/M5.csv.gz"]["bars"] = 3
+            manifest.pop("manifest_sha256")
+            manifest["manifest_sha256"] = v.sha256_text(v.canonical(manifest))
+            p.write_text(v.canonical(manifest) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValidationError, "development_file_row_count_mismatch"):
+                list(iter_dev_bars(tmp, "EURUSD.vx", "M5"))
 
     def test_cutoff_is_rejected_at_export_even_if_broker_returns_future(self):
         with tempfile.TemporaryDirectory() as tmp:
