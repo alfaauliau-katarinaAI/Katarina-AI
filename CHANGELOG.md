@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-28 - audit keseluruhan untuk review Claude (dokumentasi saja)
+
+- Tambahkan audit menyeluruh per subsistem, matriks tahap 0-5, pemisahan bukti kode/CI/MT5/alpha dan daftar tindakan prioritas P0/P1/P2 di docs/maintenance/CLAUDE_FULL_SYSTEM_AUDIT_20261028.md; tautkan pada roadmap, PROJECT_STATUS dan CLAUDE.md.
+- Snapshot pengujian terpisah yang diaudit: PR #208 CI sukses, 31/31 siklus pertama OK, 155 quote OK, broker UTC+2, 5 simbol, 0 order; 0/10 hari penuh tervalidasi, reconnect 0/3, broker tick-days/reconciliation belum tersedia. Seluruhnya hasil sementara, bukan bukti strategi profitable.
+- Tidak mengubah Risk Governor, observasi frozen, task Windows, kredensial, keputusan trading atau file holdout. R5 tetap milik Claude setelah review.
+
+
 ## 2026-10-28 - Penerimaan MT5 jam NTP dan penggabungan dua kontrak waktu
 
 - W32Time VPS awalnya Local CMOS Clock, offset terhadap NTP +14,9 detik; observer berhenti tertib dan database SQLite dibackup, service W32Time dibuat Automatic dengan peer time.windows.com,0x8. Status sinkron normal; stripchart sekitar +0,08 detik; host preflight READY.

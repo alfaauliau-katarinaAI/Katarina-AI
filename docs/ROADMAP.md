@@ -10,6 +10,15 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 
 > **Paket penerimaan 10 hari MT5, 28 Oktober:** source waktu VPS telah disinkronkan ke NTP dengan pemeriksaan silang eksternal (sebelumnya offset +14,9 detik, kini ~0,08 detik), backup SQLite dan Task Scheduler aman, dan satu pass broker asli di sandbox menghasilkan 5/5 simbol dengan offset +2 jam dan 0 order. Integrasi WP12 dan pemeriksaan portabilitas diuji dalam branch gabungan. **Belum otomatis menjadi satu hari kelulusan;** ketentuan dan pemeriksaan di [Stage0 10-Day Acceptance](maintenance/STAGE0_10DAY_ACCEPTANCE_20261028.md). Reviewer Claude harus cek CI gabungan, deployment tanpa order, dan mulai jendela forward baru yang bersih.
 
+## Audit sistem menyeluruh — handoff Claude, 28 Oktober 2026
+
+**Baca dahulu:** [Audit seluruh subsistem dan pekerjaan Claude](maintenance/CLAUDE_FULL_SYSTEM_AUDIT_20261028.md) → [PROJECT_STATUS](PROJECT_STATUS.md) → [paket penerimaan 10 hari](maintenance/STAGE0_10DAY_ACCEPTANCE_20261028.md). Audit ini memetakan arsitektur, MT5/NTP, ledger tick, berita, keputusan BUY/SELL/WAIT, shadow, memori/AI, biaya, risiko, CI, VPS, dan gerbang DEMO/LIVE. Setiap kelemahan dipasangkan dengan bukti, prioritas, dan syarat selesai.
+
+- **Aturan Owner tidak berubah:** satu otak canonical, Risk Governor independen, Level 0/research only, LIVE OFF, holdout terlindung, gerbang Tahap 0–5 serta persetujuan Owner.
+- **Pengujian 10 hari sudah berjalan pada worktree dan ledger terpisah**; keberhasilan 31 siklus awal bukan kelulusan satu hari penuh atau bukti profit. Target paling cepat evaluasi sekitar **11 November 2026 WIB jika semua kriteria tercapai**, bukan janji selesai otomatis.
+- **P0 Claude:** audit harian, 3 reconnect teruji, broker tick-days dan rekonsiliasi, pemulihan boot/login, penentuan cakupan 5/7 simbol, bukti UTC historis independen, dan review konflik PR #206/#207/#208 tanpa mengubah worktree frozen. **P1:** alasan WAIT, strategi dan biaya secara shadow. **P2:** kesiapan DEMO, pemantauan dan tata kelola.
+- Status operasional hanya di PROJECT_STATUS; log bukti di handoff, kode/tes di PR. **R5 yang belum diperbarui Claude tetap historis**, bukan izin merge atau promosi.
+
 **Cara membaca dokumen ini**
 
 - Bagian 1–7 adalah **aturan tetap**: prinsip, kewenangan, pemisahan data, gerbang promosi, dan kriteria kelulusan

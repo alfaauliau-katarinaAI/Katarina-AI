@@ -1,10 +1,35 @@
 # Status Katarina AI
 
-Satu-satunya sumber status proyek. Diperbarui **23 Oktober 2026**. Rincian per perubahan ada di
+Satu-satunya sumber status proyek. **Snapshot operasional baru diperbarui 28 Oktober 2026.** Riwayat 23 Oktober dipertahankan di bagian bawah. Rincian per perubahan ada di
 [CHANGELOG](../CHANGELOG.md); hasil CI terbaru di
 [GitHub Actions](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions).
 
-## Ringkasan
+## Snapshot operasional terkini — 28 Oktober 2026, sekitar 03.43 WIB
+
+**Laporan ini adalah snapshot, bukan dashboard live.** Baca [audit sistem lengkap untuk Claude](maintenance/CLAUDE_FULL_SYSTEM_AUDIT_20261028.md) dan [kriteria Tahap 0](maintenance/STAGE0_10DAY_ACCEPTANCE_20261028.md). Bagian historis di bawah berasal dari 23 Oktober dan tidak boleh dibaca sebagai status terkini. Kontrak kelulusan tetap di [ROADMAP](ROADMAP.md).
+
+| Komponen | Bukti terbaru | Blocker / arahan |
+|---|---|---|
+| Wewenang | Level 0 / RESEARCH ONLY / LIVE OFF, 0 order | Tidak ada DEMO/LIVE approval atau strategi terpromosi. |
+| Kode produksi | Main VPS masih d8b003a; task observer lama Ready/stopped | Tidak ada merge atau redeploy ke main. Jangan jalankan dua observer. |
+| Kandidat trial | Worktree stage0-combined-acceptance-20261028; tree a48d8c3fad957f6d6236dbbc4f1dbe7168069d24, identik dengan [PR #208](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/208) (draft/open) | Bekukan kode pengujian; PR belum di-merge. |
+| CI + tes | [CI #40574960082](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/40574960082) SUCCESS Body/Ubuntu/Windows. Lokal 78 tes tertarget dijalankan (77 pass/1 skip), manifest MATCH 306/306 | Lulus CI tidak berarti profit. |
+| MT5 Stage 0 | Running sejak 28 Okt 03.12 WIB. Snapshot audit 31/31 siklus OK, 155/155 quote OK, 5 instrumen, UTC broker +2, 0 order; 5 keputusan terbaru WAIT | Masih **0/10 hari bursa penuh**; baru pengamatan awal. |
+| Jam VPS | Semula selisih ~14,9 detik terhadap time.windows.com dan Local CMOS. Sekarang w32time Automatic, NTP time.windows.com,0x8, leap 0 / stratum 5, selisih ukur ~0,08 detik, preflight READY | Verifikasi setiap hari. Sejarah DST independen belum ada. |
+| Kriteria data | PASS sementara: siklus/quote/duplikat/clock/no-order. NOT_MET: reconnect 0/3. NO_DATA: tick-hari dan rekonsiliasi; belum ada 1 hari penuh | Audit otomatis pada task Katarina-Stage0-Daily-Health pukul 07.30 WIB. |
+| Cakupan instrumen | Pilot hanya 5 dari program inti 7 instrumen | Keputusan Claude/Owner diperlukan sebelum mengklaim kelulusan program 7 instrumen. |
+| Strategi/AI | Semua lima kartu WAIT, tujuh blocker utama, trial memakai --no-fetch (berita live tidak diuji). Audit riset 13 Oktober: PF kandidat ~0,36 dan ~77% rugi setelah biaya | Belum ada edge BUY/SELL positif tervalidasi; lanjut shadow, WP4/WP8b/WP10. |
+| Risk/DEMO | Risk Governor mandiri; batas utama DD 35%; DEMO overlay lebih ketat masih usulan, belum diaktifkan | Perlu persetujuan Owner, tahap valid, 100% rekonsiliasi demo. LIVE OFF. |
+| Ketahanan reboot | Task observer baru menggunakan InteractiveToken/trigger logon; limit 72h dihapus, retry 10 kali/5 menit | Tidak dijamin pulih setelah reboot tanpa login Administrator. |
+| PR overlap | #206, #207, #208 terbuka dan draft; #195/#204 draft, #205 terbuka belum merge | Review & urutan merge oleh Claude, hindari menerapkan perubahan ganda. |
+
+**Tanggal evaluasi paling awal sekitar 11 November 2026 WIB**, hanya jika 10 hari bursa berturut-turut memenuhi seluruh kriteria; bisa mundur. Untuk UTC historis, bukti pada dua API MT5 dari broker yang sama belum menggantikan referensi independen.
+
+---
+
+## Riwayat status 23 Oktober 2026 — bukan status saat ini
+
+### Ringkasan
 
 | Bagian | Keadaan sekarang | Batas / catatan |
 |---|---|---|
