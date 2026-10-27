@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 from math import isfinite
+from datetime import datetime, timezone
 from typing import Mapping
 
 @dataclass(frozen=True)
@@ -27,6 +28,12 @@ def infer_clock_shift(tick_epoch_by_symbol:Mapping[str,int],
                       *,min_symbols:int=3,majority_fraction:float=.70) -> ClockFinding:
     if not isfinite(observed_utc_epoch) or min_symbols<3:
         raise ValueError("invalid_clock_inputs")
+    # No fresh FX quorum is possible over this closed-market period. Previously
+    # stale Friday quotes could be misread as a new -4/-7 UTC broker offset.
+    utc = datetime.fromtimestamp(observed_utc_epoch, timezone.utc)
+    if utc.weekday() >= 5 or (utc.weekday() == 4 and utc.hour >= 20):
+        return ClockFinding(None,0,0,0.,False,
+                            stale_symbols=tuple(sorted(tick_epoch_by_symbol)))
     considered=0;votes=Counter();stale=[]
     for sym,ts in tick_epoch_by_symbol.items():
         if not sym or not isinstance(ts,int) or ts<=0:continue
@@ -47,6 +54,46 @@ def infer_clock_shift(tick_epoch_by_symbol:Mapping[str,int],
     valid=count>=min_symbols and frac>=majority_fraction
     return ClockFinding(hours if valid else None,considered,count,
                         round(frac,4),valid,stale_symbols=tuple(sorted(stale)))
+
+
+def corroborate_clock_with_utc_history(
+        finding: ClockFinding, raw_server_epochs: Mapping[str, int],
+        historical_utc_quotes: Mapping[str, tuple], observed_utc_epoch: float,
+        *, max_drift_seconds: float = 45, min_symbols: int = 3) -> bool:
+    """Require a separate MT5 historical UTC tick alongside current server quotes.
+
+    Timestamp inference alone is NOT proof: a stale weekend tick can look like
+    a different timezone. The returned offset must also align with fresh
+    bounded causal copy_ticks_range ticks on at least three distinct symbols.
+    Neither stream alone establishes true UTC when the host OS is unsynced.
+    """
+    if (not finding.suitable_for_readonly_snapshot
+            or finding.observed_hours_shift is None or min_symbols < 3
+            or not isfinite(observed_utc_epoch)
+            or not 0 < max_drift_seconds <= 90):
+        return False
+    confirmed = 0
+    valid_history = 0
+    for symbol, raw in raw_server_epochs.items():
+        quote = historical_utc_quotes.get(symbol)
+        if type(raw) is not int or quote is None:
+            continue
+        try:
+            tick_utc = float(quote[2])
+            bid, ask = float(quote[0]), float(quote[1])
+        except (TypeError, ValueError, IndexError, KeyError):
+            continue
+        if (not all(isfinite(x) for x in (tick_utc, bid, ask))
+                or bid <= 0 or ask < bid
+                or not 0 <= observed_utc_epoch - tick_utc <= 90):
+            continue
+        valid_history += 1
+        server_minus_utc = raw - tick_utc
+        if abs(server_minus_utc - finding.observed_hours_shift * 3600) <= max_drift_seconds:
+            confirmed += 1
+    return (confirmed >= min_symbols and
+            valid_history >= min_symbols and
+            confirmed / valid_history >= 0.70)
 
 
 # Canonical event-time conversion contract, recorded by the existing observer.
