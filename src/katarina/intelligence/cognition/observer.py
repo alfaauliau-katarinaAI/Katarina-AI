@@ -20,7 +20,8 @@ import time
 
 from katarina.intelligence.news.public_context import utc as parse_utc
 from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
-from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift, capture_time_reference
+from katarina.intelligence.broker.broker_clock_alignment import (infer_clock_shift, capture_time_reference,
+    corroborate_clock_with_utc_history)
 from katarina.intelligence.cognition.contextual_decision_intelligence import RiskSituation
 from katarina.intelligence.cognition.decision_inputs import (
     DecisionInputs, load_decision_inputs,
@@ -317,12 +318,22 @@ class BrainObserver:
         if not symbols:raise RuntimeError("NO_ELIGIBLE_BROKER_SYMBOLS")
         for sym in symbols:mt5.symbol_select(sym,True)
         ticks={sym:mt5.symbol_info_tick(sym) for sym in symbols}
-        clock=infer_clock_shift({
+        raw_epochs={
             sym:int(t.time) for sym,t in ticks.items()
-            if t is not None and t.bid>0 and t.ask>=t.bid},
-            now.timestamp())
+            if t is not None and t.bid>0 and t.ask>=t.bid}
+        # Infer CURRENT offset, then query historical broker server timestamps
+        # in WP12 coordinates. These are broker-internal crosschecks, not proof
+        # of an independent UTC source or historical broker DST.
+        clock=infer_clock_shift(raw_epochs,now.timestamp())
         if not clock.suitable_for_readonly_snapshot:
             raise RuntimeError("BROKER_CLOCK_NOT_VERIFIED")
+        historical_quotes={
+            sym:last_past_quote(mt5,sym,now,
+                                server_shift_hours=clock.observed_hours_shift)
+            for sym in raw_epochs}
+        if not corroborate_clock_with_utc_history(
+                clock,raw_epochs,historical_quotes,now.timestamp()):
+            raise RuntimeError("BROKER_CLOCK_HISTORY_CROSSCHECK_FAILED")
         emit('SENSORS','DONE',count=len(symbols))
         offset=clock.observed_hours_shift
         time_reference=capture_time_reference(clock,now)
@@ -383,7 +394,7 @@ class BrainObserver:
                 # AFTER whole-hour correction. Use actual historical UTC
                 # tick snapshots bounded at the observation clock instead.
                 # No synthetic fractional time shift or future quote.
-                past=last_past_quote(mt5,symbol,now,server_shift_hours=offset)
+                past=historical_quotes.get(symbol)
                 if past is None:
                     raise ValueError("no_past_broker_bidask_quote")
                 quote_bid,quote_ask,quote_at=past

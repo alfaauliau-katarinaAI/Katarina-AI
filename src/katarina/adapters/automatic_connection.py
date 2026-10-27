@@ -123,6 +123,11 @@ class BoundLocalBroker:
 
     def initialize(self):
         try:
+            # Only the real MetaTrader5 native module requires OS time
+            # attestation; dependency-injected broker test doubles are offline.
+            if getattr(self._native, "__name__", None) == "MetaTrader5":
+                from katarina.intelligence.broker.host_clock_guard import require_host_clock
+                require_host_clock()
             ok = (self._native.initialize(self._config.terminal_path)
                   if self._config.terminal_path else self._native.initialize())
             if not ok:
@@ -219,6 +224,11 @@ def run_connected(brain_type, root, *, config=None, max_symbols=17, fetch_news=T
                                 'receiving_market_data':False,
                                 'live_authorized':False}
         return result
+    # All production routes, including cloud fallback, depend on correct
+    # host UTC. Test-injected factories remain offline and deterministic.
+    if factories is None:
+        from katarina.intelligence.broker.host_clock_guard import require_host_clock
+        require_host_clock()
     factories = factories if factories is not None else {'local':local_factory,'cloud':cloud_factory}
     faults = []
     for route in config.priority:

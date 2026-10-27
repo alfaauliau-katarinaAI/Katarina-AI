@@ -231,9 +231,11 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
             with patch.object(broker, 'copy_ticks_range', return_value=()):
-                UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
-            report = json.loads((Path(d)/'latest.json').read_text())
-            self.assertTrue(all(x['action']=='WAIT' for x in report['symbols'].values()))
-            self.assertFalse(report['foundation_readiness']['engineering_checks']['sensors_without_errors'])
-            self.assertEqual(report['brain_runtime']['pending_delivery_queue'], 0)
+                # Current broker clock has no independent UTC corroboration:
+                # block the WHOLE snapshot instead of emitting false healthy cards.
+                with self.assertRaisesRegex(RuntimeError,
+                                            'BROKER_CLOCK_HISTORY_CROSSCHECK_FAILED'):
+                    UnifiedKatarinaBrain.observe_once(
+                        Path(d), broker=broker, fetch_news=False)
+            self.assertFalse((Path(d)/'latest.json').exists())
         self.assertEqual(broker.orders, 0)

@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-10-28 - Penerimaan MT5 jam NTP dan penggabungan dua kontrak waktu
+
+- W32Time VPS awalnya Local CMOS Clock, offset terhadap NTP +14,9 detik; observer berhenti tertib dan database SQLite dibackup, service W32Time dibuat Automatic dengan peer time.windows.com,0x8. Status sinkron normal; stripchart sekitar +0,08 detik; host preflight READY.
+- Gabungkan WP12 yang memakai server-shift pada historical copy_ticks_range dengan pemeriksa time reference per perangkat; satu pass MT5 read-only: 5/5 simbol, offset +2, 5 WAIT, 0 order, tanpa error. Bukti pada docs/maintenance/STAGE0_10DAY_ACCEPTANCE_20261028.md; uji 10 hari baru dimulai setelah review CI dan penempatan versi gabungan.
+
+## 2026-10-28 — Stage 0 clock false-PASS guard (untuk review, belum merge)
+
+- Audit read-only ledger VPS: 4.437/4.550 siklus OK (97,5165%, target 98%), streak 2/10 hari bursa. Jam broker +3→-4→-7→+2 (delta -7/-3/+9) salah dianggap PASS karena hanya dekat DST.
+- Perbaiki `data_health.py` agar hanya menerima offset integer finite -12..14 dan perubahan tepat 1 jam pada jendela DST; tambah diagnostik `invalid_transitions` dan `valid_step`. Tes tambahan 3 RED pada baseline, lalu total 18 unit GREEN; replay data asli `clock_shift_stable=NOT_MET`.
+- Task observer masih InteractiveToken/logon-only, belum diuji unattended boot; runtime dan trading tidak disentuh. Detail dan langkah review Claude di `docs/maintenance/STAGE0_CLOCK_HEALTH_HANDOFF_20261028.md`.
+
 ## 2026-10-27 — integrasi terisolasi DC akun kedua (belum merge/deploy)
 
 - Gabungkan perbaikan UTC broker WP12 (#204) dan shadow decision WP9b (#205) di worktree terpisah, tetap `legacy_fail_closed`, 0 order; tes tertarget 5+2+5+2 PASS.

@@ -28,7 +28,8 @@ FATAL_BINDING = frozenset(('ACCOUNT_LOGIN_MISMATCH', 'ACCOUNT_SERVER_MISMATCH',
 
 # Missing market metadata is retryable; permission, identity and unknown errors stay fatal.
 RECOVERABLE_SENSOR = frozenset(('BROKER_CATALOG_NOT_FOUND',
-    'NO_ELIGIBLE_BROKER_SYMBOLS', 'BROKER_CLOCK_NOT_VERIFIED'))
+    'NO_ELIGIBLE_BROKER_SYMBOLS', 'BROKER_CLOCK_NOT_VERIFIED',
+    'BROKER_CLOCK_HISTORY_CROSSCHECK_FAILED'))
 
 
 def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
@@ -55,6 +56,7 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
     lock = lock_worker(root)
     context = memory = brain = researcher = demo = doctor = dashboard = None
     surfaces = ExitStack()
+    native_routes = factories is None
     factories = factories if factories is not None else {'local': local_factory, 'cloud': cloud_factory}
     stop = root / 'continuous.stop'
     status = dict(schema_version=1, run_id=uuid.uuid4().hex, pid=os.getpid(),
@@ -151,6 +153,11 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
         dashboard=DashboardHeartbeat(root,config,lambda:dict(status)).start()
         publish('STARTING')
         while not stop.exists():
+            if native_routes:
+                # Reattest each cycle: an NTP failure must never silently
+                # become a broker GMT/DST offset or be bypassed by fallback.
+                from katarina.intelligence.broker.host_clock_guard import require_host_clock
+                require_host_clock()
             if inspect_host(root)['blockers']:
                 raise RuntimeError('HOST_RESOURCE_OR_STATE_BLOCKED')
             publish('OBSERVING')
@@ -270,7 +277,11 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
         status['fault_diagnostic']={'type':type(exc).__name__,
             'module':Path(frame.filename).name,'line':frame.lineno}
         # Never export raw exceptions containing account/server/endpoint details.
-        publish('BLOCKED', 'CONTINUOUS_OBSERVATION_FAILED_CLOSED')
+        safe_clock_errors = frozenset(('HOST_UTC_NOT_SYNCHRONIZED',
+            'HOST_CLOCK_STATUS_UNAVAILABLE', 'HOST_CLOCK_STATUS_UNVERIFIABLE',
+            'HOST_CLOCK_LAST_SYNC_UNPARSEABLE', 'HOST_CLOCK_LAST_SYNC_STALE'))
+        publish('BLOCKED', str(exc) if str(exc) in safe_clock_errors else
+                'CONTINUOUS_OBSERVATION_FAILED_CLOSED')
         raise
     finally:
         try:
