@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
+
+- Hapus dokumen eksperimen portfolio yang tidak dirujuk dan menunjuk modul/skrip yang telah dipensiunkan.
+- Hapus laporan perapian 15 Okt yang deskripsinya sudah digantikan aturan perapian terkini; sesuaikan rujukan CLAUDE.
+- Tambahkan peta dokumentasi `docs/README.md` untuk menemukan roadmap, status, panduan dan bukti.
+
 ## 2026-10-29 — peran baru: ChatGPT manager, Claude eksekutor
 
 - Keputusan Owner: ChatGPT memegang roadmap, antrean, spesifikasi, review/merge dan VPS dengan akses penuh; Claude
