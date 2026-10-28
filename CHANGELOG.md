@@ -9,6 +9,15 @@
 - Ekspor menuntut bukti jam UTC independen per batch (bar MT5 = jam server, R1 T11); loader streaming. Paket WP8c
   (bukti dari jam rilis NFP) ditambahkan ke roadmap.
 
+## 2026-10-23 — WP9b: input keputusan terukur dan shadow (#205)
+
+- Mode baru opsional `measured_inputs`; default `legacy_fail_closed` mempertahankan blokir lama.
+- Bandingkan keputusan aktif dan bayangan melalui evaluasi kontekstual yang sama; alasan shadow tersimpan di SQLite.
+- Syarat quote, bar, izin simbol, jam broker dan siklus ledger sebelumnya wajib terpenuhi;
+  kalender bersih tanpa artikel tidak otomatis diartikan sebagai berita berdampak tinggi.
+- Tes konfigurasi, risiko kalender dan broker sintetis. Berkas terkunci tidak berubah;
+  LIVE tetap OFF, tanpa order baru, tanpa perubahan VPS.
+
 ## 2026-10-27 — usulan agentic AI untuk review Claude
 
 - Atas permintaan Owner, catat lima fondasi perbaikan, kemampuan agentic dan target auditor data di roadmap.

@@ -991,7 +991,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
 | WP8c | Siap dikerjakan | – | – |
 | WP9a | Selesai (merge); laporan VPS oleh Claude (fase 3c) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | Diterima. Semua kode alasan di `contextual_decision_intelligence.py` terpetakan; kode baru → `UNKNOWN`. SQLite `mode=ro` + `query_only`. Manifest dibuat ulang dengan generator |
-| WP9b | Siap dikerjakan (prioritas) | – | – |
+| WP9b | Selesai (merge); `measured_inputs` di VPS menunggu persetujuan Owner (fase 3c) | [#205](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/205) | Diterima. Perbaikan review: `previous_cycle_recorded` kini menuntut siklus sebelumnya ≤ 10 menit dan tidak `FAILED`/`NO_MARKET_DATA` (sebelumnya siklus apa pun sejak awal dihitung) + tes. Default tetap perilaku lama; tabel `decision_shadow` mencatat mode alternatif |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Siap dikerjakan (paralel) | – | – |
