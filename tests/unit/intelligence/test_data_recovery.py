@@ -60,7 +60,7 @@ class RecoveryTests(unittest.TestCase):
         def ticks(s,start,end,flags):
             calls.append((start,end));return [] if len(calls)==1 else [dict(time_msc=(self.now.timestamp()-1)*1000,bid=10,ask=11),dict(time_msc=(self.now.timestamp()+1)*1000,bid=10,ask=11)]
         b.copy_ticks_range=ticks
-        q=last_past_quote(b,'0',self.now)
+        q=last_past_quote(b,'0',self.now,server_shift_hours=0)
         self.assertAlmostEqual(q[2],self.now.timestamp()-1,places=5);self.assertEqual(len(calls),2)
         self.assertLessEqual((calls[1][1]-calls[1][0]).total_seconds(),30)
 

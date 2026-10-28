@@ -102,7 +102,7 @@ class StreamArchiveTests(unittest.TestCase):
                     golden_sha = old_gzip(golden, old)
                 actual = Path(tmp) / "actual.csv.gz"
                 count, first, last, digest, found_gaps, index = ledger._download_day(
-                    broker, "EURUSD", DAY, actual)
+                    broker, "EURUSD", DAY, actual,server_shift_hours=0)
                 self.assertEqual(found_gaps, old_gaps)
                 self.assertEqual(count, len(old))
                 if old:
@@ -122,11 +122,11 @@ class StreamArchiveTests(unittest.TestCase):
             broker = FakeHistory()
             now = DAY + timedelta(hours=10, seconds=1)
             msc = int((DAY + timedelta(hours=10)).timestamp() * 1000) + 1000
-            ledger.record_snapshot(db, observed_utc=now, clock_shift_hours=3,
+            ledger.record_snapshot(db, observed_utc=now, clock_shift_hours=0,
                                    cards={"EURUSD": {"action": "WAIT"}},
                                    quotes={"EURUSD": (1.11, 1.12, msc / 1000)})
             path = Path(tmp) / "ticks.csv.gz"
-            n, first, last, sha, gaps, index = ledger._download_day(broker, "EURUSD", DAY, path)
+            n, first, last, sha, gaps, index = ledger._download_day(broker, "EURUSD", DAY, path,server_shift_hours=0)
             checked, matched = ledger._reconcile_archive(
                 db, "EURUSD", "2026-10-20", path, index, 0.01)
             self.assertEqual((checked, matched), (1, 1))
@@ -153,7 +153,7 @@ class StreamArchiveTests(unittest.TestCase):
             tracemalloc.start()
             try:
                 count, _, _, _, _, _ = ledger._download_day(
-                    BigBroker(), "EURUSD", DAY, path)
+                    BigBroker(), "EURUSD", DAY, path,server_shift_hours=0)
                 _, peak = tracemalloc.get_traced_memory()
             finally:
                 tracemalloc.stop()

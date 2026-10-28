@@ -98,14 +98,15 @@ def recover_due(db,broker,root,now,*,emit=lambda *a,**k:None,budget=2):
             # Request larger bounded history buffers before normal candle validation.
             methods.append('MULTITIMEFRAME_BAR_WARMUP')
             for name,_ in TF.values():broker.copy_rates_from_pos(symbol,getattr(broker,name),1,512)
-            methods.append('RECENT_TICK_WINDOW');quote=last_past_quote(broker,symbol,now)
-            if quote is None:
-                raise ValueError('HISTORY_AVAILABLE_LIVE_QUOTE_MISSING' if any(v.get('rows',0)>0 for v in history.values()) else 'no_past_broker_bidask_quote')
-            market=market_event_clock(quote[2],now).market_utc
             with (Path(root)/'latest.json').open('rb') as f:raw=f.read(2_000_001)
             if len(raw)>2_000_000:raise ValueError('snapshot_too_large')
             shift=json.loads(raw).get('broker_server_shift_hours')
-            if type(shift) is not int or not -14<=shift<=14:raise ValueError('clock_not_verified')
+            if type(shift) is not int or not -12<=shift<=14:raise ValueError('clock_not_verified')
+            methods.append('RECENT_TICK_WINDOW');quote=last_past_quote(
+                broker,symbol,now,server_shift_hours=shift)
+            if quote is None:
+                raise ValueError('HISTORY_AVAILABLE_LIVE_QUOTE_MISSING' if any(v.get('rows',0)>0 for v in history.values()) else 'no_past_broker_bidask_quote')
+            market=market_event_clock(quote[2],now).market_utc
             bars=bars_for(broker,symbol,timedelta(hours=shift))
             for label,rows in bars.items():
                 valid=closed_bars_as_of_market_tick(rows,market)

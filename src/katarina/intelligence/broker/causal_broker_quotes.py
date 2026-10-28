@@ -1,9 +1,8 @@
 """Causal MT5 quote reader for the existing single read-only observer.
 
-MT5 symbol_info_tick may carry a server-local +integer-hour offset
-and a further seconds-level lead. Historical copy_ticks_range returns
-UTC-epoch milliseconds on this broker. Never treat the latest server
-tick as a quote observed in the future of the VPS's decision clock.
+Both symbol_info_tick and copy_ticks_range carry broker-server epoch labels.
+Convert with the current verified integer-hour offset BEFORE applying the
+causal UTC boundary. Without verified offset, do not read quotes.
 
 The functions require UTC timezone-aware boundaries, verify actual
 tick timestamps and bid/ask, and NEVER send/check a broker order.
@@ -25,14 +24,14 @@ class BrokerEventClock:
     market_utc:datetime
     observed_vps_utc:datetime
     quote_age_seconds:float
-    source:str="MT5_HISTORICAL_TICK_TIME_MSC_UTC"
+    source:str="MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC"
 
 
 def market_event_clock(tick_epoch,observed_vps_utc,*,max_age_seconds=90):
     """Use the actual last historical broker tick as event clock.
 
     VPS UTC is only a causal upper bound, not the candle/signal timestamp.
-    No conversion to or from the broker's display timezone is allowed.
+    Caller passes a broker tick converted to UTC using a verified shift.
     """
     observed=aware_utc(observed_vps_utc)
     if (not isinstance(tick_epoch,(int,float)) or
@@ -79,6 +78,23 @@ def aware_utc(timestamp):
     return timestamp.astimezone(timezone.utc)
 
 
+def _shift_hours(shift):
+    if type(shift) is not int or not -12 <= shift <= 14:
+        raise ValueError("BROKER_CLOCK_SHIFT_UNVERIFIED")
+    return shift
+
+
+def server_epoch_to_utc(epoch, shift_hours):
+    shift = _shift_hours(shift_hours)
+    if (type(epoch) not in (int, float) or not isfinite(epoch) or epoch <= 0):
+        raise ValueError("BROKER_SERVER_EPOCH_INVALID")
+    return float(epoch) - shift * 3600
+
+
+def utc_to_server_datetime(moment, shift_hours):
+    return aware_utc(moment) + timedelta(hours=_shift_hours(shift_hours))
+
+
 def _fetch_ticks(mt5,symbol,start,end):
     if not symbol or end<=start:
         return ()
@@ -88,9 +104,9 @@ def _fetch_ticks(mt5,symbol,start,end):
     return a
 
 
-def _verified_quote(row,lower,upper):
+def _verified_quote(row,lower,upper,shift_hours):
     try:
-        ts=float(row["time_msc"])/1000.0
+        ts=server_epoch_to_utc(float(row["time_msc"])/1000.0,shift_hours)
         bid=float(row["bid"]);ask=float(row["ask"])
     except (KeyError,TypeError,ValueError,IndexError):
         return None
@@ -100,7 +116,7 @@ def _verified_quote(row,lower,upper):
     return (bid,ask,ts)
 
 
-def last_past_quote(mt5,symbol,as_of_utc,lookback_seconds=90):
+def last_past_quote(mt5,symbol,as_of_utc,*,server_shift_hours,lookback_seconds=90):
     """Freshest real BID/ASK price quote with timestamp <= observed clock.
 
     Do not extrapolate data from a tick in the broker's future;
@@ -108,13 +124,14 @@ def last_past_quote(mt5,symbol,as_of_utc,lookback_seconds=90):
     or acceptance of a quote older than the bounded lookback.
     """
     now=aware_utc(as_of_utc)
+    shift=_shift_hours(server_shift_hours)
     if not 0<lookback_seconds<=180:
         raise ValueError("invalid_quote_lookback")
     before=now-timedelta(seconds=lookback_seconds)
-    arr=_fetch_ticks(mt5,symbol,before,now)
+    arr=_fetch_ticks(mt5,symbol,utc_to_server_datetime(before,shift),utc_to_server_datetime(now,shift))
     upper=now.timestamp();lower=before.timestamp()
     # A stable maximum, rather than assuming broker arrays are sorted.
-    matched=[q for q in (_verified_quote(row,lower,upper) for row in arr)
+    matched=[q for q in (_verified_quote(row,lower,upper,shift) for row in arr)
              if q is not None]
     if not matched:
         # An empty/oversized broad response gets three smaller same-broker queries.
@@ -122,19 +139,20 @@ def last_past_quote(mt5,symbol,as_of_utc,lookback_seconds=90):
         for seconds in (0,30,60):
             end=now-timedelta(seconds=seconds)
             start=max(before,end-timedelta(seconds=30))
-            part=_fetch_ticks(mt5,symbol,start,end)
-            matched=[q for q in (_verified_quote(row,lower,upper) for row in part) if q is not None]
+            part=_fetch_ticks(mt5,symbol,utc_to_server_datetime(start,shift),utc_to_server_datetime(end,shift))
+            matched=[q for q in (_verified_quote(row,lower,upper,shift) for row in part) if q is not None]
             if matched:break
     return max(matched,key=lambda q:q[2]) if matched else None
 
 
-def due_window_quote(mt5,symbol,due_epoch,now_epoch,max_delay=120):
+def due_window_quote(mt5,symbol,due_epoch,now_epoch,max_delay=120,*,server_shift_hours):
     """Earliest actual tick after a precommitted markout deadline.
 
     This may be queried later (next 5-min cycle) via broker history;
     mark as RETROSPECTIVELY RECONCILED, not a real-time paper fill.
-    Broker history uses UTC timestamps, NOT current terminal offset.
+    Broker history uses server labels, converted with a verified offset.
     """
+    shift=_shift_hours(server_shift_hours)
     due=float(due_epoch);now=float(now_epoch)
     if (not all(isfinite(x) for x in (due,now)) or
         not 0<max_delay<=180 or due>=now):
@@ -143,9 +161,9 @@ def due_window_quote(mt5,symbol,due_epoch,now_epoch,max_delay=120):
     if end<=due:
         return None
     arr=_fetch_ticks(
-        mt5,symbol,datetime.fromtimestamp(due,timezone.utc),
-        datetime.fromtimestamp(end,timezone.utc),
+        mt5,symbol,utc_to_server_datetime(datetime.fromtimestamp(due,timezone.utc),shift),
+        utc_to_server_datetime(datetime.fromtimestamp(end,timezone.utc),shift),
     )
-    matched=[q for q in (_verified_quote(row,due,end) for row in arr)
+    matched=[q for q in (_verified_quote(row,due,end,shift) for row in arr)
              if q is not None]
     return min(matched,key=lambda q:q[2]) if matched else None
