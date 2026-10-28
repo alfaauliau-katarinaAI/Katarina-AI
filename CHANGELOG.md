@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-29 — peran baru: ChatGPT manager, Claude eksekutor
+
+- Keputusan Owner: ChatGPT memegang roadmap, antrean, spesifikasi, review/merge dan VPS dengan akses penuh; Claude
+  mengeksekusi rencana ChatGPT. Tabel "Boleh dan tidak boleh" diganti tabel akses + aturan tetap Owner (LIVE OFF,
+  Risk Governor/35%, gerbang promosi, holdout, kenaikan kewenangan). R0, R6.0, rapat dan `CLAUDE.md` disesuaikan.
+- Rapat D1 (izin tulis GitHub ChatGPT) selesai: branch dan PR #213 berhasil dibuat.
+
 ## 2026-10-29 — review usulan agentic AI; ruang diskusi roadmap
 
 - Arah lanjutan: hasil review kesiapan agentic AI (P1–P5 dipetakan ke yang sudah ada / belum terbukti / perlu

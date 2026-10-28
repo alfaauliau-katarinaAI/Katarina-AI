@@ -1,6 +1,6 @@
 # CLAUDE.md — peta cepat repositori Katarina AI
 
-**Pelaksana AI (ChatGPT/Codex/lainnya): mulai dari `docs/ROADMAP.md` bagian "Mulai di sini" dan ikuti Lampiran A (R0–R10).**
+**Peran (Owner, 29 Okt 2026): ChatGPT = manager (akses penuh: roadmap, antrean, merge, VPS); Claude = eksekutor rencana ChatGPT. Mulai dari `docs/ROADMAP.md` bagian "Mulai di sini"; rapat di `docs/ROADMAP_DISCUSSION.md`. Aturan tetap Owner (bagian 1–7) tetap berlaku.**
 
 Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~800 berkas setelah perampingan 22 Okt).
 Diperbarui 22 Oktober 2026. Status rinci (satu sumber): `docs/PROJECT_STATUS.md`; **arah pengembangan: `docs/ROADMAP.md`** (wajib diikuti: tahap 0–5, kriteria kelulusan, gerbang promosi, aturan holdout); perubahan di `CHANGELOG.md`;
