@@ -202,7 +202,7 @@ def cloud_factory(config):
 
 
 def run_connected(brain_type, root, *, config=None, max_symbols=17, fetch_news=True,
-                  factories=None, universe=None):
+                  factories=None, universe=None, decision_inputs=None):
     """Retry whole passes only; locks/state cleanup stay owned by the brain.
 
     A connection fault never resumes half a pass or replays an order. At most
@@ -227,7 +227,8 @@ def run_connected(brain_type, root, *, config=None, max_symbols=17, fetch_news=T
             try:
                 broker = factories[route](config)
                 result = brain_type.observe_once(root,broker=broker,max_symbols=max_symbols,fetch_news=fetch_news,
-                    **({'universe': universe} if universe is not None else {}))
+                    **({'universe': universe} if universe is not None else {}),
+                    **({'decision_inputs': decision_inputs} if decision_inputs is not None else {}))
                 result['connection'] = {'route':route,'attempt':attempt+1,
                     'prior_faults':faults,
                     'receiving_market_data':result.get('received_market_data_symbols', 0) > 0,

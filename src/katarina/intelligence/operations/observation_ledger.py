@@ -72,6 +72,14 @@ def setup(db) -> None:
         verified INTEGER NOT NULL,
         failures_json TEXT NOT NULL,
         PRIMARY KEY(cycle_id, source));
+    CREATE TABLE IF NOT EXISTS decision_shadow(
+        cycle_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        mode TEXT NOT NULL,
+        action TEXT NOT NULL,
+        conditional_side TEXT NOT NULL,
+        blockers_json TEXT NOT NULL,
+        UNIQUE(cycle_id, symbol, mode));
     CREATE TABLE IF NOT EXISTS broker_tick_days(
         symbol TEXT NOT NULL,
         day TEXT NOT NULL,
@@ -196,6 +204,58 @@ def record_news(db, cycle_id: str, summary: dict) -> int:
             "in_window=excluded.in_window,verified=excluded.verified,"
             "failures_json=excluded.failures_json",rows)
     return len(rows)
+
+
+
+PREVIOUS_CYCLE_MAX_AGE_SECONDS = 600
+
+
+def previous_cycle_recorded(db, *, before_utc: datetime) -> bool:
+    """The latest earlier ledger cycle must be recent (<= 10 min) and not failed.
+
+    The current pass never counts; an old or failed cycle does not prove health now.
+    """
+    setup(db)
+    before = _utc(before_utc)
+    row = db.execute(
+        "SELECT observed_utc, status FROM observer_cycles WHERE observed_utc < ? "
+        "AND status != 'ATTEMPT_FAILED' ORDER BY observed_utc DESC LIMIT 1",
+        (before.isoformat(),),
+    ).fetchone()
+    if row is None or row[1] in ("FAILED", "NO_MARKET_DATA"):
+        return False
+    age = (before - datetime.fromisoformat(row[0])).total_seconds()
+    return 0 < age <= PREVIOUS_CYCLE_MAX_AGE_SECONDS
+
+
+def record_decision_shadow(
+    db, cycle_id: str, *, symbol: str, mode: str,
+    action: str, conditional_side: str, blockers,
+) -> None:
+    """WP9b: persist counterfactual decisions; never submit a broker order."""
+    from katarina.intelligence.cognition.decision_inputs import VALID_MODES
+
+    setup(db)
+    if (
+        not isinstance(cycle_id, str) or not cycle_id
+        or not isinstance(symbol, str) or not symbol
+        or mode not in VALID_MODES
+        or action not in ("WAIT", "PAPER_OBSERVATION_ONLY")
+        or conditional_side not in ("WAIT", "BUY", "SELL")
+        or not isinstance(blockers, (tuple, list))
+        or any(type(item) is not str for item in blockers)
+    ):
+        raise ValueError("INVALID_DECISION_SHADOW")
+    with db:
+        db.execute(
+            "INSERT INTO decision_shadow(cycle_id,symbol,mode,action,conditional_side,blockers_json) "
+            "VALUES(?,?,?,?,?,?) "
+            "ON CONFLICT(cycle_id,symbol,mode) DO UPDATE SET "
+            "action=excluded.action,conditional_side=excluded.conditional_side,"
+            "blockers_json=excluded.blockers_json",
+            (cycle_id, symbol, mode, action, conditional_side,
+             json.dumps(list(blockers), sort_keys=True)),
+        )
 
 
 def close_cycle(db, *, finished_utc: datetime, cycle_id=None, status: str, reason=None,
