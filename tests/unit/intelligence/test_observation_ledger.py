@@ -180,6 +180,20 @@ class ObservationLedgerTest(unittest.TestCase):
         self.assertEqual(self.db.execute("SELECT reason FROM broker_tick_days").fetchone()[0],
                          "BROKER_SHIFT_CHANGED_DURING_DAY")
 
+    def test_failed_or_closed_market_cycles_do_not_turn_day_into_gap(self):
+        when = datetime(2026, 10, 20, 10, 0, tzinfo=UTC)
+        snapshot(self.db, when, {"EURUSD": (1.1, 1.10012, when.timestamp())}, shift=3)
+        ledger.close_cycle(self.db, finished_utc=when + timedelta(minutes=5),
+                           status="FAILED", reason="BROKER_CLOCK_NOT_VERIFIED")
+        # Stale weekend-style quotes can vote a bogus shift in a NO_MARKET_DATA cycle.
+        closed = snapshot(self.db, when + timedelta(hours=11), {}, shift=-4)
+        ledger.close_cycle(self.db, cycle_id=closed, finished_utc=when + timedelta(hours=11, seconds=5),
+                           status="NO_MARKET_DATA", reason="NO_FRESH_QUOTES")
+        out = ledger.collect_tick_days(self.db, FakeTicks(), self.root,
+            datetime(2026, 10, 21, 3, 0, tzinfo=UTC), server_shift_hours=3)
+        self.assertEqual(out["collected"][0]["status"], "STORED")
+        self.assertEqual(self.db.execute("SELECT server_shift_hours FROM broker_tick_days").fetchone()[0], 3)
+
     def test_historical_summer_day_keeps_its_shift_after_winter_transition(self):
         import gzip
         import hashlib

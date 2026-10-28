@@ -10,7 +10,7 @@
 - Konversi timestamp dan jendela tick menggunakan offset jam broker yang terverifikasi, tanpa menebak saat bukti hilang.
 - Fixture tes Windows menutup koneksi SQLite dan membandingkan path kanonik; assertion fungsional tetap.
 - Regresi dua jalur legacy, integritas arsip +3 setelah peralihan +2, dan suite Windows lengkap ditambahkan; berkas terkunci tidak diubah.
-- Arsip hari ber-offset campuran ditandai GAP; konteks riset menolak hari lama tanpa basis waktu; LIVE OFF.
+- Arsip hari ber-offset campuran ditandai GAP (siklus gagal atau tanpa data pasar diabaikan); konteks riset menolak hari lama tanpa basis waktu; LIVE OFF.
 
 ## 2026-10-23 — status setelah merge; temuan T11 dan paket WP12
 

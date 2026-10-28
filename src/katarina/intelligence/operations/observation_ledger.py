@@ -505,7 +505,8 @@ def collect_tick_days(db, mt5, root, now: datetime, *, server_shift_hours, budge
         attempts = (previous[0] if previous else 0) + 1
         observed_shifts = {row[0] for row in db.execute(
             "SELECT clock_shift_hours FROM observer_cycles "
-            "WHERE substr(observed_utc,1,10)=?", (day,))}
+            "WHERE substr(observed_utc,1,10)=? AND clock_shift_hours IS NOT NULL "
+            "AND status != 'NO_MARKET_DATA'", (day,))}
         if (len(observed_shifts) != 1 or
                 any(x is None or x != int(x) or not -12 <= x <= 14 for x in observed_shifts)):
             with db:
