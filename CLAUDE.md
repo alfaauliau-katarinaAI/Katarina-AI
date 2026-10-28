@@ -8,7 +8,7 @@ riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktob
 
 ## Apa ini
 
-**Posisi roadmap (23 Okt):** alat Tahap 0–3 sudah di `main` (#173–#175, #177–#179, WP1 #184; tabel "Peta alat per tahap"
+**Posisi roadmap (28 Okt; WP1–WP3, WP8a, WP9a, WP9b, WP11, WP12 selesai):** alat Tahap 0–3 sudah di `main` (#173–#175, #177–#179, WP1 #184; tabel "Peta alat per tahap"
 di `docs/ROADMAP.md`; rencana kerja dan status paket di Lampiran A R0/R5; status operasional di `docs/PROJECT_STATUS.md`). Tahap 0 sedang mengumpulkan data di VPS (cek `check_stage0_health.py`); belum ada tahap
 yang **lulus**. Alat tersedia ≠ tahap lulus ≠ trading diaktifkan.
 
