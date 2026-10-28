@@ -102,13 +102,13 @@ Tindak lanjut: Claude audit existing dan berikan opsi paket serta tes; Owner mem
 
 ### D5 — Perapian branch lama dan disiplin PR tanpa tumpukan
 Owner/Yura (usulan untuk review Claude) · 29 Okt 2026 · status: Terbuka
-Usulan: Pertahankan satu basis \`main\` untuk PR baru, hindari PR bergantung pada branch PR lain, dan hapus branch
+Usulan: Pertahankan satu basis `main` untuk PR baru, hindari PR bergantung pada branch PR lain, dan hapus branch
 yang terbukti tidak digunakan setelah audit commit/PR. Jangan merge gabungan perubahan lama untuk sekadar bersih-bersih.
 Audit 29 Okt: PR terbuka 0 saat diperiksa; kandidat sisa branch PR ditutup tanpa merge adalah
-\`chatgpt/docs-pr-review-blockers-20261023\`, \`chatgpt/dc2-repair-review-20261027\`,
-\`chatgpt/stage0-clock-audit-20261028\`, \`chatgpt/mt5-stage0-10day-readonly-20261028\`,
-\`chatgpt/claude-full-system-audit-20261028\`; branch uji izin \`chatgpt/write-permission-check-20261029\`
-identik dengan \`main\`. Kelima branch lama masih mengandung commit unik, bukan otomatis aman dihapus.
+`chatgpt/docs-pr-review-blockers-20261023`, `chatgpt/dc2-repair-review-20261027`,
+`chatgpt/stage0-clock-audit-20261028`, `chatgpt/mt5-stage0-10day-readonly-20261028`,
+`chatgpt/claude-full-system-audit-20261028`; branch uji izin `chatgpt/write-permission-check-20261029`
+identik dengan `main`. Kelima branch lama masih mengandung commit unik, bukan otomatis aman dihapus.
 Pertanyaan: 1. Apakah seluruh commit unik sudah diganti/ditolak dengan alasan atau perlu dipecah menjadi paket baru?
 2. Apakah WP13, bridge MCP/VPS, dan broker discovery masih digunakan dan siapa pemiliknya?
 Tanggapan:
