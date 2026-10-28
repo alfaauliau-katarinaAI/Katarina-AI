@@ -5,7 +5,9 @@
 - Arah lanjutan: hasil review kesiapan agentic AI (P1–P5 dipetakan ke yang sudah ada / belum terbukti / perlu
   dibangun), usulan WP14 auditor data baca-saja (menunggu Owner), urutan dan ukuran keberhasilan berangka.
 - Berkas baru `docs/ROADMAP_DISCUSSION.md`: pelaksana boleh mengusulkan perubahan roadmap lewat PR khusus berkas itu;
-  Claude memutuskan dan memindahkan hasilnya ke roadmap. Antrean kerja dan gerbang tidak berubah.
+  Claude memutuskan dan memindahkan hasilnya ke roadmap. Berkas itu menjadi rapat tertulis (peserta, kewenangan,
+  format topik, agenda D1–D3, keputusan terakhir).
+- WP14 disetujui Owner (29 Okt): spesifikasi R4, perintah R6, antrean #6 setelah WP13 dan WP8c. Gerbang tidak berubah.
 
 ## 2026-10-29 — roadmap dirapikan: aturan pelaksana dan antrean kerja
 
