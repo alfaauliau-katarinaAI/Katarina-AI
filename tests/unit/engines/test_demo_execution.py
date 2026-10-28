@@ -1,3 +1,4 @@
+from contextlib import closing
 import concurrent.futures
 from dataclasses import replace
 from pathlib import Path
@@ -206,7 +207,8 @@ class DemoExecutionTests(unittest.TestCase):
         result = self.boundary.reconcile()
         self.assertEqual(result['closed'], 1)
         import sqlite3, json
-        outcome = json.loads(sqlite3.connect(self.path).execute('SELECT outcome_json FROM demo_outbox').fetchone()[0])
+        with closing(sqlite3.connect(self.path)) as db:
+            outcome = json.loads(db.execute('SELECT outcome_json FROM demo_outbox').fetchone()[0])
         self.assertAlmostEqual(outcome['entry_slippage_price'], .4)
         self.assertAlmostEqual(outcome['commission_native'], -.14)
         self.assertAlmostEqual(outcome['swap_native'], -.2)

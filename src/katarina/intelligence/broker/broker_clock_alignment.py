@@ -72,7 +72,7 @@ class BrokerTimeReference:
     def as_dict(self) -> dict:
         return {
             "schema": 1,
-            "canonical_market_clock": "MT5_COPY_TICKS_RANGE_TIME_MSC_UTC",
+            "canonical_market_clock": "MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC",
             "observed_at_utc": self.observed_at_utc.isoformat(),
             "broker_server_shift_minutes": self.server_shift_hours * 60,
             "shift_evidence": "CURRENT_MULTISYMBOL_QUOTES_ONLY",

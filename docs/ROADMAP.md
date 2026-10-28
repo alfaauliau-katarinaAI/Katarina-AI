@@ -343,6 +343,51 @@ promosi tetap berlaku.
 **Prioritas terdekat:** WP2/WP3/WP8a/WP9a → WP9b, WP10a, WP10b → riset teknis pada data pengembangan (WP8b, WP9d)
 → memori/challenger sesudah ada bukti → riset otomatis terakhir. Arah ini tidak memberi kewenangan trading.
 
+### Usulan untuk review Claude — pengembangan agentic AI
+
+Dicatat atas permintaan Owner pada **27 Oktober 2026 (WIB)**. **Status: usulan, menunggu review Claude**;
+bukan paket siap dikerjakan atau izin menaikkan kewenangan. Tujuan: Katarina dapat menemukan masalah,
+merencanakan pekerjaan, memakai alat, menilai bukti dan menyimpan pelajaran secara terukur.
+Gunakan observer, registry, memori, antrean dan gerbang yang sudah ada; jangan membangun otak/worker paralel.
+
+**Lima fondasi yang perlu diperbaiki sebelum memperluas otonomi:**
+
+| Fondasi | Usulan perbaikan | Bukti penerimaan yang perlu dirinci Claude |
+|---|---|---|
+| Waktu historis/DST | Kontrak waktu tunggal: timestamp mentah, UTC, offset dan asal bukti per periode; karantina periode tanpa bukti. Jangan memakai offset saat ini untuk seluruh sejarah. | Replay salinan data nyata sebelum/selama/sesudah +3 → +2: urutan, batas hari dan rekonsiliasi benar. |
+| Keunggulan strategi | Hipotesis terdaftar sebelum eksperimen; development/validation/holdout terpisah, biaya penuh, baseline dan pencatatan seluruh percobaan. | Bukti out-of-sample dan forward memenuhi kriteria tahap yang sudah ditetapkan; CI hijau bukan bukti profit. |
+| Jalur legacy | Inventaris entry point dan seluruh pembaca timestamp; adapter aktif memakai kontrak yang sama; jalur tanpa bukti tetap ditolak. Hapus hanya yang terbukti tidak digunakan. | Tes kontrak/penolakan data untuk setiap jalur aktif, tanpa melemahkan modul riset atau berkas terkunci. |
+| Integritas data nyata | Audit salinan arsip secara offline: hash, skema, gap, duplikasi, urutan, cakupan simbol dan kecocokan snapshot. | Laporan per simbol/periode: layak, terbatas atau karantina dengan alasan; hash benar tidak otomatis berarti timezone benar. |
+| Infrastruktur | VPS 2 GB difokuskan untuk observer; riset berat dan CI di cloud/GitHub, dengan antrean, batas sumber daya, checkpoint dan pembatalan. | Observer memenuhi anggaran siklus; pemulihan restart/koneksi diuji tersendiri; pekerjaan riset pulih tanpa kehilangan atau duplikasi hasil. |
+
+**Kemampuan agentic yang perlu dipetakan ke modul existing:**
+
+1. Perencana: tujuan → hipotesis/langkah, prasyarat, anggaran dan kondisi berhenti.
+2. Alat dengan izin eksplisit: baca ledger, audit, replay, eksperimen dan usulan patch di sandbox;
+   akses alat tidak otomatis memberi izin mengubah sumber data, runtime atau trading.
+3. Evaluator terpisah dari pembuat usulan: kriteria ditetapkan sebelum eksperimen, pembandingan baseline,
+   pemeriksaan kebocoran data, dan penolakan klaim tanpa bukti.
+4. Memori terstruktur: versi kode/data, hipotesis, hasil termasuk kegagalan, alasan dan tingkat keyakinan;
+   gunakan registry existing. Catatan operasional tidak boleh berubah menjadi pembelajaran strategi dari holdout.
+5. Pengelola pekerjaan: checkpoint, deduplikasi, batas retry/CPU/RAM/waktu, pembatalan dan pemulihan.
+6. Perubahan versi melalui PR: kandidat diuji di sandbox, dibandingkan dengan versi sebelumnya,
+   direview dan memiliki rollback; tidak boleh mengubah Risk Governor atau promosi sendiri.
+7. Evaluasi agen: ketepatan penyelesaian tugas, keterlacakan bukti, kepatuhan izin, biaya dan keberhasilan
+   pemulihan; ambang penerimaan ditentukan sebelum uji, bukan berdasarkan kualitas narasi agen.
+
+**Urutan usulan:** tuntaskan WP12 dan audit data → auditor data baca-saja → agen riset setelah gerbang tahap
+terkait terpenuhi → usulan PR melalui CI/reviewer → evaluasi siklus lengkap dalam sandbox/shadow.
+Target pertama: menemukan satu masalah data, membuktikannya, mengusulkan perbaikan, menjalankan tes dan
+menyiapkan PR yang dapat direview tanpa mengganggu observer. Target ini tidak memerlukan izin trading.
+Perkembangan dipisahkan menjadi pengetahuan operasional, kemampuan riset, dan perubahan kode/model;
+pelatihan ulang model bukan prasyarat tahap pertama. Scientific Memory/riset strategi otomatis tetap mengikuti
+prasyarat arah 1 dan 5 di atas; usulan ini tidak mempercepat pembukaan holdout atau Tahap 5.
+
+**Permintaan review Claude:** petakan kemampuan yang sudah ada dan yang masih kurang; cek tumpang tindih WP,
+pilih lingkup minimum auditor data, tetapkan dataset uji/izin/anggaran/kriteria lulus dan rollback, lalu usulkan
+paket serta dependensinya kepada Owner. Bagian 1–7, status paket R5, runtime VPS dan LIVE OFF tetap berlaku;
+pencatatan ini bukan persetujuan implementasi seluruh usulan, merge, deployment atau kenaikan kewenangan.
+
 ## Lampiran A — Rencana kerja perbaikan (untuk pelaksana)
 
 Disusun Claude 22 Okt 2026 dari pemeriksaan VPS dan repo, ditambah usulan "Multi-Pair Opportunity Hunter" dari
@@ -922,12 +967,12 @@ Menunggu Owner · Dikerjakan Claude.
 | WP8a | Sedang dikerjakan — ChatGPT, PR #195 (perbaikan diminta) | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | Dua butir wajib di komentar PR: (1) `import io` hilang, 7 tes error di HEAD; (2) jam bar server belum diverifikasi → butir "Jam bar" di WP8 langkah 1. Kirim "Perintah perbaikan setelah review" |
 | WP8b | Menunggu prasyarat (WP8a) | – | – |
 | WP9a | Selesai (merge); laporan VPS oleh Claude (fase 3c) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | Diterima. Semua kode alasan di `contextual_decision_intelligence.py` terpetakan; kode baru → `UNKNOWN`. SQLite `mode=ro` + `query_only`. Manifest dibuat ulang dengan generator |
-| WP9b | Sedang dikerjakan — ChatGPT, PR #205 | [#205](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/205) | Masukan `legacy_fail_closed` vs `measured_inputs` dan decision shadow; default lama, belum mengaktifkan VPS |
+| WP9b | Selesai (merge); `measured_inputs` di VPS menunggu persetujuan Owner (fase 3c) | [#205](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/205) | Diterima. Perbaikan review: `previous_cycle_recorded` kini menuntut siklus sebelumnya ≤ 10 menit dan tidak `FAILED`/`NO_MARKET_DATA` (sebelumnya siklus apa pun sejak awal dihitung) + tes. Default tetap perilaku lama; tabel `decision_shadow` mencatat mode alternatif |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Siap dikerjakan (paralel) | – | – |
 | WP10b | Menunggu prasyarat (WP8a) | – | – |
-| WP12 | Siap dikerjakan (prioritas tertinggi) | – | – |
+| WP12 | Selesai (merge); penerapan VPS oleh Claude | [#204](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/204) | Diterima. Perbaikan review: siklus `FAILED` tanpa offset dan siklus `NO_MARKET_DATA` (offset palsu dari quote basi akhir pekan, mis. −4/−7 pada 24 Okt) tidak lagi membuat hari `GAP` (+ tes). Hari sebelum penerapan: snapshot berbasis jam server, arsip UTC → rekonsiliasi hari itu tidak dihitung bukti. Jalur `screening.collect` dan `run_readonly_decisions` dikarantina |
 | WP11 | Selesai (merge); penerapan VPS di WP6 | [#201](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/201) | Diterima. `FAILED` beralasan untuk pasar yang benar-benar tutup adalah perilaku benar; kriteria R4 butir 3–4 dikoreksi. Manifest dibuat ulang dengan generator (tidak diedit tangan). Dampak ke `quote_every_cycle` (≥ 98%) diukur di WP6 |
 | WP7 | Menunggu Owner | – | – |
 

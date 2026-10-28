@@ -383,7 +383,7 @@ class BrainObserver:
                 # AFTER whole-hour correction. Use actual historical UTC
                 # tick snapshots bounded at the observation clock instead.
                 # No synthetic fractional time shift or future quote.
-                past=last_past_quote(mt5,symbol,now)
+                past=last_past_quote(mt5,symbol,now,server_shift_hours=offset)
                 if past is None:
                     raise ValueError("no_past_broker_bidask_quote")
                 quote_bid,quote_ask,quote_at=past
@@ -517,8 +517,8 @@ class BrainObserver:
         # its due-time window; do NOT use the future-leading latest tick.
         # Ex-post status is explicitly distinct from genuine forward fills.
         def due_lookup(symbol,due,as_of):
-            return due_window_quote(mt5,symbol,due,as_of)
-        report["market_timestamp_authority"]="MT5_HISTORICAL_TICK_TIME_MSC_UTC"
+            return due_window_quote(mt5,symbol,due,as_of,server_shift_hours=offset)
+        report["market_timestamp_authority"]="MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC"
         report["market_snapshot_tick_utc"]=(
             datetime.fromtimestamp(max(market_clock_epochs),timezone.utc).isoformat()
             if market_clock_epochs else None)
@@ -558,7 +558,7 @@ class BrainObserver:
             report["observation_ledger"]={"status":"FAILED","error":type(ex).__name__}
         try:
             report["broker_tick_collection"]=ledger.collect_tick_days(
-                store.db,mt5,root,datetime.now(timezone.utc),budget=1)
+                store.db,mt5,root,datetime.now(timezone.utc),server_shift_hours=offset,budget=1)
         except Exception as ex:
             report["broker_tick_collection"]={"status":"FAILED","error":type(ex).__name__}
         from katarina.intelligence.perception.observational_associations import observe_associations

@@ -89,8 +89,12 @@ def export_contexts(db, root, signals, *, symbol: str, split: v.DataSplit, lookb
     root = Path(root)
     parameters = {"symbol": symbol, "lookback_minutes": lookback_minutes, "bar_minutes": bar_minutes,
                   "atr_bars": atr_bars, "split_sha256": split.sha256}
-    days = {row[0]: {"status": row[1], "sha256": row[2], "file": row[3]} for row in db.execute(
-        "SELECT day, status, sha256, file FROM broker_tick_days WHERE symbol=?", (symbol,))}
+    if "server_shift_hours" not in {row[1] for row in db.execute("PRAGMA table_info(broker_tick_days)")}:
+        raise v.ValidationError("TICK_CLOCK_BASIS_UNKNOWN")
+    days = {row[0]: {"status": row[1], "sha256": row[2], "file": row[3],
+                     "server_shift_hours": row[4]} for row in db.execute(
+        "SELECT day, status, sha256, file, server_shift_hours FROM broker_tick_days WHERE symbol=?",
+        (symbol,))}
     gaps = [(v._utc(s), v._utc(e), r) for s, e, r in db.execute(
         "SELECT start_utc, end_utc, reason FROM data_gaps WHERE stream='broker_ticks' AND symbol=?", (symbol,))]
     cache, rows, missing, sources = {}, [], [], set()
@@ -108,6 +112,9 @@ def export_contexts(db, root, signals, *, symbol: str, split: v.DataSplit, lookb
         while reason is None and day <= entry.date():
             key = day.isoformat()
             record = days.get(key)
+            if record is not None and record["server_shift_hours"] is None:
+                reason = "TICK_CLOCK_BASIS_UNKNOWN"
+                break
             if record is None or record["status"] not in USABLE_TICK_DAY_STATUSES or not record["file"]:
                 reason = "TICK_DAY_NOT_STORED"
                 break

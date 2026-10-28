@@ -94,6 +94,7 @@ class DecisionInputsTests(unittest.TestCase):
             )
             self.assertTrue(ledger.previous_cycle_recorded(db, before_utc=now))
             self.assertFalse(ledger.previous_cycle_recorded(db, before_utc=now - timedelta(minutes=2)))
+            self.assertFalse(ledger.previous_cycle_recorded(db, before_utc=now + timedelta(minutes=20)))
             ledger.record_decision_shadow(
                 db, cycle, symbol="EURUSD", mode=MEASURED_MODE,
                 action="WAIT", conditional_side="WAIT",

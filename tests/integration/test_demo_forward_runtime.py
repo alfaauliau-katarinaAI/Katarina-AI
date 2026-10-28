@@ -80,7 +80,7 @@ class DemoForwardTests(unittest.TestCase):
         self.write_clock()
     def write_clock(self):
         (self.root/'latest.json').write_text(json.dumps(dict(time_reference=dict(observed_at_utc=datetime.fromtimestamp(self.now,timezone.utc).isoformat(),
-            canonical_market_clock='MT5_COPY_TICKS_RANGE_TIME_MSC_UTC',broker_server_shift_minutes=0,confirming_symbols=5))))
+            canonical_market_clock='MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC',broker_server_shift_minutes=0,confirming_symbols=5))))
     def make_runtime(self):
         r=DemoForwardRuntime(self.root,self.config,native=self.native,clock=self.clock)
         r._candidate=lambda:dict(trial_id='a'*64,symbol='TEST',config=dict(method='MEAN_REVERSION',side='BUY',lookback=48,horizon=4,threshold=.5),
@@ -126,6 +126,7 @@ class DemoForwardTests(unittest.TestCase):
 
     def test_horizon_exit_is_owned_and_reconciled(self):
         self.step();self.step();self.now+=4*3600+1
+        self.write_clock()  # A current verified reference is required before any broker quote.
         self.assertEqual(self.step()['status'],'DEMO_POSITION_MONITORING')
         self.assertEqual(self.native.sent[-1]['position'],456)
         self.assertEqual(self.step(execute=False)['closed_outcomes'],1)

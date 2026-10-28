@@ -1,4 +1,5 @@
 """Research FAILED events carry a short, public error class for diagnosis."""
+from contextlib import closing
 from datetime import datetime, timezone
 import sqlite3
 import tempfile
@@ -56,7 +57,7 @@ class WorkerFailureEventTest(unittest.TestCase):
     def test_failed_experiment_event_names_error_class(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            with sqlite3.connect(root / 'context.sqlite3') as data:
+            with closing(sqlite3.connect(root / 'context.sqlite3')) as data, data:
                 data.execute('CREATE TABLE lab_universe(symbol TEXT PRIMARY KEY)')
                 data.execute('CREATE TABLE lab_bars(symbol TEXT,stamp INTEGER,o REAL,h REAL,l REAL,c REAL)')
                 data.execute('CREATE TABLE lab_runs(id TEXT,symbol TEXT,created_utc TEXT,digest TEXT,result_json TEXT)')

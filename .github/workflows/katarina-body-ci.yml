@@ -300,7 +300,7 @@ jobs:
   portable-host:
     name: Portable brain (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -319,6 +319,26 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest tests.integration.test_portable_host tests.integration.test_automatic_connection tests.integration.test_pc_acceptance tests.integration.test_environment_recovery tests.integration.test_assistant_pretrial tests.integration.test_continuous_observation tests.integration.test_unified_owner_surface tests.integration.test_system_acceptance_report tests.integration.test_portable_runtime_binding -v
+
+      - name: WP12 legacy clock regression on both platforms
+        env:
+          PYTHONPATH: src
+        run: python -m unittest tests.integration.test_legacy_clock_wp12 -v
+      - name: Full Windows unit regression
+        if: runner.os == 'Windows'
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests/unit -p 'test_*.py' -v
+      - name: Full Windows static regression
+        if: runner.os == 'Windows'
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests/static -p 'test_*.py' -v
+      - name: Full Windows integration regression
+        if: runner.os == 'Windows'
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests/integration -p 'test_*.py' -v
 
       - name: Build committed source-only PC test kit
         run: python scripts/pc/build_pc_test_package.py
