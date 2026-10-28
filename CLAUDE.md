@@ -17,6 +17,8 @@ Sistem riset trading MT5 berbasis Python (bahasa dokumen utama: Indonesia).
 lab riset VPS ada, tetapi Risk Governor (`src/katarina/engines/risk.py`) independen dan
 tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + CI.
 
+Peta dokumentasi: [docs/README.md](docs/README.md). Dokumen eksperimen portfolio dan laporan perapian 15 Okt yang usang dihapus 29 Okt; rinciannya tetap di riwayat Git.
+
 ## Struktur
 
 | Lokasi | Isi |
@@ -105,7 +107,7 @@ Nama baru bekas otak berversi: `brain_observer` → `cognition/observer`, `marke
 
 ## Riwayat perapian
 
-- 15 Okt: `docs/operations/REPOSITORY_CLEANUP_20261015.md` (identitas repo, snapshot VPS dihapus).
+- 15 Okt: identitas repo diselaraskan dan snapshot VPS dihapus (rincian di riwayat Git).
 - 21 Okt (pagi): 45 skrip riset + 27 output ke `archive/`, 3 modul yatim dan 226 import tak terpakai dihapus.
 - 21 Okt (malam): `archive/` (168 berkas), 30 alias `body/stageNN.py`, 8 modul yang hanya dipakai test
   beserta test-nya, dan 17 script riset tak dirujuk dihapus (231 berkas).
