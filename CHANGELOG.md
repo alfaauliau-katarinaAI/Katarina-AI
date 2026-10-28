@@ -6,6 +6,8 @@
 - Tambah dataset gzip deterministik + manifest SHA-256 serta pemuat offline yang memeriksa hash, bar tertutup dan cutoff
   13 Okt 2026 00:00 UTC; tes sintetis menolak holdout di kedua jalur dan modifikasi data.
 - CLI hanya untuk eksekusi manual Claude saat pasar tutup; file terkunci tetap, LIVE OFF; tidak mengubah VPS.
+- Ekspor menuntut bukti jam UTC independen per batch (bar MT5 = jam server, R1 T11); loader streaming. Paket WP8c
+  (bukti dari jam rilis NFP) ditambahkan ke roadmap.
 
 ## 2026-10-27 — usulan agentic AI untuk review Claude
 
