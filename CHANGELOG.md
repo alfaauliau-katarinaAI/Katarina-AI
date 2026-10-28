@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-28 — WP12/WP9b/WP8a diterapkan; PR bertumpuk ditutup; aturan pelaksana diperketat
+
+- VPS `main` `18e2515` sejak 28 Okt 16:57 UTC: quote observer kini harga sekarang (T11 selesai); satu observer resmi,
+  tugas worker uji dan salinan repo dihapus; laporan harian Tahap 0. Data forward harga sah mulai saat itu.
+- #206–#209 ditutup (gabungan/bertumpuk, asumsi jam lama, penjaga NTP yang menghentikan observer). Temuan T12, T13;
+  paket WP8c (bukti jam historis bar) dan WP13 (jam tahan quote basi, `--since`).
+- R0/R6.0: pelaksana dilarang mengoperasikan VPS, membuat PR gabungan/bertumpuk, atau menulis dokumen handoff.
+
 ## 2026-10-23 — WP8a: ekspor bar data pengembangan saja (#195)
 
 - Tambah ekspor historis M5, M15, H1, H4 untuk core simbol observer, simpan spread point, gap dan metadata broker.

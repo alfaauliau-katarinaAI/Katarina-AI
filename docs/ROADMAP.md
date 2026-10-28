@@ -125,7 +125,9 @@ paralel tidak boleh membuka holdout, mengubah strategi aktif, atau melonggarkan 
   Periode di luar cakupan = **CELAH** untuk simbol itu.
 - **Jam tick (R1 T11):** sampai WP12 diterapkan, quote observer berumur ±3 jam dan arsip tick berbasis jam server.
   Data observer sebelum penerapan WP12 hanya bukti operasional (siklus, putus-sambung, memori), **bukan** bukti harga
-  forward; baris tick tanpa `server_shift_hours` ditolak alat riset. Waktu penerapan WP12 dicatat di sini.
+  forward; baris tick tanpa `server_shift_hours` ditolak alat riset. **WP12 diterapkan 28 Okt 2026 16:57 UTC** (`main`
+  `18e2515`); data forward harga yang sah dimulai di sini. Observer resmi berhenti 27 Okt 19:35 – 28 Okt 16:57 UTC
+  (CELAH); data worker uji terpisah (`state\stage0-10day-20261028`, kode belum di-merge) bukan bukti.
 - Jika sampai akhir periode holdout jumlah sampel belum memenuhi kriteria, hasilnya **PENDING** — tidak boleh
   dinyatakan lulus, diperpanjang diam-diam, atau dilengkapi dengan data dari periode lain.
 - Holdout hanya boleh dibuka **satu kali per strategi yang sudah final**. Setiap pembukaan dicatat (strategi,
@@ -417,15 +419,16 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | 1 | WP1 — daftar simbol inti | Pelaksana → Claude | — | ±6 berkas | Selesai (#184) |
 | 2 | WP2 — tick streaming hemat memori | Pelaksana | WP1 | ±2 berkas, ±250 baris | Selesai (#190) |
 | 2 (paralel) | WP3 — diagnosis jalur berita | Pelaksana | WP1 (di-merge setelah WP2) | ±4 berkas, ±200 baris | Selesai (#191) |
-| 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Perbaikan diminta (#195) |
+| 2 (paralel) | WP8a — ekspor + dataset pengembangan | Pelaksana | — | ±4 berkas, ±300 baris | Selesai (#195) |
 | 2 (paralel, prioritas) | WP9a — peta tembok blokir (baca-saja) | Pelaksana | — | ±3 berkas, ±250 baris | Selesai (#196) |
-| 3a (prioritas tertinggi) | WP12 — jam tick server → UTC | Pelaksana | — | ±8 berkas, ±350 baris | — |
-| 3 | Review + merge WP2 → WP3 → WP8a → WP9a | Claude | PR siap review | — | WP2, WP3, WP9a selesai; WP8a menunggu perbaikan |
-| 3b | WP9b — input keputusan jujur + evaluasi bayangan | Pelaksana | WP3 di-merge | ±6 berkas, ±400 baris | — |
+| 3a (prioritas tertinggi) | WP12 — jam tick server → UTC | Pelaksana | — | ±8 berkas, ±350 baris | Selesai (#204) |
+| 3 | Review + merge WP2 → WP3 → WP8a → WP9a | Claude | PR siap review | — | Selesai |
+| 3b | WP9b — input keputusan jujur + evaluasi bayangan | Pelaksana | WP3 di-merge | ±6 berkas, ±400 baris | Selesai (#205) |
 | 3b (paralel) | WP10a — profil spread deskriptif | Pelaksana | WP2 di-merge | ±4 berkas, ±250 baris | — |
 | 3b (paralel) | WP10b — swap + sensitivitas biaya di alat validasi | Pelaksana | WP8a di-merge | ±3 berkas, ±250 baris | — |
 | 3c | Jalankan WP9a di VPS; aktifkan `measured_inputs` bila Owner setuju | Claude + Owner | WP9a, WP9b | — | — |
 | 3b (paralel, prioritas) | WP11 — jam broker saat sebagian pasar tutup | Pelaksana | — (berkas berbeda dari WP2/WP3) | ±2 berkas, ±120 baris | Selesai (#201) |
+| 3d (prioritas) | WP13 — jam broker tahan quote basi + `--since` | Pelaksana | — | ±4 berkas, ±200 baris | — |
 | 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP1 + WP11 di-merge | — | Tahap A dilanjutkan 23 Okt 00:16 UTC |
 | 4 (paralel) | Ekspor dataset pengembangan + profil spread di VPS (akhir pekan, pasar tutup) | Claude | WP8a; WP10a | — | — |
 | 4b | WP8c — bukti jam historis bar dari rilis resmi | Pelaksana | WP8a | ±4 berkas, ±350 baris | — |
@@ -441,7 +444,11 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | terus berjalan | Tahap 0 — observer VPS mengumpulkan 10 hari bursa | VPS | — | — | Lihat PROJECT_STATUS |
 
 **Aturan alur:**
-- Satu paket = satu branch dari `origin/main` = satu PR. Jangan menumpuk PR di atas PR lain.
+- Satu paket = satu branch dari `origin/main` = satu PR. Jangan menumpuk PR di atas PR lain, dan jangan membuat PR
+  gabungan beberapa paket (27–28 Okt: #206/#208/#209 ditutup karena ini).
+- Pelaksana **tidak pernah** mengoperasikan VPS: tidak menghentikan observer, tidak membuat tugas terjadwal, tidak
+  menyalin repo ke VPS, tidak menjalankan kode yang belum di-merge di sana. Uji di VPS hanya oleh Claude.
+- Dokumen handoff/audit/log kerja tidak ditulis di repo; tempatnya deskripsi PR (R9).
 - PR paralel hanya mengubah **baris paketnya sendiri** di tabel R5; konflik di dokumen diselesaikan Claude.
 - Paket paralel bisa menyentuh berkas yang sama (WP2 dan WP3 sama-sama menambah ke `operations/observation_ledger.py`;
   semua PR membuat ulang `release-manifest.json`). Itu boleh: Claude me-merge berurutan (WP2 dulu, lalu WP3, lalu
@@ -466,6 +473,8 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | T9 | VPS tertinggal dari `main`; tugas `Katarina-Readonly-Observer` hanya berjalan saat Administrator login (trigger logon) | Task Scheduler VPS | Sebagian: kode VPS = `main` 23 Okt; auto-start setelah restart VPS masih WP6 |
 | T10 | Mode 5 simbol, 22 Okt 21:00–22:02 UTC: 7 siklus `FAILED BROKER_CLOCK_NOT_VERIFIED`, 0 data untuk **semua** simbol ±62 menit. XAUUSD/NAS100 jeda harian ±21:00–22:00 UTC (DST AS); hanya 3/5 quote segar = 60% < ambang 70% dari **semua** simbol. Dengan 7 simbol: 3/7. Backoff ×2 sampai 16 menit memperpanjang lubang | `broker/broker_clock_alignment.py::infer_clock_shift` (`frac=count/considered`), `cognition/observer.py` (raise bila tidak `suitable_for_readonly_snapshot`), `cognition/continuous_observation.py` (backoff) | Selesai: WP11 (#201); VPS 5 simbol lagi sejak 23 Okt 00:16 UTC (WP6) |
 | T11 | **Jam tick MT5 = jam server broker (+3 jam), bukan UTC.** Probe baca-saja 23 Okt 00:19 UTC: `symbol_info_tick.time` dan `time_msc` dari `copy_ticks_range` sama-sama ≈ UTC+3 jam; bar `copy_rates_*` juga jam server (sudah dikoreksi `bars_for`). `last_past_quote(now)` mencari tick di [now−90 dtk, now] dalam koordinat server, sehingga quote observer berumur **±3 jam**: EURUSD 1.12124 vs 1.12221 sekarang, USDJPY 156.719 vs 156.162. Quote, `quote_age_seconds`, rekonsiliasi dan arsip tick Tahap 0 sejak 22 Okt 04:24 UTC tergeser 3 jam secara konsisten, sehingga pemeriksaan yang ada tidak mendeteksinya. XAUUSD/NAS100 `FAILED` 00:00–01:00 UTC = jeda harian 3 jam sebelumnya | `broker/causal_broker_quotes.py` (`last_past_quote`, `due_window_quote`, docstring "UTC"), `cognition/observer.py`, `operations/observation_ledger.py::_download_day`, `research/context_export.py`, `broker/data_recovery.py`, `demo/demo_forward.py` | Terbuka → WP12 (prioritas tertinggi) |
+| T12 | Akhir pekan, quote basi dengan umur hampir kelipatan jam menghasilkan offset palsu yang "terverifikasi" (−4 pada 24 Okt 03:57 UTC, −7 pada 06:55 UTC; ≥ 3 simbol berhenti pada saat yang sama) | `broker/broker_clock_alignment.py::infer_clock_shift` (umur dihitung setelah pembulatan jam); ledger `observer_cycles` 24 Okt | Arsip tick: diabaikan sejak WP12 review (`NO_MARKET_DATA`); akar masalah → WP13 |
+| T13 | Jam VPS sempat berjalan dari CMOS (selisih ±15 dtk); kini NTP `time.windows.com`, polling ±4,5 jam. Penjaga per siklus "sinkron terakhir ≤ 2 jam" (#207) menghentikan worker uji 28 Okt 09:38 UTC, jadi ditolak | `w32tm /query /status`; laporan harian `host-time-daily.txt` | NTP aktif; status dicatat harian, tidak memblokir observer |
 
 ### R2. Cara kerja standar (wajib untuk setiap paket)
 
@@ -960,6 +969,17 @@ yang sudah diverifikasi `infer_clock_shift` pada siklus yang sama; tanpa pergese
 7. Bukan bagian PR: Claude menerapkan ke VPS, memverifikasi quote = `symbol_info_tick` dalam satu tick size, dan
    mencatat waktu penerapan sebagai awal data forward yang sah (bagian 5).
 
+#### WP13 — Jam broker tahan quote basi + penilaian Tahap 0 sejak tanggal (Tahap 0; R1 T12)
+
+1. `broker/broker_clock_alignment.py::infer_clock_shift`: sebelum voting, buang simbol yang epoch server-nya lebih tua
+   > 180 dtk dari epoch server **terbaru** di antara simbol (`stale_symbols`). Di luar sesi FX (Jumat ≥ 20:00 UTC sampai
+   Minggu 21:00 UTC) kembalikan tidak valid tanpa voting. Syarat lain (≥ 3 suara, 70%) tetap.
+2. `scripts/ai/check_stage0_health.py --since ISO` dan `operations/data_health.assess(..., since=None)`: semua kriteria
+   hanya memakai siklus, quote dan hari tick sejak `since` (default perilaku lama).
+3. Tes: tiga simbol berhenti bersamaan 4 jam lalu → tidak valid (hari kerja dan akhir pekan); 3 segar + 2 basi 1 jam
+   → valid dengan offset benar; Minggu 21:30 UTC dengan 3 segar → valid; `--since` membuang data sebelum tanggal;
+   tes WP11 tetap lulus tanpa diubah.
+
 #### WP7 — Keputusan Owner (bukan kode)
 
 - Profil DEMO final Tahap 3 (usulan 0,5%/trade, 3%/hari sebagai lapisan pengetat di atas batas utama 35%).
@@ -984,9 +1004,9 @@ Menunggu Owner · Dikerjakan Claude.
 | WP1 | Selesai (merge); penerapan VPS di WP6 | [#184](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/184) | Diterima. Perbaikan review: path tes absolut, catatan `CLAUDE.md` dipindah, log kerja R5A dikeluarkan dari roadmap (aturan R2 langkah 7) |
 | WP2 | Selesai (merge); penerapan VPS di WP6 | [#190](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/190) | Diterima. Hasil sama dengan algoritme lama (dedup/urut per jam setara per hari karena jam terpisah), rekonsiliasi identik; manifest dibuat ulang dengan generator |
 | WP3 | Selesai (merge); penerapan VPS di WP6 | [#191](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/191) | Diterima. Hanya diagnosis: seleksi artikel, ambang dan verdict tidak berubah; `published_utc=None` kini dihitung `item_invalid_time` alih-alih error. Manifest dibuat ulang dengan generator |
-| WP4 | Menunggu prasyarat (WP9b; sama-sama mengubah `observer.py`) | – | – |
+| WP4 | Siap dikerjakan | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
-| WP6 | Sedang dikerjakan — Claude: 5 simbol sejak 23 Okt 00:16 UTC | – | Tahap A (22 Okt): RAM bebas 853 MB, siklus 1–4 dtk; gagal saat jeda emas/indeks (T10) → WP11. 7 simbol setelah WP12 dan pemantauan melewati 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
+| WP6 | Sedang dikerjakan — Claude: 5 simbol; `main` `18e2515` sejak 28 Okt 16:57 UTC | – | Quote = harga sekarang (dicek terhadap `symbol_info_tick`). 7 simbol setelah WP13 dan pemantauan melewati 21:00–22:00 UTC. Laporan harian Tahap 0 (`Katarina-Stage0-Daily-Health`, 07:30 WIB). Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8a | Selesai (merge) — alat saja; ekspor menunggu WP8c | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | Diterima versi dari #206: ekspor menuntut bukti jam UTC **independen** per batch (tanpa itu `BROKER_BAR_CLOCK_NOT_VERIFIED`), loader streaming. Usulan review sebelumnya (cocokkan bar dengan tick) ditarik: setelah T11 keduanya jam server, jadi tidak membuktikan UTC |
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
 | WP8c | Siap dikerjakan | – | – |
@@ -995,8 +1015,9 @@ Menunggu Owner · Dikerjakan Claude.
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP10a | Siap dikerjakan (paralel) | – | – |
-| WP10b | Menunggu prasyarat (WP8a) | – | – |
+| WP10b | Siap dikerjakan (paralel) | – | – |
 | WP12 | Selesai (merge); penerapan VPS oleh Claude | [#204](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/204) | Diterima. Perbaikan review: siklus `FAILED` tanpa offset dan siklus `NO_MARKET_DATA` (offset palsu dari quote basi akhir pekan, mis. −4/−7 pada 24 Okt) tidak lagi membuat hari `GAP` (+ tes). Hari sebelum penerapan: snapshot berbasis jam server, arsip UTC → rekonsiliasi hari itu tidak dihitung bukti. Jalur `screening.collect` dan `run_readonly_decisions` dikarantina |
+| WP13 | Siap dikerjakan (prioritas) | – | – |
 | WP11 | Selesai (merge); penerapan VPS di WP6 | [#201](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/201) | Diterima. `FAILED` beralasan untuk pasar yang benar-benar tutup adalah perilaku benar; kriteria R4 butir 3–4 dikoreksi. Manifest dibuat ulang dengan generator (tidak diedit tangan). Dampak ke `quote_every_cycle` (≥ 98%) diukur di WP6 |
 | WP7 | Menunggu Owner | – | – |
 
@@ -1028,7 +1049,8 @@ B. KERJAKAN SESUAI R2 (cara kerja standar) DAN R8 (cara Claude menulis kode), la
 
 C. LARANGAN MUTLAK: mengubah berkas di config/promotion_lock.json, membuat catatan promosi, mengubah Risk Governor
    atau batas 35%, mengaktifkan DEMO/LIVE atau jalur order, menambah observer/worker/thread, menambah dependensi,
-   akses jaringan/MT5 di tes, mengubah VPS atau berkas di luar repo, merge sendiri, force-push, menonaktifkan tes.
+   akses jaringan/MT5 di tes, mengubah VPS atau berkas di luar repo (termasuk lewat Desktop Commander: menghentikan
+   observer, membuat tugas terjadwal, menyalin kode), merge sendiri, force-push, menonaktifkan tes, PR bertumpuk/gabungan.
 
 D. SEBELUM MEMBUKA/MENANDAI PR SIAP:
    1. Jalankan SEMUA perintah R2 langkah 6. Semua harus lulus; manifest harus MATCH. Jika ada yang gagal karena
@@ -1253,6 +1275,17 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru. Paket in
    tanpa pergeseran terverifikasi tidak ada quote; data lama tidak ditulis ulang; baris tick lama ditolak
    context_export; broker palsu meniru jam server; tidak ada jalur order; tidak mengubah VPS.
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP12 di tabel R5.
+```
+
+**Perintah WP13 (jam broker tahan quote basi)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, Lampiran A: R0 "Aturan alur", R1 (T10–T12), R2, R8, R9, R10 dan "WP13".
+   Baca seluruh src/katarina/intelligence/broker/broker_clock_alignment.py, operations/data_health.py,
+   scripts/ai/check_stage0_health.py dan tes-tesnya.
+2. Kerjakan HANYA WP13, satu PR "WP13: jam broker tahan quote basi dan penilaian Tahap 0 sejak tanggal".
+3. Wajib: tidak memblokir observer berdasarkan NTP host; tidak mengubah VPS; tes WP11 tidak diubah.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP13 di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
