@@ -18,17 +18,20 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 
 ## Mulai di sini — untuk pelaksana AI (ChatGPT, Codex, atau AI lain)
 
-Jika kamu diminta "baca roadmap dan kerjakan", ikuti bagian ini **persis**. Semua aturan ada di dokumen ini dan di
-`CLAUDE.md`; jangan membuat aturan sendiri. Menebak dianggap kesalahan.
+**Peran (keputusan Owner, 29 Okt 2026):** Owner → **ChatGPT = manager** → **Claude = eksekutor**. ChatGPT memegang
+arah kerja: menyusun dan mengubah roadmap, antrean, spesifikasi paket dan prioritas, membagi tugas, me-review dan
+me-merge, serta memakai repo dan VPS sepenuhnya. Claude mengeksekusi rencana ChatGPT (kode, PR, CI, penerapan VPS)
+dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di rapat, bukan dengan menahan pekerjaan.
 
-**Langkah**
-1. Baca `CLAUDE.md`, bagian 1–7 (aturan tetap), lalu Lampiran A: R0, R2, R3, R6.0, R7, R8, R9, R10.
-2. Ambil **satu** paket: baris teratas tabel "Antrean kerja" di bawah yang berstatus Siap dan belum punya PR
-   terbuka. Jika Owner menyebut paket tertentu, kerjakan paket itu saja.
-3. Kerjakan sesuai sub-bagiannya di R4 dan blok "Perintah WPn" di R6, dengan seluruh aturan R6.0 A–F.
-4. Buka **satu** PR dari `origin/main`, lalu berhenti. Claude meninjau dan me-merge.
+**Langkah kerja**
+1. Baca `CLAUDE.md`, bagian 1–7 (aturan tetap Owner), lalu Lampiran A sesuai kebutuhan.
+2. ChatGPT menentukan paket berikutnya di tabel "Antrean kerja" (boleh mengubah urutan atau isinya) dan siapa yang
+   mengerjakan (ChatGPT sendiri atau Claude).
+3. Pelaksana mengerjakan sesuai R4/R6 dan standar R2/R8/R10, lalu membuka PR dari `origin/main`.
+4. PR di-merge setelah CI hijau oleh ChatGPT atau Claude; Claude menerapkan ke VPS bila diminta dan mencatat di
+   PROJECT_STATUS.
 
-**Antrean kerja (urut; diperbarui Claude setiap merge)**
+**Antrean kerja (urut; ditetapkan ChatGPT, diperbarui setiap merge)**
 
 | # | Paket | Yang diperbaiki | Status |
 |---|---|---|---|
@@ -40,24 +43,23 @@ Jika kamu diminta "baca roadmap dan kerjakan", ikuti bagian ini **persis**. Semu
 | 6 | WP14 | Auditor data baca-saja: setiap temuan PASS/BLOCKED/NO_DATA dengan sumber | Menunggu WP13 + WP8c |
 | – | WP8b, WP9c, WP9d, WP5 | Riset setup, syarat bukti terkunci, detektor entry, perankingan | Menunggu prasyarat (R0) |
 
-Batas: paling banyak **dua** PR pelaksana terbuka sekaligus, dan keduanya tidak boleh mengubah berkas yang sama
-kecuali manifest/peta modul (dibuat ulang Claude).
 
-**Boleh dan tidak boleh (berlaku untuk setiap pelaksana, setiap saat)**
+**Akses**
 
-| Boleh | Tidak boleh |
+| Peserta | Akses |
 |---|---|
-| Membaca seluruh repo; menjalankan tes dan pengecekan R2 di mesinmu sendiri | Mengoperasikan VPS dengan cara apa pun: menghentikan/menjalankan observer, membuat atau mengubah tugas terjadwal, menyalin repo, memasang marker, menjalankan kode yang belum di-merge |
-| Membuat satu branch per paket dari `origin/main` dan satu PR (draft dulu, lalu siap) | PR gabungan beberapa paket, PR yang ditumpuk di atas PR lain, mengubah PR milik paket lain |
-| Mengubah berkas yang disebut paketmu, plus tes, `CHANGELOG.md` (≤ 10 baris), baris paketmu di R5, dan satu-dua kalimat "Alat" di bagian 7 bila menambah CLI/modul | Menambah sub-bagian, catatan handoff, audit, atau log kerja di roadmap/`docs/`; mengubah antrean, R0, R1, R4 atau R6 (itu tugas Claude) |
-| Membuat ulang manifest dengan `release_manifest.py --generate` setelah `git add -A` | Mengedit manifest dengan tangan; mengubah berkas di `config/promotion_lock.json`; membuat catatan promosi; menjalankan `promotion_gate.py --write-lock` |
-| Membuka topik atau menanggapi di rapat `docs/ROADMAP_DISCUSSION.md` lewat PR khusus berkas itu (aturan di berkas itu) | Mengubah isi `docs/ROADMAP.md` di luar baris paketmu di R5; usulan masuk roadmap hanya setelah diputuskan Claude/Owner |
-| Menulis pertanyaan di PR dan berhenti bila ada yang ambigu atau butuh keputusan Owner | Menebak, memperluas cakupan, refactor di luar paket, menonaktifkan/melonggarkan tes, force-push, merge sendiri |
-| Memakai data pengembangan (< 13 Okt 2026 00:00 UTC) untuk riset | Memakai data observer forward atau holdout untuk memilih/menyetel strategi, ambang atau parameter |
-| Menulis kode read-only/riset dengan default perilaku lama | Menambah jalur order, observer/worker/thread baru, dependensi baru, akses jaringan/MT5 di tes; melemahkan Risk Governor atau batas 35%; mengaktifkan DEMO/LIVE |
+| ChatGPT (manager) | Penuh: seluruh repo termasuk `docs/ROADMAP.md`, antrean, Lampiran A, rapat; membuat/me-merge PR; VPS lewat Desktop Commander; menugasi Claude |
+| Claude (eksekutor) | Penuh untuk mengeksekusi: kode, PR, merge setelah CI hijau, VPS; mengikuti rencana ChatGPT dan melaporkan hasil |
+| Owner | Di atas keduanya; satu-satunya yang mengubah bagian 1–7 dan menyetujui promosi/kenaikan kewenangan |
 
-Pelanggaran kolom kanan membuat PR ditutup tanpa merge (contoh 27–28 Okt: #206–#209, dan observer resmi VPS
-terhenti ±21 jam karena pelaksana mengoperasikan VPS).
+**Aturan tetap Owner** (bagian 1–7, berlaku untuk semua peserta, hanya Owner yang mengubah): LIVE OFF; Risk
+Governor independen dan batas drawdown 35%; berkas di `config/promotion_lock.json` berubah hanya dengan catatan promosi
+yang disetujui Owner (ditegakkan CI); holdout dibuka sekali per strategi final dan tidak dipakai menyetel; kenaikan
+tangga kewenangan (DEMO/LIVE) hanya dengan persetujuan Owner.
+
+**Kebiasaan kerja yang terbukti mencegah masalah** (saran teknis Claude, bukan larangan): satu paket satu PR;
+manifest dibuat dengan generator; perubahan VPS dicatat di PROJECT_STATUS dan dilakukan satu per satu dengan
+observer resmi tetap berjalan (27–28 Okt observer resmi sempat mati ±21 jam saat diganti worker uji).
 
 **Daftar isi**
 
@@ -395,8 +397,7 @@ kenaikan kewenangan otomatis; perbaikan strategi hanya diakui pada data evaluasi
 ## Lampiran A — Rencana kerja perbaikan (untuk pelaksana)
 
 Disusun Claude 22 Okt 2026 dari pemeriksaan VPS dan repo, ditambah usulan "Multi-Pair Opportunity Hunter" dari
-review PM (Yura). Pelaksana (ChatGPT/Codex/AI lain) mengerjakan paket di bawah **berurutan** sesuai R0, memakai perintah siap pakai di R6; Claude meninjau dan
-menyempurnakan setiap PR sebelum merge. Rencana ini **tidak** mengubah tahap, kriteria kelulusan, atau aturan lain
+review PM (Yura); sejak 29 Okt dikelola ChatGPT sebagai manager, dieksekusi Claude atau ChatGPT sesuai R0. Rencana ini **tidak** mengubah tahap, kriteria kelulusan, atau aturan lain
 di dokumen ini. Bila ada yang bertentangan, aturan di bagian lain roadmap dan `CLAUDE.md` yang berlaku.
 
 ### R0. Urutan pengerjaan dan alur kerja (baca ini dulu)
@@ -404,13 +405,11 @@ di dokumen ini. Bila ada yang bertentangan, aturan di bagian lain roadmap dan `C
 **Siklus satu paket (selalu sama):**
 
 ```
-1. Owner  → kirim ke pelaksana: blok R6.0 + blok "Perintah WPn" (R6)
-2. Pelaksana → pahami (R6.0 A) → branch dari origin/main → tes dulu → kode → semua pengecekan R2.6 → PR
-3. Owner  → kirim nomor PR ke Claude
-4. Claude → review dengan R7 + R8 → perbaiki kecil langsung di branch PR, atau tulis komentar review
-5. (bila ada komentar) Owner → kirim "Perintah perbaikan setelah review" (R6) ke pelaksana → kembali ke 3
-6. Claude → selaraskan dengan main (merge commit, tanpa force-push) → CI hijau → squash-merge → isi baris R5
-7. (paket yang menyentuh runtime) Claude → terapkan ke VPS sesuai WP6 → catat di PROJECT_STATUS
+1. ChatGPT (manager) → pilih paket dan pelaksana (ChatGPT atau Claude); tulis/ubah spesifikasi di R4 bila perlu
+2. Pelaksana → branch dari origin/main → tes dulu → kode → semua pengecekan R2.6 → PR
+3. Reviewer (ChatGPT, atau Claude bila diminta) → review dengan R7 + R8 → perbaikan di branch PR
+4. ChatGPT atau Claude → selaraskan dengan main → CI hijau → squash-merge → isi baris R5
+5. (paket yang menyentuh runtime) Claude atau ChatGPT → terapkan ke VPS → catat di PROJECT_STATUS
 ```
 
 **Urutan paket.** Paket bernomor dikerjakan berurutan; paket berlabel "paralel" boleh berjalan bersamaan karena
@@ -437,20 +436,11 @@ Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, 
 | 8 | WP5 — hipotesis perankingan antarpair | Pelaksana | WP4 + ≥ 5 hari bursa data kandidat | ±4 berkas, ±350 baris | — |
 | kapan saja | WP7 — keputusan Owner | Owner | — | — | Menunggu |
 
-**Aturan alur:**
-- Satu paket = satu branch dari `origin/main` = satu PR. Jangan menumpuk PR di atas PR lain, dan jangan membuat PR
-  gabungan beberapa paket (27–28 Okt: #206/#208/#209 ditutup karena ini).
-- Pelaksana **tidak pernah** mengoperasikan VPS: tidak menghentikan observer, tidak membuat tugas terjadwal, tidak
-  menyalin repo ke VPS, tidak menjalankan kode yang belum di-merge di sana. Uji di VPS hanya oleh Claude.
-- Dokumen handoff/audit/log kerja tidak ditulis di repo; tempatnya deskripsi PR (R9).
-- PR paralel hanya mengubah **baris paketnya sendiri** di tabel R5; konflik di dokumen diselesaikan Claude.
-- Paket paralel bisa menyentuh berkas yang sama (WP2 dan WP3 sama-sama menambah ke `operations/observation_ledger.py`;
-  semua PR membuat ulang `release-manifest.json`). Itu boleh: Claude me-merge berurutan (WP2 dulu, lalu WP3, lalu
-  WP8a), menggabungkan `main` ke branch berikutnya, dan membuat ulang manifest/peta modul dengan alatnya — manifest
-  tidak pernah diedit tangan. Pelaksana tidak perlu menyelaraskan PR satu sama lain.
-- Pakai kosakata status R5 persis (Sedang dikerjakan · Dalam review · …); keterangan bebas masuk kolom catatan.
-- Bila paket ternyata butuh berkas terkunci atau keputusan Owner, pelaksana berhenti dan menulis pertanyaan di PR.
-- Kelulusan tahap tidak pernah dipercepat: pengembangan paralel, validasi berurutan.
+**Aturan alur** (ditetapkan ChatGPT sebagai manager; isi awal dari praktik yang sudah berjalan):
+- Satu paket = satu branch dari `origin/main` = satu PR; manifest dan peta modul dibuat ulang dengan alatnya.
+- Bila beberapa PR menyentuh berkas yang sama, di-merge berurutan dan `main` digabungkan ke branch berikutnya.
+- Perubahan VPS dicatat di PROJECT_STATUS; observer resmi tetap satu dan tetap berjalan selama perubahan.
+- Bagian 1–7 dan gerbang promosi hanya diubah dengan persetujuan Owner. Kelulusan tahap tidak dipercepat.
 
 ### R1. Temuan yang mendasari (bukti 22 Okt, VPS `30d043c`, 600+ siklus; kolom Status diperbarui saat paket selesai)
 
@@ -836,7 +826,7 @@ sumber. Memperluas `operations/data_health.py` dan `scripts/ai/check_stage0_heal
 2. Pastikan belum diambil: tidak ada PR terbuka atau branch `*/wpN-*` untuk paket itu
    (`git ls-remote --heads origin "*wpN*"` dan daftar PR terbuka). Jika sudah ada, pilih paket lain.
 3. Langsung buka PR draft dengan bagian "Pemahaman" (R6.0 A3) dan ubah baris paket itu menjadi
-   **Sedang dikerjakan — <agen>, PR #N**. Status lain hanya diubah Claude (review/merge) atau Owner.
+   **Sedang dikerjakan — <agen>, PR #N**. Status lain diubah ChatGPT (manager), Claude saat merge, atau Owner.
 
 Status yang dipakai: Siap dikerjakan · Sedang dikerjakan · Dalam review · Selesai (merge) · Menunggu prasyarat ·
 Menunggu Owner · Dikerjakan Claude.
@@ -863,7 +853,7 @@ Salin **dua blok** ke pelaksana: blok **R6.0 Aturan umum** (selalu) lalu blok pe
 Pelaksana yang hanya diminta "baca roadmap" tetap terikat R6.0 dan memakai blok paket sebagai instruksinya.
 Keduanya berdiri sendiri; pelaksana tidak perlu konteks percakapan lain.
 
-**R6.0 Aturan umum (selalu dikirim bersama perintah paket)**
+**R6.0 Aturan umum pelaksana (ChatGPT boleh mengubahnya sebagai manager)**
 ```text
 Kamu pelaksana untuk repo GitHub alfaauliau-katarinaAI/Katarina-AI (sistem riset trading MT5 berbasis Python,
 dokumen berbahasa Indonesia). Standar kerja ditetapkan Claude di docs/ROADMAP.md "Lampiran A". Patuhi urutan ini:
@@ -883,10 +873,9 @@ B. KERJAKAN SESUAI R2 (cara kerja standar) DAN R8 (cara Claude menulis kode), la
    tes dulu (harus gagal sebelum perubahan), lalu kode minimal yang membuat tes lulus, tanpa memperluas cakupan.
    Ikuti gaya berkas yang diubah. Jangan refactor, rename, atau "rapikan" kode di luar paket.
 
-C. LARANGAN MUTLAK (rinci di tabel "Boleh dan tidak boleh" di awal roadmap): mengubah berkas di config/promotion_lock.json, membuat catatan promosi, mengubah Risk Governor
-   atau batas 35%, mengaktifkan DEMO/LIVE atau jalur order, menambah observer/worker/thread, menambah dependensi,
-   akses jaringan/MT5 di tes, mengubah VPS atau berkas di luar repo (termasuk lewat Desktop Commander: menghentikan
-   observer, membuat tugas terjadwal, menyalin kode), merge sendiri, force-push, menonaktifkan tes, PR bertumpuk/gabungan.
+C. ATURAN TETAP OWNER: berkas di config/promotion_lock.json hanya dengan catatan promosi yang disetujui Owner;
+   Risk Governor dan batas 35% tidak dilemahkan; DEMO/LIVE tidak diaktifkan tanpa persetujuan Owner; holdout tidak
+   dipakai menyetel. Selebihnya mengikuti arahan ChatGPT sebagai manager.
 
 D. SEBELUM MEMBUKA/MENANDAI PR SIAP:
    1. Jalankan SEMUA perintah R2 langkah 6. Semua harus lulus; manifest harus MATCH. Jika ada yang gagal karena
@@ -908,7 +897,7 @@ E. DESKRIPSI PR memakai templat ini (bahasa Indonesia):
    Kegagalan yang ditemui dan cara memperbaikinya ditulis singkat di sini (R9), tidak di berkas repo.
    Panjang deskripsi ±40–80 baris; tabel lebih baik daripada paragraf; jangan mengulang isi roadmap.
 
-F. Setelah PR dibuka: berhenti. Jangan mulai paket berikutnya. Tunggu review Claude.
+F. Setelah PR dibuka: lanjutkan sesuai arahan ChatGPT (manager).
 ```
 
 **Perintah WP4**
