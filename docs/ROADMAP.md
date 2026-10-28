@@ -428,7 +428,8 @@ berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (b
 | 3b (paralel, prioritas) | WP11 — jam broker saat sebagian pasar tutup | Pelaksana | — (berkas berbeda dari WP2/WP3) | ±2 berkas, ±120 baris | Selesai (#201) |
 | 4 | WP6 — terapkan 5 → 7 simbol di VPS | Claude | WP1 + WP11 di-merge | — | Tahap A dilanjutkan 23 Okt 00:16 UTC |
 | 4 (paralel) | Ekspor dataset pengembangan + profil spread di VPS (akhir pekan, pasar tutup) | Claude | WP8a; WP10a | — | — |
-| 5 | WP8b — setup BUY/SELL, simulasi, perbandingan | Pelaksana | WP8a (sebaiknya setelah WP10b) | ±8 berkas, ±600 baris | — |
+| 4b | WP8c — bukti jam historis bar dari rilis resmi | Pelaksana | WP8a | ±4 berkas, ±350 baris | — |
+| 5 | WP8b — setup BUY/SELL, simulasi, perbandingan | Pelaksana | WP8a + WP8c + dataset diekspor (sebaiknya setelah WP10b) | ±8 berkas, ±600 baris | — |
 | 5 (paralel) | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP6 tahap A berjalan | ±6 berkas, ±450 baris | — |
 | 5b | WP9c — syarat bukti proporsional (berkas terkunci, gerbang promosi) | Pelaksana → Claude + Owner | WP9a + WP9b + ≥ 3 hari bursa data `decision_shadow` | ±3 berkas, ±250 baris | — |
 | 6 | Review + merge WP8b, WP4; WP4 diterapkan ke VPS | Claude | PR dibuka | — | — |
@@ -716,12 +717,10 @@ masuk ke otak aktif tanpa holdout + gerbang promosi.
    cutoff, ke `<out>/<SIMBOL>/<TF>.csv.gz` (gzip `mtime=0`, urut waktu, tanpa duplikat) + `manifest.json`
    (simbol, TF, jumlah bar, waktu pertama/terakhir, `point`, `trade_tick_size`, `trade_contract_size`, sha256).
    Celah data dicatat di manifest, tidak diisi. Tes dengan broker palsu; tolak bar ≥ cutoff.
-   **Jam bar (wajib).** `time` dari `copy_rates_*` adalah jam server broker (lihat `adapters/mt5_readonly_market.py::bars_for`),
-   sedangkan `time_msc` tick adalah jam pasar UTC. Untuk setiap batch dan simbol, ambil satu jam tick lewat
-   `copy_ticks_range` yang tumpang tindih dengan bar M5 batch itu dan tentukan pergeseran jam bulat (−12…14) yang
-   membuat open ≥ 3 bar M5 cocok dengan bid tick pertama di bar itu (toleransi `trade_tick_size`). Konversi
-   `time_utc = time_server − shift`, simpan `shift_hours` per batch di manifest (`clock_evidence`), terapkan cutoff
-   **setelah** konversi. Batch tanpa bukti → celah `BAR_CLOCK_NOT_VERIFIED`, tidak diekspor.
+   **Jam bar (wajib).** `time` bar dan `time_msc` tick MT5 sama-sama jam server (R1 T11), jadi mencocokkan keduanya
+   tidak membuktikan UTC. Setiap batch wajib membawa bukti pergeseran dari sumber UTC **independen**
+   (`clock_evidence`: `shift_hours`, `time_basis = INDEPENDENT_UTC`, `source_sha256`); tanpa itu ekspor ditolak
+   `BROKER_BAR_CLOCK_NOT_VERIFIED`. Cara memperoleh bukti: WP8c. Cutoff diterapkan setelah konversi ke UTC.
 2. Modul `src/katarina/research/dev_dataset.py`: `load_dev_dataset(path)` memverifikasi semua hash manifest, menolak
    bar ≥ cutoff, mengembalikan bar tertutup per simbol/TF. Tidak ada akses MT5/jaringan.
 3. Paket `src/katarina/research/setups/` (baru; **jangan** mengubah berkas terkunci — boleh mengimpor fungsi
@@ -751,6 +750,30 @@ masuk ke otak aktif tanpa holdout + gerbang promosi.
 
 Kriteria selesai: alat dan tes lulus; satu contoh hipotesis per keluarga setup (sintetis di tes, bukan klaim pasar).
 Hipotesis nyata didaftarkan dan dijalankan oleh Claude/Owner setelah dataset diekspor (WP8b, bukan bagian PR).
+
+#### WP8c — Bukti jam historis bar dari rilis resmi (Tahap 1; prasyarat ekspor WP8a)
+
+**Masalah.** Bar MT5 berlabel jam server (+3 musim panas, +2 musim dingin; ledger VPS mencatat +3 → +2 pada
+24–25 Okt, cocok dengan aturan DST Eropa). Pergeseran historis harus dibuktikan dari sumber UTC independen, bukan
+ditebak dari pergeseran sekarang. Sumber yang dipakai: jam rilis resmi US Employment Situation (NFP, 08:30 New York),
+yang menimbulkan lonjakan tick volume M5 di EURUSD, USDJPY dan XAUUSD.
+
+1. Berkas `config/research/us_release_calendar.csv` (`release_date, release_utc, source_url`) diisi **Claude** dari
+   jadwal resmi BLS untuk rentang data pengembangan; pelaksana tidak mengarang tanggal. Hash berkas dicatat.
+2. Modul `src/katarina/research/bar_clock_evidence.py`, fungsi murni tanpa MT5:
+   `release_shift(bars_m5_server, release_utc)` → shift bulat −12…14 bila bar M5 dengan tick volume tertinggi dalam
+   ±4 jam dari `release_utc + shift` (untuk shift kandidat) tepat jatuh di menit rilis dan volumenya ≥ 3× median 24 bar
+   di sekitarnya; selain itu `None`. Satu rilis sah bila ≥ 2 dari 3 simbol memberi shift yang sama.
+3. `shift_timeline(samples)`: urutan rilis dengan shift sah → segmen. Perubahan shift di antara dua rilis harus tepat
+   pada satu transisi aturan DST (Eropa atau AS, pakai `operations/data_health.py`); aturan yang konsisten dengan
+   **semua** sampel dipilih; bila tidak ada atau keduanya cocok untuk suatu rentang, rentang itu tanpa bukti.
+4. Adapter `verified_historical_bar_shift(symbol, timeframe, start, end)` untuk `export_dev_bars`: mengembalikan
+   `{"verified": True, "shift_hours", "time_basis": "INDEPENDENT_UTC", "source_sha256"}` hanya bila seluruh batch ada
+   di satu segmen terbukti; `source_sha256` = hash kalender + laporan bukti. CLI ekspor mendapat `--clock-evidence PATH`.
+5. Tes sintetis: bar server +3/+2 dengan lonjakan di menit rilis → shift benar; lonjakan bergeser 5 menit atau terlalu
+   kecil → `None`; satu simbol saja → tidak sah; perubahan shift di luar tanggal transisi → rentang tanpa bukti;
+   batch melintasi batas segmen → ditolak; hasil deterministik.
+6. Bukan bagian PR: Claude mengisi kalender, menjalankan pembuktian dan ekspor di VPS saat pasar tutup.
 
 #### WP9 — Membongkar "tembok blokir" keputusan (Tahap 0–2; prioritas Owner 23 Okt)
 
@@ -964,8 +987,9 @@ Menunggu Owner · Dikerjakan Claude.
 | WP4 | Menunggu prasyarat (WP9b; sama-sama mengubah `observer.py`) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP6 | Sedang dikerjakan — Claude: 5 simbol sejak 23 Okt 00:16 UTC | – | Tahap A (22 Okt): RAM bebas 853 MB, siklus 1–4 dtk; gagal saat jeda emas/indeks (T10) → WP11. 7 simbol setelah WP12 dan pemantauan melewati 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
-| WP8a | Sedang dikerjakan — ChatGPT, PR #195 (perbaikan diminta) | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | Dua butir wajib di komentar PR: (1) `import io` hilang, 7 tes error di HEAD; (2) jam bar server belum diverifikasi → butir "Jam bar" di WP8 langkah 1. Kirim "Perintah perbaikan setelah review" |
-| WP8b | Menunggu prasyarat (WP8a) | – | – |
+| WP8a | Selesai (merge) — alat saja; ekspor menunggu WP8c | [#195](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/195) | Diterima versi dari #206: ekspor menuntut bukti jam UTC **independen** per batch (tanpa itu `BROKER_BAR_CLOCK_NOT_VERIFIED`), loader streaming. Usulan review sebelumnya (cocokkan bar dengan tick) ditarik: setelah T11 keduanya jam server, jadi tidak membuktikan UTC |
+| WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
+| WP8c | Siap dikerjakan | – | – |
 | WP9a | Selesai (merge); laporan VPS oleh Claude (fase 3c) | [#196](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/196) | Diterima. Semua kode alasan di `contextual_decision_intelligence.py` terpetakan; kode baru → `UNKNOWN`. SQLite `mode=ro` + `query_only`. Manifest dibuat ulang dengan generator |
 | WP9b | Selesai (merge); `measured_inputs` di VPS menunggu persetujuan Owner (fase 3c) | [#205](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/205) | Diterima. Perbaikan review: `previous_cycle_recorded` kini menuntut siklus sebelumnya ≤ 10 menit dan tidak `FAILED`/`NO_MARKET_DATA` (sebelumnya siklus apa pun sejak awal dihitung) + tes. Default tetap perilaku lama; tabel `decision_shadow` mencatat mode alternatif |
 | WP9c | Menunggu prasyarat (WP9a, WP9b, data shadow) + persetujuan Owner | – | – |
@@ -1119,6 +1143,18 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sud
    semua trade; batas 5 hipotesis per instrumen per sisi; tidak pernah memanggil perintah holdout; keluaran berlabel
    "RISET — data pengembangan, bukan kelulusan".
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini (WP8a/WP8b) di tabel R5.
+```
+
+**Perintah WP8c (bukti jam historis bar)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sudah di-merge).
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, bagian 5 "Pemisahan data", Lampiran A: R1 (T11), R2, R8, R9, R10, "WP8"
+   dan "WP8c". Baca seluruh src/katarina/research/dev_dataset.py, scripts/research/export_dev_bars.py dan tesnya,
+   serta fungsi DST di src/katarina/intelligence/operations/data_health.py.
+2. Kerjakan HANYA WP8c, satu PR "WP8c: bukti jam historis bar dari rilis resmi".
+3. Wajib: fungsi murni tanpa MT5/jaringan; tidak mengarang tanggal rilis (kalender diisi Claude; tes memakai kalender
+   sintetis); rentang tanpa bukti ditolak; tidak mengubah berkas terkunci; tidak menjalankan ekspor ke VPS.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP8c di tabel R5.
 ```
 
 **Perintah WP9a (peta tembok blokir)**
