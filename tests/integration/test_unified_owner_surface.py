@@ -1,4 +1,5 @@
 """Actual HTTP -> same foreground brain -> tool -> memory, with bound sensors."""
+from tests.integration.test_brain_owned_workflow import write_clock_fixture
 from hashlib import sha256
 import http.client
 import json
@@ -31,6 +32,7 @@ def policy(path, *, analyst_enabled=True):
 class UnifiedOwnerSurfaceTests(unittest.TestCase):
     def test_status_only_runs_on_same_brain_without_model_or_dialog_memory(self):
         with tempfile.TemporaryDirectory() as tmp:
+            write_clock_fixture(tmp)
             root = Path(tmp)
             access = root/'access.json'; policy(access)
             ready, replies, made = queue.Queue(), queue.Queue(), []
@@ -81,6 +83,7 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
 
     def test_http_dialog_sensor_and_memory_share_one_foreground_brain(self):
         with tempfile.TemporaryDirectory() as tmp:
+            write_clock_fixture(tmp)
             root = Path(tmp)
             access = root/'access.json'; policy(access)
             ready, replies = queue.Queue(), queue.Queue()
@@ -180,6 +183,7 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
 
     def test_actual_http_credential_scopes_revocation_and_client_grant_rejection(self):
         with tempfile.TemporaryDirectory() as tmp:
+            write_clock_fixture(tmp)
             access = Path(tmp)/'access.json'; policy(access)
             seen = []
             def turn(text, **options):
@@ -321,3 +325,8 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
                 conn.close()
             finally:
                 server.shutdown();thread.join(timeout=4);server.server_close()
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

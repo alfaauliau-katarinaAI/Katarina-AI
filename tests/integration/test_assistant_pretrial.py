@@ -1,4 +1,5 @@
 """Behavior evidence, fabricated model and broker fixtures; never live validation."""
+from tests.integration.test_brain_owned_workflow import write_clock_fixture
 import json
 from pathlib import Path
 import tempfile
@@ -43,6 +44,8 @@ class AssistantPretrialTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
+        write_clock_fixture(self.root,shift=0,server='SYNTHETIC_DEMO')
+        write_clock_fixture(self.root/'same-brain',shift=0,server='SYNTHETIC_DEMO')
         from katarina.intelligence.news.public_context import ContextStore
         self.db = ContextStore(self.root/'context.sqlite3').db
         self.memory = MemoryStore(self.root/'memory.sqlite3')
@@ -166,6 +169,7 @@ class AssistantPretrialTests(unittest.TestCase):
     def test_actual_observer_pipeline_publishes_feedback_receipts(self):
         native = BoundSyntheticBroker()
         broker = BoundLocalBroker(native, self.config)
+        write_clock_fixture(self.root/'observer',shift=0,server='SYNTHETIC_DEMO')
         result = UnifiedKatarinaBrain.observe_once(self.root/'observer', broker=broker, max_symbols=3, fetch_news=False)
         report = json.loads((self.root/'observer/latest.json').read_text())
         self.assertEqual(result['observed_symbols'], 3)
@@ -306,3 +310,8 @@ class AssistantPretrialTests(unittest.TestCase):
             inbox.accept(second)
             self.assertNotIn(first['feedback_id'], inbox._seen)
             self.assertIn(second['feedback_id'], inbox._seen)
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

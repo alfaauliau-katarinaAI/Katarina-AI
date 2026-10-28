@@ -1,4 +1,5 @@
 """WP11: one normal brain-owned observer cycle despite stale clock snapshots."""
+from tests.integration.test_brain_owned_workflow import write_clock_fixture
 from contextlib import closing
 import json
 from pathlib import Path
@@ -33,6 +34,7 @@ class PartialClockCycleTests(unittest.TestCase):
     def test_three_fresh_two_stale_snapshots_do_not_fail_whole_cycle(self):
         broker = PartiallyClosedBroker()
         with tempfile.TemporaryDirectory() as root:
+            write_clock_fixture(root)
             result = UnifiedKatarinaBrain.observe_once(Path(root),
                                                         broker=broker,
                                                         fetch_news=False)
@@ -62,6 +64,7 @@ class PartialClockCycleTests(unittest.TestCase):
 
         broker = ClosedHistoryBroker()
         with tempfile.TemporaryDirectory() as root:
+            write_clock_fixture(root)
             result = UnifiedKatarinaBrain.observe_once(Path(root), broker=broker,
                                                         fetch_news=False)
             self.assertEqual(result["observed_symbols"], 5)
@@ -80,3 +83,8 @@ class PartialClockCycleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

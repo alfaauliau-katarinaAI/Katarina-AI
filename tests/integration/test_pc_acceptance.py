@@ -1,4 +1,5 @@
 """PC acceptance must distinguish invented data, offline fallback and actual route reads."""
+from tests.integration.test_brain_owned_workflow import write_clock_fixture
 import json
 from pathlib import Path
 import subprocess
@@ -74,6 +75,7 @@ class PCAcceptanceTests(unittest.TestCase):
             path=Path(tmp)/'connection.json'
             path.write_text(json.dumps(dict(expected_login=123,expected_server='Test-Demo',priority=['local'])))
             def connected(brain,root,**kwargs):
+                write_clock_fixture(root)
                 return run_connected(brain,root,**kwargs,
                     factories={'local':lambda config:BoundLocalBroker(AccountBroker(),config)})
             with patch('scripts.pc.run_pc_acceptance.run_connected',side_effect=connected):
@@ -82,3 +84,8 @@ class PCAcceptanceTests(unittest.TestCase):
             self.assertEqual(report['route'],'local')
             self.assertFalse(report['profitability_proven'])
             self.assertTrue((Path(tmp)/'readonly-observer/latest.json').exists())
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

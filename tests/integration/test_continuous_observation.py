@@ -1,4 +1,5 @@
 """Exercise the real persistent lifecycle using synthetic, nonexecuting sensors."""
+from tests.integration.test_brain_owned_workflow import write_clock_fixture
 from pathlib import Path
 import tempfile
 import json
@@ -22,6 +23,7 @@ class ContinuousObservationTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
+        write_clock_fixture(self.root)
         self.instances = []
         self.calls = []
         owner = self
@@ -188,3 +190,8 @@ class ContinuousObservationTests(unittest.TestCase):
             self.assertEqual(diagnostics['fed_article_fetch_disabled'],1)
         finally:
             store.db.close()
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

@@ -13,7 +13,7 @@ sys.path.insert(0,str(ROOT/'src'))
 from katarina.host import inspect_host, state_directory
 from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.adapters.automatic_connection import ConnectionConfig, run_connected
-from katarina.adapters.pc_simulation import PCSimulationBroker
+from katarina.adapters.pc_simulation import PCSimulationBroker, synthetic_observation_clock
 
 
 def _safe(result):
@@ -38,6 +38,13 @@ def write_report(root,report):
 
 
 def run(root,*,mode='demo',connection_config=None):
+    if mode == 'demo':
+        with synthetic_observation_clock():
+            return _run(root, mode=mode, connection_config=connection_config)
+    return _run(root, mode=mode, connection_config=connection_config)
+
+
+def _run(root,*,mode='demo',connection_config=None):
     root=Path(root)
     host=inspect_host(root)
     run_id=uuid.uuid4().hex
@@ -51,6 +58,7 @@ def run(root,*,mode='demo',connection_config=None):
             raise RuntimeError('HOST_PREFLIGHT_BLOCKED')
         if mode=='demo':
             sensor=PCSimulationBroker()
+            sensor.write_clock_fixture(work)
             result=UnifiedKatarinaBrain.observe_once(work,broker=sensor,max_symbols=3,fetch_news=False)
             observed=json.loads((work/'latest.json').read_text())
             if (not _safe(observed) or result.get('orders')!=0 or result.get('observed_symbols')!=3 or not sensor.closed

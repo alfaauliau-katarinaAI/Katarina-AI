@@ -1,4 +1,5 @@
 """WP1 integration: explicit Stage-0 core, missing-symbol ledger, LIVE OFF."""
+from tests.integration.test_brain_owned_workflow import write_clock_fixture
 from contextlib import closing
 from pathlib import Path
 import json
@@ -16,6 +17,7 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
     @staticmethod
     def observe(universe=None, *, max_symbols=3):
         with tempfile.TemporaryDirectory() as tmp:
+            write_clock_fixture(tmp)
             root = Path(tmp)
             native = AccountBroker()
             options = {} if universe is None else {"universe": universe}
@@ -63,6 +65,7 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
         import os
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as tmp:
+            write_clock_fixture(tmp)
             with patch.dict(os.environ, {"KATARINA_ALL_MARKET_RESEARCH": "1"}):
                 with self.assertRaisesRegex(
                         ValueError, "universe_and_all_market_research_exclusive"):
@@ -82,3 +85,8 @@ class ExplicitUniverseObserverIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

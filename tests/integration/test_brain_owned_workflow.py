@@ -1,5 +1,6 @@
 """Diagram acceptance with a synthetic broker: one lifecycle, zero real orders."""
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from hashlib import sha256
 import json
 from pathlib import Path
 import sqlite3
@@ -13,6 +14,17 @@ from katarina.intelligence.cognition.brain_runtime_control import CHECKPOINT
 from katarina.engines.risk import RiskGovernor, RiskRequest
 from katarina.memory import MemoryStore
 from tests.unit.engines.test_execution_recovery import plan
+
+
+def write_clock_fixture(root, *, shift=3, server='Test-Demo'):
+    """Explicit synthetic offset; never use this fixture as real broker evidence."""
+    now=datetime.now(timezone.utc)
+    root=Path(root);root.mkdir(parents=True,exist_ok=True)
+    (root/'broker-clock-evidence.json').write_text(json.dumps(dict(schema_version=1,
+        shift_hours=shift,valid_from=(now-timedelta(hours=1)).isoformat(),
+        valid_until=(now+timedelta(hours=1)).isoformat(),source='INDEPENDENT_CLOCK_OBSERVATION',
+        source_sha256=sha256(b'WP13 invented test clock').hexdigest(),
+        broker_server_sha256=sha256(server.encode()).hexdigest())),encoding='utf-8')
 
 
 class SyntheticBroker:
@@ -39,7 +51,7 @@ class SyntheticBroker:
                                (self.flip_permission and self.terminal_reads >= 3))
 
     def account_info(self):
-        return SimpleNamespace(balance=1000., equity=1000., margin=0., margin_free=1000., trade_mode=0)
+        return SimpleNamespace(balance=1000., equity=1000., margin=0., margin_free=1000., trade_mode=0, server='Test-Demo')
 
     def positions_get(self):return ()
     def orders_get(self):return ()
@@ -66,6 +78,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_complete_synthetic_observer_runs_inside_brain_and_releases_resources(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
+            write_clock_fixture(d)
             result = UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
             self.assertEqual(result['observed_symbols'], 3)
             report = json.loads((Path(d)/'latest.json').read_text())
@@ -93,6 +106,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_permission_change_mid_cycle_cannot_publish_success(self):
         broker = SyntheticBroker(flip_permission=True)
         with tempfile.TemporaryDirectory() as d:
+            write_clock_fixture(d)
             with self.assertRaisesRegex(RuntimeError, 'PERMISSION_CHANGED'):
                 UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
             self.assertFalse((Path(d)/'latest.json').exists())
@@ -101,6 +115,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_failure_is_audited_without_sensitive_message_and_lock_is_released(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
+            write_clock_fixture(d)
             with patch('katarina.intelligence.cognition.observer.BrainObserver.run',
                        side_effect=RuntimeError('sensitive account value')):
                 with self.assertRaises(RuntimeError):
@@ -131,6 +146,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
 
     def test_capital_and_recovery_restart_preserve_reserve_without_replaying_intents(self):
         with tempfile.TemporaryDirectory() as d:
+            write_clock_fixture(d)
             db = sqlite3.connect(':memory:')
             path = Path(d)/'memory.sqlite3'
             with MemoryStore(path) as memory:
@@ -206,6 +222,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
         original = BrainObserver.run
         first, second = SyntheticBroker(), SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
+            write_clock_fixture(d)
             def reenter(observer, **kwargs):
                 with self.assertRaisesRegex(RuntimeError, 'ALREADY_RUNNING'):
                     UnifiedKatarinaBrain.observe_once(Path(d), broker=second, fetch_news=False)
@@ -230,6 +247,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_failed_sensor_stays_wait_and_does_not_approve_foundation(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
+            write_clock_fixture(d)
             with patch.object(broker, 'copy_ticks_range', return_value=()):
                 UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
             report = json.loads((Path(d)/'latest.json').read_text())
@@ -237,3 +255,22 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
             self.assertFalse(report['foundation_readiness']['engineering_checks']['sensors_without_errors'])
             self.assertEqual(report['brain_runtime']['pending_delivery_queue'], 0)
         self.assertEqual(broker.orders, 0)
+
+
+# Routine pipeline tests use a fixed open session; WP13 unit tests exercise
+# the actual weekend boundaries independently.
+def freeze_test_clock(module_name):
+    from contextlib import ExitStack
+    import sys
+    from katarina.adapters.pc_simulation import synthetic_observation_clock
+    stack = ExitStack()
+    fixed = stack.enter_context(synthetic_observation_clock())
+    stack.enter_context(patch(__name__ + '.datetime', fixed))
+    module = sys.modules[module_name]
+    if module_name != __name__ and hasattr(module, 'datetime'):
+        stack.enter_context(patch(module_name + '.datetime', fixed))
+    return stack
+
+
+def setUpModule():
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-29 — WP13: bukti jam independen dan penilaian sejak tanggal
+
+- Quote kini memerlukan bukti offset independen yang terikat server dan masa berlaku; snapshot ambigu ditolak.
+- Observer membaca bukti privat; tes sintetis memasok fixture eksplisit. Kontrak WP11 disesuaikan dengan persetujuan Owner.
+- `check_stage0_health.py --since` membatasi penilaian baca-saja; agregat tick hari awal parsial tidak diklaim terverifikasi.
+- Tidak ada berkas terkunci diubah; LIVE tetap OFF; tidak mengubah VPS.
+
 ## 2026-10-29 — roadmap dirapikan: aturan pelaksana dan antrean kerja
 
 - "Mulai di sini" kini memuat antrean kerja berurutan (WP13 → WP8c → WP10b → WP10a → WP4), batas dua PR terbuka,

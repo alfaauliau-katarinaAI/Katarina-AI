@@ -1,4 +1,5 @@
 """A real offline observer emits events only around its existing execution path."""
+from tests.integration.test_brain_owned_workflow import write_clock_fixture
 from pathlib import Path
 from dataclasses import replace
 from unittest.mock import patch
@@ -14,6 +15,7 @@ from tests.integration.test_automatic_connection import AccountBroker,config
 class ObserverActivityTests(unittest.TestCase):
     def test_existing_observer_pipeline_emits_real_stages_and_keeps_live_off(self):
         with tempfile.TemporaryDirectory() as tmp:
+            write_clock_fixture(tmp)
             root=Path(tmp);broker=AccountBroker()
             result=run_continuous(root,config=config(priority=('local',),attempts=1),
                 factories={'local':lambda c:BoundLocalBroker(broker,c)},max_symbols=3,max_cycles=1)
@@ -42,6 +44,7 @@ class ObserverActivityTests(unittest.TestCase):
                     raise RuntimeError('BROKER_CLOCK_NOT_VERIFIED')
                 return super().observe_connected_market(*args,**kwargs)
         with tempfile.TemporaryDirectory() as tmp:
+            write_clock_fixture(tmp)
             broker=AccountBroker();root=Path(tmp)
             result=run_continuous(root,config=config(priority=('local',),attempts=1),
                 factories={'local':lambda c:BoundLocalBroker(broker,c)},brain_type=GlitchBrain,
@@ -61,6 +64,7 @@ class ObserverActivityTests(unittest.TestCase):
                 def observe_connected_market(self,*args,**kwargs):
                     raise RuntimeError(message)
             with tempfile.TemporaryDirectory() as tmp:
+                write_clock_fixture(tmp)
                 broker=AccountBroker();root=Path(tmp)
                 with self.assertRaises(RuntimeError):
                     run_continuous(root,config=config(priority=('local',),attempts=1),
@@ -81,6 +85,7 @@ class ObserverActivityTests(unittest.TestCase):
                 calls.append(len(rows))
                 return super().market_atr(rows)
         with tempfile.TemporaryDirectory() as tmp:
+            write_clock_fixture(tmp)
             broker=AccountBroker();root=Path(tmp)
             # Force this engineering branch, not a profitable strategy or live permission.
             with patch('katarina.intelligence.cognition.observer.calendar_status',
@@ -96,3 +101,8 @@ class ObserverActivityTests(unittest.TestCase):
             self.assertTrue(all(card['market_state']!='UNKNOWN' for card in report['symbols'].values()))
             self.assertTrue(all(card['live_execution_authorized'] is False for card in report['symbols'].values()))
             self.assertEqual(broker.orders,0)
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

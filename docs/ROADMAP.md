@@ -774,14 +774,23 @@ broker yang **deskriptif**. Tidak ada perubahan pada observer, keputusan, atau b
 
 #### WP13 — Jam broker tahan quote basi + penilaian Tahap 0 sejak tanggal (Tahap 0; R1 T12)
 
-1. `broker/broker_clock_alignment.py::infer_clock_shift`: sebelum voting, buang simbol yang epoch server-nya lebih tua
-   > 180 dtk dari epoch server **terbaru** di antara simbol (`stale_symbols`). Di luar sesi FX (Jumat ≥ 20:00 UTC sampai
-   Minggu 21:00 UTC) kembalikan tidak valid tanpa voting. Syarat lain (≥ 3 suara, 70%) tetap.
-2. `scripts/ai/check_stage0_health.py --since ISO` dan `operations/data_health.assess(..., since=None)`: semua kriteria
-   hanya memakai siklus, quote dan hari tick sejak `since` (default perilaku lama).
-3. Tes: tiga simbol berhenti bersamaan 4 jam lalu → tidak valid (hari kerja dan akhir pekan); 3 segar + 2 basi 1 jam
-   → valid dengan offset benar; Minggu 21:30 UTC dengan 3 segar → valid; `--since` membuang data sebelum tanggal;
-   tes WP11 tetap lulus tanpa diubah.
+1. Kontrak revisi atas persetujuan Owner: satu snapshot tidak dapat membedakan offset sah dari quote basi
+   tepat beberapa jam. `infer_clock_shift` wajib memakai bukti offset independen yang terikat server broker
+   dan interval UTC `[valid_from, valid_until)`; bukti hilang, kedaluwarsa atau ambigu → tidak valid.
+   Bukti operator disimpan privat sebagai `broker-clock-evidence.json` di root state observer: `schema_version=1`,
+   `shift_hours` (integer −12…14), `valid_from`, `valid_until` (ISO dengan zona), `source` (`BROKER_DOCUMENT` atau
+   `INDEPENDENT_CLOCK_OBSERVATION`), `source_sha256` dan `broker_server_sha256` (SHA-256 UTF-8 nama server).
+   Hash mengidentifikasi sumber; pemeriksaan keaslian/independensinya tetap tanggung jawab reviewer.
+   Interval tidak boleh melewati perubahan DST yang belum dibuktikan. Quote tidak boleh membuat bukti sendiri.
+2. ≥ 3 simbol harus segar terhadap offset tersebut (umur −15…180 dtk); simbol lainnya masuk `stale_symbols`.
+   Fraksi konfirmasi dihitung hanya dari simbol segar; tidak lagi menjadi voting untuk menebak offset.
+   Jumat ≥ 20:00 UTC sampai Minggu < 21:00 UTC tetap ditolak. Bukti ini bukan bukti DST historis.
+3. `check_stage0_health.py --since ISO` / `assess(..., since=None)` membatasi kriteria sejak tanggal berzona
+   (default lama dipertahankan). Agregat tick harian pada hari awal parsial dikeluarkan, tidak dipecah secara fiktif;
+   pemulihan outage yang dimulai sebelum batas tidak dihitung sebagai uji baru.
+4. Tes: 3 quote basi 4 jam ditolak pada hari kerja/akhir pekan; 3 segar + 2 basi valid; Minggu 21:30 valid;
+   bukti hilang/kedaluwarsa/salah server ditolak; `--since` baca-saja dan membuang data sebelum batas.
+   Ekspektasi WP11 yang mengandalkan inferensi snapshot disesuaikan dengan kontrak baru yang disetujui Owner.
 
 #### WP7 — Keputusan Owner (bukan kode)
 
@@ -804,7 +813,7 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | Siap dikerjakan (prioritas) | – | – |
+| WP13 | Sedang dikerjakan | – | Kontrak bukti offset independen disetujui Owner; implementasi dan validasi lokal, PR/CI menunggu akses API GitHub. |
 | WP8c | Siap dikerjakan | – | – |
 | WP10b | Siap dikerjakan | – | – |
 | WP10a | Siap dikerjakan | – | – |
@@ -976,7 +985,7 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
    Baca seluruh src/katarina/intelligence/broker/broker_clock_alignment.py, operations/data_health.py,
    scripts/ai/check_stage0_health.py dan tes-tesnya.
 2. Kerjakan HANYA WP13, satu PR "WP13: jam broker tahan quote basi dan penilaian Tahap 0 sejak tanggal".
-3. Wajib: tidak memblokir observer berdasarkan NTP host; tidak mengubah VPS; tes WP11 tidak diubah.
+3. Wajib: tidak memblokir observer berdasarkan NTP host; tidak mengubah VPS; penyesuaian tes WP11 mengikuti kontrak revisi yang disetujui Owner di WP13.
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP13 di tabel R5.
 ```
 

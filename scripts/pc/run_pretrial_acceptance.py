@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.pc.run_pc_acceptance import run as pc_run, write_report
 from scripts.pc.run_assistant import assistant_runtime
 from katarina.adapters.automatic_connection import BoundLocalBroker, ConnectionConfig
-from katarina.adapters.pc_simulation import PCSimulationBroker
+from katarina.adapters.pc_simulation import PCSimulationBroker, synthetic_observation_clock
 from katarina.adapters.dialog_model import JSONDialogModel, ModelConfig
 from katarina.engines.risk import RiskGovernor, RiskRequest
 from katarina.host import state_directory
@@ -41,6 +41,11 @@ class FixtureBroker(PCSimulationBroker):
 
 
 def run(root, *, model_config=None):
+    with synthetic_observation_clock():
+        return _run(root, model_config=model_config)
+
+
+def _run(root, *, model_config=None):
     work = Path(root)/'pretrial'/uuid.uuid4().hex
     work.mkdir(parents=True)
     report = {'schema_version':1, 'status':'BLOCKED', 'input':'SYNTHETIC_MODEL_AND_BROKER',
@@ -69,6 +74,7 @@ def run(root, *, model_config=None):
             require(blocked['status'] == 'BLOCKED' and blocked['orders_submitted'] == 0)
         report['checks'].append('PASS: model cannot acquire an execution tool')
         sensor = BoundLocalBroker(FixtureBroker(), ConnectionConfig(12345,'SYNTHETIC_DEMO'))
+        sensor.write_clock_fixture(work/'roundtrip')
         UnifiedKatarinaBrain.observe_once(work/'roundtrip', broker=sensor, max_symbols=3, fetch_news=False)
         market = json.loads((work/'roundtrip/latest.json').read_text())
         require(len(market['brain_hands_feedback']['receipts']) == 3)

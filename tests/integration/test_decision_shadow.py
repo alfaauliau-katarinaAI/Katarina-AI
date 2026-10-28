@@ -1,4 +1,5 @@
 """WP9b synthetic broker acceptance: active and counterfactual, no orders."""
+from tests.integration.test_brain_owned_workflow import write_clock_fixture
 from contextlib import closing
 import json
 from pathlib import Path
@@ -21,6 +22,7 @@ class DecisionShadowAcceptanceTests(unittest.TestCase):
     def test_legacy_active_decision_and_measured_shadow_have_no_order(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as folder:
+            write_clock_fixture(folder)
             root = Path(folder)
             result = self._observe(root, broker)
             report = json.loads((root / "latest.json").read_text(encoding="utf-8"))
@@ -46,6 +48,7 @@ class DecisionShadowAcceptanceTests(unittest.TestCase):
     def test_measured_active_fails_without_previous_then_uses_recorded_history(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as folder:
+            write_clock_fixture(folder)
             root = Path(folder)
             config = root / "decision_inputs.json"
             config.write_text(
@@ -83,3 +86,8 @@ class DecisionShadowAcceptanceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

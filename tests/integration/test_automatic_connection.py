@@ -15,7 +15,7 @@ from katarina.adapters.readonly_cloud import (
     CloudReadOnlyBroker, PROTOCOL, ReadOnlySensorBridge, validate_endpoint, pack,
 )
 from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
-from tests.integration.test_brain_owned_workflow import SyntheticBroker
+from tests.integration.test_brain_owned_workflow import SyntheticBroker, write_clock_fixture
 
 TOKEN='test-only-sensor-token-not-for-production-12345678'
 
@@ -23,7 +23,7 @@ TOKEN='test-only-sensor-token-not-for-production-12345678'
 class AccountBroker(SyntheticBroker):
     def account_info(self):
         base=super().account_info()
-        return SimpleNamespace(**vars(base),login=123,server='Test-Demo')
+        return SimpleNamespace(**{**vars(base),'login':123,'server':'Test-Demo'})
 
 
 def config(**kwargs):
@@ -85,6 +85,7 @@ class AutomaticConnectionTests(unittest.TestCase):
         native = AccountBroker()
         native.copy_rates_from_pos = lambda *a: None
         with tempfile.TemporaryDirectory() as root:
+            write_clock_fixture(root)
             result = run_connected(UnifiedKatarinaBrain, root,
                 config=config(priority=('local',)), fetch_news=False,
                 factories={'local':lambda c:BoundLocalBroker(native,c)})
@@ -111,6 +112,7 @@ class AutomaticConnectionTests(unittest.TestCase):
     def test_local_preferred_only_one_route_used(self):
         native=AccountBroker()
         with tempfile.TemporaryDirectory() as root:
+            write_clock_fixture(root)
             result=run_connected(UnifiedKatarinaBrain,root,config=config(),fetch_news=False,
                 factories={'local':lambda c:BoundLocalBroker(native,c),
                            'cloud':lambda c:self.fail('second route must not be opened')})
@@ -123,6 +125,7 @@ class AutomaticConnectionTests(unittest.TestCase):
         def offline(c): raise ConnectionUnavailable('unavailable')
         def cloud(c): return CloudReadOnlyBroker('https://localhost',TOKEN,c,exchange=server.dispatch)
         with tempfile.TemporaryDirectory() as root:
+            write_clock_fixture(root)
             result=run_connected(UnifiedKatarinaBrain,root,config=config(attempts=1),fetch_news=False,
                                  factories={'local':offline,'cloud':cloud})
             self.assertEqual(result['connection']['route'],'cloud')
@@ -278,3 +281,8 @@ class AutomaticConnectionTests(unittest.TestCase):
             with self.subTest(route=route), self.assertRaises(ConnectionUnavailable):
                 adapter.symbols_get()
             adapter.shutdown()
+
+
+def setUpModule():
+    from tests.integration.test_brain_owned_workflow import freeze_test_clock
+    unittest.addModuleCleanup(freeze_test_clock(__name__).close)

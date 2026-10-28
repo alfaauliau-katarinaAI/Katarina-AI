@@ -4,12 +4,20 @@ from katarina.intelligence.broker.broker_clock_alignment import (
     infer_clock_shift, capture_time_reference, normalize_incoming_time,
 )
 
+from tests.unit.intelligence.test_clock_evidence_wp13 import evidence
+
+
+def verified_clock(ticks, now, *, shift=3):
+    return infer_clock_shift(ticks, now,
+        evidence=evidence(datetime.fromtimestamp(now, timezone.utc), shift), broker_server='fixture')
+
+
 class TestClockAlignment(unittest.TestCase):
     def test_three_hour_broker_clock_detected_only_for_research(self):
         now=1_800_000_000.0
         ticks={"EURUSD":int(now+10800-2),"XAUUSD":int(now+10800-1),
                "US30":int(now+10800-3),"BTCUSD":int(now+10800-2)}
-        v=infer_clock_shift(ticks,now)
+        v=verified_clock(ticks,now)
         self.assertEqual(v.observed_hours_shift,3)
         self.assertTrue(v.suitable_for_readonly_snapshot)
         self.assertFalse(v.historical_dst_verified)
@@ -17,19 +25,19 @@ class TestClockAlignment(unittest.TestCase):
     def test_utc_server_clock(self):
         now=1_800_000_000.0
         ticks={x:int(now-1) for x in ("EURUSD","XAUUSD","US30")}
-        self.assertEqual(infer_clock_shift(ticks,now).observed_hours_shift,0)
+        self.assertEqual(verified_clock(ticks,now,shift=0).observed_hours_shift,0)
     def test_weekend_stale_ticks_are_not_faked_fresh(self):
         now=1_800_000_000.0
         ticks={x:int(now-3600*48) for x in ("EURUSD","XAUUSD","US30")}
-        self.assertFalse(infer_clock_shift(ticks,now).suitable_for_readonly_snapshot)
+        self.assertFalse(verified_clock(ticks,now).suitable_for_readonly_snapshot)
     def test_disagreeing_quotes_do_not_get_offset(self):
         now=1_800_000_000.0
         ticks={"A":int(now+10800),"B":int(now+10800),
                "C":int(now-7200),"D":int(now-7200)}
-        self.assertFalse(infer_clock_shift(ticks,now).suitable_for_readonly_snapshot)
+        self.assertFalse(verified_clock(ticks,now).suitable_for_readonly_snapshot)
     def test_cannot_accept_only_one_symbol(self):
         now=1_800_000_000.0
-        self.assertFalse(infer_clock_shift({"A":int(now+10800)},now).suitable_for_readonly_snapshot)
+        self.assertFalse(verified_clock({"A":int(now+10800)},now).suitable_for_readonly_snapshot)
 
 
 class TestIncomingTimeNormalization(unittest.TestCase):
@@ -37,7 +45,7 @@ class TestIncomingTimeNormalization(unittest.TestCase):
         self.now = datetime(2026, 10, 15, 6, 0, tzinfo=timezone.utc)
         ticks = {s: int(self.now.timestamp()) + 10800 - 2
                  for s in ("XAUUSD", "EURUSD", "GBPUSD")}
-        self.clock = capture_time_reference(infer_clock_shift(ticks, self.now.timestamp()), self.now)
+        self.clock = capture_time_reference(verified_clock(ticks, self.now.timestamp()), self.now)
 
     def test_snapshot_saves_current_offset_and_utc_authority(self):
         evidence = self.clock.as_dict()
@@ -108,12 +116,12 @@ class TestIncomingTimeNormalization(unittest.TestCase):
                 reference=self.clock, received_at_utc=self.now)
 
     def test_unverified_broker_clock_has_no_reference(self):
-        invalid = infer_clock_shift({"EURUSD": int(self.now.timestamp())},
+        invalid = verified_clock({"EURUSD": int(self.now.timestamp())},
                                     self.now.timestamp())
         with self.assertRaisesRegex(ValueError, "broker_clock_not_verified"):
             capture_time_reference(invalid, self.now)
         with self.assertRaises(ValueError):
-            capture_time_reference(infer_clock_shift(
+            capture_time_reference(verified_clock(
                 {s:int(self.now.timestamp()) for s in ("EURUSD","XAUUSD","US30")},
                 self.now.timestamp()), self.now.replace(tzinfo=None))
 

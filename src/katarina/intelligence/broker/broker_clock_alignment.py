@@ -1,15 +1,62 @@
 """Research-only detection of MT5 tick clock displacement from UTC.
 
 MT5 documentation and broker implementations may disagree on timestamps.
-This detects a CURRENT consistent integer-hour displacement from several
-independent fresh quotes; it does NOT establish historical DST or certify
-latency. No trading is permitted based on this detection.
+This validates CURRENT quotes using reviewed independent offset evidence.
+Quote agreement alone does NOT establish freshness, historical DST or latency. No trading is permitted based on this detection.
 """
 from __future__ import annotations
-from collections import Counter
 from dataclasses import dataclass
 from math import isfinite
 from typing import Mapping
+from datetime import datetime, timedelta, timezone
+from hashlib import sha256
+from pathlib import Path
+import json
+import re
+
+@dataclass(frozen=True)
+class ClockEvidence:
+    """Operator-reviewed independent evidence; never minted from these quote votes.
+
+    The digest identifies the external evidence, not a cryptographic attestation.
+    The private configuration is a trust boundary: its source must be reviewed.
+    The validity interval is half-open and must not cross an unproven DST change.
+    """
+    shift_hours: int
+    valid_from: datetime
+    valid_until: datetime
+    source: str
+    source_sha256: str
+    broker_server_sha256: str
+
+    def valid_at(self, now, broker_server):
+        return (type(self.shift_hours) is int and -12 <= self.shift_hours <= 14
+                and self.source in ('BROKER_DOCUMENT', 'INDEPENDENT_CLOCK_OBSERVATION')
+                and isinstance(self.source_sha256, str)
+                and re.fullmatch(r'[0-9a-f]{64}', self.source_sha256) is not None
+                and isinstance(broker_server, str) and bool(broker_server)
+                and self.broker_server_sha256 == sha256(broker_server.encode('utf-8')).hexdigest()
+                and isinstance(self.valid_from, datetime) and self.valid_from.tzinfo is not None
+                and isinstance(self.valid_until, datetime) and self.valid_until.tzinfo is not None
+                and self.valid_from <= now < self.valid_until)
+
+
+def load_clock_evidence(path):
+    """Read a private reviewed configuration; missing/invalid evidence stays closed."""
+    try:
+        with Path(path).open('rb') as stream:
+            raw = stream.read(16385)
+        if len(raw) > 16384:
+            return None
+        data = json.loads(raw)
+        if not isinstance(data, dict) or type(data.get('schema_version')) is not int or data['schema_version'] != 1:
+            return None
+        return ClockEvidence(data['shift_hours'], datetime.fromisoformat(data['valid_from']),
+            datetime.fromisoformat(data['valid_until']), data['source'], data['source_sha256'],
+            data['broker_server_sha256'])
+    except (OSError, ValueError, TypeError, KeyError):
+        return None
+
 
 @dataclass(frozen=True)
 class ClockFinding:
@@ -21,39 +68,44 @@ class ClockFinding:
     historical_dst_verified: bool = False
     live_execution_authorized: bool = False
     stale_symbols: tuple[str, ...] = ()
+    evidence: ClockEvidence | None = None
+    broker_server: str | None = None
+    observed_utc_epoch: float | None = None
 
-def infer_clock_shift(tick_epoch_by_symbol:Mapping[str,int],
-                      observed_utc_epoch:float,
-                      *,min_symbols:int=3,majority_fraction:float=.70) -> ClockFinding:
-    if not isfinite(observed_utc_epoch) or min_symbols<3:
-        raise ValueError("invalid_clock_inputs")
-    considered=0;votes=Counter();stale=[]
-    for sym,ts in tick_epoch_by_symbol.items():
-        if not sym or not isinstance(ts,int) or ts<=0:continue
-        considered+=1
-        delta=ts-observed_utc_epoch
-        hours=int(round(delta/3600))
-        if not (-12<=hours<=14):
-            stale.append(sym);continue
-        age=observed_utc_epoch-(ts-hours*3600)
-        if -15<=age<=180:
-            votes[hours]+=1
-        else:
-            stale.append(sym)
-    if considered<min_symbols or not votes:
-        return ClockFinding(None,considered,0,0.,False,stale_symbols=tuple(sorted(stale)))
-    hours,count=votes.most_common(1)[0]
-    frac=count/sum(votes.values())
-    valid=count>=min_symbols and frac>=majority_fraction
-    return ClockFinding(hours if valid else None,considered,count,
-                        round(frac,4),valid,stale_symbols=tuple(sorted(stale)))
+
+def infer_clock_shift(tick_epoch_by_symbol: Mapping[str, int], observed_utc_epoch: float,
+                      *, min_symbols: int = 3, majority_fraction: float = .70,
+                      evidence: ClockEvidence | None = None, broker_server: str | None = None) -> ClockFinding:
+    """Validate fresh quotes against independent offset evidence, never infer freshness.
+
+    A stale quote and a fresh quote at another offset can have identical epochs.
+    No snapshot quorum can resolve that ambiguity without independent evidence.
+    """
+    if (not isfinite(observed_utc_epoch) or type(min_symbols) is not int or min_symbols < 3
+            or not .70 <= majority_fraction <= 1):
+        raise ValueError('invalid_clock_inputs')
+    now = datetime.fromtimestamp(observed_utc_epoch, timezone.utc)
+    ticks = {s:t for s,t in tick_epoch_by_symbol.items() if s and type(t) is int and t > 0}
+    closed = (now.weekday() == 4 and now.hour >= 20 or now.weekday() == 5
+              or now.weekday() == 6 and now.hour < 21)
+    if closed or not isinstance(evidence, ClockEvidence) or not evidence.valid_at(now, broker_server):
+        return ClockFinding(None, len(ticks), 0, 0., False)
+    fresh, stale = [], []
+    for symbol, stamp in ticks.items():
+        age = observed_utc_epoch - (stamp - evidence.shift_hours * 3600)
+        in_period = evidence.valid_from.timestamp() <= stamp - evidence.shift_hours * 3600 < evidence.valid_until.timestamp()
+        (fresh if -15 <= age <= 180 and in_period else stale).append(symbol)
+    # Non-fresh timestamps cannot vote for an alternative offset. Independent
+    # evidence resolves the old WP11 ambiguity between a stale and wrong-offset tick.
+    fraction = 1. if fresh else 0.
+    valid = len(fresh) >= min_symbols and fraction >= majority_fraction
+    return ClockFinding(evidence.shift_hours if valid else None, len(ticks), len(fresh),
+        fraction, valid, stale_symbols=tuple(sorted(stale)), evidence=evidence,
+        broker_server=broker_server, observed_utc_epoch=observed_utc_epoch)
 
 
 # Canonical event-time conversion contract, recorded by the existing observer.
 # This deliberately does not infer historical broker DST from today's shift.
-from datetime import datetime, timedelta, timezone
-
-
 def _aware_utc(value: datetime) -> datetime:
     if not isinstance(value, datetime) or value.tzinfo is None:
         raise ValueError("incoming_time_requires_explicit_utc_offset")
@@ -68,6 +120,7 @@ class BrokerTimeReference:
     server_shift_hours: int
     confirming_symbols: int
     confidence_fraction: float
+    evidence: ClockEvidence
 
     def as_dict(self) -> dict:
         return {
@@ -75,7 +128,10 @@ class BrokerTimeReference:
             "canonical_market_clock": "MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC",
             "observed_at_utc": self.observed_at_utc.isoformat(),
             "broker_server_shift_minutes": self.server_shift_hours * 60,
-            "shift_evidence": "CURRENT_MULTISYMBOL_QUOTES_ONLY",
+            "shift_evidence": self.evidence.source,
+            "evidence_sha256": self.evidence.source_sha256,
+            "evidence_valid_from": self.evidence.valid_from.isoformat(),
+            "evidence_valid_until": self.evidence.valid_until.isoformat(),
             "confirming_symbols": self.confirming_symbols,
             "confidence_fraction": self.confidence_fraction,
             "historical_dst_verified": False,
@@ -89,11 +145,13 @@ def capture_time_reference(finding: ClockFinding, observed_at_utc: datetime) -> 
     observed = _aware_utc(observed_at_utc)
     if (not finding.suitable_for_readonly_snapshot or
             finding.observed_hours_shift is None or
-            finding.confirming_symbols < 3):
+            finding.confirming_symbols < 3 or finding.evidence is None or
+            not finding.evidence.valid_at(observed, finding.broker_server) or
+            observed.timestamp() != finding.observed_utc_epoch):
         raise ValueError("broker_clock_not_verified")
     return BrokerTimeReference(
         observed, finding.observed_hours_shift,
-        finding.confirming_symbols, finding.confidence_fraction,
+        finding.confirming_symbols, finding.confidence_fraction, finding.evidence,
     )
 
 
@@ -163,13 +221,15 @@ def normalize_incoming_time(
             raise ValueError("current_broker_clock_evidence_required")
         received = _aware_utc(received_at_utc)
         reference_age = (received - reference.observed_at_utc).total_seconds()
-        if not 0 <= reference_age <= 180:
+        if (not 0 <= reference_age <= 180 or
+                not reference.evidence.valid_from <= received < reference.evidence.valid_until):
             raise ValueError("broker_clock_evidence_expired")
         normalized = (local_wall - timedelta(hours=reference.server_shift_hours)).replace(
             tzinfo=timezone.utc
         )
         data_age = (received - normalized).total_seconds()
-        if not 0 <= data_age <= 180:
+        if (not 0 <= data_age <= 180 or
+                not reference.evidence.valid_from <= normalized < reference.evidence.valid_until):
             raise ValueError("broker_wall_outside_verified_current_window")
     else:
         raise ValueError("unknown_or_unverifiable_timestamp_source")
