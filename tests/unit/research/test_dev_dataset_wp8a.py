@@ -11,7 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from katarina.research.dev_dataset import (
-    DEV_CUTOFF_UTC, export_dev_bars, load_dev_dataset,
+    DEV_CUTOFF_UTC, export_dev_bars, iter_dev_bars, load_dev_dataset,
 )
 from katarina.research.validation import ValidationError
 
@@ -31,6 +31,12 @@ class FakeBroker:
         self.calls = []
         self.contaminated = contaminated
 
+    def verified_historical_bar_shift(self, symbol, timeframe, start, end):
+        # Fixture-only independent clock proof; production MT5 has no
+        # such method and fails closed until external UTC proof is supplied.
+        return dict(verified=True, time_basis="INDEPENDENT_UTC",
+                    shift_hours=0, source_sha256="a" * 64)
+
     def symbol_info(self, symbol):
         return SimpleNamespace(point=0.00001, trade_tick_size=0.00001,
                                trade_contract_size=100000.0)
@@ -45,6 +51,99 @@ class FakeBroker:
 
 
 class DevDatasetTests(unittest.TestCase):
+    def test_no_independent_clock_evidence_fails_closed(self):
+        class NoEvidenceBroker(FakeBroker):
+            verified_historical_bar_shift = None
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValidationError, "BROKER_BAR_CLOCK_NOT_VERIFIED"):
+                export_dev_bars(NoEvidenceBroker(), ("EURUSD.vx",),
+                                start=DAY, end=DAY + timedelta(days=1), out=tmp)
+            self.assertFalse((Path(tmp) / "manifest.json").exists())
+
+    def test_server_shift_plus_three_is_converted_before_cutoff(self):
+        class ShiftedBroker(FakeBroker):
+            def verified_historical_bar_shift(self, symbol, timeframe, start, end):
+                return dict(verified=True, time_basis="INDEPENDENT_UTC",
+                            shift_hours=3, source_sha256="b" * 64)
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                rows = super().copy_rates_range(symbol, timeframe, start, end)
+                return [{**row, "time":row["time"] + 3*3600} for row in rows]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = export_dev_bars(ShiftedBroker(), ("EURUSD.vx",),
+                                       start=DAY, end=DAY + timedelta(days=1), out=tmp)
+            self.assertEqual(load_dev_dataset(tmp)["EURUSD.vx"]["M5"][0]["time_utc"],
+                             DAY.isoformat())
+            proof = manifest["files"]["EURUSD.vx/M5.csv.gz"]["clock_evidence"]
+            self.assertEqual(proof[0]["shift_hours"], 3)
+
+    def test_dst_shift_can_change_on_separate_verified_chunks(self):
+        origin = datetime(2025, 10, 25, tzinfo=UTC)
+        class DstBroker(FakeBroker):
+            def verified_historical_bar_shift(self, symbol, timeframe, start, end):
+                shift = 3 if start.day == 25 else 2
+                return dict(verified=True, time_basis="INDEPENDENT_UTC",
+                            shift_hours=shift, source_sha256="c" * 64)
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                seconds = FRAMES[timeframe]
+                return [bar(start), bar(start + timedelta(seconds=seconds))]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = export_dev_bars(
+                DstBroker(), ("EURUSD.vx",), start=origin,
+                end=origin + timedelta(days=2), chunk_days=1, out=tmp)
+            proof = manifest["files"]["EURUSD.vx/M5.csv.gz"]["clock_evidence"]
+            self.assertEqual([row["shift_hours"] for row in proof], [3, 2])
+            bars = load_dev_dataset(tmp)["EURUSD.vx"]["M5"]
+            self.assertEqual(bars[0]["time_utc"], origin.isoformat())
+            self.assertEqual(bars[2]["time_utc"],
+                             (origin + timedelta(days=1)).isoformat())
+
+    def test_unverified_proof_is_rejected(self):
+        class BadProof(FakeBroker):
+            def verified_historical_bar_shift(self, symbol, timeframe, start, end):
+                return dict(verified=False, shift_hours=3,
+                            time_basis="INDEPENDENT_UTC", source_sha256="a" * 64)
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValidationError, "BROKER_BAR_CLOCK_NOT_VERIFIED"):
+                export_dev_bars(BadProof(), ("EURUSD.vx",),
+                                start=DAY, end=DAY + timedelta(days=1), out=tmp)
+
+    def test_streaming_reader_matches_eager_with_bounded_memory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            export_dev_bars(FakeBroker(), ("EURUSD.vx",),
+                            start=DAY, end=DAY + timedelta(days=1), out=tmp)
+            eager = load_dev_dataset(tmp)["EURUSD.vx"]["M5"]
+            stream = list(iter_dev_bars(tmp, "EURUSD.vx", "M5"))
+            self.assertEqual(eager, stream)
+
+    def test_eager_limit_is_global_and_stream_remains_available(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            export_dev_bars(FakeBroker(), ("EURUSD.vx",),
+                            start=DAY, end=DAY + timedelta(days=1), out=tmp)
+            for bad_limit in (0, -3, True, 1.4, "100"):
+                with self.subTest(limit=bad_limit), self.assertRaisesRegex(
+                        ValidationError, "development_memory_budget_invalid"):
+                    load_dev_dataset(tmp, max_total_bars=bad_limit)
+            with self.assertRaisesRegex(ValidationError, "development_dataset_exceeds_memory_budget"):
+                load_dev_dataset(tmp, max_total_bars=7)  # 4 timeframes * 2 bars
+            self.assertEqual(len(list(iter_dev_bars(tmp, "EURUSD.vx", "M5"))), 2)
+
+    def test_streaming_reader_validates_archive_count_at_end(self):
+        from katarina.research import validation as v
+        with tempfile.TemporaryDirectory() as tmp:
+            export_dev_bars(FakeBroker(), ("EURUSD.vx",),
+                            start=DAY, end=DAY + timedelta(days=1), out=tmp)
+            p = Path(tmp) / "manifest.json"
+            manifest = json.loads(p.read_text(encoding="utf-8"))
+            manifest["files"]["EURUSD.vx/M5.csv.gz"]["bars"] = 3
+            manifest.pop("manifest_sha256")
+            manifest["manifest_sha256"] = v.sha256_text(v.canonical(manifest))
+            p.write_text(v.canonical(manifest) + "\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValidationError, "development_file_row_count_mismatch"):
+                list(iter_dev_bars(tmp, "EURUSD.vx", "M5"))
+
     def test_cutoff_is_rejected_at_export_even_if_broker_returns_future(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(ValidationError, "holdout_data_forbidden"):

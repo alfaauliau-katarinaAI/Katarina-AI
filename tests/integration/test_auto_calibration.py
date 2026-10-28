@@ -16,7 +16,7 @@ class Broker:
     def copy_rates_range(self,*a):return self.bars()
     def copy_ticks_range(self,s,start,end,flag):
         self.calls.append((start,end))
-        valid=[self.raw-self.offset*60,self.raw+300-self.offset*60]
+        valid=[self.raw,self.raw+300]
         if not self.ambiguous and int(start.timestamp()) not in valid:return []
         return [dict(time_msc=int((start.timestamp()+i*30)*1000),bid=v,ask=v+.1) for i,v in enumerate((100.,102.,99.,100.,101.))]
 
@@ -31,7 +31,7 @@ class CalibrationTests(unittest.TestCase):
         self.b=Broker(self.raw)
         self.write_reference()
     def write_reference(self):
-        (self.root/'latest.json').write_text(json.dumps({'time_reference':dict(observed_at_utc=self.now.isoformat(),broker_server_shift_minutes=180,confirming_symbols=5,canonical_market_clock='MT5_COPY_TICKS_RANGE_TIME_MSC_UTC')}))
+        (self.root/'latest.json').write_text(json.dumps({'time_reference':dict(observed_at_utc=self.now.isoformat(),broker_server_shift_minutes=180,confirming_symbols=5,canonical_market_clock='MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC')}))
     def test_exact_two_window_evidence_is_scoped_and_retains_ticks(self):
         result=calibrate_due(self.db,self.b,self.root,self.now)
         self.assertEqual(result['status'],'MATCHED_WINDOW_ALIGNMENT');self.assertEqual(result['verified_windows'],2)

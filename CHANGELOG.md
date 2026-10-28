@@ -7,6 +7,79 @@
   13 Okt 2026 00:00 UTC; tes sintetis menolak holdout di kedua jalur dan modifikasi data.
 - CLI hanya untuk eksekusi manual Claude saat pasar tutup; file terkunci tetap, LIVE OFF; tidak mengubah VPS.
 
+## 2026-10-27 — usulan agentic AI untuk review Claude
+
+- Atas permintaan Owner, catat lima fondasi perbaikan, kemampuan agentic dan target auditor data di roadmap.
+- Usulan belum menjadi paket implementasi; gerbang tahap/promosi tetap, tanpa perubahan runtime, LIVE OFF.
+
+## 2026-10-23 — WP12: jam tick MT5 server ke UTC (#204)
+
+- Konversi timestamp dan jendela tick menggunakan offset jam broker yang terverifikasi, tanpa menebak saat bukti hilang.
+- Fixture tes Windows menutup koneksi SQLite dan membandingkan path kanonik; assertion fungsional tetap.
+- Regresi dua jalur legacy, integritas arsip +3 setelah peralihan +2, dan suite Windows lengkap ditambahkan; berkas terkunci tidak diubah.
+- Arsip hari ber-offset campuran ditandai GAP (siklus gagal atau tanpa data pasar diabaikan); konteks riset menolak hari lama tanpa basis waktu; LIVE OFF.
+
+## 2026-10-23 — status setelah merge; temuan T11 dan paket WP12
+
+- WP2, WP3, WP9a, WP11 di-merge dan diterapkan ke VPS (`d8b003a`, manifest MATCH); 5 simbol sejak 00:16 UTC.
+- Temuan T11: jam tick MT5 = jam server (+3 jam); quote observer berumur ±3 jam. Paket WP12 (prioritas tertinggi);
+  data forward sebelum WP12 hanya bukti operasional; 10 hari Tahap 0 dihitung sejak WP12 diterapkan.
+- WP8a diminta perbaikan (`import io`, verifikasi jam bar); temuan VPS lama diberi nomor T9, temuan jam parsial T10.
+
+## 2026-10-23 — WP9a: peta pemblokir keputusan baca-saja (#196)
+
+- Tambah `research/blocker_ladder.py` + CLI laporan SQLite mode=ro dari `contextual_decisions`.
+- Kelompokkan alasan A/B/C/M/UNKNOWN, hitung frekuensi, 10 kombinasi terbanyak dan tangga kumulatif
+  per simbol/total; M/UNKNOWN tidak dianggap pulih. Tes sintetis membuktikan determinisme.
+- Diagnostic-only: keputusan, Risk Governor, live/DEMO dan VPS tidak diubah.
+
+## 2026-10-23 — WP3: diagnosis jalur berita observer (#191)
+
+- Catat item feed usang/tanggal invalid, umur item terbaru, serta kegagalan artikel tanpa mengubah pemilihan atau blackout.
+- Ringkasan per siklus disimpan di `observer_news`; laporan Tahap 0 memisahkan tanpa rilis vs gagal ambil.
+- Tes sintetis memastikan `data_health.verdict` dan keputusan tetap; berkas terkunci tak berubah, LIVE OFF, VPS tak diubah.
+
+## 2026-10-23 — WP11: verifikasi jam sebagian pasar tutup (#201)
+
+- Mayoritas jam MT5 dihitung dari quote yang bersuara segar, bukan semua simbol; minimum 3 dan ambang 70% tetap.
+- Tambah daftar simbol basi terurut di `ClockFinding`; keputusan observer, risk dan backoff tidak diubah.
+- Tes jam dan siklus broker palsu memeriksa 3 FX segar + 2 snapshot basi; LIVE OFF, VPS tidak disentuh.
+
+## 2026-10-23 — WP2: tick broker streaming per jam (PR #190)
+
+- Mengganti koleksi tick sehari dalam RAM dengan `_download_day`: satu jam per batch, CSV gzip deterministik,
+  dedup, SHA-256, indeks baris per jam dan file sementara atomik; alasan gap dipertahankan.
+- Rekonsiliasi snapshot hanya mendekode jam relevan, tanpa menampung semua tick satu hari.
+- Tes pembanding terhadap penulis sebelum WP2 dan uji memori dua juta tick ada di PR.
+  Tidak ada berkas terkunci diubah; LIVE tetap OFF, VPS tidak diubah.
+
+## 2026-10-23 — roadmap: holdout WP9d satu kali, R5 WP8a/WP9a sinkron
+
+- WP9d: varian detektor hanya dibandingkan pada data pengembangan; holdout dibuka satu kali untuk kandidat final.
+- R5: WP8a dan WP9a ditandai sedang dikerjakan (#195, #196) agar tidak diambil dua kali.
+
+## 2026-10-23 — WP6 dijeda; WP11 jam broker saat sebagian pasar tutup
+
+- Mode 5 simbol di VPS (22 Okt 19:58–22:02 UTC): RAM dan durasi siklus aman, tetapi 21:00–22:02 UTC semua siklus
+  gagal `BROKER_CLOCK_NOT_VERIFIED` karena emas/indeks jeda harian (R1 T9). VPS kembali ke 3 simbol.
+- Lampiran A: temuan T9, paket WP11 (pecahan mayoritas jam dihitung atas suara segar) dengan perintah R6; WP6
+  menunggu WP11. PROJECT_STATUS dan cakupan simbol di "Pemisahan data" diperbarui.
+
+## 2026-10-23 — roadmap: WP10 biaya trading, counterfactual di WP9d, R0 dirapikan
+
+- Lampiran A ditambah WP10: WP10a profil spread broker deskriptif (label `DESCRIPTIVE_ONLY_NOT_FOR_TUNING`,
+  pagar impor) dan WP10b swap + sensitivitas biaya di `CostModel` (default 0, verdict tidak berubah); perintah R6.
+- WP9d memuat aturan counterfactual kelas C: hanya `dev_dataset`, kartu WAIT forward dilarang untuk untung-rugi.
+- Tabel R0 diurutkan per fase; status WP8a (#195) dan WP9a (#196); "Arah lanjutan" menunjuk WP9d/WP10.
+
+## 2026-10-23 — roadmap: enam arah lanjutan dengan batas data dan prasyarat
+
+- Tambahkan arah Autonomous Research, Market Intelligence, Counterfactual, Cost Intelligence,
+  Scientific Memory dan Champion–Challenger sebagai panduan, **bukan** paket kerja baru.
+- Tegaskan counterfactual untung-rugi hanya dari data pengembangan sebelum 13 Okt 2026,
+  sedangkan kartu WAIT forward/holdout hanya untuk frekuensi pemblokir.
+- Izinkan pengukuran spread forward **deskriptif saja**, tanpa penyetelan strategi atau filter.
+  Prasyarat dan gerbang promosi tidak berubah; tidak ada perubahan kode, VPS atau trading.
 
 ## 2026-10-23 — roadmap: WP9 membongkar tembok blokir keputusan
 

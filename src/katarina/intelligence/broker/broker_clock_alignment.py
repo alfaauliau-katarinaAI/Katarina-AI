@@ -20,29 +20,33 @@ class ClockFinding:
     suitable_for_readonly_snapshot: bool
     historical_dst_verified: bool = False
     live_execution_authorized: bool = False
+    stale_symbols: tuple[str, ...] = ()
 
 def infer_clock_shift(tick_epoch_by_symbol:Mapping[str,int],
                       observed_utc_epoch:float,
                       *,min_symbols:int=3,majority_fraction:float=.70) -> ClockFinding:
     if not isfinite(observed_utc_epoch) or min_symbols<3:
         raise ValueError("invalid_clock_inputs")
-    considered=0;votes=Counter()
+    considered=0;votes=Counter();stale=[]
     for sym,ts in tick_epoch_by_symbol.items():
         if not sym or not isinstance(ts,int) or ts<=0:continue
         considered+=1
         delta=ts-observed_utc_epoch
         hours=int(round(delta/3600))
-        if not (-12<=hours<=14):continue
+        if not (-12<=hours<=14):
+            stale.append(sym);continue
         age=observed_utc_epoch-(ts-hours*3600)
         if -15<=age<=180:
             votes[hours]+=1
+        else:
+            stale.append(sym)
     if considered<min_symbols or not votes:
-        return ClockFinding(None,considered,0,0.,False)
+        return ClockFinding(None,considered,0,0.,False,stale_symbols=tuple(sorted(stale)))
     hours,count=votes.most_common(1)[0]
-    frac=count/considered
+    frac=count/sum(votes.values())
     valid=count>=min_symbols and frac>=majority_fraction
     return ClockFinding(hours if valid else None,considered,count,
-                        round(frac,4),valid)
+                        round(frac,4),valid,stale_symbols=tuple(sorted(stale)))
 
 
 # Canonical event-time conversion contract, recorded by the existing observer.
@@ -68,7 +72,7 @@ class BrokerTimeReference:
     def as_dict(self) -> dict:
         return {
             "schema": 1,
-            "canonical_market_clock": "MT5_COPY_TICKS_RANGE_TIME_MSC_UTC",
+            "canonical_market_clock": "MT5_TICK_SERVER_TIME_CONVERTED_TO_UTC",
             "observed_at_utc": self.observed_at_utc.isoformat(),
             "broker_server_shift_minutes": self.server_shift_hours * 60,
             "shift_evidence": "CURRENT_MULTISYMBOL_QUOTES_ONLY",

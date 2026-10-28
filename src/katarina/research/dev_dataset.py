@@ -56,9 +56,9 @@ def _metadata(broker, symbol):
     return dict(zip(fields, values))
 
 
-def _row(rate, minutes, start, end):
+def _row(rate, minutes, start, end, *, shift_hours=0):
     try:
-        epoch = int(rate["time"])
+        epoch = int(rate["time"]) - shift_hours * 3600
         opened = datetime.fromtimestamp(epoch, timezone.utc)
     except (KeyError, ValueError, TypeError, OverflowError, OSError) as error:
         raise ValidationError("development_bar_time_invalid") from error
@@ -87,7 +87,7 @@ def _row(rate, minutes, start, end):
             volume, spread, real_volume, closed.isoformat())
 
 
-def _bar_stream(broker, symbol, timeframe, start, end, chunk_days):
+def _bar_stream(broker, symbol, timeframe, start, end, chunk_days, clock_evidence):
     minutes = TIMEFRAMES[timeframe]
     frame = getattr(broker, "TIMEFRAME_" + timeframe, timeframe)
     cursor = start
@@ -95,10 +95,33 @@ def _bar_stream(broker, symbol, timeframe, start, end, chunk_days):
     missing_until = start
     while cursor < end:
         upper = min(cursor + timedelta(days=chunk_days), end)
-        # MT5 range can include the end tick; remove it in the range query,
-        # and independently refuse any holdout bar returned by the broker.
+        # MT5 broker timestamps can be server-wall time (+2/+3 across DST).
+        # A trusted operator must supply INDEPENDENT UTC evidence per chunk.
+        # Matching broker ticks to broker bars alone cannot establish UTC.
+        evidence_fn = getattr(broker, "verified_historical_bar_shift", None)
+        if not callable(evidence_fn):
+            raise ValidationError("BROKER_BAR_CLOCK_NOT_VERIFIED")
+        proof = evidence_fn(symbol, timeframe, cursor, upper)
+        if not isinstance(proof, dict):
+            raise ValidationError("BROKER_BAR_CLOCK_NOT_VERIFIED")
+        shift = proof.get("shift_hours")
+        evidence_hash = proof.get("source_sha256")
+        if (proof.get("verified") is not True
+                or proof.get("time_basis") != "INDEPENDENT_UTC"
+                or type(shift) is not int or not -12 <= shift <= 14
+                or not isinstance(evidence_hash, str)
+                or re.fullmatch(r"[a-fA-F0-9]{64}", evidence_hash) is None):
+            raise ValidationError("BROKER_BAR_CLOCK_NOT_VERIFIED")
+        clock_evidence.append(dict(start_utc=cursor.isoformat(),
+                                   end_utc=upper.isoformat(),
+                                   shift_hours=shift,
+                                   time_basis="INDEPENDENT_UTC",
+                                   source_sha256=evidence_hash))
+        # Query using verified server-clock coordinates for this exact chunk.
+        # The cutoff and closed-bar checks happen AFTER UTC conversion.
         rows = broker.copy_rates_range(
-            symbol, frame, cursor, upper - timedelta(microseconds=1))
+            symbol, frame, cursor + timedelta(hours=shift),
+            upper + timedelta(hours=shift) - timedelta(microseconds=1))
         if rows is None:
             yield None, (cursor.isoformat(), upper.isoformat(), "BROKER_HISTORY_UNAVAILABLE")
             missing_until = upper
@@ -110,7 +133,7 @@ def _bar_stream(broker, symbol, timeframe, start, end, chunk_days):
                 raise ValidationError("DEVELOPMENT_CHUNK_OVER_LIMIT")
             dedup = {}
             for raw in rows:
-                row = _row(raw, minutes, start, end)
+                row = _row(raw, minutes, start, end, shift_hours=shift)
                 if row is None:
                     continue
                 key = row[0]
@@ -144,7 +167,7 @@ def _archive(broker, symbol, timeframe, start, end, root, chunk_days, metadata):
     path = root / symbol / (timeframe + ".csv.gz")
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(".tmp")
-    count, first, last, gaps = 0, None, None, []
+    count, first, last, gaps, clock_evidence = 0, None, None, [], []
     try:
         with temp.open("wb") as raw:
             with gzip.GzipFile(filename="", fileobj=raw, mode="wb", mtime=0) as zipfile:
@@ -152,7 +175,7 @@ def _archive(broker, symbol, timeframe, start, end, root, chunk_days, metadata):
                     writer = csv.writer(text, lineterminator="\n")
                     writer.writerow(CSV_FIELDS)
                     for row, gap in _bar_stream(broker, symbol, timeframe,
-                                                start, end, chunk_days):
+                                                start, end, chunk_days, clock_evidence):
                         if gap:
                             gaps.append(dict(start_utc=gap[0], end_utc=gap[1],
                                              reason=gap[2]))
@@ -168,7 +191,7 @@ def _archive(broker, symbol, timeframe, start, end, root, chunk_days, metadata):
         digest = hashlib.file_digest(source, "sha256").hexdigest()
     return dict(symbol=symbol, timeframe=timeframe, bars=count,
                 first_utc=first, last_utc=last, gaps=gaps,
-                sha256=digest, bytes=path.stat().st_size, **metadata)
+                clock_evidence=clock_evidence, sha256=digest, bytes=path.stat().st_size, **metadata)
 
 
 def export_dev_bars(broker, core, *, start, out, end=DEV_CUTOFF_UTC,
@@ -208,19 +231,30 @@ def export_dev_bars(broker, core, *, start, out, end=DEV_CUTOFF_UTC,
     return manifest
 
 
-def _read_archive(path, record, start, end):
+def _iter_archive(path, record, start, end):
     if not path.is_file() or path.is_symlink():
         raise ValidationError("development_file_missing")
     with path.open("rb") as source:
         digest = hashlib.file_digest(source, "sha256").hexdigest()
     if (path.stat().st_size != record["bytes"] or digest != record["sha256"]):
         raise ValidationError("development_file_hash_mismatch")
+    # A hash alone proves unchanged bytes, not correct broker timezone.
+    evidence = record.get("clock_evidence")
+    if (not isinstance(evidence, list) or not evidence
+            or any(e.get("time_basis") != "INDEPENDENT_UTC"
+                   or type(e.get("shift_hours")) is not int
+                   or not -12 <= e["shift_hours"] <= 14
+                   or not isinstance(e.get("source_sha256"), str)
+                   or re.fullmatch(r"[a-fA-F0-9]{64}", e["source_sha256"]) is None
+                   for e in evidence if isinstance(e, dict))
+            or any(not isinstance(e, dict) for e in evidence)):
+        raise ValidationError("BROKER_BAR_CLOCK_NOT_VERIFIED")
     try:
         with gzip.open(path, "rt", encoding="ascii", newline="") as stream:
             reader = csv.DictReader(stream)
             if tuple(reader.fieldnames or ()) != CSV_FIELDS:
                 raise ValidationError("development_csv_header_invalid")
-            rows = []
+            count, first, last, previous = 0, None, None, None
             for item in reader:
                 opened = _utc(item["time_utc"])
                 closed = _utc(item["closed_at_utc"])
@@ -235,25 +269,32 @@ def _read_archive(path, record, start, end):
                     **{col: int(item[col]) for col in ("tick_volume", "spread", "real_volume")}}
                 if _row(original, TIMEFRAMES[record["timeframe"]], start, end) is None:
                     raise ValidationError("development_bar_outside_export_range")
-                if rows and opened <= _utc(rows[-1]["time_utc"]):
+                if previous is not None and opened <= previous:
                     raise ValidationError("DEVELOPMENT_BARS_NOT_MONOTONIC")
-                rows.append({**item, "open": original["open"],
-                             "high": original["high"], "low": original["low"],
-                             "close": original["close"], "tick_volume": original["tick_volume"],
-                             "spread": original["spread"], "real_volume": original["real_volume"]})
+                count += 1
+                if count > record["bars"]:
+                    raise ValidationError("development_file_row_count_mismatch")
+                first = first or item["time_utc"]
+                last = item["time_utc"]
+                previous = opened
+                yield {**item, "open": original["open"],
+                       "high": original["high"], "low": original["low"],
+                       "close": original["close"], "tick_volume": original["tick_volume"],
+                       "spread": original["spread"], "real_volume": original["real_volume"]}
     except (OSError, EOFError, UnicodeError, csv.Error, KeyError, ValueError) as error:
         if isinstance(error, ValidationError):
             raise
         raise ValidationError("development_csv_invalid") from error
-    if (len(rows) != record["bars"]
-            or (rows[0]["time_utc"] if rows else None) != record["first_utc"]
-            or (rows[-1]["time_utc"] if rows else None) != record["last_utc"]):
+    if (count != record["bars"]
+            or first != record["first_utc"] or last != record["last_utc"]):
         raise ValidationError("development_file_row_count_mismatch")
-    return rows
 
 
-def load_dev_dataset(path):
-    """Offline verified development bars by symbol/timeframe; no MT5 or network."""
+def _read_archive(path, record, start, end):
+    return list(_iter_archive(path, record, start, end))
+
+
+def _validated_manifest(path):
     root = Path(path)
     try:
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -270,13 +311,47 @@ def load_dev_dataset(path):
     expected = {symbol + "/" + tf + ".csv.gz" for symbol in symbols for tf in TIMEFRAMES}
     if set(manifest["files"]) != expected:
         raise ValidationError("development_manifest_files_invalid")
+    for key, record in manifest["files"].items():
+        if (not isinstance(record, dict)
+                or not isinstance(record.get("symbol"), str)
+                or not isinstance(record.get("timeframe"), str)
+                or record["symbol"] + "/" + record["timeframe"] + ".csv.gz" != key
+                or type(record.get("bars")) is not int or record["bars"] < 0):
+            raise ValidationError("development_manifest_metadata_invalid")
+    return root, manifest, start, end, symbols
+
+
+def iter_dev_bars(path, symbol, timeframe):
+    """Bounded-RAM reader for one development archive; consume FULL iterator.
+
+    SHA-256 is checked before streaming. Final count and last-bar checks are
+    performed at exhaustion, so prematurely stopping cannot certify a file.
+    """
+    root, manifest, start, end, symbols = _validated_manifest(path)
+    if symbol not in symbols or timeframe not in TIMEFRAMES:
+        raise ValidationError("development_symbol_or_timeframe_invalid")
+    key = symbol + "/" + timeframe + ".csv.gz"
+    record = manifest["files"][key]
+    return _iter_archive(root / key, record, start, end)
+
+
+def load_dev_dataset(path, *, max_total_bars=100_000):
+    """Eager offline loader with a 2GB-VPS memory guard.
+
+    Large research datasets should instead use iter_dev_bars() per archive.
+    The cap covers all symbols/timeframes, not each file individually.
+    """
+    if type(max_total_bars) is not int or max_total_bars < 1:
+        raise ValidationError("development_memory_budget_invalid")
+    root, manifest, start, end, symbols = _validated_manifest(path)
+    total = sum(record["bars"] for record in manifest["files"].values())
+    if total > max_total_bars:
+        raise ValidationError("development_dataset_exceeds_memory_budget")
     output = {}
     for symbol in symbols:
         output[symbol] = {}
         for timeframe in TIMEFRAMES:
             key = symbol + "/" + timeframe + ".csv.gz"
             record = manifest["files"][key]
-            if record["symbol"] != symbol or record["timeframe"] != timeframe:
-                raise ValidationError("development_manifest_metadata_invalid")
             output[symbol][timeframe] = _read_archive(root / key, record, start, end)
     return output
