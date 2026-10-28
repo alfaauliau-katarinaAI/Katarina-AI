@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-28 - daftar perbaikan dan agenda rapat Owner–Claude
+
+- Tambahkan ke `docs/ROADMAP.md` daftar aksi FIX-01..FIX-14 (P0/P1/P2) dan keputusan DEC-01..DEC-08 (agenda rapat Owner/Claude): pemilik, bukti, kriteria selesai, urutan dan dampak terhadap Stage0 frozen.
+- Tindak lanjut CI PR #209 run #40583029343: Windows integration test antarmuka Owner timeout, sementara Body/Ubuntu PASS. Root cause belum terbukti, sehingga dilabelkan P0 verification blocker, bukan klaim regresi pasti.
+- Sinkronkan `docs/PROJECT_STATUS.md` agar kegagalan CI terbaru tidak tersembunyi; hanya perubahan dokumentasi, tidak mengubah task/MT5/ledger/trading.
+
 ## 2026-10-28 - audit keseluruhan untuk review Claude (dokumentasi saja)
 
 - Tambahkan audit menyeluruh per subsistem, matriks tahap 0-5, pemisahan bukti kode/CI/MT5/alpha dan daftar tindakan prioritas P0/P1/P2 di docs/maintenance/CLAUDE_FULL_SYSTEM_AUDIT_20261028.md; tautkan pada roadmap, PROJECT_STATUS dan CLAUDE.md.

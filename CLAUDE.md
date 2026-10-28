@@ -1,5 +1,7 @@
 # CLAUDE.md — peta cepat repositori Katarina AI
 
+**DAFTAR TINDAKAN DAN RAPAT:** di bagian awal [ROADMAP: daftar perbaikan dan agenda Owner–Claude](docs/ROADMAP.md#daftar-perbaikan-dan-agenda-rapat-ownerclaude--28-oktober-2026) terdapat FIX-01..FIX-14 dan DEC-01..DEC-08 beserta PIC, kriteria selesai dan ketergantungan. FIX-01 mengharuskan pemeriksaan timeout CI Windows PR #209. Semua DEC masih menunggu keputusan, bukan approval.
+
 **PEMBARUAN 28 OKTOBER 2026:** untuk handoff Claude, buka [audit lengkap seluruh sistem](docs/maintenance/CLAUDE_FULL_SYSTEM_AUDIT_20261028.md), lalu [status operasional terbaru](docs/PROJECT_STATUS.md) dan [pengujian MT5 10 hari](docs/maintenance/STAGE0_10DAY_ACCEPTANCE_20261028.md). Stage0 masih SOAK_RUNNING, LIVE OFF; CI gabungan PR #208 lulus, tetapi PR belum merge. Jangan mengubah worktree uji yang frozen; setiap status R5 dan promosi tetap melalui review Claude/Owner.
 
 **Pelaksana AI (ChatGPT/Codex/lainnya): mulai dari `docs/ROADMAP.md` bagian "Mulai di sini" dan ikuti Lampiran A (R0–R10).**

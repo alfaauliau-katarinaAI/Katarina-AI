@@ -5,6 +5,8 @@
 **Prioritas baca:** ringkasan ini → `docs/PROJECT_STATUS.md` → `docs/ROADMAP.md` bagian 1–7 dan R0/R5/R7 → detail PR.
 **Status kewenangan:** Level 0 / RESEARCH ONLY, LIVE OFF, tidak ada order DEMO ataupun riil.
 
+**Triage lanjutan:** daftar 14 perbaikan dan 8 keputusan Owner/Claude ada di [ROADMAP bagian Daftar Perbaikan dan Agenda Rapat](../ROADMAP.md#daftar-perbaikan-dan-agenda-rapat-ownerclaude--28-oktober-2026). Update CI PR #209: Body/Ubuntu PASS, Windows FAIL karena timeout tes HTTP Owner UI; penyebab masih harus diverifikasi dan tidak terkait klaim profit. PR #208 CI gabungan tetap SUCCESS pada SHA-nya.
+
 ## 0. Kesimpulan eksekutif
 
 **Sudah terbukti:** arsitektur satu otak mempunyai boundary order disabled; pengawas MT5 asli dengan branch gabungan mampu membuka koneksi lokal yang diverifikasi dan mengamati 5 instrumen tanpa order; Windows VPS kini NTP-synchronized; CI gabungan Body/Ubuntu/Windows hijau; sistem uji kontinu punya ledger terpisah, kode terkunci per SHA, dan audit harian.
