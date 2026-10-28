@@ -13,7 +13,8 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
   (R6), daftar periksa review (R7), cara menulis kode (R8), aturan menulis dokumen/PR (R9), dan standar teknis (R10).
 - Pembagian dokumen: roadmap = arah dan aturan; [PROJECT_STATUS](PROJECT_STATUS.md) = status terkini (satu-satunya
   sumber status operasional); deskripsi PR = bukti dan log kerja; [CHANGELOG](../CHANGELOG.md) = riwayat perubahan;
-  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian. **Log kerja tidak ditulis di roadmap.**
+  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian; [ROADMAP_DISCUSSION](ROADMAP_DISCUSSION.md) = usulan
+  pelaksana dan tanggapan Claude (bukan aturan). **Log kerja tidak ditulis di roadmap.**
 
 ## Mulai di sini — untuk pelaksana AI (ChatGPT, Codex, atau AI lain)
 
@@ -49,6 +50,7 @@ kecuali manifest/peta modul (dibuat ulang Claude).
 | Membuat satu branch per paket dari `origin/main` dan satu PR (draft dulu, lalu siap) | PR gabungan beberapa paket, PR yang ditumpuk di atas PR lain, mengubah PR milik paket lain |
 | Mengubah berkas yang disebut paketmu, plus tes, `CHANGELOG.md` (≤ 10 baris), baris paketmu di R5, dan satu-dua kalimat "Alat" di bagian 7 bila menambah CLI/modul | Menambah sub-bagian, catatan handoff, audit, atau log kerja di roadmap/`docs/`; mengubah antrean, R0, R1, R4 atau R6 (itu tugas Claude) |
 | Membuat ulang manifest dengan `release_manifest.py --generate` setelah `git add -A` | Mengedit manifest dengan tangan; mengubah berkas di `config/promotion_lock.json`; membuat catatan promosi; menjalankan `promotion_gate.py --write-lock` |
+| Menulis usulan/tanggapan di `docs/ROADMAP_DISCUSSION.md` lewat PR khusus dokumen (aturan di berkas itu) | Mengubah isi `docs/ROADMAP.md` di luar baris paketmu di R5; usulan masuk roadmap hanya setelah diputuskan Claude/Owner |
 | Menulis pertanyaan di PR dan berhenti bila ada yang ambigu atau butuh keputusan Owner | Menebak, memperluas cakupan, refactor di luar paket, menonaktifkan/melonggarkan tes, force-push, merge sendiri |
 | Memakai data pengembangan (< 13 Okt 2026 00:00 UTC) untuk riset | Memakai data observer forward atau holdout untuk memilih/menyetel strategi, ambang atau parameter |
 | Menulis kode read-only/riset dengan default perilaku lama | Menambah jalur order, observer/worker/thread baru, dependensi baru, akses jaringan/MT5 di tes; melemahkan Risk Governor atau batas 35%; mengaktifkan DEMO/LIVE |
@@ -363,14 +365,40 @@ promosi tetap berlaku.
 
 **Prioritas terdekat:** lihat "Antrean kerja" di awal dokumen. Arah ini tidak memberi kewenangan trading.
 
-### Usulan agentic AI (dicatat Owner 27 Okt; ditinjau Claude 29 Okt)
+### Usulan agentic AI (Owner 27 dan 29 Okt; ditinjau Claude 29 Okt)
 
-Usulan lima fondasi + tujuh kemampuan agentic diterima sebagai **arah**, bukan paket. Pemetaan ke yang sudah ada:
-waktu historis/DST → WP12 (selesai), WP13, WP8c; keunggulan strategi → alat Tahap 1 + WP8b/WP10b; jalur legacy →
-karantina WP12 (`screening.collect`, `run_readonly_decisions`); integritas data → `check_stage0_health.py` harian +
-WP9a; infrastruktur → VPS hanya observer, riset berat di luar VPS. Kemampuan perencana/evaluator/memori/pengelola
-kerja baru ditulis menjadi paket setelah Tahap 1 lulus untuk satu strategi (arah 1 dan 5). Target pertama yang
-disetujui: auditor data baca-saja, setelah WP13 dan WP8c.
+**Keputusan review:** diterima sebagai arah. Tidak ada subsistem baru: setiap kemampuan memakai modul yang sudah ada.
+Satu paket baru diusulkan (WP14, auditor data baca-saja); masuk antrean hanya setelah Owner menyetujuinya.
+Antrean kerja, gerbang promosi, LIVE OFF, Risk Governor dan batas 35% tidak berubah.
+
+| Kelemahan | Sudah ada | Belum terbukti | Perlu dibangun |
+|---|---|---|---|
+| P1 integritas waktu/data | WP12 (jam tick → UTC), ledger + `check_stage0_health.py` harian, WP9a | Tahap 0 belum lulus; offset akhir pekan (T12); jam bar historis | WP13, WP8c (antrean); WP14 auditor |
+| P2 keunggulan setelah biaya | Alat Tahap 1: registry berantai hash, pembanding, bootstrap, `HoldoutVault` | Belum ada satu strategi pun yang lulus | WP10b (biaya), WP8b (setup) — sudah di roadmap |
+| P3 tugas jangka panjang | Modul lama `lab/continuous_research_lab.py`, `lab/autonomous_research.py` | Checkpoint, anggaran, pemulihan belum diuji | Paket baru **setelah** Tahap 1 lulus untuk satu strategi |
+| P4 bukti virtual vs eksekusi | Tangga kewenangan memisahkan paper/DEMO; `decision_shadow`; `demo_readiness.py` | Belum ada fill DEMO | Tidak ada paket baru; ikuti Tahap 3 |
+| P5 kesiapan operasional | Kriteria Tahap 0–3, WP6 butir 4 (restart), bagian "Sebelum akun riil" | Restart VPS tanpa login; Tahap 0–3 belum lulus | WP6 butir 4 (Claude) |
+
+**Jawaban pertanyaan 3:** ya. Auditor data baca-saja boleh disiapkan setelah WP13 dan WP8c tanpa menunggu Tahap 1,
+karena hanya membaca data dan tidak memilih atau menyetel strategi.
+
+**WP14 — Auditor data baca-saja (usulan; menunggu persetujuan Owner)**
+- Prasyarat: WP13 dan WP8c di-merge.
+- Lingkup: memperluas `operations/data_health.py` / `check_stage0_health.py`, bukan alat paralel. Memeriksa ledger
+  Tahap 0 (siklus, quote, offset, hari tick, celah, rekonsiliasi), manifest dataset pengembangan + `clock_evidence`,
+  dan `decision_shadow`.
+- Keluaran: satu laporan JSON; setiap temuan berstatus `PASS` / `BLOCKED` / `NO_DATA` dengan alasan dan sumber
+  (tabel + kunci baris atau berkas + sha256).
+- Kriteria terima: SQLite `mode=ro`; input sama → laporan byte-identik (hash sama); 100% temuan punya sumber; tes
+  sintetis untuk tiap jenis masalah (data hilang, offset campuran, hash salah, bukti jam tidak ada); tidak menulis ke
+  state observer; berjalan di salinan data, bukan di VPS oleh pelaksana.
+
+**Urutan:** WP13 → WP8c → WP14 (setelah disetujui) → pembuktian Tahap 1 (WP10b, WP8b, holdout sekali) → agent riset
+berkelanjutan (setelah Tahap 1 lulus) → DEMO terbatas (Tahap 0–3 lulus + Owner) → LIVE (gerbang terpisah + Owner).
+
+**Ukuran keberhasilan** diterima dengan angka: laporan deterministik (hash sama pada input sama); 100% kesimpulan
+punya sumber; tugas gagal tercatat dengan alasan dan dapat diulang tanpa duplikasi; tidak pernah ada promosi atau
+kenaikan kewenangan otomatis; perbaikan strategi hanya diakui pada data evaluasi independen setelah biaya penuh.
 
 ## Lampiran A — Rencana kerja perbaikan (untuk pelaksana)
 

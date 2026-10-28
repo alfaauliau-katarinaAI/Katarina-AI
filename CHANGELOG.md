@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-29 — review usulan agentic AI; ruang diskusi roadmap
+
+- Arah lanjutan: hasil review kesiapan agentic AI (P1–P5 dipetakan ke yang sudah ada / belum terbukti / perlu
+  dibangun), usulan WP14 auditor data baca-saja (menunggu Owner), urutan dan ukuran keberhasilan berangka.
+- Berkas baru `docs/ROADMAP_DISCUSSION.md`: pelaksana boleh mengusulkan perubahan roadmap lewat PR khusus berkas itu;
+  Claude memutuskan dan memindahkan hasilnya ke roadmap. Antrean kerja dan gerbang tidak berubah.
+
 ## 2026-10-29 — roadmap dirapikan: aturan pelaksana dan antrean kerja
 
 - "Mulai di sini" kini memuat antrean kerja berurutan (WP13 → WP8c → WP10b → WP10a → WP4), batas dua PR terbuka,
