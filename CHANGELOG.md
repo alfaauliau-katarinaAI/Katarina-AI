@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-29 — roadmap dirapikan: aturan pelaksana dan antrean kerja
+
+- "Mulai di sini" kini memuat antrean kerja berurutan (WP13 → WP8c → WP10b → WP10a → WP4), batas dua PR terbuka,
+  dan tabel "Boleh dan tidak boleh" untuk pelaksana (termasuk larangan mengoperasikan VPS).
+- Spesifikasi dan perintah paket yang sudah selesai dihapus dari R4/R6 (ada di riwayat Git); R0/R5 hanya memuat
+  paket tersisa; usulan agentic AI diringkas dengan hasil review Claude. 1.417 → ±1.110 baris.
+
 ## 2026-10-28 — WP12/WP9b/WP8a diterapkan; PR bertumpuk ditutup; aturan pelaksana diperketat
 
 - VPS `main` `18e2515` sejak 28 Okt 16:57 UTC: quote observer kini harga sekarang (T11 selesai); satu observer resmi,
