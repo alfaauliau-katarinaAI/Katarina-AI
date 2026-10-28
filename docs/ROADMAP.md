@@ -13,7 +13,8 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
   (R6), daftar periksa review (R7), cara menulis kode (R8), aturan menulis dokumen/PR (R9), dan standar teknis (R10).
 - Pembagian dokumen: roadmap = arah dan aturan; [PROJECT_STATUS](PROJECT_STATUS.md) = status terkini (satu-satunya
   sumber status operasional); deskripsi PR = bukti dan log kerja; [CHANGELOG](../CHANGELOG.md) = riwayat perubahan;
-  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian. **Log kerja tidak ditulis di roadmap.**
+  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian; [ROADMAP_DISCUSSION](ROADMAP_DISCUSSION.md) = rapat
+  tertulis Owner, Yura, Claude dan pelaksana (bukan aturan). **Log kerja tidak ditulis di roadmap.**
 
 ## Mulai di sini — untuk pelaksana AI (ChatGPT, Codex, atau AI lain)
 
@@ -36,6 +37,7 @@ Jika kamu diminta "baca roadmap dan kerjakan", ikuti bagian ini **persis**. Semu
 | 3 | WP10b | Swap dan sensitivitas biaya di alat validasi; label "tidak ekonomis" | Siap |
 | 4 | WP10a | Profil spread broker deskriptif dari tick forward (tidak untuk penyetelan) | Siap |
 | 5 | WP4 | Jurnal kandidat riset + replay sinyal teknis (tanpa mengubah keputusan) | Siap |
+| 6 | WP14 | Auditor data baca-saja: setiap temuan PASS/BLOCKED/NO_DATA dengan sumber | Menunggu WP13 + WP8c |
 | – | WP8b, WP9c, WP9d, WP5 | Riset setup, syarat bukti terkunci, detektor entry, perankingan | Menunggu prasyarat (R0) |
 
 Batas: paling banyak **dua** PR pelaksana terbuka sekaligus, dan keduanya tidak boleh mengubah berkas yang sama
@@ -49,6 +51,7 @@ kecuali manifest/peta modul (dibuat ulang Claude).
 | Membuat satu branch per paket dari `origin/main` dan satu PR (draft dulu, lalu siap) | PR gabungan beberapa paket, PR yang ditumpuk di atas PR lain, mengubah PR milik paket lain |
 | Mengubah berkas yang disebut paketmu, plus tes, `CHANGELOG.md` (≤ 10 baris), baris paketmu di R5, dan satu-dua kalimat "Alat" di bagian 7 bila menambah CLI/modul | Menambah sub-bagian, catatan handoff, audit, atau log kerja di roadmap/`docs/`; mengubah antrean, R0, R1, R4 atau R6 (itu tugas Claude) |
 | Membuat ulang manifest dengan `release_manifest.py --generate` setelah `git add -A` | Mengedit manifest dengan tangan; mengubah berkas di `config/promotion_lock.json`; membuat catatan promosi; menjalankan `promotion_gate.py --write-lock` |
+| Membuka topik atau menanggapi di rapat `docs/ROADMAP_DISCUSSION.md` lewat PR khusus berkas itu (aturan di berkas itu) | Mengubah isi `docs/ROADMAP.md` di luar baris paketmu di R5; usulan masuk roadmap hanya setelah diputuskan Claude/Owner |
 | Menulis pertanyaan di PR dan berhenti bila ada yang ambigu atau butuh keputusan Owner | Menebak, memperluas cakupan, refactor di luar paket, menonaktifkan/melonggarkan tes, force-push, merge sendiri |
 | Memakai data pengembangan (< 13 Okt 2026 00:00 UTC) untuk riset | Memakai data observer forward atau holdout untuk memilih/menyetel strategi, ambang atau parameter |
 | Menulis kode read-only/riset dengan default perilaku lama | Menambah jalur order, observer/worker/thread baru, dependensi baru, akses jaringan/MT5 di tes; melemahkan Risk Governor atau batas 35%; mengaktifkan DEMO/LIVE |
@@ -363,14 +366,31 @@ promosi tetap berlaku.
 
 **Prioritas terdekat:** lihat "Antrean kerja" di awal dokumen. Arah ini tidak memberi kewenangan trading.
 
-### Usulan agentic AI (dicatat Owner 27 Okt; ditinjau Claude 29 Okt)
+### Usulan agentic AI (Owner 27 dan 29 Okt; ditinjau Claude 29 Okt)
 
-Usulan lima fondasi + tujuh kemampuan agentic diterima sebagai **arah**, bukan paket. Pemetaan ke yang sudah ada:
-waktu historis/DST → WP12 (selesai), WP13, WP8c; keunggulan strategi → alat Tahap 1 + WP8b/WP10b; jalur legacy →
-karantina WP12 (`screening.collect`, `run_readonly_decisions`); integritas data → `check_stage0_health.py` harian +
-WP9a; infrastruktur → VPS hanya observer, riset berat di luar VPS. Kemampuan perencana/evaluator/memori/pengelola
-kerja baru ditulis menjadi paket setelah Tahap 1 lulus untuk satu strategi (arah 1 dan 5). Target pertama yang
-disetujui: auditor data baca-saja, setelah WP13 dan WP8c.
+**Keputusan review:** diterima sebagai arah. Tidak ada subsistem baru: setiap kemampuan memakai modul yang sudah ada.
+Satu paket baru: WP14 (auditor data baca-saja), **disetujui Owner 29 Okt**, masuk antrean setelah WP13 dan WP8c.
+Antrean kerja, gerbang promosi, LIVE OFF, Risk Governor dan batas 35% tidak berubah.
+
+| Kelemahan | Sudah ada | Belum terbukti | Perlu dibangun |
+|---|---|---|---|
+| P1 integritas waktu/data | WP12 (jam tick → UTC), ledger + `check_stage0_health.py` harian, WP9a | Tahap 0 belum lulus; offset akhir pekan (T12); jam bar historis | WP13, WP8c (antrean); WP14 auditor |
+| P2 keunggulan setelah biaya | Alat Tahap 1: registry berantai hash, pembanding, bootstrap, `HoldoutVault` | Belum ada satu strategi pun yang lulus | WP10b (biaya), WP8b (setup) — sudah di roadmap |
+| P3 tugas jangka panjang | Modul lama `lab/continuous_research_lab.py`, `lab/autonomous_research.py` | Checkpoint, anggaran, pemulihan belum diuji | Paket baru **setelah** Tahap 1 lulus untuk satu strategi |
+| P4 bukti virtual vs eksekusi | Tangga kewenangan memisahkan paper/DEMO; `decision_shadow`; `demo_readiness.py` | Belum ada fill DEMO | Tidak ada paket baru; ikuti Tahap 3 |
+| P5 kesiapan operasional | Kriteria Tahap 0–3, WP6 butir 4 (restart), bagian "Sebelum akun riil" | Restart VPS tanpa login; Tahap 0–3 belum lulus | WP6 butir 4 (Claude) |
+
+**Jawaban pertanyaan 3:** ya. Auditor data baca-saja boleh disiapkan setelah WP13 dan WP8c tanpa menunggu Tahap 1,
+karena hanya membaca data dan tidak memilih atau menyetel strategi.
+
+Spesifikasi WP14 ada di Lampiran A R4.
+
+**Urutan:** WP13 → WP8c → WP14 → pembuktian Tahap 1 (WP10b, WP8b, holdout sekali) → agent riset
+berkelanjutan (setelah Tahap 1 lulus) → DEMO terbatas (Tahap 0–3 lulus + Owner) → LIVE (gerbang terpisah + Owner).
+
+**Ukuran keberhasilan** diterima dengan angka: laporan deterministik (hash sama pada input sama); 100% kesimpulan
+punya sumber; tugas gagal tercatat dengan alasan dan dapat diulang tanpa duplikasi; tidak pernah ada promosi atau
+kenaikan kewenangan otomatis; perbaikan strategi hanya diakui pada data evaluasi independen setelah biaya penuh.
 
 ## Lampiran A — Rencana kerja perbaikan (untuk pelaksana)
 
@@ -405,6 +425,7 @@ Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, 
 | 2 | WP10b — swap + sensitivitas biaya | Pelaksana | WP8a (selesai) | ±3 berkas, ±250 baris | Siap |
 | 2 (paralel) | WP10a — profil spread deskriptif | Pelaksana | WP2 (selesai) | ±4 berkas, ±250 baris | Siap |
 | 3 | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP9b (selesai) | ±6 berkas, ±450 baris | Siap |
+| 3b | WP14 — auditor data baca-saja | Pelaksana | WP13 + WP8c | ±4 berkas, ±350 baris | — |
 | terus | WP6 — 5 → 7 simbol di VPS | Claude | WP13 + pemantauan 21:00–22:00 UTC | — | Berjalan (5 simbol) |
 | terus | Laporan WP9a di VPS; usul `measured_inputs` ke Owner | Claude + Owner | ≥ 3 hari bursa `decision_shadow` | — | Mengumpulkan data |
 | 4 | Isi kalender NFP, buktikan jam bar, ekspor dataset pengembangan (pasar tutup) | Claude | WP8c | — | — |
@@ -783,6 +804,24 @@ broker yang **deskriptif**. Tidak ada perubahan pada observer, keputusan, atau b
    → valid dengan offset benar; Minggu 21:30 UTC dengan 3 segar → valid; `--since` membuang data sebelum tanggal;
    tes WP11 tetap lulus tanpa diubah.
 
+#### WP14 — Auditor data baca-saja (Tahap 0–1; disetujui Owner 29 Okt; setelah WP13 dan WP8c)
+
+Tujuan: satu laporan yang menunjukkan data mana yang layak menjadi bukti dan mana yang tidak, dengan alasan dan
+sumber. Memperluas `operations/data_health.py` dan `scripts/ai/check_stage0_health.py`; **bukan** alat paralel.
+
+1. `check_stage0_health.py --audit --since ISO [--dataset DIR] --output build/research/data_audit.json`. Membaca
+   `context.sqlite3` dengan `mode=ro` + `PRAGMA query_only`, dan (opsional) manifest dataset pengembangan WP8a.
+2. Pemeriksaan: siklus (status, alasan, celah antar siklus), quote (kosong, umur, spread negatif), offset jam (lebih
+   dari satu nilai per hari di luar `NO_MARKET_DATA`), hari tick (status, `server_shift_hours`, sha256 berkas cocok),
+   celah `data_gaps`, rekonsiliasi (`snapshots_matched/snapshots_checked`), `decision_shadow` (baris per siklus ×
+   simbol), dataset (hash manifest, `clock_evidence` lengkap per batch).
+3. Setiap temuan: `{"check", "status": PASS|BLOCKED|NO_DATA, "reason", "source": {"table"|"file", "key"|"sha256"}}`.
+   Ringkasan per simbol × hari: layak / terbatas / karantina. Laporan memuat `report_sha256`.
+4. Kriteria terima: input sama → laporan byte-identik; 100% temuan punya `source`; tidak ada penulisan ke state
+   observer (tes membandingkan hash database sebelum/sesudah); tes sintetis per jenis masalah (quote hilang, offset
+   campuran, hash berkas salah, `clock_evidence` hilang, baris shadow kurang); tidak memakai MT5/jaringan.
+5. Menjalankan di VPS bukan bagian PR (Claude, pada salinan data).
+
 #### WP7 — Keputusan Owner (bukan kode)
 
 - Profil DEMO final Tahap 3 (usulan 0,5%/trade, 3%/hari sebagai lapisan pengetat di atas batas utama 35%).
@@ -809,6 +848,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP10b | Siap dikerjakan | – | – |
 | WP10a | Siap dikerjakan | – | – |
 | WP4 | Siap dikerjakan | – | – |
+| WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
 | WP6 | Dikerjakan Claude: 5 simbol, `main` sejak 28 Okt 16:57 UTC | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
 | WP9c | Menunggu prasyarat (≥ 3 hari bursa `decision_shadow`) + persetujuan Owner | – | – |
@@ -978,6 +1018,19 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
 2. Kerjakan HANYA WP13, satu PR "WP13: jam broker tahan quote basi dan penilaian Tahap 0 sejak tanggal".
 3. Wajib: tidak memblokir observer berdasarkan NTP host; tidak mengubah VPS; tes WP11 tidak diubah.
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP13 di tabel R5.
+```
+
+**Perintah WP14 (auditor data baca-saja)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP13 dan WP8c sudah di-merge).
+1. Baca R6.0, "Mulai di sini", CLAUDE.md, bagian 5 "Pemisahan data", Lampiran A: R1 (T10–T13), R2, R8, R9, R10 dan
+   "WP14". Baca seluruh src/katarina/intelligence/operations/data_health.py, observation_ledger.py (skema tabel),
+   scripts/ai/check_stage0_health.py, src/katarina/research/dev_dataset.py dan tes-tesnya.
+2. Kerjakan HANYA WP14, satu PR "WP14: auditor data baca-saja".
+3. Wajib: memperluas data_health/check_stage0_health (bukan modul paralel); SQLite mode=ro + query_only; laporan
+   deterministik dengan report_sha256; setiap temuan punya source; tes hash database sebelum/sesudah; tanpa MT5/jaringan;
+   verdict kriteria Tahap 0 yang ada tidak berubah tanpa --audit.
+4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP14 di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
