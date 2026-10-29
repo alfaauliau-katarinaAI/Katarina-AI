@@ -1501,9 +1501,9 @@
       "sha256": "3c8f05c72febe961cdb7817f5885519fbec9243da3010cfc0c81fe25f66c3ed6"
     },
     "src/katarina/research/validation.py": {
-      "bytes": 25129,
-      "normalized_sha256": "884b26a9c53f343b387ba8678e6a06c676955f76182c1fc847004a07be1128f5",
-      "sha256": "884b26a9c53f343b387ba8678e6a06c676955f76182c1fc847004a07be1128f5"
+      "bytes": 28744,
+      "normalized_sha256": "ca8c5be54582190fc78901360533a465e9d47800d14e06cff4a9d3f304dda964",
+      "sha256": "ca8c5be54582190fc78901360533a465e9d47800d14e06cff4a9d3f304dda964"
     },
     "src/katarina/research/walkforward.py": {
       "bytes": 1024,
