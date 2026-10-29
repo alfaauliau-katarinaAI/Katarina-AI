@@ -381,6 +381,23 @@ class ValidationToolTest(unittest.TestCase):
         rep_pos = v.evaluate_development(vault_big, self.hid, costs=COSTS, as_of=datetime(2026, 7, 10, tzinfo=UTC))
         self.assertEqual(rep_pos["cost_sensitivity"]["cost_verdict"], "POSITIVE_AFTER_COSTS")
 
+    def test_random_side_baseline_expected_cost_with_asymmetric_swap(self):
+        cost_model = v.CostModel(slippage_per_side=0.0, commission_round_trip=0.0,
+                                 swap_long_per_night=0.5, swap_short_per_night=0.1)
+        trade = v.Trade(trade_id="t1", side="BUY",
+                        entry_at=datetime(2026, 7, 15, 20, 0, tzinfo=UTC),
+                        exit_at=datetime(2026, 7, 15, 22, 0, tzinfo=UTC),
+                        known_at=datetime(2026, 7, 15, 22, 0, tzinfo=UTC),
+                        data_until=datetime(2026, 7, 15, 19, 59, tzinfo=UTC),
+                        entry_mid=2000.0, exit_mid=2010.0, stop_distance=10.0,
+                        spread_entry=0.2, spread_exit=0.2, trend_side="BUY")
+
+        # BUY cost_r = (0.1 + 0.1 + 1.5) / 10.0 = 0.17 R
+        # SELL cost_r = (0.1 + 0.1 + 0.3) / 10.0 = 0.05 R
+        # Average random side cost = (0.17 + 0.05) / 2 = 0.11 R
+        base = v.baselines([trade], cost_model, seed="test")
+        self.assertEqual(base["random_side_same_timing"]["expected_expectancy_r"], -0.11)
+
 
 if __name__ == "__main__":
     unittest.main()

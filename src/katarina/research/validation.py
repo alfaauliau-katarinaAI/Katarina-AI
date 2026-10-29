@@ -436,10 +436,14 @@ def baselines(trades, costs: CostModel, seed: str) -> dict:
     draws.sort()
     trend = [t for t in trades if t.trend_side in SIDES]
     trend_values = [costs.net_r(t, t.trend_side) for t in trend]
+    expected_random_cost = (
+        sum((costs.cost_r(t, "BUY") + costs.cost_r(t, "SELL")) / 2 for t in trades) / len(trades)
+        if trades else None
+    )
     return {
         "no_trade": {"expectancy_r": 0.0, "total_r": 0.0},
         "random_side_same_timing": {
-            "expected_expectancy_r": _round(-sum(costs.cost_r(t) for t in trades) / len(trades)) if trades else None,
+            "expected_expectancy_r": _round(-expected_random_cost) if expected_random_cost is not None else None,
             "simulated_total_r_p50": _round(draws[499]) if trades else None,
             "simulated_total_r_p95": _round(draws[949]) if trades else None},
         "trend_rule": {"labelled_trades": len(trend),
