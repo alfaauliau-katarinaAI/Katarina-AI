@@ -17,7 +17,6 @@ from katarina.intelligence.cognition.continuous_observation import run_continuou
 from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.memory.store import MemoryStore
 from tests.integration.test_automatic_connection import AccountBroker, config
-from tests.integration.clock_fixture import seed_synthetic_clock
 
 OWNER, ANALYST = 'owner-test-only-'+'x'*40, 'analyst-test-only-'+'y'*40
 
@@ -34,7 +33,6 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             access = root/'access.json'; policy(access)
-            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
             ready, replies, made = queue.Queue(), queue.Queue(), []
             class Brain(UnifiedKatarinaBrain):
                 def __init__(self, *args):
@@ -85,7 +83,6 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             access = root/'access.json'; policy(access)
-            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
             ready, replies = queue.Queue(), queue.Queue()
             main_thread = threading.get_ident()
             native, made, model_threads = AccountBroker(), [], []
