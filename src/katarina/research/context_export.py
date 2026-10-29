@@ -49,20 +49,17 @@ def iter_verified_ticks(root: Path, record: dict):
     if hasher.hexdigest() != record["sha256"]:
         raise v.ValidationError("TICK_FILE_HASH_MISMATCH")
 
-    # Pass 2: Stream lines and yield (time_msc, bid, ask)
-    with gzip.open(file_path, "rt", encoding="ascii") as gz:
+    # Pass 2: same strict 4-column contract as the archive writer (time_msc,bid,ask,flags).
+    with gzip.open(file_path, "rt", encoding="ascii", newline="") as gz:
         next(gz, None)  # Skip CSV header line
         for line in gz:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split(",")
-            if len(parts) < 3:
-                continue
-            msc, bid, ask = parts[0], parts[1], parts[2]
-            bid_f, ask_f = float(bid), float(ask)
+            try:
+                msc, bid, ask, _ = line.rstrip("\n").split(",")
+                msc, bid_f, ask_f = int(msc), float(bid), float(ask)
+            except ValueError as error:
+                raise v.ValidationError("TICK_FILE_MALFORMED") from error
             if math.isfinite(bid_f) and math.isfinite(ask_f) and bid_f > 0 and ask_f >= bid_f:
-                yield int(msc), bid_f, ask_f
+                yield msc, bid_f, ask_f
 
 
 def _ticks(root: Path, record) -> list[tuple[int, float]]:

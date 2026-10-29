@@ -1,12 +1,22 @@
 # Perubahan material Katarina AI
 
-## 2026-10-30 — WP10a: profil spread broker deskriptif (#227)
+## 2026-10-30 — WP10a: profil spread broker deskriptif (#231)
+
+- Review Claude: parser tick ketat 4 kolom (gagal pada baris rusak), hari arsip sebelum WP12 dikecualikan
+  (`excluded_sources`), quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`.
 
 - Refactor `katarina.research.context_export.iter_verified_ticks` dua pass streaming untuk verifikasi SHA-256 dan pembacaan tick terverifikasi. Refactor `_ticks` menggunakan `iter_verified_ticks` tanpa perubahan keluaran.
 - Tambah `src/katarina/research/spread_profile.py` dan CLI `scripts/research/spread_profile.py` (SQLite `mode=ro` hari `STORED`/`STORED_WITH_GAPS` dalam rentang `[since, until]`).
 - Profil spread (ask - bid) berbasis quote terakhir per menit UTC per simbol x jam UTC 0–23 dan total simbol dengan nearest-rank p50/p90/p99/max dan minute count. Label deskriptif `"usage": "DESCRIPTIVE_ONLY_NOT_FOR_TUNING"`.
 - Pagar static test `tests/static/test_spread_profile_guard.py` memastikan tidak ada importer lain di `src/katarina` dan `scripts` selain CLI.
 - Tes sintetis unit/integration (parity, hash mismatch, sampling, percentiles, streaming 2M ticks < 50MB peak, connection closure, determinisme). Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
+## 2026-10-30 — WP10b: swap dan sensitivitas biaya di alat validasi (#225)
+
+- Modul `katarina.research.validation`: `CostModel` menambah `swap_long_per_night`, `swap_short_per_night`, dan `triple_swap_weekday` (default 0 dan 2, backward compatible). Rollover dihitung pukul 17:00 waktu New York (21:00 UTC saat DST AS, 22:00 UTC di luar DST AS) memakai ulang helper `_nth_sunday` dari `data_health.py` untuk posisi terbuka `entry_at < rollover <= exit_at`. Swap kredit ditulis nol (konservatif).
+- Pembanding sisi acak (`baselines`) menggunakan biaya ekspektasi 50/50 rata-rata BUY/SELL per trade.
+- Tambah blok `cost_sensitivity` di laporan validasi: `net_expectancy_r_1_5x`, `net_expectancy_r_2_0x`, `breakeven_cost_multiple`, dan `cost_verdict` (`NO_GROSS_EDGE`, `NOT_ECONOMIC_AFTER_COSTS`, `POSITIVE_AFTER_COSTS`). Verdict promosi dan aturan gate tidak berubah.
+- Update `docs/research/VALIDATION_PROTOCOL.md` (paragraf biaya) dan 7 unit tes baru di `tests/unit/research/test_validation.py`. **PR #225 merged** sebagai squash `8cc3d677` pada 30 Okt; CI Body/Linux/Windows PASS. Berkas terkunci tidak diubah; LIVE OFF; tanpa perubahan VPS.
 
 ## 2026-10-30 — prioritas operasional dan handoff Google Jules
 

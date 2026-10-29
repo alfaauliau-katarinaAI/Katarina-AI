@@ -76,6 +76,29 @@ class SpreadProfileTests(unittest.TestCase):
         expected_mids = [(msc, (bid + ask) / 2) for msc, bid, ask in raw_ticks]
         self.assertEqual(ticks_out, expected_mids)
 
+    def test_malformed_row_is_rejected_not_skipped(self):
+        import gzip, hashlib
+        tick_file = self.root / "broker-ticks" / "EURUSD" / "2026-10-22.csv.gz"
+        tick_file.parent.mkdir(parents=True, exist_ok=True)
+        raw = b"time_msc,bid,ask,flags\n1792627200000,1.1,1.1002,6\n1792627201000,1.1001\n"
+        with gzip.GzipFile(tick_file, "wb", mtime=0) as gz:
+            gz.write(raw)
+        record = {"file": "broker-ticks/EURUSD/2026-10-22.csv.gz", "sha256": hashlib.sha256(raw).hexdigest()}
+        with self.assertRaises(v.ValidationError):
+            list(iter_verified_ticks(self.root, record))
+
+    def test_pre_wp12_days_without_clock_basis_are_excluded(self):
+        tick_file = self.root / "broker-ticks" / "EURUSD" / "2026-10-22.csv.gz"
+        digest = create_synthetic_tick_file(tick_file, [(1792627200000, 1.1, 1.1002)])
+        with contextlib.closing(sqlite3.connect(self.root / "context.sqlite3")) as db:
+            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT, server_shift_hours INTEGER)")
+            db.execute("INSERT INTO broker_tick_days VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?, NULL)",
+                       (digest, "broker-ticks/EURUSD/2026-10-22.csv.gz"))
+            db.commit()
+        report = build_spread_profile(self.root, since="2026-10-22", until="2026-10-22")
+        self.assertEqual(report["symbols"], {})
+        self.assertEqual(report["excluded_sources"][0]["reason"], "TICK_CLOCK_BASIS_UNKNOWN")
+
     def test_one_quote_per_minute_sampling(self):
         # 3 ticks in same minute 10:05 UTC (1792663500000 ms = 2026-10-22 10:05:00)
         base_msc = 1792663500000
@@ -89,8 +112,8 @@ class SpreadProfileTests(unittest.TestCase):
 
         db_path = self.root / "context.sqlite3"
         with contextlib.closing(sqlite3.connect(db_path)) as db:
-            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT)")
-            db.execute("INSERT INTO broker_tick_days VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?)",
+            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT, server_shift_hours INTEGER DEFAULT 2)")
+            db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file) VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?)",
                        (digest, "broker-ticks/EURUSD/2026-10-22.csv.gz"))
             db.commit()
 
@@ -115,14 +138,14 @@ class SpreadProfileTests(unittest.TestCase):
     def test_date_bounds_inclusive(self):
         db_path = self.root / "context.sqlite3"
         with contextlib.closing(sqlite3.connect(db_path)) as db:
-            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT)")
+            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT, server_shift_hours INTEGER DEFAULT 2)")
 
             for day in ("2026-10-21", "2026-10-22", "2026-10-23"):
                 rel = f"broker-ticks/EURUSD/{day}.csv.gz"
                 p = self.root / rel
                 msc = int(datetime.datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc).timestamp() * 1000)
                 digest = create_synthetic_tick_file(p, [(msc, 1.1000, 1.1002)])
-                db.execute("INSERT INTO broker_tick_days VALUES('EURUSD', ?, 'STORED', ?, ?)", (day, digest, rel))
+                db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file) VALUES('EURUSD', ?, 'STORED', ?, ?)", (day, digest, rel))
             db.commit()
 
         report = build_spread_profile(self.root, "2026-10-22", "2026-10-22")
@@ -155,8 +178,8 @@ class SpreadProfileTests(unittest.TestCase):
 
         db_path = self.root / "context.sqlite3"
         with contextlib.closing(sqlite3.connect(db_path)) as db:
-            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT)")
-            db.execute("INSERT INTO broker_tick_days VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?)",
+            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT, server_shift_hours INTEGER DEFAULT 2)")
+            db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file) VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?)",
                        (digest, "broker-ticks/EURUSD/2026-10-22.csv.gz"))
             db.commit()
 
@@ -174,13 +197,13 @@ class SpreadProfileTests(unittest.TestCase):
     def test_connection_always_closed(self):
         db_path = self.root / "context.sqlite3"
         with contextlib.closing(sqlite3.connect(db_path)) as db:
-            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT)")
+            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT, server_shift_hours INTEGER DEFAULT 2)")
             db.commit()
 
         report = build_spread_profile(self.root, "2026-10-22", "2026-10-22")
         self.assertEqual(report["sources"], [])
         with contextlib.closing(sqlite3.connect(db_path)) as db:
-            db.execute("INSERT INTO broker_tick_days VALUES('EURUSD', '2026-10-22', 'STORED', 'a', 'b')")
+            db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file) VALUES('EURUSD', '2026-10-22', 'STORED', 'a', 'b')")
             db.commit()
 
     def test_identical_result_on_same_input(self):
@@ -189,8 +212,8 @@ class SpreadProfileTests(unittest.TestCase):
         digest = create_synthetic_tick_file(tick_file, [(1792627200000, 1.1000, 1.1002)])
 
         with contextlib.closing(sqlite3.connect(db_path)) as db:
-            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT)")
-            db.execute("INSERT INTO broker_tick_days VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?)",
+            db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT, server_shift_hours INTEGER DEFAULT 2)")
+            db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file) VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?)",
                        (digest, "broker-ticks/EURUSD/2026-10-22.csv.gz"))
             db.commit()
 

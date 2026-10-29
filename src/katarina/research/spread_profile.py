@@ -66,7 +66,7 @@ def build_spread_profile(state_dir: str | Path, since: str, until: str) -> dict:
 
     placeholders = ",".join("?" for _ in USABLE_TICK_DAY_STATUSES)
     query = f"""
-        SELECT symbol, day, status, sha256, file
+        SELECT symbol, day, status, sha256, file, server_shift_hours
         FROM broker_tick_days
         WHERE status IN ({placeholders})
           AND day >= ? AND day <= ?
@@ -75,11 +75,20 @@ def build_spread_profile(state_dir: str | Path, since: str, until: str) -> dict:
     params = list(USABLE_TICK_DAY_STATUSES) + [since_date.isoformat(), until_date.isoformat()]
 
     sources = []
+    excluded = []
     symbol_records: dict[str, list[dict]] = {}
 
-    with contextlib.closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)) as db:
+    with contextlib.closing(sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)) as db:
+        db.execute("PRAGMA query_only=ON")
+        columns = {r[1] for r in db.execute("PRAGMA table_info(broker_tick_days)")}
+        if "server_shift_hours" not in columns:
+            raise v.ValidationError("TICK_CLOCK_BASIS_UNKNOWN")
         for row in db.execute(query, params):
-            sym, day, status, sha256, file_rel = row[0], row[1], row[2], row[3], row[4]
+            sym, day, status, sha256, file_rel, shift = row
+            if shift is None:
+                # Archived before WP12: server-time labels, not UTC (R1 T11). Never mixed in.
+                excluded.append({"symbol": sym, "day": day, "reason": "TICK_CLOCK_BASIS_UNKNOWN"})
+                continue
             rec = {"symbol": sym, "day": day, "status": status, "sha256": sha256, "file": file_rel}
             if sym not in symbol_records:
                 symbol_records[sym] = []
@@ -88,11 +97,14 @@ def build_spread_profile(state_dir: str | Path, since: str, until: str) -> dict:
 
     symbols_data = {}
     for sym, records in symbol_records.items():
-        minute_quotes: dict[int, float] = {}
+        minute_quotes: dict[int, tuple[int, float]] = {}
         for rec in records:
             for time_msc, bid, ask in iter_verified_ticks(root, rec):
                 minute_idx = time_msc // 60_000
-                minute_quotes[minute_idx] = ask - bid
+                previous = minute_quotes.get(minute_idx)
+                if previous is None or time_msc >= previous[0]:  # latest timestamp wins, not file order
+                    minute_quotes[minute_idx] = (time_msc, ask - bid)
+        minute_quotes = {minute: spread for minute, (_, spread) in minute_quotes.items()}
 
         hourly_spreads: dict[int, list[float]] = {h: [] for h in range(24)}
         for minute_idx, spread in minute_quotes.items():
@@ -120,6 +132,7 @@ def build_spread_profile(state_dir: str | Path, since: str, until: str) -> dict:
             "until": until_date.isoformat(),
         },
         "sources": sources,
+        "excluded_sources": excluded,
         "symbols": symbols_data,
         "live_execution_authorized": False,
     }

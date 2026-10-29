@@ -44,7 +44,7 @@ Total modul: 246. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina` | runtime, ops, workflow, research, scripts, tests | 145 | 218 |
+| `katarina` | runtime, ops, workflow, research, scripts, tests | 146 | 218 |
 | `katarina.adapters` | runtime, ops, workflow, scripts, tests | 17 | 27 |
 | `katarina.adapters.agent_dashboard_page` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 15 |
@@ -124,23 +124,23 @@ Total modul: 246. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.health` | runtime, ops, workflow, scripts, tests | 2 | 4 |
 | `katarina.health.engine` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.host` | runtime, ops, workflow, scripts, tests | 2 | 7 |
-| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 53 | 122 |
+| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 54 | 122 |
 | `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 11 | 19 |
 | `katarina.intelligence.broker.auto_calibration` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_account_monitor` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.intelligence.broker.broker_clock_alignment` | runtime, ops, workflow, scripts, tests | 1 | 4 |
 | `katarina.intelligence.broker.broker_history_coverage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_scan_universe` | runtime, ops, workflow, research, scripts, tests | 3 | 2 |
-| `katarina.intelligence.broker.causal_broker_quotes` | runtime, ops, workflow, scripts, tests | 4 | 5 |
+| `katarina.intelligence.broker.causal_broker_quotes` | runtime, ops, workflow, research, scripts, tests | 4 | 5 |
 | `katarina.intelligence.broker.data_recovery` | runtime, ops, workflow, scripts, tests | 4 | 1 |
 | `katarina.intelligence.broker.observer_universe` | runtime, ops, workflow, research, scripts, tests | 4 | 4 |
-| `katarina.intelligence.cognition` | runtime, ops, workflow, scripts, tests | 21 | 45 |
+| `katarina.intelligence.cognition` | runtime, ops, workflow, research, scripts, tests | 21 | 45 |
 | `katarina.intelligence.cognition.adaptive_observation` | runtime, ops, workflow, scripts, tests | 3 | 7 |
 | `katarina.intelligence.cognition.assistant_cycle` | runtime, ops, workflow, scripts, tests | 1 | 0 |
 | `katarina.intelligence.cognition.brain_runtime_control` | runtime, ops, workflow, scripts, tests | 2 | 3 |
 | `katarina.intelligence.cognition.contextual_decision_intelligence` | runtime, ops, workflow, scripts, tests | 3 | 1 |
 | `katarina.intelligence.cognition.continuous_observation` | runtime, ops, workflow, scripts, tests | 0 | 5 |
-| `katarina.intelligence.cognition.decision_inputs` | runtime, ops, workflow, scripts, tests | 2 | 2 |
+| `katarina.intelligence.cognition.decision_inputs` | runtime, ops, workflow, research, scripts, tests | 2 | 2 |
 | `katarina.intelligence.cognition.explainable_market_decision` | runtime, ops, workflow, scripts, tests | 1 | 0 |
 | `katarina.intelligence.cognition.market_decision` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.intelligence.cognition.market_decision_pipeline` | runtime, ops, workflow, scripts, tests | 3 | 10 |
@@ -164,20 +164,20 @@ Total modul: 246. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.lab.evidence_risk` | runtime, ops, workflow, scripts, tests | 3 | 3 |
 | `katarina.intelligence.lab.research_capacity` | runtime, ops, workflow, scripts, tests | 3 | 6 |
 | `katarina.intelligence.lab.research_reports` | runtime, ops, workflow, scripts, tests | 2 | 2 |
-| `katarina.intelligence.news` | runtime, ops, workflow, scripts, tests | 12 | 20 |
+| `katarina.intelligence.news` | runtime, ops, workflow, research, scripts, tests | 12 | 20 |
 | `katarina.intelligence.news.market_article_context` | runtime, ops, workflow, scripts, tests | 1 | 2 |
-| `katarina.intelligence.news.news_intelligence` | runtime, ops, workflow, scripts, tests | 6 | 4 |
+| `katarina.intelligence.news.news_intelligence` | runtime, ops, workflow, research, scripts, tests | 6 | 4 |
 | `katarina.intelligence.news.official_cache_provenance` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.news.public_context` | runtime, ops, workflow, scripts, tests | 4 | 8 |
 | `katarina.intelligence.news.public_language_research` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.news.research_agenda` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.news.research_news_collection` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.news.verified_policy_context` | runtime, ops, workflow, scripts, tests | 3 | 2 |
-| `katarina.intelligence.operations` | runtime, ops, workflow, scripts, tests | 7 | 14 |
+| `katarina.intelligence.operations` | runtime, ops, workflow, research, scripts, tests | 8 | 14 |
 | `katarina.intelligence.operations.file_housekeeping` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.foundation_readiness` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.network_doctor` | runtime, ops, workflow, scripts, tests | 1 | 2 |
-| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, scripts, tests | 3 | 7 |
+| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, research, scripts, tests | 3 | 7 |
 | `katarina.intelligence.operations.parallel_storage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.runtime_evidence` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.perception` | runtime, ops, workflow, research, scripts, tests | 20 | 32 |
@@ -281,7 +281,7 @@ Total modul: 246. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina.intelligence.operations.data_health` | scripts, tests | 0 | 3 |
+| `katarina.intelligence.operations.data_health` | research, scripts, tests | 1 | 3 |
 | `katarina.intelligence.perception.analog_feature_schema` | research, tests | 1 | 0 |
 | `katarina.intelligence.perception.historical_analog_memory` | research, tests | 0 | 2 |
 | `katarina.intelligence.perception.market_regime_intelligence` | scripts, tests | 1 | 1 |

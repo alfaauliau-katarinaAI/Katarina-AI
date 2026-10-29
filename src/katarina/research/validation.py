@@ -61,6 +61,40 @@ def _utc(value) -> datetime:
     return value.astimezone(timezone.utc)
 
 
+from katarina.intelligence.operations.data_health import _nth_sunday
+
+
+def is_us_dst(moment: datetime) -> bool:
+    """US Daylight Saving Time: 2nd Sunday in March 02:00 EST (07:00 UTC) to 1st Sunday in Nov 02:00 EDT (06:00 UTC)."""
+    moment = _utc(moment)
+    year = moment.year
+    start_date = _nth_sunday(year, 3, 2)
+    end_date = _nth_sunday(year, 11, 1)
+    start_utc = datetime(year, 3, start_date.day, 7, 0, tzinfo=timezone.utc)
+    end_utc = datetime(year, 11, end_date.day, 6, 0, tzinfo=timezone.utc)
+    return start_utc <= moment < end_utc
+
+
+def calculate_rollover_nights(entry_at: datetime, exit_at: datetime, triple_swap_weekday: int = 2) -> int:
+    """Calculates rollover nights (17:00 NY time) between entry_at < t <= exit_at for Mon-Fri."""
+    entry_at = _utc(entry_at)
+    exit_at = _utc(exit_at)
+    if entry_at >= exit_at:
+        return 0
+    nights = 0
+    current_day = (entry_at - timedelta(days=1)).date()
+    end_day = (exit_at + timedelta(days=1)).date()
+    while current_day <= end_day:
+        if current_day.weekday() < 5:  # Monday (0) to Friday (4)
+            check_utc = datetime(current_day.year, current_day.month, current_day.day, 21, 0, tzinfo=timezone.utc)
+            rollover_hour = 21 if is_us_dst(check_utc) else 22
+            rollover_utc = datetime(current_day.year, current_day.month, current_day.day, rollover_hour, 0, tzinfo=timezone.utc)
+            if entry_at < rollover_utc <= exit_at:
+                nights += 3 if current_day.weekday() == triple_swap_weekday else 1
+        current_day += timedelta(days=1)
+    return nights
+
+
 # --------------------------------------------------------------------------- append-only ledgers
 
 class _ChainedLedger:
@@ -220,14 +254,28 @@ class CostModel:
     """All costs in price units of the instrument; observed spread is charged half at entry and exit."""
     slippage_per_side: float = 0.0
     commission_round_trip: float = 0.0
+    swap_long_per_night: float = 0.0
+    swap_short_per_night: float = 0.0
+    triple_swap_weekday: int = 2
 
     def __post_init__(self):
-        if not all(math.isfinite(v) and v >= 0 for v in (self.slippage_per_side, self.commission_round_trip)):
+        if not all(math.isfinite(v) and v >= 0 for v in (self.slippage_per_side, self.commission_round_trip,
+                                                        self.swap_long_per_night, self.swap_short_per_night)):
             raise ValidationError("cost_model_values_must_be_finite_and_non_negative")
+        if type(self.triple_swap_weekday) is not int or not (0 <= self.triple_swap_weekday <= 6):
+            raise ValidationError("triple_swap_weekday_must_be_int_between_0_and_6")
 
-    def cost_r(self, trade: Trade) -> float:
+    def swap_cost(self, trade: Trade, side: str | None = None) -> float:
+        trade_side = side or trade.side
+        rate = self.swap_long_per_night if trade_side == "BUY" else self.swap_short_per_night
+        if rate <= 0:
+            return 0.0
+        nights = calculate_rollover_nights(trade.entry_at, trade.exit_at, self.triple_swap_weekday)
+        return nights * rate
+
+    def cost_r(self, trade: Trade, side: str | None = None) -> float:
         price = (trade.spread_entry / 2 + trade.spread_exit / 2 + 2 * self.slippage_per_side
-                 + self.commission_round_trip)
+                 + self.commission_round_trip + self.swap_cost(trade, side))
         return price / trade.stop_distance
 
     @staticmethod
@@ -236,7 +284,7 @@ class CostModel:
         return direction * (trade.exit_mid - trade.entry_mid) / trade.stop_distance
 
     def net_r(self, trade: Trade, side: str | None = None) -> float:
-        return self.gross_r(trade, side) - self.cost_r(trade)
+        return self.gross_r(trade, side) - self.cost_r(trade, side)
 
 
 def guard_trades(trades, split: DataSplit, period: str, *, expected_side: str | None = None,
@@ -386,10 +434,14 @@ def baselines(trades, costs: CostModel, seed: str) -> dict:
     draws.sort()
     trend = [t for t in trades if t.trend_side in SIDES]
     trend_values = [costs.net_r(t, t.trend_side) for t in trend]
+    expected_random_cost = (
+        sum((costs.cost_r(t, "BUY") + costs.cost_r(t, "SELL")) / 2 for t in trades) / len(trades)
+        if trades else None
+    )
     return {
         "no_trade": {"expectancy_r": 0.0, "total_r": 0.0},
         "random_side_same_timing": {
-            "expected_expectancy_r": _round(-sum(costs.cost_r(t) for t in trades) / len(trades)) if trades else None,
+            "expected_expectancy_r": _round(-expected_random_cost) if expected_random_cost is not None else None,
             "simulated_total_r_p50": _round(draws[499]) if trades else None,
             "simulated_total_r_p95": _round(draws[949]) if trades else None},
         "trend_rule": {"labelled_trades": len(trend),
@@ -471,6 +523,29 @@ def _build_report(evaluation: Evaluation, trades, registry: HypothesisRegistry, 
     stats["gross_expectancy_r"] = _round(sum(costs.gross_r(t) for t in accepted) / len(accepted)) if accepted else None
     stats["mean_cost_r"] = _round(sum(costs.cost_r(t) for t in accepted) / len(accepted)) if accepted else None
     stats["weeks"] = len(weekly_blocks(accepted, values))
+
+    gross_exp = stats["gross_expectancy_r"]
+    mean_cost = stats["mean_cost_r"]
+    net_1_5_values = [costs.gross_r(t) - 1.5 * costs.cost_r(t) for t in accepted]
+    net_2_0_values = [costs.gross_r(t) - 2.0 * costs.cost_r(t) for t in accepted]
+    net_1_5_exp = _round(sum(net_1_5_values) / len(accepted)) if accepted else None
+    net_2_0_exp = _round(sum(net_2_0_values) / len(accepted)) if accepted else None
+    breakeven_mult = _round(gross_exp / mean_cost) if (gross_exp is not None and mean_cost is not None and mean_cost > 0 and gross_exp > 0) else None
+
+    if gross_exp is None or gross_exp <= 0:
+        cost_verdict = "NO_GROSS_EDGE"
+    elif stats["expectancy_r"] is None or stats["expectancy_r"] <= 0:
+        cost_verdict = "NOT_ECONOMIC_AFTER_COSTS"
+    else:
+        cost_verdict = "POSITIVE_AFTER_COSTS"
+
+    cost_sensitivity = {
+        "net_expectancy_r_1_5x": net_1_5_exp,
+        "net_expectancy_r_2_0x": net_2_0_exp,
+        "breakeven_cost_multiple": breakeven_mult,
+        "cost_verdict": cost_verdict,
+    }
+
     base = baselines(accepted, costs, seed)
     expectancy = stats["expectancy_r"]
     comparators = [0.0, base["random_side_same_timing"]["expected_expectancy_r"], base["trend_rule"]["expectancy_r"]]
@@ -515,6 +590,7 @@ def _build_report(evaluation: Evaluation, trades, registry: HypothesisRegistry, 
         "familywise_alpha": _round(alpha),
         "confidence": CONFIDENCE,
         "statistics": stats,
+        "cost_sensitivity": cost_sensitivity,
         "weekly_block_bootstrap_lower_expectancy_r": lower,
         "baselines": base,
         "walk_forward": walk_forward(accepted, values, split) if evaluation.period == "DEVELOPMENT" else [],

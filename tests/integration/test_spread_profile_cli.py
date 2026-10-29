@@ -38,8 +38,8 @@ class SpreadProfileCLIIntegrationTests(unittest.TestCase):
 
             db_path = state_dir / "context.sqlite3"
             with contextlib.closing(sqlite3.connect(db_path)) as db:
-                db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT)")
-                db.execute("INSERT INTO broker_tick_days VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?)",
+                db.execute("CREATE TABLE broker_tick_days(symbol TEXT, day TEXT, status TEXT, sha256 TEXT, file TEXT, server_shift_hours INTEGER DEFAULT 2)")
+                db.execute("INSERT INTO broker_tick_days(symbol, day, status, sha256, file) VALUES('EURUSD', '2026-10-22', 'STORED', ?, ?)",
                            (digest, "broker-ticks/EURUSD/2026-10-22.csv.gz"))
                 db.commit()
 
