@@ -13,6 +13,7 @@ from katarina.intelligence.cognition.brain_runtime_control import CHECKPOINT
 from katarina.engines.risk import RiskGovernor, RiskRequest
 from katarina.memory import MemoryStore
 from tests.unit.engines.test_execution_recovery import plan
+from tests.integration.clock_fixture import seed_synthetic_clock
 
 
 class SyntheticBroker:
@@ -39,7 +40,7 @@ class SyntheticBroker:
                                (self.flip_permission and self.terminal_reads >= 3))
 
     def account_info(self):
-        return SimpleNamespace(balance=1000., equity=1000., margin=0., margin_free=1000., trade_mode=0)
+        return SimpleNamespace(balance=1000., equity=1000., margin=0., margin_free=1000., trade_mode=0, server='Synthetic-Test')
 
     def positions_get(self):return ()
     def orders_get(self):return ()
@@ -66,6 +67,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_complete_synthetic_observer_runs_inside_brain_and_releases_resources(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
+            seed_synthetic_clock(Path(d), server='Synthetic-Test', shift_hours=3)
             result = UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
             self.assertEqual(result['observed_symbols'], 3)
             report = json.loads((Path(d)/'latest.json').read_text())
@@ -85,6 +87,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_active_terminal_refused_and_shutdown_even_before_memory_creation(self):
         broker = SyntheticBroker(active=True)
         with tempfile.TemporaryDirectory() as d:
+            seed_synthetic_clock(Path(d), server='Synthetic-Test', shift_hours=3)
             with self.assertRaisesRegex(RuntimeError, 'TRADING_MUST_BE_DISABLED'):
                 UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
             self.assertFalse((Path(d)/'latest.json').exists())
@@ -93,6 +96,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_permission_change_mid_cycle_cannot_publish_success(self):
         broker = SyntheticBroker(flip_permission=True)
         with tempfile.TemporaryDirectory() as d:
+            seed_synthetic_clock(Path(d), server='Synthetic-Test', shift_hours=3)
             with self.assertRaisesRegex(RuntimeError, 'PERMISSION_CHANGED'):
                 UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
             self.assertFalse((Path(d)/'latest.json').exists())
@@ -101,6 +105,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_failure_is_audited_without_sensitive_message_and_lock_is_released(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
+            seed_synthetic_clock(Path(d), server='Synthetic-Test', shift_hours=3)
             with patch('katarina.intelligence.cognition.observer.BrainObserver.run',
                        side_effect=RuntimeError('sensitive account value')):
                 with self.assertRaises(RuntimeError):
@@ -131,6 +136,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
 
     def test_capital_and_recovery_restart_preserve_reserve_without_replaying_intents(self):
         with tempfile.TemporaryDirectory() as d:
+            seed_synthetic_clock(Path(d), server='Synthetic-Test', shift_hours=3)
             db = sqlite3.connect(':memory:')
             path = Path(d)/'memory.sqlite3'
             with MemoryStore(path) as memory:
@@ -206,6 +212,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
         original = BrainObserver.run
         first, second = SyntheticBroker(), SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
+            seed_synthetic_clock(Path(d), server='Synthetic-Test', shift_hours=3)
             def reenter(observer, **kwargs):
                 with self.assertRaisesRegex(RuntimeError, 'ALREADY_RUNNING'):
                     UnifiedKatarinaBrain.observe_once(Path(d), broker=second, fetch_news=False)
@@ -230,6 +237,7 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
     def test_failed_sensor_stays_wait_and_does_not_approve_foundation(self):
         broker = SyntheticBroker()
         with tempfile.TemporaryDirectory() as d:
+            seed_synthetic_clock(Path(d), server='Synthetic-Test', shift_hours=3)
             with patch.object(broker, 'copy_ticks_range', return_value=()):
                 UnifiedKatarinaBrain.observe_once(Path(d), broker=broker, fetch_news=False)
             report = json.loads((Path(d)/'latest.json').read_text())
