@@ -1,7 +1,8 @@
 """One PC acceptance run. Synthetic results never imply broker/live readiness."""
 from pathlib import Path
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from hashlib import sha256
 import html
 import json
 import os
@@ -37,6 +38,29 @@ def write_report(root,report):
         temporary.write_text(content,encoding='utf-8'); temporary.replace(target)
 
 
+def _seed_invented_pc_clock(work):
+    """Local PC synthetic demo only; NEVER evidence for a real MT5 broker.
+
+    Kept in this synthetic-only acceptance path, not in canonical observer.
+    """
+    work = Path(work)
+    work.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(timezone.utc)
+    source = b'SYNTHETIC_PC_ONLY_NOT_INDEPENDENT_BROKER_EVIDENCE'
+    (work / 'broker-clock-source.txt').write_bytes(source)
+    metadata = {
+        'schema_version': 1,
+        'shift_hours': 0,
+        'valid_from': (now - timedelta(minutes=1)).isoformat(),
+        'valid_until': (now + timedelta(minutes=1)).isoformat(),
+        'source': 'INDEPENDENT_CLOCK_OBSERVATION',
+        'source_sha256': sha256(source).hexdigest(),
+        'broker_server_sha256': sha256(b'SYNTHETIC_PC_ONLY').hexdigest(),
+    }
+    (work / 'broker-clock-evidence.json').write_text(
+        json.dumps(metadata, sort_keys=True) + '\n', encoding='utf-8')
+
+
 def run(root,*,mode='demo',connection_config=None):
     root=Path(root)
     host=inspect_host(root)
@@ -50,6 +74,7 @@ def run(root,*,mode='demo',connection_config=None):
         if host['blockers']:
             raise RuntimeError('HOST_PREFLIGHT_BLOCKED')
         if mode=='demo':
+            _seed_invented_pc_clock(work)
             sensor=PCSimulationBroker()
             result=UnifiedKatarinaBrain.observe_once(work,broker=sensor,max_symbols=3,fetch_news=False)
             observed=json.loads((work/'latest.json').read_text())
