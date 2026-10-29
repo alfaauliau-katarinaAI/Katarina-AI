@@ -1,59 +1,33 @@
-# Status Katarina AI
+# Status Katarina AI — snapshot operasional
 
-Satu-satunya sumber status proyek. Diperbarui **23 Oktober 2026**. Rincian per perubahan ada di
-[CHANGELOG](../CHANGELOG.md); hasil CI terbaru di
-[GitHub Actions](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions).
+**Diperiksa:** 30 Oktober 2026 pukul **05:25 WIB** untuk observer VPS; PR GitHub dan review terkini diperiksa pada sesi sama. **Audit kelemahan dan instruksi Claude:** [laporan lengkap](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md). Audit jam rinci: [WP13 clock handoff](maintenance/WP13_CLOCK_CLAUDE_HANDOFF_20261030.md). Angka VPS adalah snapshot, bukan janji kondisi saat file dibaca nanti. Urutan kerja/acceptance ada di [ROADMAP](ROADMAP.md); perbaikan nyata di [REPAIR_HISTORY](REPAIR_HISTORY.md); keputusan terbuka di [MEETING](ROADMAP_DISCUSSION.md).
 
-## Ringkasan
+## Ringkasan terverifikasi
 
-| Bagian | Keadaan sekarang | Batas / catatan |
+| Aspek | Kondisi saat diperiksa | Batas bukti / tindak lanjut |
 |---|---|---|
-| Mode | Research-only, **LIVE OFF**. Tidak ada jalur kirim order ke akun riil | DEMO forward ada di kode, tetapi **tidak berjalan**; hanya observer read-only (lihat VPS) |
-| Otak | Satu otak canonical `UnifiedKatarinaBrain` (`intelligence/cognition/unified_brain.py`): observer → market decision (regime, playbook, setup) → kartu BUY/SELL/WAIT → memori, laporan, Risk Governor | BUY/SELL hanya jika skor bukti ≥ 0,62 dan RR memenuhi. Di VPS **100% WAIT**: 7 pemblokir permanen (fail-closed `system_healthy=False`, riwayat forward kosong, berita segar kosong = blackout, entry teknis tidak menyala) — dibongkar lewat WP9 (roadmap Lampiran A; prioritas Owner 23 Okt) |
-| Risiko | Risk Governor independen (`engines/risk.py`, `config/risk_governor_v2.json`): 1% default dan maks 5% per entry, 8% total risiko terbuka, **stop entry baru di drawdown harian 35%**, drawdown total 35%. Risiko adaptif dipangkas setengah mulai DD harian 5% / total 10% | Batas 35% disinkronkan di config, Risk Governor, tracker DD harian, gerbang risiko riset, dan dokumen; dijaga `tests/unit/engines/test_daily_drawdown_sync.py` |
-| Riset / edge | **Edge belum terbukti.** Audit 13 Okt (17 instrumen): profit factor kandidat 0,36, 77% kandidat rugi setelah biaya. Backtest 2025–2026 (7 instrumen): tidak ada keluarga playbook yang ekspektansinya positif di kedua tahun | Biaya spread ≈ 0,24R vs gerak menguntungkan median ≈ 0,23R. Laporan aslinya ada di riwayat Git (dihapus saat perampingan 22 Okt) |
-| VPS | Windows Server 2012 R2, RAM 2 GB, diakses lewat Desktop Commander. Python 3.12.10 di `C:\Katarina\python312`, checkout `main` di `C:\Katarina\code`; `setup`, `doctor`, uji sintetis lulus. MT5 build 6274 dipasang ulang 22 Okt | Observer read-only **berjalan** sejak 22 Okt 04:24 UTC (tugas `Katarina-Readonly-Observer`, akun demo, Algo Trading OFF, siklus 60 detik). Simbol: 5 (EURUSD, GBPUSD, USDJPY, XAUUSD, NAS100). Kode VPS = `main` `18e2515` (WP12 jam tick → UTC, WP9b, WP8a) sejak **28 Okt 16:57 UTC**, manifest MATCH; quote kini = harga sekarang. Observer resmi sempat dihentikan pelaksana 27 Okt 19:35 – 28 Okt 16:57 UTC (diganti worker uji dari kode belum di-merge; dihapus, datanya disimpan terpisah). NTP host aktif (T13); laporan harian Tahap 0 07:30 WIB. Tugas hanya jalan saat Administrator login (auto-start pasca-restart masih WP6) |
-| Repository | `main` dilindungi (PR + Body CI wajib). Perampingan 22 Okt: ~1.211 → ~795 berkas, 11 workflow; tooling VPS lama, dokumen bertanggal, skrip riset sekali pakai, dan transport KAT1/ZMQ dipensiunkan | Repo masih **publik**; website masih di repo ini |
-| Pengujian | Body CI + suite penuh Windows lulus (28 Okt, setelah WP12/WP9b/WP8a) | Lulus tes sumber ≠ profitabilitas atau kesiapan live |
+| Mode & kewenangan | **Research-only, LIVE OFF, Level 0**; observer read-only, tanpa izin order nyata | Persetujuan Owner dan gerbang promosi tetap wajib; tidak ada aktivasi DEMO/LIVE |
+| Observer di VPS | Task `Katarina-Readonly-Observer` **Running**, status **WAITING**, `cycles=298`, `successful_cycles=292`, `consecutive_failures=0`, `orders_submitted=0`, heartbeat **2026-10-29T22:24:25.607802Z** saat cek **30 Okt 05:25 WIB**. Pada **04:59 WIB** sempat **DEGRADED** dengan `BROKER_CLOCK_NOT_VERIFIED`, 1 consecutive failure | Pemulihan status tidak menghapus gap/failed cycle; **bukan** kelulusan Tahap 0 atau bukti semua simbol selalu segar. |
+| Perbaikan lock | Sumber `PermissionError` tahap PUBLISH terbukti terkait handle `latest.json` yang dipegang child Node.js Desktop Commander; DC dipulihkan, patch retry atomik dan tes masuk `main` | Detail dan bukti lengkap: [RH-001](REPAIR_HISTORY.md#rh-001--file-snapshot-observer-terkunci-oleh-desktop-commander); pantau bila kambuh |
+| Deployment kode VPS | Checkout `C:\Katarina\code` `main` **`64497b5`**, manifest `MATCH 304/304` saat deploy sebelumnya; `test_snapshot_io.py` **5/5 PASS** | `main` GitHub sudah mengandung perubahan WP10b #225 **kode riset** serta dokumentasi setelah `64497b5`; **jangan menganggap VPS sudah sinkron** atau WP10b/WP13 sudah dideploy |
+| Tahap 0 — 10 hari bursa | **BELUM LULUS**. Data forward harga yang sah menurut WP12 dimulai **28 Okt 16:57 UTC**; pengamatan perlu hari bursa berurutan, kelengkapan simbol, 0 order, audit gap dan rekonsiliasi | Laporan harian terakhir yang diperiksa dibuat **29 Okt 07:30 WIB**, belum difilter `--since` WP12: `cycle_success_rate` 97,0111% vs 98% **NOT_MET**; 10 hari berurutan **NOT_MET**; tick/snapshot reconciliation **NOT_MET**. Angka lama tidak boleh dipakai sebagai kelulusan periode setelah WP12. |
+| Jam broker MT5 | **WP12 sudah diterapkan**. Tiga simbol forex pada sampel read-only menunjukkan offset raw sekitar **UTC+2**, bukan bukti independen; file `broker-clock-evidence.json` **masih TIDAK ADA** di state resmi hingga 05:25 WIB. **WP13 belum selesai** | [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233) OPEN, `mergeable=false` pada audit HEAD terbaru; canonical observer masih berisiko fallback ke tebakan jam, CI final belum PASS, belum deploy. [#219](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/219) superseded. [Audit Claude](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md) |
+| Reboot & perangkat | VPS Windows Server 2012 R2 RAM ±2 GB; observer task menggunakan akun Administrator dengan **Interactive Logon** | Auto-start setelah reboot tanpa login belum terbukti; WP6 harus diuji aman tanpa mengorbankan evidence 10 hari |
+| Coding Google | **Jules aktif:** WP10b #225 **MERGED**; WP13 #233, WP8c #230, WP10a #231 **OPEN / review CHANGES REQUIRED**; manajer mengirim review formal GitHub. Laporan Claude #234/#235 **MERGED** | Penandaan tugas Completed/Archived **di UI Jules belum dikonfirmasi**, karena sesi Jules terautentikasi tidak tersedia. Jangan salah artikan review/merge GitHub sebagai aksi UI Jules. |
+| Antrean PR aktif | [#233 WP13](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233), [#230 WP8c](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/230), [#231 WP10a](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/231) masih konflik `mergeable=false` + review blocker; #234/#235 laporan handoff sudah MERGED. #219 versi lama superseded, #216/#218 docs belum diselaraskan | Jangan merge PR yang konflik atau mengembalikan dokumen lama. Ikuti prioritas dan acceptance [audit kelemahan Claude](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md) |
+| Validasi strategi | **Belum ada edge/profitabilitas konsisten yang terbukti**; audit historis 13 Okt: profit factor kandidat 0,36 dan 77% kandidat rugi setelah biaya | Lulus source tests ≠ edge; WP10b #225 code merged, tetapi Tahap 1 masih perlu bukti strategi independen sebelum promosi |
+| Keputusan trading | Snapshot audit sebelumnya mencatat kartu **100% WAIT** dengan pemblokir fail-closed; WP9a/WP9b sudah menyediakan alat diagnosis bayangan | Menunggu ≥3 hari bursa `decision_shadow` dan hasil peta blocker; perubahan mode aktif hanya setelah keputusan Owner pada agenda D2 |
+| Risiko | Risk Governor independen, batas drawdown harian 35% sesuai keputusan Owner; repo masih publik | Batas 35% bukan klaim aman untuk live; tidak boleh dilonggarkan. Repo private/pemisahan website tetap keputusan Owner |
 
-## Pekerjaan berikutnya
+## Blocker yang belum selesai
 
-Pengembangan mengikuti **[Roadmap berbasis bukti](ROADMAP.md)** (ditetapkan Owner 22 Okt 2026): validasi adalah
-hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
+**P0:** WP13 PR #233 — observer belum mewajibkan bukti jam independen pada canonical path, bukti server/DST belum tersedia, tes FakeBroker dan CI final harus diselesaikan, PR konflik. Tahap 0 10 hari bursa serta audit gap/tick/recovery **belum lulus**, meskipun observer 05:25 WAITING dan 0 order. [Rincian K-01 s.d. K-04](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md).  
+**P1:** WP8c #230 (sumber jam historis/M5 dapat false-positive), WP10a #231 (parser/memori), WP6 auto-reboot belum terbukti dan risiko drift kode VPS vs GitHub, review status Jules/GitHub.  
+**P2:** WP4 #229, WP14 setelah WP13/WP8c, validasi profitabilitas/edge dan otonomi riset menurut gerbang Roadmap. **Prioritas/antrean tunggal hanya [ROADMAP.md](ROADMAP.md)**.  
 
-1. **Tahap 0 — Observer & data** (sedang dikerjakan): alat repo selesai 22 Okt (ledger snapshot per siklus,
-   pengunduh tick broker per hari, `scripts/ai/check_stage0_health.py`); observer VPS aktif sejak 22 Okt 04:24 UTC
-   dengan 3 simbol, 5 simbol sejak 23 Okt 00:16 UTC; uji putus-sambung 3× lulus 22 Okt. Jam tick MT5 = jam server
-   (T11) diperbaiki WP12, diterapkan **28 Okt 16:57 UTC**: 10 hari bursa berturut-turut dihitung sejak itu (paling cepat
-   ±11 Nov). Offset palsu akhir pekan (T12) dan penilaian `--since` → WP13.
-2. **Tahap 1 — Validasi ilmiah:** alat dan protokol selesai 22 Okt (`katarina.research.validation`,
-   [protokol](research/VALIDATION_PROTOCOL.md)); kriterianya dibuktikan tes. Dipakai untuk semua strategi berikutnya.
-3. Tahap 2–5 (market intelligence, risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan,
-   masing-masing dengan kriteria kelulusan di roadmap.
-   **Persiapan Tahap 2:** alat eksperimen filter tersedia di `katarina.research.market_intelligence` dan
-   perintah `validate_strategy.py market-filter`; membandingkan biaya/MFE dan dua laporan Tahap 1,
-   mencatat alasan WAIT serta menolak kebocoran. Tes sintetis bukan kelulusan pasar. `export_market_contexts.py`
-   membangun `contexts.jsonl` dari tick broker Tahap 0 yang terverifikasi hash (tanpa interpolasi celah);
-   dataset pengembangan nyata (butuh tick Tahap 0 yang cukup) dan promosi filter aktif masih belum tersedia; panduan: [Market Intelligence](research/MARKET_INTELLIGENCE.md).
-   Pengembangan alat tahap berikutnya boleh berjalan bersamaan dengan observasi Tahap 0.
-   **Persiapan Tahap 3:** adapter pembatas tambahan `DemoRiskOverlay` diuji terhadap governor dan boundary
-   demo existing dengan broker sintetis; CLI `check_demo_readiness.py` membaca outbox untuk laporan P/L,
-   biaya, slippage, WAIT dan kelengkapan rekonsiliasi. Belum terpasang pada worker aktif; nilai profil final
-   dan bukti broker nyata masih diperlukan. Panduan: [DEMO readiness](research/DEMO_READINESS.md).
-4. **Rencana kerja perbaikan WP1–WP7** (22 Okt) ada di [roadmap](ROADMAP.md#lampiran-a--rencana-kerja-perbaikan-untuk-pelaksana):
-   WP1 selesai (#184); berikutnya WP2–WP3 (ChatGPT) dan, paralel, WP8 riset historis setup BUY/SELL antarpair
-   dari data pengembangan sebelum 13 Okt 2026.
-5. Keputusan Owner di luar roadmap: repo private atau pemisahan website (Tahap 7 perapian), 15 folder lama
-   terkunci di `C:\` VPS.
+## Pemeriksaan dan pelaporan
 
-## Panduan terkait
-
-- [Uji di PC](QUICKSTART_PC.md) · [redeploy](deployment/KATARINA_REDEPLOY.md) ·
-  [akses GitHub](operations/GITHUB_ACCESS.md) · [aturan pengembangan](operations/GITHUB_FIRST_DEVELOPMENT.md)
-- Arsitektur: [diagram satu otak](architecture/KATARINA_SINGLE_BRAIN_WORKFLOW_20261016.md),
-  [profil risiko](architecture/RISK_PROFILE_V2.md),
-  [host portabel](architecture/KATARINA_PORTABLE_HOST.md),
-  [koneksi otomatis](architecture/KATARINA_AUTOMATIC_CONNECTION.md),
-  [pemulihan environment](architecture/KATARINA_ENVIRONMENT_RECOVERY.md),
-  [pretrial AI trading](architecture/KATARINA_AI_TRADING_PRETRIAL.md)
-- Peta kode: [modul runtime](maintenance/RUNTIME_MODULE_MAP.md), [stage body](maintenance/BODY_STAGE_MAP.md)
+- Setelah perbaikan diverifikasi, catat bukti sebelum/sesudah di [REPAIR_HISTORY.md](REPAIR_HISTORY.md), ringkasan teknis per PR di [CHANGELOG.md](../CHANGELOG.md).
+- Setelah keputusan pada [MEETING](ROADMAP_DISCUSSION.md) disahkan, pindahkan hasilnya ke roadmap dan tutup topik rapat.
+- Observer tetap **LIVE OFF**, satu worker resmi, tanpa menghapus ledger/gap atau mengganti data forward dengan backfill.
+- Semua angka di sini adalah **snapshot historis pada waktu yang tertulis**, bukan janji monitor terus-menerus.

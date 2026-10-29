@@ -1,8 +1,8 @@
 # Roadmap Katarina AI — berbasis bukti
 
-Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari yang sama setelah review PM
+Ditetapkan Owner (pemilik proyek) pada **22 Oktober 2026**; disempurnakan hari yang sama setelah review PM
 (dua aliran data, paralel vs berurutan, celah holdout dan PENDING, profil DEMO vs Stage 38) dan dirapikan
-23 dan 29 Oktober 2026. Dokumen ini menjadi dasar pengembangan Katarina berikutnya.
+23, 29, dan 30 Oktober 2026. Dokumen ini menjadi dasar pengembangan Katarina berikutnya.
 
 **Cara membaca dokumen ini**
 
@@ -11,10 +11,14 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 - **Lampiran A** adalah **rencana kerja berjalan** untuk pelaksana (AI lain atau manusia): urutan dan alur kerja (R0),
   temuan (R1), cara kerja standar (R2), peta berkas (R3), langkah per paket (R4), status (R5), perintah siap pakai
   (R6), daftar periksa review (R7), cara menulis kode (R8), aturan menulis dokumen/PR (R9), dan standar teknis (R10).
-- Pembagian dokumen: roadmap = arah dan aturan; [PROJECT_STATUS](PROJECT_STATUS.md) = status terkini (satu-satunya
-  sumber status operasional); deskripsi PR = bukti dan log kerja; [CHANGELOG](../CHANGELOG.md) = riwayat perubahan;
-  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian; [ROADMAP_DISCUSSION](ROADMAP_DISCUSSION.md) = rapat
-  tertulis Owner, Yura, Claude dan pelaksana (bukan aturan). **Log kerja tidak ditulis di roadmap.**
+- **Fungsi roadmap ini: perjalanan Katarina.** Isi hanya tujuan, tahap, gerbang kelulusan, milestone, antrean
+  paket, dependensi, dan progres paket/keputusan yang **sudah disahkan**. Bukan notula, arsip perbaikan, atau log kerja.
+- **Tiga jalur Owner (30 Okt 2026):** [ROADMAP](ROADMAP.md) = perjalanan dan pekerjaan yang disetujui;
+  [MEETING](ROADMAP_DISCUSSION.md) = usulan, pertanyaan, dan keputusan yang masih dibahas;
+  [REPAIR_HISTORY](REPAIR_HISTORY.md) = perbaikan nyata, berkas yang berubah, tes, bukti, serta risiko tersisa.
+- Dokumen pendukung tidak digandakan: [PROJECT_STATUS](PROJECT_STATUS.md) = status operasional terkini;
+  [CHANGELOG](../CHANGELOG.md) = ringkasan teknis per PR/commit; deskripsi PR = detail diff/review;
+  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian. **Tidak ada log kerja atau transkrip rapat di roadmap.**
 
 ## Mulai di sini — untuk pelaksana AI (ChatGPT, Codex, atau AI lain)
 
@@ -33,15 +37,24 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 
 **Antrean kerja (urut; ditetapkan ChatGPT, diperbarui setiap merge)**
 
-| # | Paket | Yang diperbaiki | Status |
+**Audit kelemahan dan pembaruan 30 Okt 2026:** [Laporan Claude — kelemahan dan tugas perbaikan](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md) mencatat prioritas K-01 s.d. K-10 serta status code/CI/VPS; status real-time di [PROJECT_STATUS](PROJECT_STATUS.md).
+
+**Urgensi disepakati Owner, 30 Oktober 2026:** stabilkan bukti observasi 10 hari bursa dan validasi jam broker **lebih dulu**. Penyelesaian kode, merge, deployment, serta kelulusan hari bursa **empat status terpisah**. Detail diagnosis/hasil perbaikan ada di [REPAIR_HISTORY](REPAIR_HISTORY.md), status mesin sesaat di [PROJECT_STATUS](PROJECT_STATUS.md). Google Jules hanya menulis kode GitHub; tidak mengoperasikan VPS.
+
+| # | Paket / alur | Prioritas dan keluaran yang harus terbukti | Pelaksana dan status |
 |---|---|---|---|
-| 1 | WP13 | Offset jam palsu dari quote basi akhir pekan (T12); `check_stage0_health --since` agar Tahap 0 dinilai sejak WP12 | Siap |
-| 2 | WP8c | Bukti jam historis bar dari jam rilis NFP, syarat ekspor data pengembangan (WP8a) | Siap |
-| 3 | WP10b | Swap dan sensitivitas biaya di alat validasi; label "tidak ekonomis" | Siap |
-| 4 | WP10a | Profil spread broker deskriptif dari tick forward (tidak untuk penyetelan) | Siap |
-| 5 | WP4 | Jurnal kandidat riset + replay sinyal teknis (tanpa mengubah keputusan) | Siap |
-| 6 | WP14 | Auditor data baca-saja: setiap temuan PASS/BLOCKED/NO_DATA dengan sumber | Menunggu WP13 + WP8c |
-| – | WP8b, WP9c, WP9d, WP5 | Riset setup, syarat bukti terkunci, detektor entry, perankingan | Menunggu prasyarat (R0) |
+| 0 | **Tahap 0 — observasi 10 hari bursa** | Jaga satu observer resmi read-only; audit per hari/simbol sejak 28 Okt 16:57 UTC (cutoff WP12), target streak 10 hari, sukses siklus ≥98%, rekonsiliasi tick/snapshot, cakupan dan gap, restart otomatis dan **0 order**. Jangan menghitung backfill sebagai forward atau mengklaim lulus sebelum bukti. | **P0 / berjalan** — Yura pantau, Claude verifikasi bukti VPS; **belum lulus** |
+| 1 | **WP13 — jam broker MT5 dan `--since`** | Selesaikan [Issue #228](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/228) dan [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233), pengganti PR #219 yang konflik. Wajib evidence sumber broker independen, fail-closed observer, penanganan gap, DST, stale, tes/CI dan `--since`. | **P0 / Jules sudah coding, review menemukan regresi pengamanan; PR #233 belum merge/CI final**, evidence broker privat belum ada; Claude review/repair sesuai [audit](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md) |
+| 2 | **WP8c — asal waktu bar historis** | Bukti UTC bar memakai rilis NFP yang terverifikasi dan tes deterministik; jangan ekspor data development tanpa bukti jam atau sentuh holdout. | **P1 / review [PR #230](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/230)** — revisi lineage dan fail-closed diminta Jules; belum merge |
+| 3 | **WP10b — swap & sensitivitas biaya** | CostModel swap BUY/SELL, rollover New York/DST dan sensitivitas 1,5×/2×; perbaikan baseline random-side; tidak mengubah gate promosi. | **P1 / kode MERGED [PR #225](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/225)** — CI Body/Linux/Windows PASS; belum validasi broker/VPS atau strategi |
+| 4 | **Tata kelola PR terbuka** | Review konflik [#216](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/216) / [#218](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/218) dengan tiga dokumen kanonis; tutup/selaraskan yang duplikat tanpa menghapus keputusan; jangan merge WP13 dalam keadaan konflik. | **P1 / perlu review** — Yura/Claude |
+| 5 | **WP6 — pemulihan setelah reboot** | Verifikasi scheduled task observer yang kini hanya saat login; uji recovery dengan risiko observasi minimal. Penambahan 5→7 simbol tetap **menunggu WP13 + bukti jam 21:00–22:00 UTC**, tidak boleh mendahului kelulusan data. | **P1 / belum terverifikasi** — Claude |
+| 6 | **WP10a** | Profil spread broker deskriptif dari tick forward terverifikasi, bukan penyetelan strategi. | **P2 / review [PR #231](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/231)** — revisi streaming/parser/memori diminta Jules; belum merge |
+| 7 | **WP4** | Jurnal kandidat riset + replay sinyal teknis tanpa mengubah keputusan aktif. | **P2 / antrean [Issue #229](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/229)** — tunggu WP13 dan kapasitas Jules |
+| 8 | **WP14** | Auditor data baca-saja dengan keluaran PASS/BLOCKED/NO_DATA yang bersumber. | **P2 / menunggu WP13 dan WP8c** |
+| – | **WP8b, WP9c, WP9d, WP5** | Setup, syarat bukti, entry, dan perankingan; hanya setelah prasyarat R0 terpenuhi. | **Menunggu prasyarat** |
+
+**Handoff Google (audit 30 Okt):** WP10b **#225 merged**; WP8c **#230 review BLOCKED**, WP10a **#231 review BLOCKED**, WP13 **#233 review BLOCKED** karena guard waktu hilang/CI+konflik (Issue #228 sudah ditangani Jules); WP4 #229 tetap antrean. Review formal GitHub sudah dikirim untuk #230/#231/#233. Status **Needs review di UI Jules berbeda dari GitHub**: hanya tandai Completed/Archived saat merge+CI lulus dan sesi Jules terautentikasi; belum ada bukti penandaan tersebut. Jules tidak memiliki akses VPS, data broker privat, atau kewenangan promosi. [Rincian untuk Claude](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md).
 
 
 **Akses**
@@ -419,9 +432,9 @@ Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, 
 
 | Fase | Paket | Oleh | Prasyarat | Ukuran perkiraan | Status (rinci di R5) |
 |---|---|---|---|---|---|
-| 1 (prioritas) | WP13 — jam broker tahan quote basi + `--since` | Pelaksana | — | ±4 berkas, ±200 baris | Siap |
+| 1 (prioritas) | WP13 — jam broker tahan quote basi + `--since` | Claude / review Yura | — | ±4 berkas, ±200 baris | Dalam review #219, konflik dengan `main` |
 | 1 (paralel) | WP8c — bukti jam historis bar dari rilis resmi | Pelaksana | WP8a (selesai) | ±4 berkas, ±350 baris | Siap |
-| 2 | WP10b — swap + sensitivitas biaya | Pelaksana | WP8a (selesai) | ±3 berkas, ±250 baris | Siap |
+| 2 | WP10b — swap + sensitivitas biaya | Google Jules (jika terotorisasi), review Claude | WP8a (selesai) | ±3 berkas, ±250 baris | Menunggu koneksi Jules GitHub, Issue #220 |
 | 2 (paralel) | WP10a — profil spread deskriptif | Pelaksana | WP2 (selesai) | ±4 berkas, ±250 baris | Siap |
 | 3 | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP9b (selesai) | ±6 berkas, ±450 baris | Siap |
 | 3b | WP14 — auditor data baca-saja | Pelaksana | WP13 + WP8c | ±4 berkas, ±350 baris | — |
@@ -833,19 +846,19 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | Siap dikerjakan (prioritas) | – | – |
-| WP8c | Siap dikerjakan | – | – |
-| WP10b | Siap dikerjakan | – | – |
-| WP10a | Siap dikerjakan | – | – |
-| WP4 | Siap dikerjakan | – | – |
+| WP13 | **Dalam review BLOCKED P0**; Jules sudah membuka PR #233, guard canonical `require_evidence=True` hilang pada HEAD terakhir diaudit, konflik dan CI final belum lulus; bukti jam privat belum ada | Issue #228; **PR #233** (menggantikan #219) | Claude audit HEAD baru vs safety patch `2e504d3`; fail-closed tanpa memutus observer, fixture CI, sumber independen, merge hanya setelah CI aman; **jangan deploy** sebelum bukti broker nyata |
+| WP8c | **Dalam review BLOCKED**; sumber independen, M5, rentang verified dan fake report belum valid; PR konflik | #230 | Claude/Jules perbaiki lineage BLS+volume M5 dan fail-closed; 24 surrounding bars, tes adversarial dan CI HEAD final |
+| WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
+| WP10a | **Dalam review BLOCKED**; parser, streaming/memori multi-hari, last-tick/minute, SQLite read-only; PR konflik | #231 | CI lama bukan bukti HEAD final; perbaiki 2 juta tick <50 MB, parity parser, time_msc maksimum dan ulangi semua CI |
+| WP4 | Menunggu kapasitas Jules dan WP13 | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
-| WP6 | Dikerjakan Claude: 5 simbol, `main` sejak 28 Okt 16:57 UTC | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
+| WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
 | WP9c | Menunggu prasyarat (≥ 3 hari bursa `decision_shadow`) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP7 | Menunggu Owner | – | – |
-| Selesai | WP1 #184 · WP2 #190 · WP3 #191 · WP8a #195 · WP9a #196 · WP9b #205 · WP11 #201 · WP12 #204 | – | Catatan review ada di deskripsi/komentar PR masing-masing |
+| Selesai | WP1 #184 · WP2 #190 · WP3 #191 · WP8a #195 · WP9a #196 · WP9b #205 · WP11 #201 · WP12 #204 · **WP10b #225** | – | Catatan review ada di deskripsi/komentar PR masing-masing |
 
 ### R6. Perintah siap pakai untuk pelaksana
 
@@ -1090,10 +1103,13 @@ Prinsipnya: **perubahan terkecil yang benar, dibuktikan tes, dijelaskan singkat.
 
 | Tempat | Isi | Batas |
 |---|---|---|
-| Roadmap | Baris status paket di R5; satu-dua kalimat di paragraf "Alat" tahap terkait | Tanpa sub-bagian baru, tanpa log |
-| `CHANGELOG.md` | Apa yang berubah dan mengapa, satu entri per PR | ≤ 10 baris |
-| `CLAUDE.md` | Hanya bila CLI/modul baru atau angka tes/peta modul berubah | ≤ 2 baris per perubahan, di tabel/baris yang tepat |
-| Deskripsi PR | Templat R6.0 E | ±40–80 baris; tabel lebih baik daripada paragraf |
+| `ROADMAP.md` | Tahapan perjalanan, kriteria lulus, prioritas, dependensi; status paket di R5 | Tanpa notula atau daftar commit; tidak mengulang detail perbaikan |
+| `ROADMAP_DISCUSSION.md` (**MEETING**) | Pertanyaan, usulan, tanggapan dan keputusan yang masih menunggu; ringkasan keputusan terakhir | Bukan aturan atau antrean kedua; topik selesai ditutup |
+| `REPAIR_HISTORY.md` | Satu entri per perbaikan terverifikasi: sebelum, akar masalah, perubahan berkas, PR/commit, tes, deployment, risiko tersisa | Tidak mencatat ide, progres pengerjaan harian, atau klaim stabil tanpa bukti |
+| `PROJECT_STATUS.md` | Kondisi operasional terkini, blocker dan bukti terakhir | Snapshot; bukan arsip kronologis |
+| `CHANGELOG.md` | Ringkasan teknis apa berubah dan mengapa, satu entri per PR | ≤ 10 baris; untuk detail hasil perbaikan cukup tautkan `REPAIR_HISTORY.md` |
+| `CLAUDE.md` | Peta baca dan panduan kode | ≤ 2 baris per perubahan kecil, tidak menggandakan isi dokumen |
+| Deskripsi PR | Templat R6.0 E dan bukti diff/CI/review | ±40–80 baris; tabel lebih baik daripada paragraf |
 | Komentar review/jawaban | Apa yang diubah atau alasan tidak diubah | Beberapa kalimat |
 | Pesan commit | Kalimat perintah singkat dalam bahasa Indonesia, lalu baris kosong dan alasan bila perlu | Judul ≤ 72 karakter |
 

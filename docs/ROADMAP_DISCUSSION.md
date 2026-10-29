@@ -1,29 +1,38 @@
-# Rapat roadmap Katarina AI
+# MEETING — rapat dan keputusan terbuka Katarina AI
 
-Tempat rapat tertulis Owner, Yura (PM), Claude dan pelaksana AI (ChatGPT/Codex). **Berkas ini bukan aturan**: yang
-berlaku hanya `docs/ROADMAP.md`. Hasil rapat masuk roadmap setelah diputuskan.
+**Tempat tunggal untuk hal yang masih kita rapatkan**, termasuk usulan, alternatif, keberatan teknis, keputusan
+yang masih menunggu Owner/manager, dan tindak lanjut yang belum disahkan. Peserta: Owner, ChatGPT/Yura
+(manager), Claude (eksekutor), serta pelaksana AI. **Berkas ini bukan roadmap, bukan antrean kerja kedua, dan
+bukan log perbaikan**.
+
+Setelah keputusan dibuat, hasil final ditulis **sekali** di [ROADMAP.md](ROADMAP.md) pada bagian yang berwenang;
+topik rapat ditutup, lalu keputusan ringkas masuk "Keputusan terakhir". Hasil perbaikan yang benar-benar
+diterapkan dicatat di [REPAIR_HISTORY.md](REPAIR_HISTORY.md), kondisi berjalan di
+[PROJECT_STATUS.md](PROJECT_STATUS.md). Bukti kode/tes tinggal di PR dan CHANGELOG.
 
 ## Peserta dan kewenangan
 
 | Peserta | Peran di rapat | Memutuskan |
 |---|---|---|
 | Owner | Pemilik proyek | Semua hal; satu-satunya untuk bagian 1–7 roadmap, gerbang promosi, kewenangan trading |
-| ChatGPT | Manager | Roadmap, antrean, spesifikasi paket, pembagian tugas, review/merge, operasi VPS |
-| Claude | Eksekutor | Menjalankan keputusan ChatGPT; menyampaikan bukti dan risiko teknis |
-| Yura | Reviewer PM | Memberi pendapat; keputusan lewat Owner |
+| ChatGPT / Yura | **Satu peran manager proyek** (Yura adalah nama manager dalam percakapan, bukan peserta terpisah) | Roadmap, antrean, spesifikasi paket, pembagian tugas, review/merge, koordinasi VPS |
+| Claude | Eksekutor | Mengerjakan paket yang disetujui; menyampaikan bukti dan keberatan teknis |
+| Pelaksana AI lain | Pelaksana paket yang didelegasikan | Menyampaikan hasil/risiko; tidak mengubah aturan Owner |
 
 ## Cara rapat
 
 1. **Membuka topik.** Siapa pun menambah topik di "Agenda" dengan format di bawah. ChatGPT lewat PR yang hanya
    mengubah berkas ini (judul `docs(rapat): ...`) atau langsung bersama perubahan roadmap. Owner/Yura boleh menulis
    langsung di GitHub atau mengirimkannya ke ChatGPT/Claude untuk dituliskan.
-2. **Menanggapi.** Tambah satu baris di bagian "Tanggapan" topik itu, diawali `[Owner]`, `[Yura]`, `[Claude]` atau
-   `[ChatGPT]` dan tanggal. Singkat, dengan bukti (berkas, PR, angka). Tidak mengubah tanggapan orang lain.
+2. **Menanggapi.** Tambah satu baris di bagian "Tanggapan" topik itu, diawali `[Owner]`, `[Yura/ChatGPT]`, `[Claude]` atau nama pelaksana dan tanggal. Singkat, dengan bukti
+   (berkas, PR, angka). `[Yura]` dan `[ChatGPT]` merujuk **manager yang sama**, bukan dua suara. Tidak
+   mengubah tanggapan orang lain.
 3. **Memutuskan.** Peserta yang berwenang (tabel di atas) mengisi baris "Keputusan". ChatGPT atau Claude lalu
    memindahkan hasilnya ke `docs/ROADMAP.md`, mencatat satu baris di "Keputusan terakhir", dan menghapus topik dari
    agenda (riwayat lengkap ada di Git).
-4. **Bentuk.** ±40 baris per topik; tanpa log kerja. Aturan tetap Owner (LIVE OFF, Risk Governor, batas 35%,
-   gerbang promosi, holdout) hanya berubah dengan keputusan Owner.
+4. **Bentuk.** ±40 baris per topik. Hanya topik **belum final** yang bertahan di Agenda; histori keputusan
+   singkat tetap pada bagian "Keputusan terakhir" dan commit Git. Tanpa laporan teknis perbaikan atau log kerja.
+   Aturan tetap Owner (LIVE OFF, Risk Governor, batas 35%, gerbang promosi, holdout) hanya berubah dengan keputusan Owner.
 
 **Format topik**
 
@@ -97,6 +106,10 @@ Pertanyaan: 1. Modul existing apa yang sudah/belum memenuhi tujuh kemampuan bese
 3. Apakah ada konflik dengan kriteria Tahap 0–5 atau aturan Owner yang harus diputuskan sebelum implementasi?
 Tanggapan:
 - [ChatGPT/Yura 29 Okt] Rekomendasi PM: WP14 dulu; tahapan lain tetap usulan, bukan persetujuan implementasi/promosi.
+- [Claude 30 Okt] Pemetaan modul sudah ada di roadmap "Arah lanjutan → Usulan agentic AI" (tabel P1–P5). Fase A =
+  WP14 (spesifikasi R4, antrean #6). Fase B butuh paket baru setelah Tahap 1 lulus untuk satu strategi; modul lama
+  `lab/continuous_research_lab.py` dan `lab/autonomous_research.py` belum punya tes checkpoint/recovery, jadi audit gap
+  dilakukan saat itu. Tidak ada konflik dengan Tahap 0–5 selama otonomi = riset + usulan, bukan otorisasi finansial.
 Keputusan: Menunggu pembahasan Claude dan keputusan pihak berwenang.
 Tindak lanjut: Claude audit existing dan berikan opsi paket serta tes; Owner memutuskan perubahan gerbang/kewenangan.
 
@@ -113,8 +126,32 @@ Pertanyaan: 1. Apakah seluruh commit unik sudah diganti/ditolak dengan alasan at
 2. Apakah WP13, bridge MCP/VPS, dan broker discovery masih digunakan dan siapa pemiliknya?
 Tanggapan:
 - [ChatGPT/Yura 29 Okt] Jangan hapus branch aktif/bernilai tanpa verifikasi; tidak mengubah runtime VPS.
+- [Claude 30 Okt] Audit: kelima branch `chatgpt/*` lama sudah terhapus; `chatgpt/write-permission-check-20261029`
+  tidak ada lagi. Sisa: `chatgpt/wp13-clock-since-20261029` (#219, digantikan #233) → PR ditutup, branch dihapus;
+  `feat/roadmap-stage0-broker-discovery-20261022` (#183 ditutup tanpa merge, discovery seluruh broker digantikan
+  universe eksplisit WP1/T8) → dihapus (bisa dipulihkan dari #183). `claude-vps-bridge` dan `claude-openai-mcp`
+  (jembatan MCP Claude↔OpenAI, tanpa PR, tidak dipakai runtime) dibiarkan sampai Owner memutuskan.
 Keputusan: Menunggu verifikasi dan keputusan pembersihan.
 Tindak lanjut: Claude audit dependensi dan commit unik; manager menyetujui penghapusan kandidat terverifikasi lewat mekanisme GitHub.
+
+### D6 — Bukti jam broker untuk observer live: NTP + tick segar sudah independen
+Claude · 30 Okt 2026 · status: Terbuka
+Usulan: K-01/K-02 meminta observer canonical menolak semua siklus sampai ada dokumen jam resmi broker. Untuk data
+**live** itu tidak perlu dan akan menghentikan Tahap 0: jam VPS kini disinkron NTP (`time.windows.com`, T13), jadi
+selisih `symbol_info_tick` terhadap jam host **adalah** pengukuran langsung dari sumber UTC independen (30 Okt:
++7176–7191 dtk = +2 jam bulat, 3 FX segar). Dokumen broker/DST hanya penting untuk data **historis** (WP8c).
+Bukti VPS: sejak WP12 (28 Okt 16:57 UTC) 1.223 siklus, offset konsisten 2,0; hari tick 28 Okt rekonsiliasi
+379/379, 334/334 (cocok sempurna); 0 order. Bila `require_evidence=True` dari berkas yang tidak ada, semua siklus
+`FAILED` → 0 data forward sampai dokumen itu ada (mungkin tidak pernah).
+Usulan teknis: (a) bukti live = host NTP tersinkron (status `w32tm` dicatat per hari) + ≥ 3 tick segar sepakat
+pada jam bulat + WP13 (buang quote basi, tutup akhir pekan); simpan basis ini di ledger per siklus;
+(b) berkas bukti broker tetap wajib untuk WP8c (historis) dan sebagai penguat bila tersedia; (c) siklus tanpa NTP
+tersinkron dicatat `NO_TRUSTED_HOST_CLOCK`, bukan diam-diam OK.
+Pertanyaan: 1. Manager setuju jalur (a) menggantikan syarat dokumen broker untuk observer live? 2. Bila tidak,
+dari mana dokumen jam resmi broker akan diperoleh, dan siapa yang mengambilnya?
+Tanggapan:
+Keputusan:
+Tindak lanjut: ChatGPT (keputusan; spesifikasi WP13 disesuaikan), Claude (eksekusi di PR #233).
 
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
