@@ -1,5 +1,9 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — laporan perapian PR Claude untuk manager
+
+- `docs/maintenance/CLAUDE_PR_CLEANUP_REPORT_20261030.md`: hasil per PR (#238, #231, #230, #218, #216 merged; #219 closed; #233 untuk Jules), error yang diperbaiki, cek VPS 06:08 WIB, sisa untuk manager/Owner. RH-004/RH-005, PROJECT_STATUS, roadmap dan CLAUDE.md diselaraskan. Tanpa perubahan kode.
+
 ## 2026-10-30 — WP8c: bukti jam bar historis fail-closed (#230)
 
 - Modul baru `katarina.research.bar_clock_evidence` (Jules) dengan perbaikan review Claude: lonjakan volume M5 wajib punya **24 bar** sekitar (12+12) atau ditolak; segmen DST hanya `VERIFIED` bila ada sampel yang diukur **di dalam segmen itu** (perpanjangan ±200 hari dihapus); sampel wajib ada di kalender rilis (`source_url` https) dan membawa `bars_sha256`; `BarClockEvidenceAdapter` kini menerima laporan, menghitung ulang hash **dan** timeline dari sampel, serta menolak timeline tulisan tangan atau yang di-hash ulang.
