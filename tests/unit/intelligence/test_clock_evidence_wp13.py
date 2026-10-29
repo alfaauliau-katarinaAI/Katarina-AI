@@ -138,11 +138,21 @@ class ClockEvidenceWP13Tests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "evidence.json"
+            source = Path(tmpdir) / "broker-clock-source.txt"
+            source.write_bytes(b"source")  # reviewed source bytes, not just a SHA string
             path.write_text(json.dumps(valid_json), encoding="utf-8")
 
             loaded = load_clock_evidence(path)
             self.assertIsNotNone(loaded)
             self.assertEqual(loaded.shift_hours, 3)
+
+            # Forged SHA or missing source can never authenticate itself.
+            source.write_bytes(b"tampered")
+            self.assertIsNone(load_clock_evidence(path))
+            source.unlink()
+            self.assertIsNone(load_clock_evidence(path))
+            source.write_bytes(b"source")
+            self.assertIsNotNone(load_clock_evidence(path))
 
             # File > 16KB rejected
             path.write_bytes(b"x" * 16385)
@@ -150,6 +160,36 @@ class ClockEvidenceWP13Tests(unittest.TestCase):
 
             # Non-existent file
             self.assertIsNone(load_clock_evidence(Path(tmpdir) / "missing.json"))
+
+
+    def test_dst_crossing_and_reversed_evidence_interval_rejected(self):
+        now = datetime(2026, 11, 1, 12, tzinfo=timezone.utc)
+        ev = evidence(now, shift=2)
+        crossing = ClockEvidence(
+            shift_hours=ev.shift_hours,
+            valid_from=datetime(2026, 10, 31, 12, tzinfo=timezone.utc),
+            valid_until=datetime(2026, 11, 2, 12, tzinfo=timezone.utc),
+            source=ev.source, source_sha256=ev.source_sha256,
+            broker_server_sha256=ev.broker_server_sha256,
+        )
+        self.assertFalse(crossing.valid_at(now, "fixture"))
+        reversed_interval = ClockEvidence(
+            shift_hours=ev.shift_hours, valid_from=now + timedelta(days=1),
+            valid_until=now - timedelta(days=1),
+            source=ev.source, source_sha256=ev.source_sha256,
+            broker_server_sha256=ev.broker_server_sha256,
+        )
+        self.assertFalse(reversed_interval.valid_at(now, "fixture"))
+
+    def test_canonical_observer_requires_evidence_static_contract(self):
+        # The inference helper may preserve legacy opt-in, but the canonical
+        # read-only Stage-0 observer is NOT allowed to silently fall back.
+        root = Path(__file__).resolve().parents[3]
+        source = (root / "src/katarina/intelligence/cognition/observer.py").read_text(encoding="utf-8")
+        self.assertIn("require_evidence=True)", source)
+        runner = (root / "src/katarina/intelligence/cognition/continuous_observation.py").read_text(encoding="utf-8")
+        self.assertIn("'CLOCK_EVIDENCE_MISSING_OR_INVALID'", runner)
+        self.assertIn("'CLOCK_EVIDENCE_EXPIRED_OR_WRONG_BROKER'", runner)
 
 
 if __name__ == "__main__":
