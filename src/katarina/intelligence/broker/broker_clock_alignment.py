@@ -15,6 +15,39 @@ from pathlib import Path
 import re
 from typing import Mapping
 
+from katarina.intelligence.operations.data_health import _last_sunday, _nth_sunday
+
+
+def _crosses_unverified_dst_boundary(start: datetime, end: datetime) -> bool:
+    """Avoid certifying one offset through possible EU/US clock changes.
+
+    A verified broker-specific DST policy can be modeled in separate bounded
+    evidence intervals. This conservative rule does NOT assume which schedule
+    any particular broker follows.
+    """
+    if not isinstance(start, datetime) or not isinstance(end, datetime):
+        return True
+    if start.tzinfo is None or end.tzinfo is None or end <= start:
+        return True
+    start_utc = start.astimezone(timezone.utc)
+    end_utc = end.astimezone(timezone.utc)
+    if end_utc.year - start_utc.year > 2:
+        return True
+    for year in range(start_utc.year, end_utc.year + 1):
+        eu_mar = _last_sunday(year, 3)
+        eu_oct = _last_sunday(year, 10)
+        us_mar = _nth_sunday(year, 3, 2)
+        us_nov = _nth_sunday(year, 11, 1)
+        transitions = (
+            datetime(year, eu_mar.month, eu_mar.day, 1, tzinfo=timezone.utc),
+            datetime(year, eu_oct.month, eu_oct.day, 1, tzinfo=timezone.utc),
+            datetime(year, us_mar.month, us_mar.day, 7, tzinfo=timezone.utc),
+            datetime(year, us_nov.month, us_nov.day, 6, tzinfo=timezone.utc),
+        )
+        if any(start_utc < t < end_utc for t in transitions):
+            return True
+    return False
+
 
 @dataclass(frozen=True)
 class ClockEvidence:
@@ -40,6 +73,7 @@ class ClockEvidence:
                 and self.broker_server_sha256 == sha256(broker_server.encode('utf-8')).hexdigest()
                 and isinstance(self.valid_from, datetime) and self.valid_from.tzinfo is not None
                 and isinstance(self.valid_until, datetime) and self.valid_until.tzinfo is not None
+                and not _crosses_unverified_dst_boundary(self.valid_from, self.valid_until)
                 and self.valid_from <= now < self.valid_until)
 
 
@@ -52,6 +86,16 @@ def load_clock_evidence(path: str | Path) -> ClockEvidence | None:
             return None
         data = json.loads(raw)
         if not isinstance(data, dict) or type(data.get('schema_version')) is not int or data['schema_version'] != 1:
+            return None
+        # Evidence metadata does not authenticate itself. The operator must
+        # provide the independently reviewed source as a separate PRIVATE file;
+        # its actual bytes must match the stated digest. Neither file is
+        # generated from quote votes by the observer.
+        source_path = Path(path).with_name('broker-clock-source.txt')
+        if not source_path.is_file() or source_path.stat().st_size > 16384:
+            return None
+        source_bytes = source_path.read_bytes()
+        if not source_bytes or sha256(source_bytes).hexdigest() != data.get('source_sha256'):
             return None
         return ClockEvidence(
             shift_hours=data['shift_hours'],
