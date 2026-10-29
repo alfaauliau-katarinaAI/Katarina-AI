@@ -16,7 +16,7 @@ Label status: **CODE DONE** (kode + tes selesai) · **MERGED** (masuk `main`, CI
 | #231 WP10a | Profil spread broker | Perbaiki temuan review K-06 (bagian 2), merge `main`, CI | MERGED `ccdaec2` · belum DEPLOYED/dijalankan di VPS |
 | #230 WP8c | Bukti jam bar historis | Perbaiki temuan review K-05 (bagian 2), merge `main`, CI | MERGED `93a2c67` · CODE DONE tetapi **tanpa bukti nyata**: kalender rilis masih kosong, jadi ekspor tetap ditolak |
 | #218 | Keputusan Owner visi agentic | Merge `main` (strict), urutkan CHANGELOG, CI | MERGED `e453475` · docs |
-| #216 | Rapat D4/D5 agentic + branch | Tanggapan Claude D4/D5, merge `main`, CI | MERGED · docs |
+| #216 | Rapat D4/D5 agentic + branch | Tanggapan Claude D4/D5, merge `main`, CI | MERGED `7add208` · docs |
 | #219 | WP13 lama | Ditutup; digantikan #233 | CLOSED |
 | #233 WP13 | Jam broker live + `--since` | **Tidak diubah** (keputusan Owner). Review tertulis di [komentar #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233#issuecomment-6510642908) | OPEN · konflik dengan `main` · NOT MERGED |
 
