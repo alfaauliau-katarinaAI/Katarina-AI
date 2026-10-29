@@ -61,19 +61,17 @@ def _utc(value) -> datetime:
     return value.astimezone(timezone.utc)
 
 
-def _nth_sunday(year: int, month: int, nth: int) -> datetime:
-    first = datetime(year, month, 1, tzinfo=timezone.utc)
-    first_sunday_day = 1 + (6 - first.weekday()) % 7
-    target_day = first_sunday_day + 7 * (nth - 1)
-    return datetime(year, month, target_day, tzinfo=timezone.utc)
+from katarina.intelligence.operations.data_health import _nth_sunday
 
 
 def is_us_dst(moment: datetime) -> bool:
     """US Daylight Saving Time: 2nd Sunday in March 02:00 EST (07:00 UTC) to 1st Sunday in Nov 02:00 EDT (06:00 UTC)."""
     moment = _utc(moment)
     year = moment.year
-    start_utc = _nth_sunday(year, 3, 2).replace(hour=7)
-    end_utc = _nth_sunday(year, 11, 1).replace(hour=6)
+    start_date = _nth_sunday(year, 3, 2)
+    end_date = _nth_sunday(year, 11, 1)
+    start_utc = datetime(year, 3, start_date.day, 7, 0, tzinfo=timezone.utc)
+    end_utc = datetime(year, 11, end_date.day, 6, 0, tzinfo=timezone.utc)
     return start_utc <= moment < end_utc
 
 
