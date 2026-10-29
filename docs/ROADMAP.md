@@ -1,8 +1,8 @@
 # Roadmap Katarina AI — berbasis bukti
 
-Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari yang sama setelah review PM
+Ditetapkan Owner (pemilik proyek) pada **22 Oktober 2026**; disempurnakan hari yang sama setelah review PM
 (dua aliran data, paralel vs berurutan, celah holdout dan PENDING, profil DEMO vs Stage 38) dan dirapikan
-23 dan 29 Oktober 2026. Dokumen ini menjadi dasar pengembangan Katarina berikutnya.
+23, 29, dan 30 Oktober 2026. Dokumen ini menjadi dasar pengembangan Katarina berikutnya.
 
 **Cara membaca dokumen ini**
 
