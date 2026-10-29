@@ -32,18 +32,39 @@ from katarina.research.market_intelligence import MarketContext
 USABLE_TICK_DAY_STATUSES = ("STORED", "STORED_WITH_GAPS")
 
 
+def iter_verified_ticks(root: Path, record: dict):
+    """Yield (time_msc, bid, ask) from one ledger tick file after verifying its recorded hash.
+
+    Two-pass streaming:
+    Pass 1: verify sha256 hash of decompressed content.
+    Pass 2: yield (time_msc, bid, ask) for valid tick lines.
+    """
+    file_path = Path(root) / record["file"]
+
+    # Pass 1: SHA256 of decompressed CSV content
+    hasher = hashlib.sha256()
+    with gzip.open(file_path, "rb") as gz:
+        while chunk := gz.read(65536):
+            hasher.update(chunk)
+    if hasher.hexdigest() != record["sha256"]:
+        raise v.ValidationError("TICK_FILE_HASH_MISMATCH")
+
+    # Pass 2: same strict 4-column contract as the archive writer (time_msc,bid,ask,flags).
+    with gzip.open(file_path, "rt", encoding="ascii", newline="") as gz:
+        next(gz, None)  # Skip CSV header line
+        for line in gz:
+            try:
+                msc, bid, ask, _ = line.rstrip("\n").split(",")
+                msc, bid_f, ask_f = int(msc), float(bid), float(ask)
+            except ValueError as error:
+                raise v.ValidationError("TICK_FILE_MALFORMED") from error
+            if math.isfinite(bid_f) and math.isfinite(ask_f) and bid_f > 0 and ask_f >= bid_f:
+                yield msc, bid_f, ask_f
+
+
 def _ticks(root: Path, record) -> list[tuple[int, float]]:
     """(time_msc, mid) from one ledger tick file after verifying its recorded hash."""
-    raw = gzip.decompress((root / record["file"]).read_bytes())
-    if hashlib.sha256(raw).hexdigest() != record["sha256"]:
-        raise v.ValidationError("TICK_FILE_HASH_MISMATCH")
-    rows = []
-    for line in raw.decode("ascii").splitlines()[1:]:
-        msc, bid, ask, _ = line.split(",")
-        bid, ask = float(bid), float(ask)
-        if math.isfinite(bid) and math.isfinite(ask) and bid > 0 and ask >= bid:
-            rows.append((int(msc), (bid + ask) / 2))
-    return rows
+    return [(msc, (bid + ask) / 2) for msc, bid, ask in iter_verified_ticks(root, record)]
 
 
 def _closed_bars(ticks, start: datetime, end: datetime, bar_minutes: int, atr_bars: int):

@@ -1,9 +1,20 @@
 # Perubahan material Katarina AI
 
-## 2026-10-29 — Owner mengukuhkan visi agentic AI mandiri
+## 2026-10-30 — WP8c: bukti jam bar historis fail-closed (#230)
 
-- `docs/ROADMAP.md`: sasaran riset mandiri, lima kemampuan, siklus evaluasi, bukti keuntungan bersih,
-  serta batas promosi dan modal. Rapat hanya merujuk keputusan kanonis; belum ada kode atau izin trading berubah.
+- Modul baru `katarina.research.bar_clock_evidence` (Jules) dengan perbaikan review Claude: lonjakan volume M5 wajib punya **24 bar** sekitar (12+12) atau ditolak; segmen DST hanya `VERIFIED` bila ada sampel yang diukur **di dalam segmen itu** (perpanjangan ±200 hari dihapus); sampel wajib ada di kalender rilis (`source_url` https) dan membawa `bars_sha256`; `BarClockEvidenceAdapter` kini menerima laporan, menghitung ulang hash **dan** timeline dari sampel, serta menolak timeline tulisan tangan atau yang di-hash ulang.
+- `config/research/us_release_calendar.csv` masih kosong (hanya header) → ekspor development tetap ditolak sampai kalender resmi dan laporan sampel dibuat. Status: CODE DONE, belum ada bukti nyata; tidak menyentuh holdout, VPS, atau berkas terkunci. LIVE OFF.
+
+## 2026-10-30 — WP10a: profil spread broker deskriptif (#231)
+
+- Review Claude: parser tick ketat 4 kolom (gagal pada baris rusak), hari arsip sebelum WP12 dikecualikan
+  (`excluded_sources`), quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`.
+
+- Refactor `katarina.research.context_export.iter_verified_ticks` dua pass streaming untuk verifikasi SHA-256 dan pembacaan tick terverifikasi. Refactor `_ticks` menggunakan `iter_verified_ticks` tanpa perubahan keluaran.
+- Tambah `src/katarina/research/spread_profile.py` dan CLI `scripts/research/spread_profile.py` (SQLite `mode=ro` hari `STORED`/`STORED_WITH_GAPS` dalam rentang `[since, until]`).
+- Profil spread (ask - bid) berbasis quote terakhir per menit UTC per simbol x jam UTC 0–23 dan total simbol dengan nearest-rank p50/p90/p99/max dan minute count. Label deskriptif `"usage": "DESCRIPTIVE_ONLY_NOT_FOR_TUNING"`.
+- Pagar static test `tests/static/test_spread_profile_guard.py` memastikan tidak ada importer lain di `src/katarina` dan `scripts` selain CLI.
+- Tes sintetis unit/integration (parity, hash mismatch, sampling, percentiles, streaming 2M ticks < 50MB peak, connection closure, determinisme). Tidak ada berkas terkunci diubah; LIVE tetap OFF.
 
 ## 2026-10-30 — WP10b: swap dan sensitivitas biaya di alat validasi (#225)
 
@@ -24,6 +35,11 @@
 - Tegaskan `docs/ROADMAP_DISCUSSION.md` sebagai **MEETING** untuk topik belum diputuskan; selaraskan peran ChatGPT/Yura sebagai manager yang sama.
 - Tambah **satu** file `docs/REPAIR_HISTORY.md` untuk bukti hasil perbaikan (kasus observer #221/#222, normalisasi waktu WP12), dengan status merge/deploy/tes/kelulusan dipisahkan.
 - Tautkan pembagian sumber ini di `docs/README.md` dan `CLAUDE.md`. Status operasional tetap di `PROJECT_STATUS.md`; detail teknis commit tetap di CHANGELOG/PR. LIVE OFF.
+
+## 2026-10-29 — Owner mengukuhkan visi agentic AI mandiri
+
+- `docs/ROADMAP.md`: sasaran riset mandiri, lima kemampuan, siklus evaluasi, bukti keuntungan bersih,
+  serta batas promosi dan modal. Rapat hanya merujuk keputusan kanonis; belum ada kode atau izin trading berubah.
 
 ## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
 
