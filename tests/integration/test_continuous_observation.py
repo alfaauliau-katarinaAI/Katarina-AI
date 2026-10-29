@@ -9,6 +9,7 @@ from katarina.adapters.automatic_connection import ConnectionConfig, ConnectionU
 from katarina.intelligence.cognition.observer import lock_worker
 from katarina.intelligence.cognition.continuous_observation import run_continuous
 from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
+from tests.integration.clock_fixture import seed_synthetic_clock
 
 CONFIG = ConnectionConfig(123, 'Synthetic fixture', priority=('local',), attempts=1)
 
@@ -134,6 +135,7 @@ class ContinuousObservationTests(unittest.TestCase):
         from tests.integration.test_automatic_connection import AccountBroker, config
         from katarina.adapters.automatic_connection import BoundLocalBroker
         native = AccountBroker()
+        seed_synthetic_clock(self.root, server='Test-Demo', shift_hours=3)
         result = run_continuous(self.root, config=config(priority=('local',), attempts=1),
             max_cycles=3, factories={'local':lambda c:BoundLocalBroker(native, c)},
             wait=lambda _:None)
@@ -151,6 +153,7 @@ class ContinuousObservationTests(unittest.TestCase):
         from tests.integration.test_automatic_connection import AccountBroker, config
         from katarina.adapters.automatic_connection import BoundLocalBroker
         native = AccountBroker()
+        seed_synthetic_clock(self.root, server='Test-Demo', shift_hours=3)
         attempts = []
         def factory(c):
             attempts.append(1)
