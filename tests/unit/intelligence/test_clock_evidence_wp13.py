@@ -54,6 +54,30 @@ class IndependentClockTests(unittest.TestCase):
                     evidence=evidence(day),broker_server='fixture')
                 self.assertEqual(result.suitable_for_readonly_snapshot,valid)
 
+    def test_portable_across_host_timezones_but_not_brokers(self):
+        # Same UTC instant, different VPS timezone and an unchanged broker server.
+        from dataclasses import replace
+        local_clock=NOW.astimezone(timezone(timedelta(hours=7)))
+        proof=replace(evidence(), valid_from=local_clock-timedelta(minutes=5),
+                      valid_until=local_clock+timedelta(minutes=5))
+        one=clock.infer_clock_shift(self.ticks(),NOW.timestamp(),evidence=proof,broker_server='fixture')
+        self.assertTrue(one.suitable_for_readonly_snapshot)
+        self.assertEqual(one.reason,'CLOCK_VERIFIED')
+        other=clock.infer_clock_shift(self.ticks(),NOW.timestamp(),evidence=proof,broker_server='new-broker')
+        self.assertFalse(other.suitable_for_readonly_snapshot)
+        self.assertEqual(other.reason,'CLOCK_EVIDENCE_EXPIRED_OR_WRONG_BROKER')
+
+    def test_precise_block_reason_distinguishes_closed_missing_and_stale(self):
+        missing=clock.infer_clock_shift(self.ticks(), NOW.timestamp(), broker_server='fixture')
+        self.assertEqual(missing.reason,'CLOCK_EVIDENCE_MISSING_OR_INVALID')
+        stale=clock.infer_clock_shift(self.ticks(age=14400),NOW.timestamp(),
+                                     evidence=evidence(),broker_server='fixture')
+        self.assertEqual(stale.reason,'INSUFFICIENT_FRESH_QUOTES')
+        saturday=datetime(2026,10,31,12,tzinfo=UTC)
+        closed=clock.infer_clock_shift(self.ticks(saturday),saturday.timestamp(),
+                                      evidence=evidence(saturday),broker_server='fixture')
+        self.assertEqual(closed.reason,'FX_MARKET_CLOSED')
+
     def test_capture_keeps_source_and_cannot_extend_evidence_lifetime(self):
         finding=clock.infer_clock_shift(self.ticks(),NOW.timestamp(),evidence=evidence(),broker_server='fixture')
         ref=clock.capture_time_reference(finding,NOW)
