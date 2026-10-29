@@ -65,7 +65,7 @@ class AutomaticConnectionTests(unittest.TestCase):
             if change == 'server':
                 native.account_info = lambda: SimpleNamespace(login=123, server='private-server')
             with tempfile.TemporaryDirectory() as root:
-            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
+                seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
                 result = run_connected(UnifiedKatarinaBrain, root,
                     config=config(priority=('local',), attempts=1),
                     factories={'local': lambda c: BoundLocalBroker(native, c)})
