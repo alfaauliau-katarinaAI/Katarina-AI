@@ -20,7 +20,7 @@ import time
 
 from katarina.intelligence.news.public_context import utc as parse_utc
 from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
-from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift, capture_time_reference
+from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift, capture_time_reference, load_clock_evidence
 from katarina.intelligence.cognition.contextual_decision_intelligence import RiskSituation
 from katarina.intelligence.cognition.decision_inputs import (
     DecisionInputs, load_decision_inputs,
@@ -317,10 +317,20 @@ class BrainObserver:
         if not symbols:raise RuntimeError("NO_ELIGIBLE_BROKER_SYMBOLS")
         for sym in symbols:mt5.symbol_select(sym,True)
         ticks={sym:mt5.symbol_info_tick(sym) for sym in symbols}
+        evidence=load_clock_evidence(root/"broker-clock-evidence.json")
+        broker_server=None
+        try:
+            acc=mt5.account_info()
+            if acc and hasattr(acc,'server'):
+                broker_server=acc.server
+        except Exception:
+            pass
         clock=infer_clock_shift({
             sym:int(t.time) for sym,t in ticks.items()
             if t is not None and t.bid>0 and t.ask>=t.bid},
-            now.timestamp())
+            now.timestamp(),
+            evidence=evidence,
+            broker_server=broker_server)
         if not clock.suitable_for_readonly_snapshot:
             raise RuntimeError("BROKER_CLOCK_NOT_VERIFIED")
         emit('SENSORS','DONE',count=len(symbols))

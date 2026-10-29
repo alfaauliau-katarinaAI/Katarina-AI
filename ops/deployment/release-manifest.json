@@ -171,9 +171,9 @@
       "sha256": "162d8a25b76e1ca42f8d0fd23e59e97b8d77dfcab5faf9acfaf12bfc25a91cdb"
     },
     "scripts/ai/check_stage0_health.py": {
-      "bytes": 1921,
-      "normalized_sha256": "d33581e020b0dbd371ed9d3c6103f741ec922f6b39d51dbed002cc05bb1fb29c",
-      "sha256": "d33581e020b0dbd371ed9d3c6103f741ec922f6b39d51dbed002cc05bb1fb29c"
+      "bytes": 2381,
+      "normalized_sha256": "019c2305c37736565f19f94635875d39ca56e05f0298d58a389cca6259ea6513",
+      "sha256": "019c2305c37736565f19f94635875d39ca56e05f0298d58a389cca6259ea6513"
     },
     "scripts/ai/hf_archive_sync.py": {
       "bytes": 32143,
@@ -821,9 +821,9 @@
       "sha256": "6bab0926b0f497254c7b4ad0745cbb87deb3629ebd3dbb04c8bc5854aa41c845"
     },
     "src/katarina/intelligence/broker/broker_clock_alignment.py": {
-      "bytes": 7777,
-      "normalized_sha256": "4c59b3ef28f2f261efcc91b4e170a3a28601c324786340e6f94d789ae8eab487",
-      "sha256": "4c59b3ef28f2f261efcc91b4e170a3a28601c324786340e6f94d789ae8eab487"
+      "bytes": 13820,
+      "normalized_sha256": "553bcd7449f516d68f5be6fcf0ca3f3e7d40c25d388fd8c730c2d5948514f32f",
+      "sha256": "553bcd7449f516d68f5be6fcf0ca3f3e7d40c25d388fd8c730c2d5948514f32f"
     },
     "src/katarina/intelligence/broker/broker_history_coverage.py": {
       "bytes": 4508,
@@ -901,9 +901,9 @@
       "sha256": "78d277a63cefa7b44f19d9cc1b0c2adcad7e7355da2525db45daf2446dd369aa"
     },
     "src/katarina/intelligence/cognition/observer.py": {
-      "bytes": 33741,
-      "normalized_sha256": "08edd6a88bf2d4b7e518b3b60f92ca0cc9023ab2601150350cc536022b409ed5",
-      "sha256": "08edd6a88bf2d4b7e518b3b60f92ca0cc9023ab2601150350cc536022b409ed5"
+      "bytes": 34111,
+      "normalized_sha256": "d031ebb05ceff1a1c8a1df587302bdeee22d7c01b2ec6637445ceb35973346ad",
+      "sha256": "d031ebb05ceff1a1c8a1df587302bdeee22d7c01b2ec6637445ceb35973346ad"
     },
     "src/katarina/intelligence/cognition/owner_research_review.py": {
       "bytes": 8306,
@@ -1076,9 +1076,9 @@
       "sha256": "d6955aba47b1ebd2b13a0951e16ebbeb1d2aebc74d7e73db4e7784951768606e"
     },
     "src/katarina/intelligence/operations/data_health.py": {
-      "bytes": 15566,
-      "normalized_sha256": "2002a8cd13b3f0e35725d56343aed2e9655a1caf58632932dc7a70c00a1efb09",
-      "sha256": "2002a8cd13b3f0e35725d56343aed2e9655a1caf58632932dc7a70c00a1efb09"
+      "bytes": 17400,
+      "normalized_sha256": "f880ee6e40140bc93dcaa33e70ca71646368c73db92b9d0911656abb80eb723b",
+      "sha256": "f880ee6e40140bc93dcaa33e70ca71646368c73db92b9d0911656abb80eb723b"
     },
     "src/katarina/intelligence/operations/file_housekeeping.py": {
       "bytes": 6717,
