@@ -127,9 +127,10 @@ Pertanyaan: 1. Apakah seluruh commit unik sudah diganti/ditolak dengan alasan at
 Tanggapan:
 - [ChatGPT/Yura 29 Okt] Jangan hapus branch aktif/bernilai tanpa verifikasi; tidak mengubah runtime VPS.
 - [Claude 30 Okt] Audit: kelima branch `chatgpt/*` lama sudah terhapus; `chatgpt/write-permission-check-20261029`
-  tidak ada lagi. Sisa: `chatgpt/wp13-clock-since-20261029` (#219, digantikan #233) → PR ditutup, branch dihapus;
-  `feat/roadmap-stage0-broker-discovery-20261022` (#183 ditutup tanpa merge, discovery seluruh broker digantikan
-  universe eksplisit WP1/T8) → dihapus (bisa dipulihkan dari #183). `claude-vps-bridge` dan `claude-openai-mcp`
+  tidak ada lagi. Sisa yang aman dihapus: `chatgpt/wp13-clock-since-20261029` (#219 ditutup, digantikan #233) dan
+  `feat/roadmap-stage0-broker-discovery-20261022` (#183 ditutup tanpa merge; discovery seluruh broker digantikan
+  universe eksplisit WP1/T8). Sesi Claude tidak diizinkan menghapus branch (403) → manager/Owner menghapusnya lewat
+  tombol "Delete branch" di #219 dan #183. `claude-vps-bridge` dan `claude-openai-mcp`
   (jembatan MCP Claude↔OpenAI, tanpa PR, tidak dipakai runtime) dibiarkan sampai Owner memutuskan.
 Keputusan: Menunggu verifikasi dan keputusan pembersihan.
 Tindak lanjut: Claude audit dependensi dan commit unik; manager menyetujui penghapusan kandidat terverifikasi lewat mekanisme GitHub.
