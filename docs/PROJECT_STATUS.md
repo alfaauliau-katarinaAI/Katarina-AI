@@ -1,6 +1,6 @@
 # Status Katarina AI
 
-Satu-satunya sumber status proyek. Diperbarui **23 Oktober 2026**. Rincian per perubahan ada di
+Satu-satunya sumber status proyek. Diperbarui **29 Oktober 2026**. Rincian per perubahan ada di
 [CHANGELOG](../CHANGELOG.md); hasil CI terbaru di
 [GitHub Actions](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions).
 
@@ -16,6 +16,21 @@ Satu-satunya sumber status proyek. Diperbarui **23 Oktober 2026**. Rincian per p
 | Repository | `main` dilindungi (PR + Body CI wajib). Perampingan 22 Okt: ~1.211 → ~795 berkas, 11 workflow; tooling VPS lama, dokumen bertanggal, skrip riset sekali pakai, dan transport KAT1/ZMQ dipensiunkan | Repo masih **publik**; website masih di repo ini |
 | Pengujian | Body CI + suite penuh Windows lulus (28 Okt, setelah WP12/WP9b/WP8a) | Lulus tes sumber ≠ profitabilitas atau kesiapan live |
 
+## WP13 — waktu broker MT5 (catatan 29 Oktober 2026)
+
+- **Status kode GitHub:** [PR #219](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/219) pada
+  branch `chatgpt/wp13-clock-since-20261029` masih **OPEN / BELUM MERGED** saat diperiksa. Jangan menyamakan
+  pengujian lokal atau kabar penerapan dengan perubahan yang sudah masuk `main`.
+- **Perbaikan dalam PR:** validasi offset berdasarkan bukti independen yang terikat server broker dan masa berlaku,
+  penolakan quote basi/ambiguitas waktu, serta pemeriksaan Tahap 0 dengan opsi `--since`. Detail perubahan teknis
+  ada di deskripsi PR dan [CHANGELOG](../CHANGELOG.md), bukan disalin ke roadmap.
+- **Verifikasi belum ditutup:** pastikan seluruh CI wajib lulus dan cek MT5 read-only saat pasar aktif, market close,
+  quote serentak basi, pergantian DST, pindah broker serta pindah VPS/deployment. Pastikan tidak ada order terkirim;
+  jika bukti jam tidak sah, observer harus menolak data ambigu (fail-closed) tanpa mengarang offset.
+- **Status VPS:** laporan percakapan menyebut pembaruan sudah diterapkan tanpa mematikan observer, **tetapi belum
+  diverifikasi secara independen terhadap SHA/manifest dan output MT5 nyata** pada pemeriksaan dokumentasi ini.
+  Oleh sebab itu WP13 **belum boleh dinyatakan tuntas secara operasional**. LIVE OFF; Tahap 0 belum lulus.
+
 ## Pekerjaan berikutnya
 
 Pengembangan mengikuti **[Roadmap berbasis bukti](ROADMAP.md)** (ditetapkan Owner 22 Okt 2026): validasi adalah
@@ -25,7 +40,7 @@ hakim tertinggi, dan kewenangan Katarina bertambah hanya berdasarkan bukti.
    pengunduh tick broker per hari, `scripts/ai/check_stage0_health.py`); observer VPS aktif sejak 22 Okt 04:24 UTC
    dengan 3 simbol, 5 simbol sejak 23 Okt 00:16 UTC; uji putus-sambung 3× lulus 22 Okt. Jam tick MT5 = jam server
    (T11) diperbaiki WP12, diterapkan **28 Okt 16:57 UTC**: 10 hari bursa berturut-turut dihitung sejak itu (paling cepat
-   ±11 Nov). Offset palsu akhir pekan (T12) dan penilaian `--since` → WP13.
+   ±11 Nov). WP13 (T12 dan `--since`) dalam PR #219; status operasional tetap menunggu bukti CI dan pasar normal.
 2. **Tahap 1 — Validasi ilmiah:** alat dan protokol selesai 22 Okt (`katarina.research.validation`,
    [protokol](research/VALIDATION_PROTOCOL.md)); kriterianya dibuktikan tes. Dipakai untuk semua strategi berikutnya.
 3. Tahap 2–5 (market intelligence, risk & execution, strategi adaptif, kalibrasi & riset mandiri) berurutan,
