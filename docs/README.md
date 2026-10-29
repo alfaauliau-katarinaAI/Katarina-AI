@@ -10,7 +10,7 @@
 | **MEETING** — ide, usulan, keberatan dan pertanyaan yang **belum diputuskan** | [ROADMAP_DISCUSSION.md](ROADMAP_DISCUSSION.md) | Antrean pengerjaan paralel, klaim perbaikan selesai |
 | **HASIL PERBAIKAN** — masalah sebelum/sesudah, akar penyebab, kode yang diubah, PR/commit, CI/VPS, sisa risiko | [REPAIR_HISTORY.md](REPAIR_HISTORY.md) | Ide belum disetujui, pekerjaan yang belum dikerjakan, status heartbeat saat ini |
 
-**Dokumen pendukung tetap dipertahankan:** [PROJECT_STATUS.md](PROJECT_STATUS.md) = **satu-satunya status operasional terakhir**; [CHANGELOG.md](../CHANGELOG.md) = ringkasan teknis perubahan **per PR/commit**; [CLAUDE.md](../CLAUDE.md) = instruksi cepat untuk pelaksana; [KATARINA_CONSTITUTION.md](../KATARINA_CONSTITUTION.md) = aturan beku. Ketiganya tidak menjadi arsip perbaikan kedua.
+**Dokumen pendukung tetap dipertahankan:** [PROJECT_STATUS.md](PROJECT_STATUS.md) = **satu-satunya status operasional terakhir**; [CHANGELOG.md](../CHANGELOG.md) = ringkasan teknis perubahan **per PR/commit**; [CLAUDE.md](../CLAUDE.md) = instruksi cepat untuk pelaksana; [KATARINA_CONSTITUTION.md](../KATARINA_CONSTITUTION.md) = aturan beku. Dokumen pendukung tersebut tidak menjadi arsip perbaikan kedua.
 
 ## Urutan baca hemat token
 
