@@ -54,7 +54,7 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 | 8 | **WP14** | Auditor data baca-saja dengan keluaran PASS/BLOCKED/NO_DATA yang bersumber. | **P2 / menunggu WP13 dan WP8c** |
 | – | **WP8b, WP9c, WP9d, WP5** | Setup, syarat bukti, entry, dan perankingan; hanya setelah prasyarat R0 terpenuhi. | **Menunggu prasyarat** |
 
-**Handoff Google (audit 30 Okt):** WP10b **#225 merged**; WP8c **#230 review BLOCKED**, WP10a **#231 review BLOCKED**, WP13 **#233 review BLOCKED** karena guard waktu hilang/CI+konflik (Issue #228 sudah ditangani Jules); WP4 #229 tetap antrean. Review formal GitHub sudah dikirim untuk #230/#231/#233. Status **Needs review di UI Jules berbeda dari GitHub**: hanya tandai Completed/Archived saat merge+CI lulus dan sesi Jules terautentikasi; belum ada bukti penandaan tersebut. Jules tidak memiliki akses VPS, data broker privat, atau kewenangan promosi. [Rincian untuk Claude](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md).
+**Handoff Google (audit 30 Okt):** WP10b **#225 merged**; WP8c **#230 merged** dan WP10a **#231 merged** (30 Okt, perbaikan review Claude), WP13 **#233 review BLOCKED** karena guard waktu hilang/CI+konflik (Issue #228 sudah ditangani Jules); WP4 #229 tetap antrean. Review formal GitHub sudah dikirim untuk #230/#231/#233. Status **Needs review di UI Jules berbeda dari GitHub**: hanya tandai Completed/Archived saat merge+CI lulus dan sesi Jules terautentikasi; belum ada bukti penandaan tersebut. Jules tidak memiliki akses VPS, data broker privat, atau kewenangan promosi. [Rincian untuk Claude](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md).
 
 
 **Akses**

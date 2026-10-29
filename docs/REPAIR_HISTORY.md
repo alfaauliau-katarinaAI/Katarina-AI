@@ -21,6 +21,36 @@ Dokumen ini adalah **satu-satunya jurnal hasil perbaikan yang terverifikasi**: m
 4. `CHANGELOG.md` tetap mencatat ringkasan perubahan per PR; detail diagnosis dan hasil pemulihan hanya di sini, dengan tautan ke PR. `PROJECT_STATUS.md` hanya menyimpan kondisi saat ini dan merujuk ID perbaikan bila diperlukan.
 5. Pengembangan lewat GitHub dan PR + CI. VPS hanya untuk pengujian yang diizinkan. Tidak ada perubahan yang mengaktifkan LIVE, order, membuka holdout, atau melemahkan Risk Governor tanpa keputusan Owner yang berlaku.
 
+## RH-005 — Bukti jam bar historis WP8c dibuat fail-closed
+
+**Tanggal:** 30 Oktober 2026 WIB
+**Status:** **Kode riset MERGED + CI PASS**; tanpa bukti nyata (kalender rilis kosong), belum dipakai di VPS; tidak ada data development yang diekspor.
+
+| Aspek | Bukti perbaikan |
+|---|---|
+| Sebelum | Lonjakan volume M5 diterima dengan ≥12 bar sekitar; segmen DST diberi `VERIFIED` dalam ±200 hari dari sampel; laporan cukup cocok dengan hash buatannya sendiri; `BarClockEvidenceAdapter` menerima timeline apa pun |
+| Akar penyebab | **TERBUKTI pada review #230 (K-05):** verifikasi hanya memeriksa konsistensi internal, bukan asal sampel atau reproduktibilitas timeline |
+| Perbaikan | `src/katarina/research/bar_clock_evidence.py`: 24 bar (12+12) wajib; segmen `VERIFIED` hanya dengan sampel di dalamnya; sampel wajib di kalender (`source_url` https) dengan `bars_sha256`; `verify_report_body` menghitung ulang hash dan timeline; adapter menerima laporan, bukan timeline. `scripts/research/export_dev_bars.py` disesuaikan |
+| PR / commit | [#230](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/230) squash `93a2c67e84b388fb63ed2af12641449035a1744b` |
+| Bukti tes | 15 tes WP8c termasuk timeline tulisan tangan/di-hash ulang, sampel di luar kalender, tepi data; unit/static/integration OK lokal; GitHub Body/Ubuntu/Windows PASS pada HEAD `2aa658b`; manifest MATCH |
+| Deployment | Tidak dilakukan (alat riset manual) |
+| Sisa risiko | `config/research/us_release_calendar.csv` masih header saja; belum ada CLI pembuat sampel dari bar M5 nyata. Sampai keduanya ada, ekspor development tetap ditolak |
+
+## RH-004 — Profil spread WP10a: parser ketat dan basis jam
+
+**Tanggal:** 30 Oktober 2026 WIB
+**Status:** **Kode riset MERGED + CI PASS**; belum dijalankan di VPS.
+
+| Aspek | Bukti perbaikan |
+|---|---|
+| Sebelum | Baris tick rusak dilewati diam-diam; hari arsip sebelum WP12 (jam server) ikut dihitung; quote per menit = baris terakhir, bukan timestamp terakhir; SQLite dibuka tanpa `query_only` |
+| Akar penyebab | **TERBUKTI pada review #231 (K-06)** |
+| Perbaikan | `research/context_export.py` `iter_verified_ticks` menolak baris rusak (`TICK_FILE_MALFORMED`); `research/spread_profile.py` membaca `server_shift_hours`, mengecualikan hari NULL ke `excluded_sources`, memilih timestamp terakhir per menit, URI `mode=ro` + `PRAGMA query_only=ON` |
+| PR / commit | [#231](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/231) squash `ccdaec2d7b080d1df56173269ac9847dee103f60` |
+| Bukti tes | Tes baru baris rusak dan hari pra-WP12; 21 tes spread/context OK; GitHub Body/Ubuntu/Windows PASS pada HEAD `ca22cfc`; manifest MATCH |
+| Deployment | Tidak dilakukan |
+| Sisa risiko | Profil hanya deskriptif dari data forward sejak 28 Okt; bukan bukti biaya final |
+
 ## RH-003 — Koreksi baseline biaya sisi acak dan validasi swap WP10b
 
 **Tanggal:** 30 Oktober 2026 WIB  
