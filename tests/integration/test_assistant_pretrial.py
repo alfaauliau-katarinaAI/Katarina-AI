@@ -14,6 +14,7 @@ from katarina.adapters.pc_simulation import PCSimulationBroker
 from katarina.adapters.readonly_cloud import CloudReadOnlyBroker, ReadOnlySensorBridge
 from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.memory.store import MemoryStore
+from tests.integration.clock_fixture import seed_synthetic_clock
 
 
 class ScriptedModel:
@@ -166,6 +167,7 @@ class AssistantPretrialTests(unittest.TestCase):
     def test_actual_observer_pipeline_publishes_feedback_receipts(self):
         native = BoundSyntheticBroker()
         broker = BoundLocalBroker(native, self.config)
+        seed_synthetic_clock(self.root/'observer', server='SYNTHETIC_DEMO', shift_hours=0)
         result = UnifiedKatarinaBrain.observe_once(self.root/'observer', broker=broker, max_symbols=3, fetch_news=False)
         report = json.loads((self.root/'observer/latest.json').read_text())
         self.assertEqual(result['observed_symbols'], 3)
@@ -191,6 +193,7 @@ class AssistantPretrialTests(unittest.TestCase):
         self.brain.shadow_db = context.db
         broker = BoundLocalBroker(BoundSyntheticBroker(), self.config)
         try:
+            seed_synthetic_clock(self.root/'same-brain', server='SYNTHETIC_DEMO', shift_hours=0)
             result = self.brain.observe_connected_market(self.root/'same-brain', broker, fetch_news=False)
             self.assertEqual(result['observed_symbols'], 3)
             self.assertIs(self.brain._knowledge.store, self.memory)
