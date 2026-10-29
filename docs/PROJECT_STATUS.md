@@ -31,6 +31,28 @@ Satu-satunya sumber status proyek. Diperbarui **29 Oktober 2026**. Rincian per p
   diverifikasi secara independen terhadap SHA/manifest dan output MT5 nyata** pada pemeriksaan dokumentasi ini.
   Oleh sebab itu WP13 **belum boleh dinyatakan tuntas secara operasional**. LIVE OFF; Tahap 0 belum lulus.
 
+
+## Audit lintas sistem — 29 Oktober 2026 (untuk Claude)
+
+**Ruang lingkup dan batas bukti:** telaah roadmap, status proyek, PR #218/#219, dan pemeriksaan read-only VPS pada 29 Okt. Ini **audit status dan risiko berbasis sampel**, bukan audit setiap baris kode, setiap pengujian, atau bukti kelulusan produksi. Temuan lama di bawah berasal dari dokumen proyek; temuan baru diberi tanggal. Jangan menyimpulkan sebuah masalah telah ditutup hanya dari adanya modul atau tes sintetis.
+
+| Prioritas | Temuan / kelemahan | Bukti dan status | Aksi Claude / syarat penutupan |
+|---|---|---|---|
+| P0 | Observer forward rentan berhenti | Pada 29 Okt 09:14 UTC status `BLOCKED`, `PermissionError` di `pathlib.py:1376`, siklus 906 / sukses 901, `orders_submitted=0`. Snapshot `latest.tmp` tertinggal. Task kemudian dijalankan ulang 29 Okt 16:29 UTC dan melaporkan `OBSERVING`, tetapi saat dicek baru 0 siklus; **pemulihan berkelanjutan belum terbukti** | Identifikasi operasi dan path yang gagal, kemungkinan file-lock/atomic replace/ACL/antivirus; tambahkan regression test dan retry aman di repo, satu PR; verifikasi > beberapa siklus, restart, ledger dan heartbeat tanpa gap tersembunyi. Jangan menghapus data bukti. |
+| P0 | Kebenaran waktu MT5 belum portabel dan tervalidasi | WP12 di VPS commit `18e2515`; PR #219 WP13 masih OPEN dan `mergeable=false` pada pemeriksaan 29 Okt; VPS belum memakai WP13 | Selesaikan konflik PR #219, tes CI, verifikasi offset berbasis bukti broker, quote stale, DST, akhir pekan, pindah broker/VPS; deployment **hanya untuk pengujian** sesudah merge dan persetujuan alur; catat SHA serta hasil nyata. |
+| P0 | Belum ada alpha positif yang dapat direproduksi | Audit lama 13 Okt: PF kandidat 0,36; 77% kandidat rugi setelah biaya; backtest 2025–2026 tidak konsisten lintas tahun | Jangan promosikan strategi; validasi biaya penuh, data development/holdout, PF bersih dan stabilitas out-of-sample sesuai roadmap. |
+| P1 | Tahap 0 belum memenuhi kelulusan 10 hari bursa | Celah data historis dan downtime 29 Okt; task pernah berhenti. Restart **bukan** bukti sepuluh hari | Hitung hanya hari bursa dengan data valid dari ledger, laporkan PASS/BLOCKED/NO_DATA per hari/simbol; gap tidak diisi backfill sebagai forward; ulang hari yang tidak memenuhi syarat sesuai aturan roadmap. |
+| P1 | Jalur keputusan belum menghasilkan bukti BUY/SELL yang layak | Status proyek: 100% WAIT; beberapa blocker permanen; WP9 masih bagian perbaikan | Uji ladder blocker dengan data yang valid; pisahkan WAIT yang benar (fail-closed) dari bug logika; jangan melonggarkan gate tanpa bukti dan persetujuan. |
+| P1 | Biaya trading dan kesiapan DEMO belum tervalidasi nyata | WP10b swap/sensitivitas biaya belum selesai; DemoRiskOverlay masih sintetis, belum worker aktif | WP10b melalui issue #220/Jules bila terotorisasi; Claude review PR, cek swap/triple rollover dan tes biaya; verifikasi komisi/slippage broker sebelum DEMO. |
+| P1 | Ketahanan VPS dan portability belum tuntas | Windows Server 2012 R2 RAM 2 GB; task observer hanya saat Administrator login; downtime dan PermissionError tercatat | Uji startup pasca-reboot, privilege minimum, recovery crash, kapasitas disk/RAM, perbedaan broker/host; jangan jadikan VPS lokasi pengembangan atau penyimpanan sumber kode utama. |
+| P1 | Risiko operasional dan eksposur repository | Repo masih publik; website dan kode dalam repo sama. Batas DD harian 35% adalah keputusan Owner, bukan bukti aman live | Audit rahasia/izin/repo exposure tanpa menampilkan kredensial; pertahankan LIVE OFF; evaluasi risiko sebelum izin akun riil (keputusan Owner). |
+| P2 | Koordinasi agent/PR berpotensi tumpang tindih | PR #218 agentic docs OPEN, #219 clock OPEN, #216 draft lama (audit sebelumnya); issue #220 berlabel Jules, belum ada bukti agen mulai | Satu paket satu PR; verifikasi assignment Jules, bandingkan #216/#218 sebelum merge, perbarui status hanya dari CI/merge dan bukti nyata. |
+| P2 | Riset agentic masih berupa kemampuan, bukan otonomi terbukti | Roadmap Tahap 4–5 belum memenuhi syarat; modul discovery/research sudah ada namun promosi tetap terkunci | Audit koneksi modul dan trace keputusan secara read-only; uji hipotesis, reproduksibilitas, anti-leakage, batas kewenangan; jangan aktifkan self-modification trading. |
+
+**Urutan eksekusi:** (1) stabilkan observer + bukti siklus sukses, (2) selesaikan WP13, (3) audit Tahap 0 per hari/simbol, (4) WP10b/biaya dan blocker WAIT, (5) kesiapan DEMO/agentic. Pekerjaan coding di GitHub, VPS hanya pengujian. Tidak membuat dokumen/roadmap baru. Tidak ada perubahan LIVE atau Risk Governor.
+
+**Catatan integritas:** Bagian ringkasan di atas adalah snapshot historis, bukan klaim keadaan observer saat ini. Setelah restart 29 Okt 16:29 UTC, status terakhir yang terbukti adalah `OBSERVING` dengan **0 siklus selesai**, sehingga keberlanjutan belum dikonfirmasi. Periksa ulang sebelum mengubah status menjadi sehat. PR ini belum masuk `main`; laporan ini hanya tersedia di branch PR #219 sampai merge.
+
 ## Pekerjaan berikutnya
 
 Pengembangan mengikuti **[Roadmap berbasis bukti](ROADMAP.md)** (ditetapkan Owner 22 Okt 2026): validasi adalah
