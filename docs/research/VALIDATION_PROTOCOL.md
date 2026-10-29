@@ -57,8 +57,8 @@ Waktu pendaftaran tidak boleh sesudah waktu evaluasi. Jika definisi mendaftarkan
 ## 5. Biaya dan R bersih
 
 R kotor = arah × (mid exit − mid entry) / jarak stop. Biaya (dalam R) = (½ spread teramati saat entry + ½ spread saat
-exit + 2 × slippage per sisi + komisi pulang-pergi) / jarak stop. Spread berasal dari ledger Tahap 0 atau tick broker;
-slippage dan komisi ditetapkan di `costs.json` sebelum pengujian.
+exit + 2 × slippage per sisi + komisi pulang-pergi + swap sisi × jumlah malam rollover) / jarak stop. Spread berasal dari ledger Tahap 0 atau tick broker;
+slippage, komisi, dan parameter swap (`swap_long_per_night`, `swap_short_per_night`, `triple_swap_weekday`) ditetapkan di `costs.json` sebelum pengujian. Nilai swap diambil dari spesifikasi kontrak broker dengan sumber dan tanggal dicatat, tidak pernah dari hasil uji. Kredit swap diperlakukan nol (konservatif). Rollover terjadi pukul 17:00 waktu New York (21:00 UTC saat DST AS, 22:00 UTC di luar DST AS) untuk posisi terbuka (`entry_at < rollover <= exit_at`). Laporan menyertakan analisis sensitivitas biaya (`cost_sensitivity`) pada pengali 1.5x dan 2.0x.
 
 ## 6. Pembanding
 

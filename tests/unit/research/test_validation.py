@@ -258,6 +258,146 @@ class ValidationToolTest(unittest.TestCase):
             vault.open(self.hid, opened_by="test", now=datetime(2027, 1, 6, tzinfo=UTC), reason="retry")
         self.assertEqual(calls, [True])
 
+    def test_is_us_dst_transitions(self):
+        # 2026 US DST: March 8 (2nd Sun) to Nov 1 (1st Sun)
+        self.assertFalse(v.is_us_dst(datetime(2026, 3, 8, 6, 59, tzinfo=UTC)))
+        self.assertTrue(v.is_us_dst(datetime(2026, 3, 8, 7, 0, tzinfo=UTC)))
+        self.assertTrue(v.is_us_dst(datetime(2026, 11, 1, 5, 59, tzinfo=UTC)))
+        self.assertFalse(v.is_us_dst(datetime(2026, 11, 1, 6, 0, tzinfo=UTC)))
+
+    def test_calculate_rollover_nights_dst_and_standard_time(self):
+        # US DST: July 15 (Wed), rollover is 21:00 UTC
+        entry_dst = datetime(2026, 7, 15, 20, 0, tzinfo=UTC)
+        exit_dst = datetime(2026, 7, 15, 21, 30, tzinfo=UTC)
+        # July 15 is Wednesday -> triple swap = 3 nights
+        self.assertEqual(v.calculate_rollover_nights(entry_dst, exit_dst, triple_swap_weekday=2), 3)
+
+        # July 13 (Mon), rollover is 21:00 UTC -> 1 night
+        entry_mon = datetime(2026, 7, 13, 20, 0, tzinfo=UTC)
+        exit_mon = datetime(2026, 7, 13, 21, 30, tzinfo=UTC)
+        self.assertEqual(v.calculate_rollover_nights(entry_mon, exit_mon, triple_swap_weekday=2), 1)
+
+        # Standard time: Dec 14 (Mon), rollover is 22:00 UTC
+        # Entry at 20:00, Exit at 21:30 (before 22:00) -> 0 nights
+        entry_std = datetime(2026, 12, 14, 20, 0, tzinfo=UTC)
+        exit_std_1 = datetime(2026, 12, 14, 21, 30, tzinfo=UTC)
+        self.assertEqual(v.calculate_rollover_nights(entry_std, exit_std_1), 0)
+
+        # Entry at 20:00, Exit at 22:30 (after 22:00) -> 1 night
+        exit_std_2 = datetime(2026, 12, 14, 22, 30, tzinfo=UTC)
+        self.assertEqual(v.calculate_rollover_nights(entry_std, exit_std_2), 1)
+
+    def test_calculate_rollover_nights_weekend_and_triple_swap(self):
+        # Fri 20:00 UTC to Sun 20:00 UTC spans Friday rollover (21:00 UTC in July) but no Sat/Sun rollovers
+        entry_fri = datetime(2026, 7, 17, 20, 0, tzinfo=UTC)  # Friday
+        exit_sun = datetime(2026, 7, 19, 20, 0, tzinfo=UTC)   # Sunday
+        self.assertEqual(v.calculate_rollover_nights(entry_fri, exit_sun), 1)
+
+        # Wed 20:00 to Thu 22:00 in July (spans Wed 21:00 triple swap + Thu 21:00 regular swap = 3 + 1 = 4)
+        entry_wed = datetime(2026, 7, 15, 20, 0, tzinfo=UTC)
+        exit_thu = datetime(2026, 7, 16, 22, 0, tzinfo=UTC)
+        self.assertEqual(v.calculate_rollover_nights(entry_wed, exit_thu, triple_swap_weekday=2), 4)
+
+    def test_swap_credit_and_side_handling(self):
+        cost_model = v.CostModel(slippage_per_side=0.0, commission_round_trip=0.0,
+                                 swap_long_per_night=0.5, swap_short_per_night=0.0)
+        # Negative swap values rejected
+        with self.assertRaises(v.ValidationError):
+            v.CostModel(swap_long_per_night=-0.1)
+        with self.assertRaises(v.ValidationError):
+            v.CostModel(triple_swap_weekday=7)
+
+        # Wednesday rollover trade
+        trade_buy = v.Trade(trade_id="t1", side="BUY",
+                            entry_at=datetime(2026, 7, 15, 20, 0, tzinfo=UTC),
+                            exit_at=datetime(2026, 7, 15, 22, 0, tzinfo=UTC),
+                            known_at=datetime(2026, 7, 15, 22, 0, tzinfo=UTC),
+                            data_until=datetime(2026, 7, 15, 19, 59, tzinfo=UTC),
+                            entry_mid=2000.0, exit_mid=2010.0, stop_distance=10.0,
+                            spread_entry=0.2, spread_exit=0.2)
+
+        # BUY has long swap 0.5 per night * 3 nights = 1.5 price units
+        # Cost = (0.1 + 0.1 + 0 + 0 + 1.5) / 10.0 = 0.17 R
+        self.assertAlmostEqual(cost_model.cost_r(trade_buy, side="BUY"), 0.17)
+
+        # SELL has short swap 0.0 per night (credit treated as 0) -> 0.0 swap cost
+        # Cost = (0.1 + 0.1 + 0 + 0 + 0) / 10.0 = 0.02 R
+        self.assertAlmostEqual(cost_model.cost_r(trade_buy, side="SELL"), 0.02)
+
+    def test_backwards_compatibility_and_cost_sensitivity(self):
+        # Legacy costs without swap fields
+        legacy_costs = v.CostModel(slippage_per_side=0.05, commission_round_trip=0.1)
+        self.assertEqual(legacy_costs.swap_long_per_night, 0.0)
+        self.assertEqual(legacy_costs.swap_short_per_night, 0.0)
+        self.assertEqual(legacy_costs.triple_swap_weekday, 2)
+
+        trade = self.vault.development()[0]
+        self.assertAlmostEqual(legacy_costs.cost_r(trade), (0.15 + 0.15 + 0.1 + 0.1) / 10)
+
+        report = v.evaluate_development(self.vault, self.hid, costs=legacy_costs, as_of=datetime(2026, 7, 10, tzinfo=UTC))
+        self.assertIn("cost_sensitivity", report)
+        cs = report["cost_sensitivity"]
+        self.assertIn("net_expectancy_r_1_5x", cs)
+        self.assertIn("net_expectancy_r_2_0x", cs)
+        self.assertIn("breakeven_cost_multiple", cs)
+        self.assertIn("cost_verdict", cs)
+        self.assertIn(cs["cost_verdict"], ("NO_GROSS_EDGE", "NOT_ECONOMIC_AFTER_COSTS", "POSITIVE_AFTER_COSTS"))
+
+    def test_cost_verdict_categories(self):
+        # 1. NO_GROSS_EDGE (gross <= 0)
+        trade_loss = v.Trade(trade_id="l1", side="BUY",
+                             entry_at=datetime(2026, 1, 5, 8, 0, tzinfo=UTC),
+                             exit_at=datetime(2026, 1, 5, 9, 0, tzinfo=UTC),
+                             known_at=datetime(2026, 1, 5, 9, 0, tzinfo=UTC),
+                             data_until=datetime(2026, 1, 5, 7, 59, tzinfo=UTC),
+                             entry_mid=2000.0, exit_mid=1990.0, stop_distance=10.0,
+                             spread_entry=0.1, spread_exit=0.1, trend_side="BUY")
+        vault_loss = v.HoldoutVault([trade_loss], SPLIT, self.registry, self.root / "loss.jsonl")
+        rep_loss = v.evaluate_development(vault_loss, self.hid, costs=COSTS, as_of=datetime(2026, 7, 10, tzinfo=UTC))
+        self.assertEqual(rep_loss["cost_sensitivity"]["cost_verdict"], "NO_GROSS_EDGE")
+
+        # 2. NOT_ECONOMIC_AFTER_COSTS (gross > 0 but net <= 0 due to heavy costs)
+        trade_small_win = v.Trade(trade_id="w1", side="BUY",
+                                  entry_at=datetime(2026, 1, 5, 8, 0, tzinfo=UTC),
+                                  exit_at=datetime(2026, 1, 5, 9, 0, tzinfo=UTC),
+                                  known_at=datetime(2026, 1, 5, 9, 0, tzinfo=UTC),
+                                  data_until=datetime(2026, 1, 5, 7, 59, tzinfo=UTC),
+                                  entry_mid=2000.0, exit_mid=2000.5, stop_distance=10.0,
+                                  spread_entry=1.0, spread_exit=1.0, trend_side="BUY")
+        heavy_costs = v.CostModel(slippage_per_side=0.2, commission_round_trip=0.2)
+        vault_win = v.HoldoutVault([trade_small_win], SPLIT, self.registry, self.root / "win.jsonl")
+        rep_ne = v.evaluate_development(vault_win, self.hid, costs=heavy_costs, as_of=datetime(2026, 7, 10, tzinfo=UTC))
+        self.assertEqual(rep_ne["cost_sensitivity"]["cost_verdict"], "NOT_ECONOMIC_AFTER_COSTS")
+
+        # 3. POSITIVE_AFTER_COSTS (gross > 0 and net > 0)
+        trade_big_win = v.Trade(trade_id="bw1", side="BUY",
+                                entry_at=datetime(2026, 1, 5, 8, 0, tzinfo=UTC),
+                                exit_at=datetime(2026, 1, 5, 9, 0, tzinfo=UTC),
+                                known_at=datetime(2026, 1, 5, 9, 0, tzinfo=UTC),
+                                data_until=datetime(2026, 1, 5, 7, 59, tzinfo=UTC),
+                                entry_mid=2000.0, exit_mid=2020.0, stop_distance=10.0,
+                                spread_entry=0.1, spread_exit=0.1, trend_side="BUY")
+        vault_big = v.HoldoutVault([trade_big_win], SPLIT, self.registry, self.root / "big.jsonl")
+        rep_pos = v.evaluate_development(vault_big, self.hid, costs=COSTS, as_of=datetime(2026, 7, 10, tzinfo=UTC))
+        self.assertEqual(rep_pos["cost_sensitivity"]["cost_verdict"], "POSITIVE_AFTER_COSTS")
+
+    def test_random_side_baseline_expected_cost_with_asymmetric_swap(self):
+        cost_model = v.CostModel(slippage_per_side=0.0, commission_round_trip=0.0,
+                                 swap_long_per_night=0.5, swap_short_per_night=0.1)
+        trade = v.Trade(trade_id="t1", side="BUY",
+                        entry_at=datetime(2026, 7, 15, 20, 0, tzinfo=UTC),
+                        exit_at=datetime(2026, 7, 15, 22, 0, tzinfo=UTC),
+                        known_at=datetime(2026, 7, 15, 22, 0, tzinfo=UTC),
+                        data_until=datetime(2026, 7, 15, 19, 59, tzinfo=UTC),
+                        entry_mid=2000.0, exit_mid=2010.0, stop_distance=10.0,
+                        spread_entry=0.2, spread_exit=0.2, trend_side="BUY")
+
+        # BUY cost_r = (0.1 + 0.1 + 1.5) / 10.0 = 0.17 R
+        # SELL cost_r = (0.1 + 0.1 + 0.3) / 10.0 = 0.05 R
+        # Average random side cost = (0.17 + 0.05) / 2 = 0.11 R
+        base = v.baselines([trade], cost_model, seed="test")
+        self.assertEqual(base["random_side_same_timing"]["expected_expectancy_r"], -0.11)
+
 
 if __name__ == "__main__":
     unittest.main()

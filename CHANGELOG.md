@@ -5,6 +5,26 @@
 - `docs/ROADMAP.md`: sasaran riset mandiri, lima kemampuan, siklus evaluasi, bukti keuntungan bersih,
   serta batas promosi dan modal. Rapat hanya merujuk keputusan kanonis; belum ada kode atau izin trading berubah.
 
+## 2026-10-30 — WP10b: swap dan sensitivitas biaya di alat validasi (#225)
+
+- Modul `katarina.research.validation`: `CostModel` menambah `swap_long_per_night`, `swap_short_per_night`, dan `triple_swap_weekday` (default 0 dan 2, backward compatible). Rollover dihitung pukul 17:00 waktu New York (21:00 UTC saat DST AS, 22:00 UTC di luar DST AS) memakai ulang helper `_nth_sunday` dari `data_health.py` untuk posisi terbuka `entry_at < rollover <= exit_at`. Swap kredit ditulis nol (konservatif).
+- Pembanding sisi acak (`baselines`) menggunakan biaya ekspektasi 50/50 rata-rata BUY/SELL per trade.
+- Tambah blok `cost_sensitivity` di laporan validasi: `net_expectancy_r_1_5x`, `net_expectancy_r_2_0x`, `breakeven_cost_multiple`, dan `cost_verdict` (`NO_GROSS_EDGE`, `NOT_ECONOMIC_AFTER_COSTS`, `POSITIVE_AFTER_COSTS`). Verdict promosi dan aturan gate tidak berubah.
+- Update `docs/research/VALIDATION_PROTOCOL.md` (paragraf biaya) dan 7 unit tes baru di `tests/unit/research/test_validation.py`. **PR #225 merged** sebagai squash `8cc3d677` pada 30 Okt; CI Body/Linux/Windows PASS. Berkas terkunci tidak diubah; LIVE OFF; tanpa perubahan VPS.
+
+## 2026-10-30 — prioritas operasional dan handoff Google Jules
+
+- Sinkronkan antrean darurat di `docs/ROADMAP.md`: Tahap 0 observer/10 hari bursa, WP13 jam broker, WP8c, delegasi WP10b via Jules, konflik PR docs, dan WP6 reboot. Tidak ada paket atau gerbang trading baru.
+- `docs/PROJECT_STATUS.md` diperbarui dari bukti VPS 30 Okt 00:28 WIB: 27/27 siklus observer sukses, lima simbol, nol order; laporan Tahap 0 lama tetap NOT_MET, PR #219 masih konflik, Issue Jules #220 belum ada respons.
+- Kelulusan data, status kerja Jules, dan koneksi akun tidak diklaim selesai. Dokumen perbaikan lama tidak digandakan; LIVE OFF.
+
+## 2026-10-30 — pemisahan roadmap, meeting dan riwayat perbaikan
+
+- Tegaskan `docs/ROADMAP.md` sebagai perjalanan, prioritas, milestone dan acceptance, tanpa log perbaikan.
+- Tegaskan `docs/ROADMAP_DISCUSSION.md` sebagai **MEETING** untuk topik belum diputuskan; selaraskan peran ChatGPT/Yura sebagai manager yang sama.
+- Tambah **satu** file `docs/REPAIR_HISTORY.md` untuk bukti hasil perbaikan (kasus observer #221/#222, normalisasi waktu WP12), dengan status merge/deploy/tes/kelulusan dipisahkan.
+- Tautkan pembagian sumber ini di `docs/README.md` dan `CLAUDE.md`. Status operasional tetap di `PROJECT_STATUS.md`; detail teknis commit tetap di CHANGELOG/PR. LIVE OFF.
+
 ## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
 
 - Hapus dokumen eksperimen portfolio yang tidak dirujuk dan menunjuk modul/skrip yang telah dipensiunkan.
