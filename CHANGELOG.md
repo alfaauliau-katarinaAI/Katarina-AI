@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — pemisahan roadmap, meeting dan riwayat perbaikan
+
+- Tegaskan `docs/ROADMAP.md` sebagai perjalanan, prioritas, milestone dan acceptance, tanpa log perbaikan.
+- Tegaskan `docs/ROADMAP_DISCUSSION.md` sebagai **MEETING** untuk topik belum diputuskan; selaraskan peran ChatGPT/Yura sebagai manager yang sama.
+- Tambah **satu** file `docs/REPAIR_HISTORY.md` untuk bukti hasil perbaikan (kasus observer #221/#222, normalisasi waktu WP12), dengan status merge/deploy/tes/kelulusan dipisahkan.
+- Tautkan pembagian sumber ini di `docs/README.md` dan `CLAUDE.md`. Status operasional tetap di `PROJECT_STATUS.md`; detail teknis commit tetap di CHANGELOG/PR. LIVE OFF.
+
 ## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
 
 - Hapus dokumen eksperimen portfolio yang tidak dirujuk dan menunjuk modul/skrip yang telah dipensiunkan.

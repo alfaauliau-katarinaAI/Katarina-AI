@@ -1,8 +1,8 @@
 # Roadmap Katarina AI — berbasis bukti
 
-Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari yang sama setelah review PM
+Ditetapkan Owner (pemilik proyek) pada **22 Oktober 2026**; disempurnakan hari yang sama setelah review PM
 (dua aliran data, paralel vs berurutan, celah holdout dan PENDING, profil DEMO vs Stage 38) dan dirapikan
-23 dan 29 Oktober 2026. Dokumen ini menjadi dasar pengembangan Katarina berikutnya.
+23, 29, dan 30 Oktober 2026. Dokumen ini menjadi dasar pengembangan Katarina berikutnya.
 
 **Cara membaca dokumen ini**
 
@@ -11,10 +11,14 @@ Ditetapkan Owner (Project Manager) pada **22 Oktober 2026**; disempurnakan hari 
 - **Lampiran A** adalah **rencana kerja berjalan** untuk pelaksana (AI lain atau manusia): urutan dan alur kerja (R0),
   temuan (R1), cara kerja standar (R2), peta berkas (R3), langkah per paket (R4), status (R5), perintah siap pakai
   (R6), daftar periksa review (R7), cara menulis kode (R8), aturan menulis dokumen/PR (R9), dan standar teknis (R10).
-- Pembagian dokumen: roadmap = arah dan aturan; [PROJECT_STATUS](PROJECT_STATUS.md) = status terkini (satu-satunya
-  sumber status operasional); deskripsi PR = bukti dan log kerja; [CHANGELOG](../CHANGELOG.md) = riwayat perubahan;
-  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian; [ROADMAP_DISCUSSION](ROADMAP_DISCUSSION.md) = rapat
-  tertulis Owner, Yura, Claude dan pelaksana (bukan aturan). **Log kerja tidak ditulis di roadmap.**
+- **Fungsi roadmap ini: perjalanan Katarina.** Isi hanya tujuan, tahap, gerbang kelulusan, milestone, antrean
+  paket, dependensi, dan progres paket/keputusan yang **sudah disahkan**. Bukan notula, arsip perbaikan, atau log kerja.
+- **Tiga jalur Owner (30 Okt 2026):** [ROADMAP](ROADMAP.md) = perjalanan dan pekerjaan yang disetujui;
+  [MEETING](ROADMAP_DISCUSSION.md) = usulan, pertanyaan, dan keputusan yang masih dibahas;
+  [REPAIR_HISTORY](REPAIR_HISTORY.md) = perbaikan nyata, berkas yang berubah, tes, bukti, serta risiko tersisa.
+- Dokumen pendukung tidak digandakan: [PROJECT_STATUS](PROJECT_STATUS.md) = status operasional terkini;
+  [CHANGELOG](../CHANGELOG.md) = ringkasan teknis per PR/commit; deskripsi PR = detail diff/review;
+  [CLEANUP_PLAN](maintenance/CLEANUP_PLAN.md) = aturan perapian. **Tidak ada log kerja atau transkrip rapat di roadmap.**
 
 ## Mulai di sini — untuk pelaksana AI (ChatGPT, Codex, atau AI lain)
 
@@ -1090,10 +1094,13 @@ Prinsipnya: **perubahan terkecil yang benar, dibuktikan tes, dijelaskan singkat.
 
 | Tempat | Isi | Batas |
 |---|---|---|
-| Roadmap | Baris status paket di R5; satu-dua kalimat di paragraf "Alat" tahap terkait | Tanpa sub-bagian baru, tanpa log |
-| `CHANGELOG.md` | Apa yang berubah dan mengapa, satu entri per PR | ≤ 10 baris |
-| `CLAUDE.md` | Hanya bila CLI/modul baru atau angka tes/peta modul berubah | ≤ 2 baris per perubahan, di tabel/baris yang tepat |
-| Deskripsi PR | Templat R6.0 E | ±40–80 baris; tabel lebih baik daripada paragraf |
+| `ROADMAP.md` | Tahapan perjalanan, kriteria lulus, prioritas, dependensi; status paket di R5 | Tanpa notula atau daftar commit; tidak mengulang detail perbaikan |
+| `ROADMAP_DISCUSSION.md` (**MEETING**) | Pertanyaan, usulan, tanggapan dan keputusan yang masih menunggu; ringkasan keputusan terakhir | Bukan aturan atau antrean kedua; topik selesai ditutup |
+| `REPAIR_HISTORY.md` | Satu entri per perbaikan terverifikasi: sebelum, akar masalah, perubahan berkas, PR/commit, tes, deployment, risiko tersisa | Tidak mencatat ide, progres pengerjaan harian, atau klaim stabil tanpa bukti |
+| `PROJECT_STATUS.md` | Kondisi operasional terkini, blocker dan bukti terakhir | Snapshot; bukan arsip kronologis |
+| `CHANGELOG.md` | Ringkasan teknis apa berubah dan mengapa, satu entri per PR | ≤ 10 baris; untuk detail hasil perbaikan cukup tautkan `REPAIR_HISTORY.md` |
+| `CLAUDE.md` | Peta baca dan panduan kode | ≤ 2 baris per perubahan kecil, tidak menggandakan isi dokumen |
+| Deskripsi PR | Templat R6.0 E dan bukti diff/CI/review | ±40–80 baris; tabel lebih baik daripada paragraf |
 | Komentar review/jawaban | Apa yang diubah atau alasan tidak diubah | Beberapa kalimat |
 | Pesan commit | Kalimat perintah singkat dalam bahasa Indonesia, lalu baris kosong dan alasan bila perlu | Judul ≤ 72 karakter |
 

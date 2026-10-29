@@ -1,29 +1,38 @@
-# Rapat roadmap Katarina AI
+# MEETING — rapat dan keputusan terbuka Katarina AI
 
-Tempat rapat tertulis Owner, Yura (PM), Claude dan pelaksana AI (ChatGPT/Codex). **Berkas ini bukan aturan**: yang
-berlaku hanya `docs/ROADMAP.md`. Hasil rapat masuk roadmap setelah diputuskan.
+**Tempat tunggal untuk hal yang masih kita rapatkan**, termasuk usulan, alternatif, keberatan teknis, keputusan
+yang masih menunggu Owner/manager, dan tindak lanjut yang belum disahkan. Peserta: Owner, ChatGPT/Yura
+(manager), Claude (eksekutor), serta pelaksana AI. **Berkas ini bukan roadmap, bukan antrean kerja kedua, dan
+bukan log perbaikan**.
+
+Setelah keputusan dibuat, hasil final ditulis **sekali** di [ROADMAP.md](ROADMAP.md) pada bagian yang berwenang;
+topik rapat ditutup, lalu keputusan ringkas masuk "Keputusan terakhir". Hasil perbaikan yang benar-benar
+diterapkan dicatat di [REPAIR_HISTORY.md](REPAIR_HISTORY.md), kondisi berjalan di
+[PROJECT_STATUS.md](PROJECT_STATUS.md). Bukti kode/tes tinggal di PR dan CHANGELOG.
 
 ## Peserta dan kewenangan
 
 | Peserta | Peran di rapat | Memutuskan |
 |---|---|---|
 | Owner | Pemilik proyek | Semua hal; satu-satunya untuk bagian 1–7 roadmap, gerbang promosi, kewenangan trading |
-| ChatGPT | Manager | Roadmap, antrean, spesifikasi paket, pembagian tugas, review/merge, operasi VPS |
-| Claude | Eksekutor | Menjalankan keputusan ChatGPT; menyampaikan bukti dan risiko teknis |
-| Yura | Reviewer PM | Memberi pendapat; keputusan lewat Owner |
+| ChatGPT / Yura | **Satu peran manager proyek** (Yura adalah nama manager dalam percakapan, bukan peserta terpisah) | Roadmap, antrean, spesifikasi paket, pembagian tugas, review/merge, koordinasi VPS |
+| Claude | Eksekutor | Mengerjakan paket yang disetujui; menyampaikan bukti dan keberatan teknis |
+| Pelaksana AI lain | Pelaksana paket yang didelegasikan | Menyampaikan hasil/risiko; tidak mengubah aturan Owner |
 
 ## Cara rapat
 
 1. **Membuka topik.** Siapa pun menambah topik di "Agenda" dengan format di bawah. ChatGPT lewat PR yang hanya
    mengubah berkas ini (judul `docs(rapat): ...`) atau langsung bersama perubahan roadmap. Owner/Yura boleh menulis
    langsung di GitHub atau mengirimkannya ke ChatGPT/Claude untuk dituliskan.
-2. **Menanggapi.** Tambah satu baris di bagian "Tanggapan" topik itu, diawali `[Owner]`, `[Yura]`, `[Claude]` atau
-   `[ChatGPT]` dan tanggal. Singkat, dengan bukti (berkas, PR, angka). Tidak mengubah tanggapan orang lain.
+2. **Menanggapi.** Tambah satu baris di bagian "Tanggapan" topik itu, diawali `[Owner]`, `[Yura/ChatGPT]`, `[Claude]` atau nama pelaksana dan tanggal. Singkat, dengan bukti
+   (berkas, PR, angka). `[Yura]` dan `[ChatGPT]` merujuk **manager yang sama**, bukan dua suara. Tidak
+   mengubah tanggapan orang lain.
 3. **Memutuskan.** Peserta yang berwenang (tabel di atas) mengisi baris "Keputusan". ChatGPT atau Claude lalu
    memindahkan hasilnya ke `docs/ROADMAP.md`, mencatat satu baris di "Keputusan terakhir", dan menghapus topik dari
    agenda (riwayat lengkap ada di Git).
-4. **Bentuk.** ±40 baris per topik; tanpa log kerja. Aturan tetap Owner (LIVE OFF, Risk Governor, batas 35%,
-   gerbang promosi, holdout) hanya berubah dengan keputusan Owner.
+4. **Bentuk.** ±40 baris per topik. Hanya topik **belum final** yang bertahan di Agenda; histori keputusan
+   singkat tetap pada bagian "Keputusan terakhir" dan commit Git. Tanpa laporan teknis perbaikan atau log kerja.
+   Aturan tetap Owner (LIVE OFF, Risk Governor, batas 35%, gerbang promosi, holdout) hanya berubah dengan keputusan Owner.
 
 **Format topik**
 
