@@ -37,15 +37,22 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 
 **Antrean kerja (urut; ditetapkan ChatGPT, diperbarui setiap merge)**
 
-| # | Paket | Yang diperbaiki | Status |
+**Urgensi disepakati Owner, 30 Oktober 2026:** stabilkan bukti observasi 10 hari bursa dan validasi jam broker **lebih dulu**. Penyelesaian kode, merge, deployment, serta kelulusan hari bursa **empat status terpisah**. Detail diagnosis/hasil perbaikan ada di [REPAIR_HISTORY](REPAIR_HISTORY.md), status mesin sesaat di [PROJECT_STATUS](PROJECT_STATUS.md). Google Jules hanya menulis kode GitHub; tidak mengoperasikan VPS.
+
+| # | Paket / alur | Prioritas dan keluaran yang harus terbukti | Pelaksana dan status |
 |---|---|---|---|
-| 1 | WP13 | Offset jam palsu dari quote basi akhir pekan (T12); `check_stage0_health --since` agar Tahap 0 dinilai sejak WP12 | Siap |
-| 2 | WP8c | Bukti jam historis bar dari jam rilis NFP, syarat ekspor data pengembangan (WP8a) | Siap |
-| 3 | WP10b | Swap dan sensitivitas biaya di alat validasi; label "tidak ekonomis" | Siap |
-| 4 | WP10a | Profil spread broker deskriptif dari tick forward (tidak untuk penyetelan) | Siap |
-| 5 | WP4 | Jurnal kandidat riset + replay sinyal teknis (tanpa mengubah keputusan) | Siap |
-| 6 | WP14 | Auditor data baca-saja: setiap temuan PASS/BLOCKED/NO_DATA dengan sumber | Menunggu WP13 + WP8c |
-| – | WP8b, WP9c, WP9d, WP5 | Riset setup, syarat bukti terkunci, detektor entry, perankingan | Menunggu prasyarat (R0) |
+| 0 | **Tahap 0 — observasi 10 hari bursa** | Jaga satu observer resmi read-only; audit per hari/simbol sejak 28 Okt 16:57 UTC (cutoff WP12), target streak 10 hari, sukses siklus ≥98%, rekonsiliasi tick/snapshot, cakupan dan gap, restart otomatis dan **0 order**. Jangan menghitung backfill sebagai forward atau mengklaim lulus sebelum bukti. | **P0 / berjalan** — Yura pantau, Claude verifikasi bukti VPS; **belum lulus** |
+| 1 | **WP13 — jam broker MT5 dan `--since`** | Selaraskan [PR #219](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/219) dengan `main` dan dokumentasi baru; uji stale quote, offset broker independen, DST, migrasi broker/VPS, fail-closed, baru setelah CI hijau lakukan pemeriksaan read-only. | **P0 / dalam review, konflik merge** — Claude eksekusi, Yura review; belum terpasang |
+| 2 | **WP8c — asal waktu bar historis** | Bukti UTC bar memakai rilis NFP yang terverifikasi dan tes deterministik; jangan ekspor data development tanpa bukti jam atau sentuh holdout. | **P1 / siap** — Claude atau coding agent yang ditugasi |
+| 3 | **WP10b — swap & sensitivitas biaya** | Mulai dari `main` melalui [Issue #220](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/220) di Google Jules; tes DST/triple swap/BUY-SELL dan tanpa perubahan gate promosi. PR tunggal, review Claude, CI sebelum merge. | **P1 / MENUNGGU akses Google Jules** — label `jules` sudah ada, belum ada komentar/PR Jules; Owner mengizinkan GitHub App di Jules |
+| 4 | **Tata kelola PR terbuka** | Review konflik [#216](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/216) / [#218](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/218) dengan tiga dokumen kanonis; tutup/selaraskan yang duplikat tanpa menghapus keputusan; jangan merge WP13 dalam keadaan konflik. | **P1 / perlu review** — Yura/Claude |
+| 5 | **WP6 — pemulihan setelah reboot** | Verifikasi scheduled task observer yang kini hanya saat login; uji recovery dengan risiko observasi minimal. Penambahan 5→7 simbol tetap **menunggu WP13 + bukti jam 21:00–22:00 UTC**, tidak boleh mendahului kelulusan data. | **P1 / belum terverifikasi** — Claude |
+| 6 | **WP10a** | Profil spread broker deskriptif dari tick forward terverifikasi, bukan penyetelan strategi. | **P2 / siap setelah P0/P1 prioritas** |
+| 7 | **WP4** | Jurnal kandidat riset + replay sinyal teknis tanpa mengubah keputusan aktif. | **P2 / siap setelah P0/P1 prioritas** |
+| 8 | **WP14** | Auditor data baca-saja dengan keluaran PASS/BLOCKED/NO_DATA yang bersumber. | **P2 / menunggu WP13 dan WP8c** |
+| – | **WP8b, WP9c, WP9d, WP5** | Setup, syarat bukti, entry, dan perankingan; hanya setelah prasyarat R0 terpenuhi. | **Menunggu prasyarat** |
+
+**Handoff Google:** Owner login ke [Jules](https://jules.google/), pilih Connect GitHub dan izinkan hanya repository `alfaauliau-katarinaAI/Katarina-AI`; pilih `main`; beri Jules **hanya tugas WP10b Issue #220**, minta plan untuk disetujui sebelum coding. Label `jules` saja bukan bukti kerja sudah dimulai. Google Jules tidak memiliki akses VPS, data broker privat, atau kewenangan merge/promosi.
 
 
 **Akses**
@@ -423,9 +430,9 @@ Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, 
 
 | Fase | Paket | Oleh | Prasyarat | Ukuran perkiraan | Status (rinci di R5) |
 |---|---|---|---|---|---|
-| 1 (prioritas) | WP13 — jam broker tahan quote basi + `--since` | Pelaksana | — | ±4 berkas, ±200 baris | Siap |
+| 1 (prioritas) | WP13 — jam broker tahan quote basi + `--since` | Claude / review Yura | — | ±4 berkas, ±200 baris | Dalam review #219, konflik dengan `main` |
 | 1 (paralel) | WP8c — bukti jam historis bar dari rilis resmi | Pelaksana | WP8a (selesai) | ±4 berkas, ±350 baris | Siap |
-| 2 | WP10b — swap + sensitivitas biaya | Pelaksana | WP8a (selesai) | ±3 berkas, ±250 baris | Siap |
+| 2 | WP10b — swap + sensitivitas biaya | Google Jules (jika terotorisasi), review Claude | WP8a (selesai) | ±3 berkas, ±250 baris | Menunggu koneksi Jules GitHub, Issue #220 |
 | 2 (paralel) | WP10a — profil spread deskriptif | Pelaksana | WP2 (selesai) | ±4 berkas, ±250 baris | Siap |
 | 3 | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP9b (selesai) | ±6 berkas, ±450 baris | Siap |
 | 3b | WP14 — auditor data baca-saja | Pelaksana | WP13 + WP8c | ±4 berkas, ±350 baris | — |
@@ -837,13 +844,13 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | Siap dikerjakan (prioritas) | – | – |
-| WP8c | Siap dikerjakan | – | – |
-| WP10b | Siap dikerjakan | – | – |
-| WP10a | Siap dikerjakan | – | – |
-| WP4 | Siap dikerjakan | – | – |
+| WP13 | Dalam review; konflik dengan `main`, **jangan deploy** | #219 | Periksa konflik, bukti offset dan `--since`, CI penuh serta fail-closed sebelum merge |
+| WP8c | Siap dikerjakan (prioritas setelah WP13) | – | Wajib bukti jam bar historis dan tes deterministik |
+| WP10b | Menunggu akses/aktivitas **Google Jules**; label `jules` belum berarti coding | Issue #220 | Owner sambungkan Jules–GitHub, Jules satu branch/PR; review Claude |
+| WP10a | Siap setelah urgensi P0/P1 | – | – |
+| WP4 | Siap setelah urgensi P0/P1 | – | – |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
-| WP6 | Dikerjakan Claude: 5 simbol, `main` sejak 28 Okt 16:57 UTC | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
+| WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
 | WP9c | Menunggu prasyarat (≥ 3 hari bursa `decision_shadow`) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
