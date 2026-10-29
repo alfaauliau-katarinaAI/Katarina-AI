@@ -821,9 +821,9 @@
       "sha256": "6bab0926b0f497254c7b4ad0745cbb87deb3629ebd3dbb04c8bc5854aa41c845"
     },
     "src/katarina/intelligence/broker/broker_clock_alignment.py": {
-      "bytes": 13820,
-      "normalized_sha256": "553bcd7449f516d68f5be6fcf0ca3f3e7d40c25d388fd8c730c2d5948514f32f",
-      "sha256": "553bcd7449f516d68f5be6fcf0ca3f3e7d40c25d388fd8c730c2d5948514f32f"
+      "bytes": 15967,
+      "normalized_sha256": "4759c40d401d45a3de33188702d02ebf830434d5a0a5afe0be176e5e803cf28a",
+      "sha256": "4759c40d401d45a3de33188702d02ebf830434d5a0a5afe0be176e5e803cf28a"
     },
     "src/katarina/intelligence/broker/broker_history_coverage.py": {
       "bytes": 4508,
@@ -876,9 +876,9 @@
       "sha256": "7347c79ffe39ec2ef625396cca3fa099fd9d91346de444492f39c2d219a3a8fe"
     },
     "src/katarina/intelligence/cognition/continuous_observation.py": {
-      "bytes": 17072,
-      "normalized_sha256": "51388f7c618e81160eda5ac6c218e830d64e263f35f71c2d6739403975f30912",
-      "sha256": "51388f7c618e81160eda5ac6c218e830d64e263f35f71c2d6739403975f30912"
+      "bytes": 17558,
+      "normalized_sha256": "9d7981a01accd50c646b822a28d66755ff5b8faaf6ba32e97435025bab521ea1",
+      "sha256": "9d7981a01accd50c646b822a28d66755ff5b8faaf6ba32e97435025bab521ea1"
     },
     "src/katarina/intelligence/cognition/decision_inputs.py": {
       "bytes": 2855,
@@ -901,9 +901,9 @@
       "sha256": "78d277a63cefa7b44f19d9cc1b0c2adcad7e7355da2525db45daf2446dd369aa"
     },
     "src/katarina/intelligence/cognition/observer.py": {
-      "bytes": 34111,
-      "normalized_sha256": "d031ebb05ceff1a1c8a1df587302bdeee22d7c01b2ec6637445ceb35973346ad",
-      "sha256": "d031ebb05ceff1a1c8a1df587302bdeee22d7c01b2ec6637445ceb35973346ad"
+      "bytes": 34570,
+      "normalized_sha256": "cec446b9d3e86d1ba0717290ad55898bd641a52aa95702a13006d5d182eebb73",
+      "sha256": "cec446b9d3e86d1ba0717290ad55898bd641a52aa95702a13006d5d182eebb73"
     },
     "src/katarina/intelligence/cognition/owner_research_review.py": {
       "bytes": 8306,
