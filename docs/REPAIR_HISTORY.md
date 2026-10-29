@@ -21,6 +21,21 @@ Dokumen ini adalah **satu-satunya jurnal hasil perbaikan yang terverifikasi**: m
 4. `CHANGELOG.md` tetap mencatat ringkasan perubahan per PR; detail diagnosis dan hasil pemulihan hanya di sini, dengan tautan ke PR. `PROJECT_STATUS.md` hanya menyimpan kondisi saat ini dan merujuk ID perbaikan bila diperlukan.
 5. Pengembangan lewat GitHub dan PR + CI. VPS hanya untuk pengujian yang diizinkan. Tidak ada perubahan yang mengaktifkan LIVE, order, membuka holdout, atau melemahkan Risk Governor tanpa keputusan Owner yang berlaku.
 
+## RH-003 — Koreksi baseline biaya sisi acak dan validasi swap WP10b
+
+**Tanggal:** 30 Oktober 2026 WIB  
+**Status:** **Kode riset MERGED + CI PASS**; belum diterapkan/diuji di VPS, tidak ada klaim profitabilitas atau kelulusan Tahap 0/1.
+
+| Aspek | Bukti perbaikan |
+|---|---|
+| Sebelum | Pembanding `random_side_same_timing.expected_expectancy_r` mengabaikan swap sisi acak ketika swap BUY ≠ SELL; biaya validasi lama belum menghitung swap rollover dan sensitivitas biaya |
+| Akar penyebab | **TERBUKTI pada review PR #225:** perhitungan ekspektasi baseline semula mengambil `cost_r(trade)` dari sisi trade asli; perubahan tes timeout integrasi juga tidak terkait WP10b |
+| Perbaikan | `src/katarina/research/validation.py`: baseline biaya BUY/SELL 50/50, swap long/short, rollover 17:00 New York termasuk DST/triple Rabu, sensitivitas 1,5×/2×; memakai ulang `_nth_sunday` dari `operations/data_health.py`. Perubahan timeout `tests/integration/test_unified_owner_surface.py` dipulihkan; tes `tests/unit/research/test_validation.py`, protokol biaya dan manifest diselaraskan |
+| PR / commit | [WP10b #225](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/225) **merged**, squash `8cc3d677a883ff638f4360b24c3d8f7dc64cef18` |
+| Bukti tes | GitHub Actions run `40939671190`: **Body PASS, Ubuntu PASS, Windows PASS**; manifest berubah bersama kode, tidak ada berkas trading/promosi yang disentuh |
+| Deployment | **Tidak dilakukan**; VPS, broker, observer dan data privat tidak diakses |
+| Sisa risiko | Nilai swap, spread, slippage dan komisi broker nyata belum dikalibrasi; hasil validasi strategi/holdout tidak otomatis menjadi positif; LIVE OFF dan Risk Governor tetap |
+
 ## RH-001 — File snapshot observer terkunci oleh Desktop Commander
 
 **Tanggal:** 29–30 Oktober 2026 WIB  
