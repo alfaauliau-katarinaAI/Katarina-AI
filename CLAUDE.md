@@ -4,6 +4,7 @@
 
 Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~800 berkas setelah perampingan 22 Okt).
 **Peta dokumentasi (keputusan Owner, 30 Oktober 2026):** `docs/ROADMAP.md` = perjalanan, milestone, antrean dan acceptance; `docs/ROADMAP_DISCUSSION.md` = **MEETING**, hanya hal belum diputuskan; `docs/REPAIR_HISTORY.md` = **hasil perbaikan yang benar-benar diterapkan, apa yang diubah, dan buktinya**. Jangan menyalin satu log ke ketiga tempat.
+**WP13 / jam MT5 (30 Okt 2026): sebelum menangani PR #233 atau VPS, baca [laporan audit dan handoff Claude](docs/maintenance/WP13_CLOCK_CLAUDE_HANDOFF_20261030.md). Berkas bukti clock independen di state VPS belum tersedia saat cek; jangan klaim selesai/merge/deploy otomatis.**
 Status operasional satu sumber: `docs/PROJECT_STATUS.md`; ringkasan teknis per commit/PR: `CHANGELOG.md`. Aturan tahap 0–5, gerbang promosi, dan holdout tetap di roadmap; riwayat serah-terima lama ada di Git (folder `archive/` dihapus 21 Oktober).
 
 ## Apa ini
