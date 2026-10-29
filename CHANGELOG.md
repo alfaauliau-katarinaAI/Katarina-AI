@@ -6,6 +6,8 @@
 - Observer membaca bukti privat; tes sintetis memasok fixture eksplisit. Kontrak WP11 disesuaikan dengan persetujuan Owner.
 - `check_stage0_health.py --since` membatasi penilaian baca-saja; agregat tick hari awal parsial tidak diklaim terverifikasi.
 - Tidak ada berkas terkunci diubah; LIVE tetap OFF; tidak mengubah VPS.
+- Status pemeriksaan 29 Okt: PR #219 masih OPEN, belum di-merge ke `main`; pengujian pasar normal, CI final,
+  dan klaim penerapan VPS harus diverifikasi sebelum WP13 dinyatakan selesai.
 
 ## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
 
