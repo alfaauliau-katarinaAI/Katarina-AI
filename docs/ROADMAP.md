@@ -37,12 +37,14 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 
 **Antrean kerja (urut; ditetapkan ChatGPT, diperbarui setiap merge)**
 
+**Audit kelemahan dan pembaruan 30 Okt 2026:** [Laporan Claude — kelemahan dan tugas perbaikan](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md) mencatat prioritas K-01 s.d. K-10 serta status code/CI/VPS; status real-time di [PROJECT_STATUS](PROJECT_STATUS.md).
+
 **Urgensi disepakati Owner, 30 Oktober 2026:** stabilkan bukti observasi 10 hari bursa dan validasi jam broker **lebih dulu**. Penyelesaian kode, merge, deployment, serta kelulusan hari bursa **empat status terpisah**. Detail diagnosis/hasil perbaikan ada di [REPAIR_HISTORY](REPAIR_HISTORY.md), status mesin sesaat di [PROJECT_STATUS](PROJECT_STATUS.md). Google Jules hanya menulis kode GitHub; tidak mengoperasikan VPS.
 
 | # | Paket / alur | Prioritas dan keluaran yang harus terbukti | Pelaksana dan status |
 |---|---|---|---|
 | 0 | **Tahap 0 — observasi 10 hari bursa** | Jaga satu observer resmi read-only; audit per hari/simbol sejak 28 Okt 16:57 UTC (cutoff WP12), target streak 10 hari, sukses siklus ≥98%, rekonsiliasi tick/snapshot, cakupan dan gap, restart otomatis dan **0 order**. Jangan menghitung backfill sebagai forward atau mengklaim lulus sebelum bukti. | **P0 / berjalan** — Yura pantau, Claude verifikasi bukti VPS; **belum lulus** |
-| 1 | **WP13 — jam broker MT5 dan `--since`** | Selesaikan [Issue #228](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/228) dari `main` terkini; [PR #219](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/219) konflik dan hanya menjadi rujukan. Uji stale quote, offset independen, DST, migrasi broker/VPS dan fail-closed. | **P0 / antrean coding** — pemicu Jules gagal 3×, tunggu slot; belum di-merge atau diterapkan |
+| 1 | **WP13 — jam broker MT5 dan `--since`** | Selesaikan [Issue #228](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/228) dan [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233), pengganti PR #219 yang konflik. Wajib evidence sumber broker independen, fail-closed observer, penanganan gap, DST, stale, tes/CI dan `--since`. | **P0 / Jules sudah coding, review menemukan regresi pengamanan; PR #233 belum merge/CI final**, evidence broker privat belum ada; Claude review/repair sesuai [audit](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md) |
 | 2 | **WP8c — asal waktu bar historis** | Bukti UTC bar memakai rilis NFP yang terverifikasi dan tes deterministik; jangan ekspor data development tanpa bukti jam atau sentuh holdout. | **P1 / review [PR #230](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/230)** — revisi lineage dan fail-closed diminta Jules; belum merge |
 | 3 | **WP10b — swap & sensitivitas biaya** | CostModel swap BUY/SELL, rollover New York/DST dan sensitivitas 1,5×/2×; perbaikan baseline random-side; tidak mengubah gate promosi. | **P1 / kode MERGED [PR #225](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/225)** — CI Body/Linux/Windows PASS; belum validasi broker/VPS atau strategi |
 | 4 | **Tata kelola PR terbuka** | Review konflik [#216](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/216) / [#218](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/218) dengan tiga dokumen kanonis; tutup/selaraskan yang duplikat tanpa menghapus keputusan; jangan merge WP13 dalam keadaan konflik. | **P1 / perlu review** — Yura/Claude |
@@ -52,7 +54,7 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 | 8 | **WP14** | Auditor data baca-saja dengan keluaran PASS/BLOCKED/NO_DATA yang bersumber. | **P2 / menunggu WP13 dan WP8c** |
 | – | **WP8b, WP9c, WP9d, WP5** | Setup, syarat bukti, entry, dan perankingan; hanya setelah prasyarat R0 terpenuhi. | **Menunggu prasyarat** |
 
-**Handoff Google:** Jules telah mengerjakan WP10b (#225, merged), WP8c (#230, review), dan WP10a (#231, review). WP13 (#228) belum memperoleh sesi setelah tiga pemicu gagal; WP4 (#229) antrean berikutnya. Label `jules` saja bukan bukti kerja dimulai. Google Jules tidak memiliki akses VPS, data broker privat, atau kewenangan merge/promosi.
+**Handoff Google (audit 30 Okt):** WP10b **#225 merged**; WP8c **#230 review BLOCKED**, WP10a **#231 review BLOCKED**, WP13 **#233 review BLOCKED** karena guard waktu hilang/CI+konflik (Issue #228 sudah ditangani Jules); WP4 #229 tetap antrean. Review formal GitHub sudah dikirim untuk #230/#231/#233. Status **Needs review di UI Jules berbeda dari GitHub**: hanya tandai Completed/Archived saat merge+CI lulus dan sesi Jules terautentikasi; belum ada bukti penandaan tersebut. Jules tidak memiliki akses VPS, data broker privat, atau kewenangan promosi. [Rincian untuk Claude](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md).
 
 
 **Akses**
@@ -844,10 +846,10 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | Antrean coding P0; Jules gagal membuat sesi 3×; #219 konflik, **jangan deploy** | Issue #228; PR #219 | Buat PR pengganti dari `main` saat slot Jules tersedia; bukti offset independen, `--since`, CI, fail-closed |
-| WP8c | Dalam review; perbaikan lineage sumber independen dan fail-closed diperlukan | #230 | CI hijau tidak cukup untuk menyatakan kalender resmi/offset terverifikasi |
+| WP13 | **Dalam review BLOCKED P0**; Jules sudah membuka PR #233, guard canonical `require_evidence=True` hilang pada HEAD terakhir diaudit, konflik dan CI final belum lulus; bukti jam privat belum ada | Issue #228; **PR #233** (menggantikan #219) | Claude audit HEAD baru vs safety patch `2e504d3`; fail-closed tanpa memutus observer, fixture CI, sumber independen, merge hanya setelah CI aman; **jangan deploy** sebelum bukti broker nyata |
+| WP8c | **Dalam review BLOCKED**; sumber independen, M5, rentang verified dan fake report belum valid; PR konflik | #230 | Claude/Jules perbaiki lineage BLS+volume M5 dan fail-closed; 24 surrounding bars, tes adversarial dan CI HEAD final |
 | WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
-| WP10a | Dalam review; revisi streaming/parser/memori | #231 | Body/Linux/Windows PASS tetapi review menemukan bug R4 |
+| WP10a | **Dalam review BLOCKED**; parser, streaming/memori multi-hari, last-tick/minute, SQLite read-only; PR konflik | #231 | CI lama bukan bukti HEAD final; perbaiki 2 juta tick <50 MB, parity parser, time_msc maksimum dan ulangi semua CI |
 | WP4 | Menunggu kapasitas Jules dan WP13 | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
 | WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
