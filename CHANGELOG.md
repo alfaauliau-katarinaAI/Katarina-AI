@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-10-29 — Owner mengukuhkan visi agentic AI mandiri
+
+- `docs/ROADMAP.md`: sasaran riset mandiri, lima kemampuan, siklus evaluasi, bukti keuntungan bersih,
+  serta batas promosi dan modal. Rapat hanya merujuk keputusan kanonis; belum ada kode atau izin trading berubah.
+
 ## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
 
 - Hapus dokumen eksperimen portfolio yang tidak dirujuk dan menunjuk modul/skrip yang telah dipensiunkan.
