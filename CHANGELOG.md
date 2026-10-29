@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — prioritas operasional dan handoff Google Jules
+
+- Sinkronkan antrean darurat di `docs/ROADMAP.md`: Tahap 0 observer/10 hari bursa, WP13 jam broker, WP8c, delegasi WP10b via Jules, konflik PR docs, dan WP6 reboot. Tidak ada paket atau gerbang trading baru.
+- `docs/PROJECT_STATUS.md` diperbarui dari bukti VPS 30 Okt 00:28 WIB: 27/27 siklus observer sukses, lima simbol, nol order; laporan Tahap 0 lama tetap NOT_MET, PR #219 masih konflik, Issue Jules #220 belum ada respons.
+- Kelulusan data, status kerja Jules, dan koneksi akun tidak diklaim selesai. Dokumen perbaikan lama tidak digandakan; LIVE OFF.
+
 ## 2026-10-30 — pemisahan roadmap, meeting dan riwayat perbaikan
 
 - Tegaskan `docs/ROADMAP.md` sebagai perjalanan, prioritas, milestone dan acceptance, tanpa log perbaikan.
