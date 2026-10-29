@@ -1460,6 +1460,11 @@
       "normalized_sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da",
       "sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da"
     },
+    "src/katarina/research/bar_clock_evidence.py": {
+      "bytes": 13495,
+      "normalized_sha256": "ae7d529c1ab2374d082fce022f78037bbb693dba9bee2ec4ea5e97a65c95d8a4",
+      "sha256": "ae7d529c1ab2374d082fce022f78037bbb693dba9bee2ec4ea5e97a65c95d8a4"
+    },
     "src/katarina/research/blocker_ladder.py": {
       "bytes": 7618,
       "normalized_sha256": "b1fadded747a4f03fc4b24c5f44a6bc9f6bce507290b97cce202bee691b1b668",
