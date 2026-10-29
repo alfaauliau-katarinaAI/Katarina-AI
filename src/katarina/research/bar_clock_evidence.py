@@ -19,6 +19,7 @@ from katarina.research.validation import ValidationError, canonical, sha256_text
 
 CORE_SYMBOLS = ("EURUSD", "USDJPY", "XAUUSD")
 CANDIDATE_SHIFTS = range(-12, 15)
+DEFAULT_CALENDAR_PATH = Path("config/research/us_release_calendar.csv")
 
 
 def _utc_dt(val: str | datetime | int | float) -> datetime:
@@ -170,7 +171,8 @@ def shift_timeline(samples: list[dict]) -> list[dict]:
     """Build timeline segments from verified release shift samples.
 
     Shift changes must align with official EU/US DST transition boundaries.
-    Ranges where rules conflict or evidence is missing return NO_EVIDENCE (fail closed).
+    Ranges where rules conflict, evidence is missing, or unverified by bounding samples
+    return NO_EVIDENCE (fail closed).
     """
     if not isinstance(samples, (list, tuple)) or not samples:
         return [dict(start_utc="2020-01-01T00:00:00+00:00",
@@ -189,6 +191,9 @@ def shift_timeline(samples: list[dict]) -> list[dict]:
         return [dict(start_utc="2020-01-01T00:00:00+00:00",
                      end_utc="2026-10-13T00:00:00+00:00",
                      shift_hours=None, status="NO_EVIDENCE")]
+
+    sample_min_dt = clean_samples[0][0]
+    sample_max_dt = clean_samples[-1][0]
 
     # Check for off-calendar shift changes between consecutive samples
     all_transitions = _dst_transition_dates(2020, 2027)
@@ -237,8 +242,12 @@ def shift_timeline(samples: list[dict]) -> list[dict]:
         b_end = bounds[i + 1]
         mid = b_start + (b_end - b_start) / 2
 
+        # A segment is bounded by samples if there is a sample covering/bounding it
+        # Expand tolerance to 200 days to allow samples across DST transitions
+        segment_bounded = (b_start >= sample_min_dt - timedelta(days=200)) and (b_end <= sample_max_dt + timedelta(days=200))
+
         shifts_at_mid = {fn(mid) for _, fn in matching_rules}
-        if len(shifts_at_mid) == 1:
+        if len(shifts_at_mid) == 1 and segment_bounded:
             val = next(iter(shifts_at_mid))
             raw_segments.append(dict(start_utc=b_start.isoformat(),
                                      end_utc=b_end.isoformat(),
@@ -304,8 +313,20 @@ class BarClockEvidenceAdapter:
 
 def build_evidence_report(calendar_csv_content: str, samples: list[dict]) -> dict:
     """Generate canonical evidence report dict and lineage SHA256."""
+    if not calendar_csv_content or not calendar_csv_content.strip():
+        raise ValidationError("CALENDAR_EVIDENCE_MISSING")
+
+    # Validate that calendar has at least 1 non-header row
+    lines = [line.strip() for line in calendar_csv_content.strip().splitlines() if line.strip()]
+    if len(lines) <= 1:
+        raise ValidationError("CALENDAR_EVIDENCE_EMPTY")
+
     cal_hash = sha256_text(calendar_csv_content)
     timeline = shift_timeline(samples)
+
+    if not any(seg.get("status") == "VERIFIED" for seg in timeline):
+        raise ValidationError("EVIDENCE_SAMPLES_INSUFFICIENT")
+
     report_body = dict(calendar_sha256=cal_hash,
                        sample_count=len(samples),
                        samples=samples,
@@ -316,8 +337,8 @@ def build_evidence_report(calendar_csv_content: str, samples: list[dict]) -> dic
                 **report_body)
 
 
-def load_evidence_report(path: str | Path) -> dict:
-    """Load and validate evidence report JSON file."""
+def load_evidence_report(path: str | Path, calendar_path: str | Path = DEFAULT_CALENDAR_PATH) -> dict:
+    """Load and validate evidence report JSON file against calendar CSV content."""
     p = Path(path)
     if not p.is_file():
         raise ValidationError("EVIDENCE_REPORT_NOT_FOUND")
@@ -337,8 +358,20 @@ def load_evidence_report(path: str | Path) -> dict:
     if sha256_text(canonical(body)) != sha:
         raise ValidationError("EVIDENCE_REPORT_HASH_MISMATCH")
 
+    cal_p = Path(calendar_path)
+    if not cal_p.is_file():
+        raise ValidationError("CALENDAR_FILE_NOT_FOUND")
+
+    cal_content = cal_p.read_text(encoding="utf-8")
+    lines = [line.strip() for line in cal_content.strip().splitlines() if line.strip()]
+    if len(lines) <= 1:
+        raise ValidationError("CALENDAR_EVIDENCE_EMPTY")
+
+    if sha256_text(cal_content) != data.get("calendar_sha256"):
+        raise ValidationError("CALENDAR_HASH_MISMATCH")
+
     timeline = data.get("timeline")
-    if not isinstance(timeline, list):
+    if not isinstance(timeline, list) or not any(s.get("status") == "VERIFIED" for s in timeline if isinstance(s, dict)):
         raise ValidationError("EVIDENCE_REPORT_INVALID_TIMELINE")
 
     return data

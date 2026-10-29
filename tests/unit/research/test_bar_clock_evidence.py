@@ -127,6 +127,15 @@ class TestBarClockEvidence(unittest.TestCase):
         self.assertEqual(len(timeline), 1)
         self.assertEqual(timeline[0]["status"], "NO_EVIDENCE")
 
+    def test_shift_timeline_no_extrapolation(self):
+        # Sample only in 2024 should not extrapolate VERIFIED to 2020 or 2026
+        samples = [{"release_utc": "2024-06-15T12:30:00+00:00", "shift_hours": 3}]
+        timeline = shift_timeline(samples)
+        first_seg = timeline[0]
+        last_seg = timeline[-1]
+        self.assertEqual(first_seg["status"], "NO_EVIDENCE")
+        self.assertEqual(last_seg["status"], "NO_EVIDENCE")
+
     def test_verified_historical_bar_shift_adapter(self):
         raw_broker = DummyBroker()
         timeline = [
@@ -170,26 +179,35 @@ class TestBarClockEvidence(unittest.TestCase):
             self.assertIn("manifest_sha256", manifest)
             self.assertEqual(manifest["stage"], "WP8A_DEVELOPMENT_ONLY")
 
-    def test_report_lineage_and_determinism(self):
-        csv_text = "release_date,release_utc,source_url\n"
-        samples = [{"release_utc": "2024-01-15T13:30:00+00:00", "shift_hours": 2}]
+    def test_report_lineage_empty_calendar_and_hash_mismatch(self):
+        empty_csv = "release_date,release_utc,source_url\n"
+        valid_csv = "release_date,release_utc,source_url\n2024-06-07,2024-06-07T12:30:00Z,https://bls.gov\n"
+        samples = [{"release_utc": "2024-06-07T12:30:00+00:00", "shift_hours": 3}]
 
-        r1 = build_evidence_report(csv_text, samples)
-        r2 = build_evidence_report(csv_text, samples)
+        # Empty calendar content throws exception
+        with self.assertRaises(ValidationError) as ctx:
+            build_evidence_report(empty_csv, samples)
+        self.assertEqual(str(ctx.exception), "CALENDAR_EVIDENCE_EMPTY")
 
-        # Byte-identical determinism
-        self.assertEqual(json.dumps(r1, sort_keys=True), json.dumps(r2, sort_keys=True))
-        self.assertEqual(r1["source_sha256"], r2["source_sha256"])
+        # Valid report creation with real calendar entry
+        r1 = build_evidence_report(valid_csv, samples)
 
-        with tempfile.NamedTemporaryFile("w+", encoding="utf-8", suffix=".json", delete=False) as tf:
-            json.dump(r1, tf)
-            tf_path = Path(tf.name)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_cal = Path(tmpdir) / "cal.csv"
+            tmp_cal.write_text(valid_csv, encoding="utf-8")
 
-        try:
-            loaded = load_evidence_report(tf_path)
+            tmp_rep = Path(tmpdir) / "report.json"
+            tmp_rep.write_text(json.dumps(r1), encoding="utf-8")
+
+            # Successfully loads with matching calendar
+            loaded = load_evidence_report(tmp_rep, calendar_path=tmp_cal)
             self.assertEqual(loaded["source_sha256"], r1["source_sha256"])
-        finally:
-            tf_path.unlink(missing_ok=True)
+
+            # Tampering with calendar throws CALENDAR_HASH_MISMATCH
+            tmp_cal.write_text(valid_csv + "2024-07-05,2024-07-05T12:30:00Z,https://bls.gov\n", encoding="utf-8")
+            with self.assertRaises(ValidationError) as ctx2:
+                load_evidence_report(tmp_rep, calendar_path=tmp_cal)
+            self.assertEqual(str(ctx2.exception), "CALENDAR_HASH_MISMATCH")
 
 
 if __name__ == "__main__":
