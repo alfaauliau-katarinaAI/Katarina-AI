@@ -10,6 +10,7 @@ from unittest.mock import patch
 from scripts.pc.run_pc_acceptance import run
 from katarina.adapters.automatic_connection import run_connected
 from katarina.adapters.pc_simulation import PCSimulationBroker
+from tests.integration.clock_fixture import seed_synthetic_clock
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -73,6 +74,7 @@ class PCAcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'connection.json'
             path.write_text(json.dumps(dict(expected_login=123,expected_server='Test-Demo',priority=['local'])))
+            seed_synthetic_clock(Path(tmp)/'readonly-observer', server='Test-Demo', shift_hours=3)
             def connected(brain,root,**kwargs):
                 return run_connected(brain,root,**kwargs,
                     factories={'local':lambda config:BoundLocalBroker(AccountBroker(),config)})
