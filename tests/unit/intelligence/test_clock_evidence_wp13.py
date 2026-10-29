@@ -1,5 +1,6 @@
 """Deterministic test suite for WP13 broker clock alignment with independent evidence."""
 import json
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import unittest
@@ -61,7 +62,17 @@ class ClockEvidenceWP13Tests(unittest.TestCase):
         # Sunday 21:30 UTC (FX market opens at 21:00 UTC)
         sunday_open = datetime(2026, 10, 25, 21, 30, tzinfo=timezone.utc)
         sunday_ts = sunday_open.timestamp()
-        ev = evidence(sunday_open, shift=3)
+        # This date follows the EU DST transition; confine this evidence to
+        # a period entirely AFTER the boundary rather than self-attesting
+        # an unverified clock shift across it.
+        template = evidence(sunday_open, shift=3)
+        ev = ClockEvidence(
+            shift_hours=template.shift_hours,
+            valid_from=sunday_open - timedelta(minutes=20),
+            valid_until=sunday_open + timedelta(minutes=20),
+            source=template.source, source_sha256=template.source_sha256,
+            broker_server_sha256=template.broker_server_sha256,
+        )
         tick_ts = int(sunday_ts + 3 * 3600 - 2)
         ticks = {"EURUSD": tick_ts, "GBPUSD": tick_ts, "USDJPY": tick_ts}
 
