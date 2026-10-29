@@ -1,5 +1,13 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — WP10a: profil spread broker deskriptif (#227)
+
+- Refactor `katarina.research.context_export.iter_verified_ticks` dua pass streaming untuk verifikasi SHA-256 dan pembacaan tick terverifikasi. Refactor `_ticks` menggunakan `iter_verified_ticks` tanpa perubahan keluaran.
+- Tambah `src/katarina/research/spread_profile.py` dan CLI `scripts/research/spread_profile.py` (SQLite `mode=ro` hari `STORED`/`STORED_WITH_GAPS` dalam rentang `[since, until]`).
+- Profil spread (ask - bid) berbasis quote terakhir per menit UTC per simbol x jam UTC 0–23 dan total simbol dengan nearest-rank p50/p90/p99/max dan minute count. Label deskriptif `"usage": "DESCRIPTIVE_ONLY_NOT_FOR_TUNING"`.
+- Pagar static test `tests/static/test_spread_profile_guard.py` memastikan tidak ada importer lain di `src/katarina` dan `scripts` selain CLI.
+- Tes sintetis unit/integration (parity, hash mismatch, sampling, percentiles, streaming 2M ticks < 50MB peak, connection closure, determinisme). Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
 ## 2026-10-30 — prioritas operasional dan handoff Google Jules
 
 - Sinkronkan antrean darurat di `docs/ROADMAP.md`: Tahap 0 observer/10 hari bursa, WP13 jam broker, WP8c, delegasi WP10b via Jules, konflik PR docs, dan WP6 reboot. Tidak ada paket atau gerbang trading baru.
