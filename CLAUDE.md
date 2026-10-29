@@ -3,8 +3,8 @@
 **Peran (Owner, 29 Okt 2026): ChatGPT = manager (akses penuh: roadmap, antrean, merge, VPS); Claude = eksekutor rencana ChatGPT. Mulai dari `docs/ROADMAP.md` bagian "Mulai di sini"; rapat di `docs/ROADMAP_DISCUSSION.md`. Aturan tetap Owner (bagian 1–7) tetap berlaku.**
 
 Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~800 berkas setelah perampingan 22 Okt).
-Diperbarui 22 Oktober 2026. Status rinci (satu sumber): `docs/PROJECT_STATUS.md`; **arah pengembangan: `docs/ROADMAP.md`** (wajib diikuti: tahap 0–5, kriteria kelulusan, gerbang promosi, aturan holdout); perubahan di `CHANGELOG.md`;
-riwayat serah-terima lama ada di riwayat Git (folder `archive/` dihapus 21 Oktober).
+**Peta dokumentasi (keputusan Owner, 30 Oktober 2026):** `docs/ROADMAP.md` = perjalanan, milestone, antrean dan acceptance; `docs/ROADMAP_DISCUSSION.md` = **MEETING**, hanya hal belum diputuskan; `docs/REPAIR_HISTORY.md` = **hasil perbaikan yang benar-benar diterapkan, apa yang diubah, dan buktinya**. Jangan menyalin satu log ke ketiga tempat.
+Status operasional satu sumber: `docs/PROJECT_STATUS.md`; ringkasan teknis per commit/PR: `CHANGELOG.md`. Aturan tahap 0–5, gerbang promosi, dan holdout tetap di roadmap; riwayat serah-terima lama ada di Git (folder `archive/` dihapus 21 Oktober).
 
 ## Apa ini
 
