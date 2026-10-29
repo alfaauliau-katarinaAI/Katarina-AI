@@ -36,6 +36,11 @@
 - Tambah **satu** file `docs/REPAIR_HISTORY.md` untuk bukti hasil perbaikan (kasus observer #221/#222, normalisasi waktu WP12), dengan status merge/deploy/tes/kelulusan dipisahkan.
 - Tautkan pembagian sumber ini di `docs/README.md` dan `CLAUDE.md`. Status operasional tetap di `PROJECT_STATUS.md`; detail teknis commit tetap di CHANGELOG/PR. LIVE OFF.
 
+## 2026-10-29 — Owner mengukuhkan visi agentic AI mandiri
+
+- `docs/ROADMAP.md`: sasaran riset mandiri, lima kemampuan, siklus evaluasi, bukti keuntungan bersih,
+  serta batas promosi dan modal. Rapat hanya merujuk keputusan kanonis; belum ada kode atau izin trading berubah.
+
 ## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
 
 - Hapus dokumen eksperimen portfolio yang tidak dirujuk dan menunjuk modul/skrip yang telah dipensiunkan.

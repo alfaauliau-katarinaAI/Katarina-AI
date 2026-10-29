@@ -400,6 +400,34 @@ karena hanya membaca data dan tidak memilih atau menyetel strategi.
 
 Spesifikasi WP14 ada di Lampiran A R4.
 
+**Keputusan visi Owner, 29 Okt 2026 — Katarina agentic AI yang mandiri:** tujuan jangka panjangnya
+bukan sekadar menghasilkan sinyal, melainkan mampu mengamati, mencari informasi, bernalar, meneliti,
+menguji, mengingat hasil, dan mengusulkan peningkatan secara berulang tanpa instruksi per eksperimen.
+Sasaran kinerja adalah **expectancy/keuntungan bersih yang konsisten setelah seluruh biaya, dengan
+risiko terkendali dan bukti independen**; belum ada klaim strategi menguntungkan atau jaminan profit.
+
+**Kemampuan yang dituju (gunakan otak serta modul yang sudah ada, jangan buat sistem paralel):**
+1. **Riset informasi mandiri:** kumpulkan data pasar dan berita ekonomi (FOMC, NFP, bank sentral, geopolitik)
+   melalui sumber yang sah, dengan sumber, waktu publikasi, relevansi instrumen, kesegaran dan verifikasi;
+   informasi yang tidak valid tidak boleh dipakai sebagai fakta keputusan.
+2. **Penalaran & riset strategi:** amati regime dan peluang BUY/SELL berbeda; daftarkan hipotesis
+   liquidity sweep, pullback, Fibonacci, struktur pasar atau alternatif **sebelum** eksperimen;
+   uji hanya pada data pengembangan yang diizinkan, dengan biaya, pembanding dan koreksi banyak percobaan.
+3. **Memori ilmiah:** pakai `HypothesisRegistry` dan memori canonical yang sudah ada untuk menyimpan
+   versi, dataset/hash, keputusan, bukti, kegagalan, dan alasan; jangan membuat memori kedua.
+4. **Evaluasi diri:** audit kualitas waktu/data, kebocoran, overfitting, expectancy bersih, risiko,
+   dan kemampuan reproduksi; hasil lemah atau belum lengkap harus dilabeli WAIT/BLOCKED/PENDING.
+5. **Perbaikan diri terkendali:** boleh menghasilkan rekomendasi perubahan dan PR GitHub dengan tes,
+   alasan, rollback, dan hasil audit. Tidak boleh mengubah strategi aktif, mempromosikan model,
+   mengirim order, memakai modal, atau menaikkan kewenangan tanpa gerbang validasi dan persetujuan Owner.
+
+**Siklus target:** OBSERVE → RESEARCH/REASON → REGISTER HYPOTHESIS → VALIDATE →
+EVALUATE → REMEMBER → PROPOSE IMPROVEMENT → ulangi.
+Kemandirian berlaku untuk **riset dan pengusulan**, bukan otorisasi finansial.
+**Urutan realisasi:** selesaikan WP13 dan WP8c, lalu WP14; riset mandiri memanfaatkan alat yang ada
+sesuai gerbang Tahap 1–5. Tidak membuat WP baru sebelum audit gap dan keputusan rapat lanjutan.
+Tidak mengubah antrean aktif, LIVE OFF, Risk Governor, pemisahan holdout, atau gerbang promosi.
+
 **Urutan:** WP13 → WP8c → WP14 → pembuktian Tahap 1 (WP10b, WP8b, holdout sekali) → agent riset
 berkelanjutan (setelah Tahap 1 lulus) → DEMO terbatas (Tahap 0–3 lulus + Owner) → LIVE (gerbang terpisah + Owner).
 
