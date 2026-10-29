@@ -136,79 +136,93 @@ class TestBarClockEvidence(unittest.TestCase):
         self.assertEqual(first_seg["status"], "NO_EVIDENCE")
         self.assertEqual(last_seg["status"], "NO_EVIDENCE")
 
-    def test_verified_historical_bar_shift_adapter(self):
-        raw_broker = DummyBroker()
-        timeline = [
-            {"start_utc": "2024-01-01T00:00:00+00:00", "end_utc": "2024-03-31T00:00:00+00:00",
-             "shift_hours": 2, "status": "VERIFIED"},
-            {"start_utc": "2024-03-31T00:00:00+00:00", "end_utc": "2024-10-27T00:00:00+00:00",
-             "shift_hours": 3, "status": "VERIFIED"},
-        ]
-        adapter = BarClockEvidenceAdapter(raw_broker, timeline, "a" * 64)
+    CAL = ("release_date,release_utc,source_url\n"
+           "2024-01-05,2024-01-05T13:30:00Z,https://www.bls.gov/schedule/news_release/empsit.htm\n"
+           "2024-06-07,2024-06-07T12:30:00Z,https://www.bls.gov/schedule/news_release/empsit.htm\n")
 
-        # Query completely inside first segment
+    def _report(self):
+        samples = [{"release_utc": "2024-01-05T13:30:00+00:00", "shift_hours": 2, "bars_sha256": "1" * 64},
+                   {"release_utc": "2024-06-07T12:30:00+00:00", "shift_hours": 3, "bars_sha256": "2" * 64}]
+        return build_evidence_report(self.CAL, samples)
+
+    def test_release_near_data_edge_needs_full_24_bar_context(self):
+        release_utc = datetime(2024, 6, 7, 12, 30, tzinfo=timezone.utc)
+        bars = {sym: [b for b in self._generate_synthetic_bars(release_utc, shift=3)
+                      if datetime.fromisoformat(b["time_utc"]) >= release_utc + timedelta(hours=3, minutes=-30)]
+                for sym in ("EURUSD", "USDJPY", "XAUUSD")}
+        self.assertIsNone(release_shift(bars, release_utc))  # only 6 bars before the release
+
+    def test_segment_without_own_sample_is_not_verified(self):
+        timeline = shift_timeline([{"release_utc": "2024-06-07T12:30:00+00:00", "shift_hours": 3}])
+        verified = [s for s in timeline if s["status"] == "VERIFIED"]
+        self.assertEqual(len(verified), 1)
+        seg = verified[0]
+        self.assertLessEqual(seg["start_utc"], "2024-06-07")
+        self.assertGreater(seg["end_utc"], "2024-06-07")
+        # Winter 2024 next to the sample stays unverified (no 200-day extension).
+        self.assertTrue(seg["start_utc"] >= "2024-03-31")
+
+    def test_verified_historical_bar_shift_adapter(self):
+        adapter = BarClockEvidenceAdapter(DummyBroker(), self._report())
         res1 = adapter.verified_historical_bar_shift("EURUSD", "M5", "2024-01-10T00:00:00Z", "2024-01-17T00:00:00Z")
         self.assertTrue(res1["verified"])
         self.assertEqual(res1["shift_hours"], 2)
-        self.assertEqual(res1["source_sha256"], "a" * 64)
-
-        # Batch crossing segment boundary
         res2 = adapter.verified_historical_bar_shift("EURUSD", "M5", "2024-03-25T00:00:00Z", "2024-04-05T00:00:00Z")
         self.assertFalse(res2["verified"])
+        res3 = adapter.verified_historical_bar_shift("EURUSD", "M5", "2023-01-10T00:00:00Z", "2023-01-17T00:00:00Z")
+        self.assertFalse(res3["verified"])
+
+    def test_adapter_rejects_hand_written_or_tampered_timeline(self):
+        timeline = [{"start_utc": "2020-01-01T00:00:00+00:00", "end_utc": "2026-10-13T00:00:00+00:00",
+                     "shift_hours": 2, "status": "VERIFIED"}]
+        with self.assertRaises(ValidationError):
+            BarClockEvidenceAdapter(DummyBroker(), {"timeline": timeline, "source_sha256": "b" * 64})
+        report = self._report()
+        report["timeline"] = timeline  # rehash so only reproducibility can catch it
+        body = {k: v for k, v in report.items() if k != "source_sha256"}
+        from katarina.research.validation import canonical, sha256_text
+        report["source_sha256"] = sha256_text(canonical(body))
+        with self.assertRaises(ValidationError) as ctx:
+            BarClockEvidenceAdapter(DummyBroker(), report)
+        self.assertEqual(str(ctx.exception), "EVIDENCE_REPORT_TIMELINE_NOT_REPRODUCIBLE")
+
+    def test_samples_must_be_on_calendar_with_lineage(self):
+        off = [{"release_utc": "2024-02-01T13:30:00+00:00", "shift_hours": 2, "bars_sha256": "1" * 64}]
+        with self.assertRaises(ValidationError) as ctx:
+            build_evidence_report(self.CAL, off)
+        self.assertEqual(str(ctx.exception), "EVIDENCE_SAMPLE_OFF_CALENDAR")
+        no_hash = [{"release_utc": "2024-01-05T13:30:00+00:00", "shift_hours": 2, "bars_sha256": ""}]
+        with self.assertRaises(ValidationError) as ctx:
+            build_evidence_report(self.CAL, no_hash)
+        self.assertEqual(str(ctx.exception), "EVIDENCE_SAMPLE_LINEAGE_MISSING")
 
     def test_export_dev_bars_with_evidence_adapter(self):
-        raw_broker = DummyBroker()
-        timeline = [
-            {"start_utc": "2024-01-01T00:00:00+00:00", "end_utc": "2024-10-13T00:00:00+00:00",
-             "shift_hours": 2, "status": "VERIFIED"}
-        ]
-        adapter = BarClockEvidenceAdapter(raw_broker, timeline, "b" * 64)
-
+        adapter = BarClockEvidenceAdapter(DummyBroker(), self._report())
         with tempfile.TemporaryDirectory() as tmpdir:
-            out_path = Path(tmpdir) / "dev-export"
-            start_dt = datetime(2024, 1, 1, tzinfo=timezone.utc)
-            end_dt = datetime(2024, 1, 7, tzinfo=timezone.utc)
-            manifest = export_dev_bars(
-                adapter,
-                core=["EURUSD"],
-                start=start_dt,
-                end=end_dt,
-                out=str(out_path),
-                chunk_days=6
-            )
+            manifest = export_dev_bars(adapter, core=["EURUSD"],
+                                       start=datetime(2024, 1, 1, tzinfo=timezone.utc),
+                                       end=datetime(2024, 1, 7, tzinfo=timezone.utc),
+                                       out=str(Path(tmpdir) / "dev-export"), chunk_days=6)
             self.assertIn("manifest_sha256", manifest)
             self.assertEqual(manifest["stage"], "WP8A_DEVELOPMENT_ONLY")
 
     def test_report_lineage_empty_calendar_and_hash_mismatch(self):
-        empty_csv = "release_date,release_utc,source_url\n"
-        valid_csv = "release_date,release_utc,source_url\n2024-06-07,2024-06-07T12:30:00Z,https://bls.gov\n"
-        samples = [{"release_utc": "2024-06-07T12:30:00+00:00", "shift_hours": 3}]
-
-        # Empty calendar content throws exception
         with self.assertRaises(ValidationError) as ctx:
-            build_evidence_report(empty_csv, samples)
+            build_evidence_report("release_date,release_utc,source_url\n", [])
         self.assertEqual(str(ctx.exception), "CALENDAR_EVIDENCE_EMPTY")
-
-        # Valid report creation with real calendar entry
-        r1 = build_evidence_report(valid_csv, samples)
-
+        r1 = self._report()
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_cal = Path(tmpdir) / "cal.csv"
-            tmp_cal.write_text(valid_csv, encoding="utf-8")
-
+            tmp_cal.write_text(self.CAL, encoding="utf-8")
             tmp_rep = Path(tmpdir) / "report.json"
             tmp_rep.write_text(json.dumps(r1), encoding="utf-8")
-
-            # Successfully loads with matching calendar
-            loaded = load_evidence_report(tmp_rep, calendar_path=tmp_cal)
-            self.assertEqual(loaded["source_sha256"], r1["source_sha256"])
-
-            # Tampering with calendar throws CALENDAR_HASH_MISMATCH
-            tmp_cal.write_text(valid_csv + "2024-07-05,2024-07-05T12:30:00Z,https://bls.gov\n", encoding="utf-8")
+            self.assertEqual(load_evidence_report(tmp_rep, calendar_path=tmp_cal)["source_sha256"],
+                             r1["source_sha256"])
+            tmp_cal.write_text(self.CAL + "2024-07-05,2024-07-05T12:30:00Z,https://www.bls.gov/x\n",
+                               encoding="utf-8")
             with self.assertRaises(ValidationError) as ctx2:
                 load_evidence_report(tmp_rep, calendar_path=tmp_cal)
             self.assertEqual(str(ctx2.exception), "CALENDAR_HASH_MISMATCH")
-
 
 if __name__ == "__main__":
     unittest.main()

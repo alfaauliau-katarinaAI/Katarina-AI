@@ -91,7 +91,8 @@ def release_shift(bars_by_symbol: dict, release_utc: str | datetime) -> int | No
 
     Requires:
       1. Peak tick volume in a +/- 4-hour window falls EXACTLY on the release minute.
-      2. Peak volume is >= 3x the median of surrounding 24 bars (12 before, 12 after).
+      2. Peak volume is >= 3x the median of exactly 24 surrounding bars (12 before, 12 after);
+         a release near the edge of the data, with fewer neighbours, is rejected.
       3. Consensus across >= 2 of EURUSD, USDJPY, XAUUSD with zero conflicts.
 
     Returns shift integer (-12..+14) if valid consensus is established, else None.
@@ -138,7 +139,7 @@ def release_shift(bars_by_symbol: dict, release_utc: str | datetime) -> int | No
             bars_after = parsed_bars[target_idx + 1:min(len(parsed_bars), target_idx + 13)]
             surrounding = bars_before + bars_after
 
-            if len(surrounding) < 12:  # Need adequate surrounding bar context
+            if len(bars_before) != 12 or len(bars_after) != 12:  # full 24-bar context or reject
                 continue
 
             median_vol = statistics.median([b[1] for b in surrounding])
@@ -192,9 +193,6 @@ def shift_timeline(samples: list[dict]) -> list[dict]:
                      end_utc="2026-10-13T00:00:00+00:00",
                      shift_hours=None, status="NO_EVIDENCE")]
 
-    sample_min_dt = clean_samples[0][0]
-    sample_max_dt = clean_samples[-1][0]
-
     # Check for off-calendar shift changes between consecutive samples
     all_transitions = _dst_transition_dates(2020, 2027)
     for i in range(len(clean_samples) - 1):
@@ -242,9 +240,9 @@ def shift_timeline(samples: list[dict]) -> list[dict]:
         b_end = bounds[i + 1]
         mid = b_start + (b_end - b_start) / 2
 
-        # A segment is bounded by samples if there is a sample covering/bounding it
-        # Expand tolerance to 200 days to allow samples across DST transitions
-        segment_bounded = (b_start >= sample_min_dt - timedelta(days=200)) and (b_end <= sample_max_dt + timedelta(days=200))
+        # Fail closed: a DST segment is verified only by a sample measured inside it.
+        # No extrapolation into neighbouring segments (no +/-N day tolerance).
+        segment_bounded = any(b_start <= t < b_end for t, _ in clean_samples)
 
         shifts_at_mid = {fn(mid) for _, fn in matching_rules}
         if len(shifts_at_mid) == 1 and segment_bounded:
@@ -277,10 +275,13 @@ def shift_timeline(samples: list[dict]) -> list[dict]:
 class BarClockEvidenceAdapter:
     """Broker wrapper introducing verified_historical_bar_shift."""
 
-    def __init__(self, broker: object, timeline_segments: list[dict], source_sha256: str):
+    def __init__(self, broker: object, report: dict):
+        # Only a report whose timeline is recomputed from its own samples and whose
+        # hash matches is accepted; an arbitrary hand-written timeline is rejected.
+        verified = verify_report_body(report)
         self._broker = broker
-        self._timeline = timeline_segments
-        self._source_sha256 = source_sha256
+        self._timeline = verified["timeline"]
+        self._source_sha256 = verified["source_sha256"]
 
     def verified_historical_bar_shift(self, symbol: str, timeframe: str, start: datetime | str, end: datetime | str) -> dict:
         start_dt = _utc_dt(start)
@@ -311,16 +312,68 @@ class BarClockEvidenceAdapter:
         return getattr(self._broker, item)
 
 
-def build_evidence_report(calendar_csv_content: str, samples: list[dict]) -> dict:
-    """Generate canonical evidence report dict and lineage SHA256."""
+HEX64 = re.compile(r"[a-f0-9]{64}")
+
+
+def _calendar_releases(calendar_csv_content: str) -> set[datetime]:
     if not calendar_csv_content or not calendar_csv_content.strip():
         raise ValidationError("CALENDAR_EVIDENCE_MISSING")
-
-    # Validate that calendar has at least 1 non-header row
-    lines = [line.strip() for line in calendar_csv_content.strip().splitlines() if line.strip()]
-    if len(lines) <= 1:
+    rows = list(csv.DictReader(calendar_csv_content.strip().splitlines()))
+    if not rows:
         raise ValidationError("CALENDAR_EVIDENCE_EMPTY")
+    releases = set()
+    for row in rows:
+        try:
+            releases.add(_utc_dt(row["release_utc"]))
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValidationError("CALENDAR_ROW_INVALID") from error
+        if not str(row.get("source_url", "")).startswith("https://"):
+            raise ValidationError("CALENDAR_SOURCE_MISSING")
+    return releases
 
+
+def _check_samples(samples, releases: set[datetime]) -> None:
+    if not isinstance(samples, list) or not samples:
+        raise ValidationError("EVIDENCE_SAMPLES_INSUFFICIENT")
+    seen = set()
+    for sample in samples:
+        if not isinstance(sample, dict) or set(sample) != {"release_utc", "shift_hours", "bars_sha256"}:
+            raise ValidationError("EVIDENCE_SAMPLE_INVALID")
+        sh = sample["shift_hours"]
+        if type(sh) is not int or not -12 <= sh <= 14:
+            raise ValidationError("EVIDENCE_SAMPLE_INVALID")
+        if not isinstance(sample["bars_sha256"], str) or HEX64.fullmatch(sample["bars_sha256"]) is None:
+            raise ValidationError("EVIDENCE_SAMPLE_LINEAGE_MISSING")
+        when = _utc_dt(sample["release_utc"])
+        if when not in releases:
+            raise ValidationError("EVIDENCE_SAMPLE_OFF_CALENDAR")
+        if when in seen:
+            raise ValidationError("EVIDENCE_SAMPLE_DUPLICATE")
+        seen.add(when)
+
+
+def verify_report_body(report: dict) -> dict:
+    """Recompute hash and timeline from samples; reject anything that differs."""
+    if not isinstance(report, dict):
+        raise ValidationError("EVIDENCE_REPORT_INVALID")
+    sha = report.get("source_sha256")
+    if not isinstance(sha, str) or HEX64.fullmatch(sha) is None:
+        raise ValidationError("EVIDENCE_REPORT_INVALID_HASH")
+    body = {k: v for k, v in report.items() if k != "source_sha256"}
+    if sha256_text(canonical(body)) != sha:
+        raise ValidationError("EVIDENCE_REPORT_HASH_MISMATCH")
+    if body.get("schema_version") != 1 or body.get("sample_count") != len(body.get("samples") or []):
+        raise ValidationError("EVIDENCE_REPORT_INVALID")
+    if body.get("timeline") != shift_timeline(body.get("samples")):
+        raise ValidationError("EVIDENCE_REPORT_TIMELINE_NOT_REPRODUCIBLE")
+    if not any(seg.get("status") == "VERIFIED" for seg in body["timeline"]):
+        raise ValidationError("EVIDENCE_SAMPLES_INSUFFICIENT")
+    return report
+
+
+def build_evidence_report(calendar_csv_content: str, samples: list[dict]) -> dict:
+    """Generate canonical evidence report dict and lineage SHA256."""
+    _check_samples(samples, _calendar_releases(calendar_csv_content))
     cal_hash = sha256_text(calendar_csv_content)
     timeline = shift_timeline(samples)
 
@@ -350,28 +403,13 @@ def load_evidence_report(path: str | Path, calendar_path: str | Path = DEFAULT_C
     if not isinstance(data, dict):
         raise ValidationError("EVIDENCE_REPORT_INVALID")
 
-    sha = data.get("source_sha256")
-    if not isinstance(sha, str) or re.fullmatch(r"[a-fA-F0-9]{64}", sha) is None:
-        raise ValidationError("EVIDENCE_REPORT_INVALID_HASH")
-
-    body = {k: v for k, v in data.items() if k != "source_sha256"}
-    if sha256_text(canonical(body)) != sha:
-        raise ValidationError("EVIDENCE_REPORT_HASH_MISMATCH")
-
     cal_p = Path(calendar_path)
     if not cal_p.is_file():
         raise ValidationError("CALENDAR_FILE_NOT_FOUND")
-
     cal_content = cal_p.read_text(encoding="utf-8")
-    lines = [line.strip() for line in cal_content.strip().splitlines() if line.strip()]
-    if len(lines) <= 1:
-        raise ValidationError("CALENDAR_EVIDENCE_EMPTY")
-
+    releases = _calendar_releases(cal_content)
+    verify_report_body(data)
     if sha256_text(cal_content) != data.get("calendar_sha256"):
         raise ValidationError("CALENDAR_HASH_MISMATCH")
-
-    timeline = data.get("timeline")
-    if not isinstance(timeline, list) or not any(s.get("status") == "VERIFIED" for s in timeline if isinstance(s, dict)):
-        raise ValidationError("EVIDENCE_REPORT_INVALID_TIMELINE")
-
+    _check_samples(data["samples"], releases)
     return data

@@ -41,7 +41,7 @@ def main(argv=None) -> int:
     broker_target = mt5
     if args.clock_evidence:
         report = load_evidence_report(args.clock_evidence)
-        broker_target = BarClockEvidenceAdapter(mt5, report["timeline"], report["source_sha256"])
+        broker_target = BarClockEvidenceAdapter(mt5, report)
 
     try:
         manifest = export_dev_bars(broker_target, universe.core, start=start,

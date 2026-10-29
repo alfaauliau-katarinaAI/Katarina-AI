@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — WP8c: bukti jam bar historis fail-closed (#230)
+
+- Modul baru `katarina.research.bar_clock_evidence` (Jules) dengan perbaikan review Claude: lonjakan volume M5 wajib punya **24 bar** sekitar (12+12) atau ditolak; segmen DST hanya `VERIFIED` bila ada sampel yang diukur **di dalam segmen itu** (perpanjangan ±200 hari dihapus); sampel wajib ada di kalender rilis (`source_url` https) dan membawa `bars_sha256`; `BarClockEvidenceAdapter` kini menerima laporan, menghitung ulang hash **dan** timeline dari sampel, serta menolak timeline tulisan tangan atau yang di-hash ulang.
+- `config/research/us_release_calendar.csv` masih kosong (hanya header) → ekspor development tetap ditolak sampai kalender resmi dan laporan sampel dibuat. Status: CODE DONE, belum ada bukti nyata; tidak menyentuh holdout, VPS, atau berkas terkunci. LIVE OFF.
+
 ## 2026-10-30 — WP10b: swap dan sensitivitas biaya di alat validasi (#225)
 
 - Modul `katarina.research.validation`: `CostModel` menambah `swap_long_per_night`, `swap_short_per_night`, dan `triple_swap_weekday` (default 0 dan 2, backward compatible). Rollover dihitung pukul 17:00 waktu New York (21:00 UTC saat DST AS, 22:00 UTC di luar DST AS) memakai ulang helper `_nth_sunday` dari `data_health.py` untuk posisi terbuka `entry_at < rollover <= exit_at`. Swap kredit ditulis nol (konservatif).
