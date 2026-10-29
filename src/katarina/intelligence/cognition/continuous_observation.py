@@ -28,9 +28,7 @@ FATAL_BINDING = frozenset(('ACCOUNT_LOGIN_MISMATCH', 'ACCOUNT_SERVER_MISMATCH',
 
 # Missing market metadata is retryable; permission, identity and unknown errors stay fatal.
 RECOVERABLE_SENSOR = frozenset(('BROKER_CATALOG_NOT_FOUND',
-    'NO_ELIGIBLE_BROKER_SYMBOLS', 'BROKER_CLOCK_NOT_VERIFIED',
-    'CLOCK_EVIDENCE_MISSING_OR_INVALID',
-    'CLOCK_EVIDENCE_EXPIRED_OR_WRONG_BROKER'))
+    'NO_ELIGIBLE_BROKER_SYMBOLS', 'BROKER_CLOCK_NOT_VERIFIED'))
 
 
 def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
@@ -217,13 +215,7 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
             if demo is not None and not stop.exists():
                 status["demo_forward"]=demo.step()
             # No overlapping passes or catch-up bursts. Stop latency while idle <=1s.
-            # Clock evidence may arrive via operator review at any moment. Keep
-            # one bounded check each interval while recording failed cycles;
-            # never label missing evidence as successful market observation.
-            delay = (interval_seconds if fault in (
-                'CLOCK_EVIDENCE_MISSING_OR_INVALID',
-                'CLOCK_EVIDENCE_EXPIRED_OR_WRONG_BROKER') else
-                min(3600, interval_seconds * 2 ** min(status['consecutive_failures'], 4)))
+            delay = min(3600, interval_seconds * 2 ** min(status['consecutive_failures'], 4))
             deadline = time.monotonic() + delay
             for idle_second in range(delay):
                 if stop.exists():

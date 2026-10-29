@@ -330,15 +330,8 @@ class BrainObserver:
             if t is not None and t.bid>0 and t.ask>=t.bid},
             now.timestamp(),
             evidence=evidence,
-            broker_server=broker_server,
-            require_evidence=True)
+            broker_server=broker_server)
         if not clock.suitable_for_readonly_snapshot:
-            # The canonical Stage-0 observer may not certify a UTC timestamp
-            # from quote agreement alone. Missing/expired broker evidence is a
-            # recoverable DATA failure, not an excuse to infer a timezone.
-            if clock.reason in ("CLOCK_EVIDENCE_MISSING_OR_INVALID",
-                                "CLOCK_EVIDENCE_EXPIRED_OR_WRONG_BROKER"):
-                raise RuntimeError(clock.reason)
             raise RuntimeError("BROKER_CLOCK_NOT_VERIFIED")
         emit('SENSORS','DONE',count=len(symbols))
         offset=clock.observed_hours_shift
