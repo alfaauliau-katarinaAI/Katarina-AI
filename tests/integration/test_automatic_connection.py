@@ -16,6 +16,7 @@ from katarina.adapters.readonly_cloud import (
 )
 from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from tests.integration.test_brain_owned_workflow import SyntheticBroker
+from tests.integration.clock_fixture import seed_synthetic_clock
 
 TOKEN='test-only-sensor-token-not-for-production-12345678'
 
@@ -23,7 +24,7 @@ TOKEN='test-only-sensor-token-not-for-production-12345678'
 class AccountBroker(SyntheticBroker):
     def account_info(self):
         base=super().account_info()
-        return SimpleNamespace(**vars(base),login=123,server='Test-Demo')
+        return SimpleNamespace(**{**vars(base), 'login':123, 'server':'Test-Demo'})
 
 
 def config(**kwargs):
@@ -33,6 +34,7 @@ def config(**kwargs):
 class AutomaticConnectionTests(unittest.TestCase):
     def test_no_identity_configuration_runs_offline_without_probing(self):
         with tempfile.TemporaryDirectory() as root:
+            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
             result=run_connected(UnifiedKatarinaBrain,root,factories={})
             self.assertEqual(result['connection']['route'],'offline')
             self.assertEqual(result['orders_submitted'],0)
@@ -63,6 +65,7 @@ class AutomaticConnectionTests(unittest.TestCase):
             if change == 'server':
                 native.account_info = lambda: SimpleNamespace(login=123, server='private-server')
             with tempfile.TemporaryDirectory() as root:
+            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
                 result = run_connected(UnifiedKatarinaBrain, root,
                     config=config(priority=('local',), attempts=1),
                     factories={'local': lambda c: BoundLocalBroker(native, c)})
@@ -75,6 +78,7 @@ class AutomaticConnectionTests(unittest.TestCase):
         def missing(c):
             raise ImportError('private path must not be exposed')
         with tempfile.TemporaryDirectory() as root:
+            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
             result = run_connected(UnifiedKatarinaBrain, root,
                 config=config(priority=('local',), attempts=1), factories={'local':missing})
         self.assertEqual(result['connection']['attempts'][0]['reason'], 'LOCAL_MT5_PACKAGE_UNAVAILABLE')
@@ -85,6 +89,7 @@ class AutomaticConnectionTests(unittest.TestCase):
         native = AccountBroker()
         native.copy_rates_from_pos = lambda *a: None
         with tempfile.TemporaryDirectory() as root:
+            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
             result = run_connected(UnifiedKatarinaBrain, root,
                 config=config(priority=('local',)), fetch_news=False,
                 factories={'local':lambda c:BoundLocalBroker(native,c)})
@@ -111,6 +116,7 @@ class AutomaticConnectionTests(unittest.TestCase):
     def test_local_preferred_only_one_route_used(self):
         native=AccountBroker()
         with tempfile.TemporaryDirectory() as root:
+            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
             result=run_connected(UnifiedKatarinaBrain,root,config=config(),fetch_news=False,
                 factories={'local':lambda c:BoundLocalBroker(native,c),
                            'cloud':lambda c:self.fail('second route must not be opened')})
@@ -123,6 +129,7 @@ class AutomaticConnectionTests(unittest.TestCase):
         def offline(c): raise ConnectionUnavailable('unavailable')
         def cloud(c): return CloudReadOnlyBroker('https://localhost',TOKEN,c,exchange=server.dispatch)
         with tempfile.TemporaryDirectory() as root:
+            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
             result=run_connected(UnifiedKatarinaBrain,root,config=config(attempts=1),fetch_news=False,
                                  factories={'local':offline,'cloud':cloud})
             self.assertEqual(result['connection']['route'],'cloud')
@@ -137,6 +144,7 @@ class AutomaticConnectionTests(unittest.TestCase):
         def fail(c):
             calls.append(1); raise ConnectionUnavailable(TOKEN)
         with tempfile.TemporaryDirectory() as root:
+            seed_synthetic_clock(root, server='Test-Demo', shift_hours=3)
             result=run_connected(UnifiedKatarinaBrain,root,config=config(),factories={'local':fail,'cloud':fail})
             self.assertEqual(len(calls),4)
             self.assertEqual(result['connection']['route'],'offline')
