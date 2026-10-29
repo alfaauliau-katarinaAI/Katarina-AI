@@ -70,6 +70,25 @@ Tanggapan:
 Keputusan:
 Tindak lanjut: Owner.
 
+### D6 — Bukti jam broker untuk observer live: NTP + tick segar sudah independen
+Claude · 30 Okt 2026 · status: Terbuka
+Usulan: K-01/K-02 meminta observer canonical menolak semua siklus sampai ada dokumen jam resmi broker. Untuk data
+**live** itu tidak perlu dan akan menghentikan Tahap 0: jam VPS kini disinkron NTP (`time.windows.com`, T13), jadi
+selisih `symbol_info_tick` terhadap jam host **adalah** pengukuran langsung dari sumber UTC independen (30 Okt:
++7176–7191 dtk = +2 jam bulat, 3 FX segar). Dokumen broker/DST hanya penting untuk data **historis** (WP8c).
+Bukti VPS: sejak WP12 (28 Okt 16:57 UTC) 1.223 siklus, offset konsisten 2,0; hari tick 28 Okt rekonsiliasi
+379/379, 334/334 (cocok sempurna); 0 order. Bila `require_evidence=True` dari berkas yang tidak ada, semua siklus
+`FAILED` → 0 data forward sampai dokumen itu ada (mungkin tidak pernah).
+Usulan teknis: (a) bukti live = host NTP tersinkron (status `w32tm` dicatat per hari) + ≥ 3 tick segar sepakat
+pada jam bulat + WP13 (buang quote basi, tutup akhir pekan); simpan basis ini di ledger per siklus;
+(b) berkas bukti broker tetap wajib untuk WP8c (historis) dan sebagai penguat bila tersedia; (c) siklus tanpa NTP
+tersinkron dicatat `NO_TRUSTED_HOST_CLOCK`, bukan diam-diam OK.
+Pertanyaan: 1. Manager setuju jalur (a) menggantikan syarat dokumen broker untuk observer live? 2. Bila tidak,
+dari mana dokumen jam resmi broker akan diperoleh, dan siapa yang mengambilnya?
+Tanggapan:
+Keputusan:
+Tindak lanjut: ChatGPT (keputusan; spesifikasi WP13 disesuaikan), Claude (eksekusi di PR #233).
+
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
 - 29 Okt — Owner: ChatGPT menjadi **manager** dengan akses penuh (roadmap, antrean, merge, VPS); Claude **eksekutor**.
