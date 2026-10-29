@@ -7,6 +7,28 @@
 - `check_stage0_health.py --since` membatasi penilaian baca-saja; agregat tick hari awal parsial tidak diklaim terverifikasi.
 - Tidak ada berkas terkunci diubah; LIVE tetap OFF; tidak mengubah VPS.
 
+## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
+
+- Hapus dokumen eksperimen portfolio yang tidak dirujuk dan menunjuk modul/skrip yang telah dipensiunkan.
+- Hapus laporan perapian 15 Okt yang deskripsinya sudah digantikan aturan perapian terkini; sesuaikan rujukan CLAUDE.
+- Tambahkan peta dokumentasi `docs/README.md` untuk menemukan roadmap, status, panduan dan bukti.
+
+## 2026-10-29 — peran baru: ChatGPT manager, Claude eksekutor
+
+- Keputusan Owner: ChatGPT memegang roadmap, antrean, spesifikasi, review/merge dan VPS dengan akses penuh; Claude
+  mengeksekusi rencana ChatGPT. Tabel "Boleh dan tidak boleh" diganti tabel akses + aturan tetap Owner (LIVE OFF,
+  Risk Governor/35%, gerbang promosi, holdout, kenaikan kewenangan). R0, R6.0, rapat dan `CLAUDE.md` disesuaikan.
+- Rapat D1 (izin tulis GitHub ChatGPT) selesai: branch dan PR #213 berhasil dibuat.
+
+## 2026-10-29 — review usulan agentic AI; ruang diskusi roadmap
+
+- Arah lanjutan: hasil review kesiapan agentic AI (P1–P5 dipetakan ke yang sudah ada / belum terbukti / perlu
+  dibangun), usulan WP14 auditor data baca-saja (menunggu Owner), urutan dan ukuran keberhasilan berangka.
+- Berkas baru `docs/ROADMAP_DISCUSSION.md`: pelaksana boleh mengusulkan perubahan roadmap lewat PR khusus berkas itu;
+  Claude memutuskan dan memindahkan hasilnya ke roadmap. Berkas itu menjadi rapat tertulis (peserta, kewenangan,
+  format topik, agenda D1–D3, keputusan terakhir).
+- WP14 disetujui Owner (29 Okt): spesifikasi R4, perintah R6, antrean #6 setelah WP13 dan WP8c. Gerbang tidak berubah.
+
 ## 2026-10-29 — roadmap dirapikan: aturan pelaksana dan antrean kerja
 
 - "Mulai di sini" kini memuat antrean kerja berurutan (WP13 → WP8c → WP10b → WP10a → WP4), batas dua PR terbuka,
