@@ -71,6 +71,7 @@ class ClockFinding:
     evidence: ClockEvidence | None = None
     broker_server: str | None = None
     observed_utc_epoch: float | None = None
+    reason: str = 'CLOCK_NOT_EVALUATED'
 
 
 def infer_clock_shift(tick_epoch_by_symbol: Mapping[str, int], observed_utc_epoch: float,
@@ -88,8 +89,12 @@ def infer_clock_shift(tick_epoch_by_symbol: Mapping[str, int], observed_utc_epoc
     ticks = {s:t for s,t in tick_epoch_by_symbol.items() if s and type(t) is int and t > 0}
     closed = (now.weekday() == 4 and now.hour >= 20 or now.weekday() == 5
               or now.weekday() == 6 and now.hour < 21)
-    if closed or not isinstance(evidence, ClockEvidence) or not evidence.valid_at(now, broker_server):
-        return ClockFinding(None, len(ticks), 0, 0., False)
+    if closed:
+        return ClockFinding(None, len(ticks), 0, 0., False, reason='FX_MARKET_CLOSED')
+    if not isinstance(evidence, ClockEvidence):
+        return ClockFinding(None, len(ticks), 0, 0., False, reason='CLOCK_EVIDENCE_MISSING_OR_INVALID')
+    if not evidence.valid_at(now, broker_server):
+        return ClockFinding(None, len(ticks), 0, 0., False, reason='CLOCK_EVIDENCE_EXPIRED_OR_WRONG_BROKER')
     fresh, stale = [], []
     for symbol, stamp in ticks.items():
         age = observed_utc_epoch - (stamp - evidence.shift_hours * 3600)
@@ -101,7 +106,8 @@ def infer_clock_shift(tick_epoch_by_symbol: Mapping[str, int], observed_utc_epoc
     valid = len(fresh) >= min_symbols and fraction >= majority_fraction
     return ClockFinding(evidence.shift_hours if valid else None, len(ticks), len(fresh),
         fraction, valid, stale_symbols=tuple(sorted(stale)), evidence=evidence,
-        broker_server=broker_server, observed_utc_epoch=observed_utc_epoch)
+        broker_server=broker_server, observed_utc_epoch=observed_utc_epoch,
+        reason='CLOCK_VERIFIED' if valid else 'INSUFFICIENT_FRESH_QUOTES')
 
 
 # Canonical event-time conversion contract, recorded by the existing observer.
