@@ -2,27 +2,27 @@
 
 **Keputusan Owner, 29 Oktober 2026:** GitHub adalah sumber resmi kode dan dokumentasi. VPS hanya untuk testing; deployment atau migrasi VPS baru perlu persetujuan Owner. Gunakan berkas yang sudah ada, hindari duplikasi.
 
+## Tiga jalur utama perjalanan proyek (keputusan Owner, 30 Oktober 2026)
+
+| Kebutuhan | Satu tempat | Tidak boleh ditaruh di sini |
+|---|---|---|
+| **Perjalanan Katarina** — tujuan, tahap, milestone, urutan paket, dependensi, acceptance, progres gerbang | [ROADMAP.md](ROADMAP.md) | Transkrip meeting, diagnosis harian, log perubahan per commit |
+| **MEETING** — ide, usulan, keberatan dan pertanyaan yang **belum diputuskan** | [ROADMAP_DISCUSSION.md](ROADMAP_DISCUSSION.md) | Antrean pengerjaan paralel, klaim perbaikan selesai |
+| **HASIL PERBAIKAN** — masalah sebelum/sesudah, akar penyebab, kode yang diubah, PR/commit, CI/VPS, sisa risiko | [REPAIR_HISTORY.md](REPAIR_HISTORY.md) | Ide belum disetujui, pekerjaan yang belum dikerjakan, status heartbeat saat ini |
+
+**Dokumen pendukung tetap dipertahankan:** [PROJECT_STATUS.md](PROJECT_STATUS.md) = **satu-satunya status operasional terakhir**; [CHANGELOG.md](../CHANGELOG.md) = ringkasan teknis perubahan **per PR/commit**; [CLAUDE.md](../CLAUDE.md) = instruksi cepat untuk pelaksana; [KATARINA_CONSTITUTION.md](../KATARINA_CONSTITUTION.md) = aturan beku. Ketiganya tidak menjadi arsip perbaikan kedua.
+
 ## Urutan baca hemat token
 
-1. [CLAUDE.md](../CLAUDE.md) — orientasi singkat dan aturan pelaksana.
-2. [PROJECT_STATUS.md](PROJECT_STATUS.md) — **satu-satunya status operasional**; baca bagian relevan.
-3. [ROADMAP.md](ROADMAP.md) — **satu-satunya antrean pekerjaan, prioritas dan acceptance**; baca paket aktif.
-4. [ROADMAP_DISCUSSION.md](ROADMAP_DISCUSSION.md) — rapat, opsi, keputusan tertunda; **bukan daftar kerja kedua**.
-5. [CHANGELOG.md](../CHANGELOG.md) — perubahan terverifikasi, dengan bukti commit/PR.
-6. [KATARINA_CONSTITUTION.md](../KATARINA_CONSTITUTION.md) — aturan tertinggi, FROZEN.
+1. [CLAUDE.md](../CLAUDE.md) — orientasi singkat dan batas kewenangan.
+2. [PROJECT_STATUS.md](PROJECT_STATUS.md) — kondisi operasional terbaru, bukan sejarah.
+3. [ROADMAP.md](ROADMAP.md) — tahap perjalanan, paket prioritas dan acceptance yang sudah disetujui.
+4. [ROADMAP_DISCUSSION.md](ROADMAP_DISCUSSION.md) — baca hanya agenda meeting yang belum final.
+5. [REPAIR_HISTORY.md](REPAIR_HISTORY.md) — riwayat perbaikan dan bukti sebelum/sesudah.
+6. [CHANGELOG.md](../CHANGELOG.md) — ringkasan perubahan teknis bila perlu detail commit.
+7. [KATARINA_CONSTITUTION.md](../KATARINA_CONSTITUTION.md) — aturan tertinggi, FROZEN.
 
-## Batas fungsi dokumen
-
-| Informasi | Dokumen kanonis |
-|---|---|
-| Misi dan prinsip risiko beku | `KATARINA_CONSTITUTION.md` |
-| Spesifikasi yang telah disetujui | Bagian tetap `ROADMAP.md`, `architecture/`, `adr/` |
-| Pekerjaan, prioritas, dependensi, acceptance | `ROADMAP.md` |
-| Agenda rapat dan alternatif belum final | `ROADMAP_DISCUSSION.md` |
-| Status aktual, blocker dan langkah berikutnya | `PROJECT_STATUS.md` |
-| Riwayat perubahan kecil, alasan, file, tes, rollback, commit | `CHANGELOG.md` dan riwayat PR |
-
-**Alur:** rapat di ROADMAP_DISCUSSION → persetujuan Owner untuk perubahan besar → keputusan final ditulis sekali di dokumen kanonis → implementasi melalui PR dan CI → bukti di CHANGELOG, status singkat di PROJECT_STATUS. Tidak ada DONE tanpa bukti. Perubahan kecil boleh dilakukan tanpa persetujuan baru hanya bila tidak mengubah aturan yang dibekukan dan wajib tercatat.
+**Alur tunggal:** usulan belum final → **MEETING** → keputusan berwenang → **ROADMAP** (target/paket) → PR + CI → **REPAIR_HISTORY** (bila benar ada perbaikan dengan bukti) dan **CHANGELOG** (ringkasan teknis) → **PROJECT_STATUS** (snapshot kondisi saat ini). Tidak ada DONE tanpa bukti. Keputusan tidak diubah lewat meeting saja; aturan beku tetap membutuhkan persetujuan Owner.
 
 **Master Blueprint:** belum dibuat. Jangan menduplikasi persyaratan, arsitektur, atau acceptance yang sudah tercatat. Satu dokumen blueprint baru hanya boleh dibuat setelah pemetaan isi dan review Owner.
 
