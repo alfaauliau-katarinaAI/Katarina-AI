@@ -19,7 +19,8 @@ class PCSimulationBroker:
     def shutdown(self): self.closed=True
     def terminal_info(self): return SimpleNamespace(connected=True,trade_allowed=False)
     def account_info(self):
-        return SimpleNamespace(balance=10000.,equity=10000.,margin=0.,margin_free=10000.,trade_mode=0)
+        return SimpleNamespace(balance=10000.,equity=10000.,margin=0.,margin_free=10000.,trade_mode=0,
+                               server='SYNTHETIC_PC_ONLY')
     def positions_get(self): return ()
     def orders_get(self): return ()
     def history_deals_get(self,*args): return ()
