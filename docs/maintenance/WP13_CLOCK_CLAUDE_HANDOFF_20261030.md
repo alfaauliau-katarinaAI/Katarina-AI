@@ -54,3 +54,41 @@ Pemeriksaan **30 Okt 2026 sekitar 04:04–04:14 WIB**, melalui Desktop Commander
 ### Instruksi singkat agar Claude tidak mengulang audit dari nol
 
 Baca file ini → `docs/ROADMAP.md` WP13 dan aturan Tahap0 → PR [#233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233) terbaru → `src/katarina/intelligence/cognition/observer.py` dan `broker_clock_alignment.py` → verifikasi hasil tes/CI → cek VPS hanya read-only dahulu. Jika hasil coding sudah berubah, **audit HEAD baru**, bukan asumsi commit sebelumnya. Catat hasil terverifikasi, bukan klaim Jules semata.
+
+## 6. Pembaruan manager — 30 Okt 2026 pukul 04:57–04:59 WIB
+
+**Status akhir pemeriksaan: WP13 masih BLOCKED, belum aman di-merge atau diterapkan.** Ini adalah hasil audit baru, bukan konfirmasi bahwa perbaikan telah selesai.
+
+### Bukti GitHub terbaru
+
+- PR [#233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233), HEAD saat dicek: `cd52d4a3ea62df233ba036ef688f28178f8ee224`, `mergeable=false`, **belum memiliki run CI untuk SHA tersebut**.
+- Commit patch pengamanan manager **`2e504d3`** sempat menambahkan `require_evidence=True` di jalur observer, validasi sumber evidence privat beserta SHA dan batas DST, serta penanganan kegagalan yang dapat dipulihkan. Namun versi HEAD PR terbaru **tidak mempertahankan patch tersebut**: canonical observer kembali memanggil `infer_clock_shift` dengan argumen `evidence` dan `broker_server` saja. Apabila evidence file tidak ada, default `require_evidence=False` membuka fallback voting quote tanpa bukti.
+- Ubuntu CI **run 40957973876 / job 123743617390** sebelumnya gagal pada 13 test integrasi/PC yang menjalankan `FakeBroker` tanpa fixture evidence/source. Perbaikannya adalah fixture sintetis **hanya untuk tes**, tidak boleh menonaktifkan guard runtime.
+- Instruksi perbaikan baru kepada Jules ada pada [komentar manager #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233#issuecomment-6509287195). Jangan mengulang siklus revert/fix: audit diff HEAD terhadap `2e504d3` sebelum merge.
+
+### Bukti VPS paling mutakhir (read-only)
+
+Pada pemeriksaan **30 Oktober sekitar 04:59 WIB**:
+
+| Parameter | Nilai |
+|---|---|
+| Scheduled task | `Katarina-Readonly-Observer` **Running** |
+| Kode VPS | `C:\Katarina\code` commit **`64497b5`** (belum di-deploy WP13) |
+| Total siklus tercatat | **274** |
+| Status observer | **DEGRADED** |
+| Penyebab yang tercatat | **`BROKER_CLOCK_NOT_VERIFIED`** |
+| Kegagalan beruntun | **1** |
+| Heartbeat | **2026-10-29T21:57:52.653100+00:00** |
+| Order terkirim | **0** |
+| Evidence file privat | **TIDAK ADA** di state observer resmi |
+
+Status DEGRADED adalah snapshot sesaat, bukan bukti kegagalan permanen. Windows UTC dan WIB sebelumnya menunjukkan selisih yang tepat; offset broker empiris +2 jam **belum** mengesahkan DST atau asal waktu secara independen. Jangan menghasilkan evidence produksi dari angka tebakan ini.
+
+### Acceptance dan instruksi Claude yang belum boleh dilewati
+
+1. **Review & perbaiki HEAD WP13 PR #233 yang sama.** Pastikan canonical observer menegakkan `require_evidence=True`, memvalidasi sumber evidence asli (bukan format SHA saja), broker identity, validitas waktu dan DST. Bila tidak ada evidence, beri status beralasan `CLOCK_EVIDENCE_MISSING_OR_INVALID` atau `PENDING_INDEPENDENT_BROKER_EVIDENCE`; jangan menulis snapshot/tick sebagai UTC terverifikasi. Worker resmi harus tetap dapat pulih/menulis ledger kegagalan, tanpa menjalankan order.
+2. **Pulihkan tes integrasi melalui fixture valid**, termasuk FakeBroker, tanpa bypass runtime. Uji tidak ada/korup/expired/wrong-broker/source palsu/DST/universe, restart dan recovery; validasi `--since 2026-10-28T16:57:00+00:00` agar semua kriteria Stage0 benar memfilter cutoff. Setelah itu regenerasi manifest, pastikan CI Body/Ubuntu/Windows **pada HEAD final**, mergeable=true, review independen bersih.
+3. **Tidak ada deployment WP13 sampai bukti broker privat spesifik server dan masa berlaku benar-benar diperoleh dan direview**, lalu rencanakan backup dan deployment terkendali agar run 10 hari tidak terputus tanpa catatan. Risiko 10 hari forward dan rekonsiliasi tidak dapat diselesaikan hanya oleh Jules.
+4. Setelah merge+deploy aman dan hasil nyata tersedia, isi `docs/REPAIR_HISTORY.md`, `docs/PROJECT_STATUS.md`, dan tabel R5 Roadmap dengan SHA CI, SHA code VPS, status ledger, waktu, dan sisa blocker. **Jangan mengklaim PASS Tahap 0 ataupun membuka DEMO/LIVE** hanya karena CI lulus.
+
+**Putusan manager:** `CODE_REVIEW_BLOCKED` + `DEPLOY_BLOCKED_PENDING_PRIVATE_BROKER_EVIDENCE`. Tugas coding Jules masih aktif. Claude dapat menggunakan dokumen ini sebagai handoff tanpa menebak progress.
