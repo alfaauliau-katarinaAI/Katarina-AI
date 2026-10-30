@@ -239,6 +239,23 @@ Tindak lanjut:
 
 **Tindak lanjut:** manager memastikan satu jalur penulis PR #233 stabil; reviewer independen mengaudit SHA hasil pemulihan; Owner menentukan izin NTP VPS, aturan proteksi branch, dan pengubahan kriteria rollover. Sampai saat itu **LIVE OFF, 0 order, Risk Governor/promotion_lock/holdout tidak berubah; tidak ada deploy, restart, atau perubahan VPS**.
 
+
+#### D7 — Persetujuan Owner dan bukti pelaksanaan (31 Okt 2026)
+
+**Persetujuan eksplisit Owner (pesan 31 Okt 2026):**
+1. **D7-M12 — Keputusan eksplisit Owner: SETUJU menghentikan task Jules WP13.** Pause task existing sebelum menulis ulang PR #233. Jangan delete task, jangan mengaktifkan kembali writer sandbox lama atau membuat PR WP13 paralel. **Status UI Paused belum terverifikasi** karena koneksi yang tersedia tidak memiliki kontrol UI Jules; persetujuan ini bukan bukti pause telah dilakukan.
+2. **D7-M13 — SETUJU perubahan konfigurasi NTP VPS** dengan backup, rollback, dan validasi; **TIDAK** mencakup deploy WP13, restart observer, pengiriman order atau izin trading. Batas kepercayaan kode 14.400 detik tidak diturunkan. Perubahan yang diizinkan terbatas pada pengaturan Windows Time (mis. MaxPollInterval=13), mempertahankan sumber NTP tepercaya dan verifikasi sinkronisasi aktual berulang.
+3. **D7-M14 — SETUJU kewajiban minimal satu approval independen untuk merge ke `main`.** Terapkan melalui kontrol branch protection/ruleset setelah akses pengaturan yang sah tersedia, sertakan required CI, dismiss stale approvals dan penolakan force-push; jangan klaim sudah aktif sebelum diverifikasi.
+4. **D7-M15 — SETUJU paket perubahan rollover Stage0 TERPISAH.** Pakai model waktu 17:00 `America/New_York`, uji perubahan DST dan efek denominator. Pelaksanaan dilakukan hanya setelah desain, tes dan review untuk paket terpisah; **tidak** mengubah data historis atau hasil Stage0 secara retroaktif.
+
+**Bukti tindakan dan batas status (bukan approval deploy):**
+- Pengaturan VPS Windows Time **sudah diubah** secara terkontrol dari MaxPollInterval 15 (32.768 s) menjadi 13 (8.192 s), sesudah backup registry/config/status/peers disimpan pada direktori privat di VPS. Windows Time Service tetap RUNNING; perintah `w32tm /config /update` serta `w32tm /resync /rediscover` exit 0. Sumber NTP lama dipertahankan. Status setelah resync menunjukkan usia 0 detik, tetapi `State Machine: 1 (Hold)`, belum `2 (Sync)`; **WP13 host clock trust belum dinyatakan PASS** sampai evaluasi berikutnya dan pemantauan berulang menunjukkan state valid. Detail lokasi backup disimpan privat, bukan dipublikasikan di dokumen ini.
+- Pengaturan approval GitHub **belum diterapkan**: API koneksi GitHub untuk branch protection tidak memberikan akses admin settings. Dibutuhkan akun/operator yang berwenang melalui antarmuka GitHub atau alat administrasi yang sah. Review manusia pada SHA baru tetap wajib secara prosedural.
+- Task Jules existing **belum terverifikasi paused**. PR #233 HEAD regresif `35323998` masih MERGE BLOCKED. Tidak ada restorasi/force-push/merge/deploy yang diotorisasi dari persetujuan ini.
+- **Keselamatan**: LIVE OFF, 0 order, Risk Governor, promotion_lock, holdout, observer dan MT5 runtime tidak diubah; NTP system configuration adalah satu-satunya perubahan VPS yang dilakukan.
+
+**Langkah berikutnya:** pastikan Jules task `5365169223632429294` Paused dengan bukti UI; periksa ulang W32Time `State=Sync`, sumber, stratum, Last Sync Error, age, phase offset pada beberapa interval; aktifkan branch protection menggunakan admin GitHub; setelah writer stabil, pulihkan PR #233 dan minta review ulang SHA final. Rollover ditangani lewat paket sendiri tanpa perubahan data Stage0 lama.
+
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
