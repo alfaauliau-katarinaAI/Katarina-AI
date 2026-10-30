@@ -23,7 +23,7 @@ TOKEN='test-only-sensor-token-not-for-production-12345678'
 class AccountBroker(SyntheticBroker):
     def account_info(self):
         base=super().account_info()
-        return SimpleNamespace(**(vars(base) | dict(login=123,server='Test-Demo')))
+        return SimpleNamespace(**vars(base),login=123,server='Test-Demo')
 
 
 def config(**kwargs):
@@ -278,14 +278,3 @@ class AutomaticConnectionTests(unittest.TestCase):
             with self.subTest(route=route), self.assertRaises(ConnectionUnavailable):
                 adapter.symbols_get()
             adapter.shutdown()
-
-
-# This synthetic suite patches only its observer call sites and restores them.
-from tests.synthetic_clock_fixture import ModuleClockFixture
-_clock_fixture = ModuleClockFixture()
-
-def setUpModule():
-    _clock_fixture.start()
-
-def tearDownModule():
-    _clock_fixture.stop()

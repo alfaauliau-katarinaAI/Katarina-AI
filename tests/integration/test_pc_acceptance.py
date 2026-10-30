@@ -82,14 +82,3 @@ class PCAcceptanceTests(unittest.TestCase):
             self.assertEqual(report['route'],'local')
             self.assertFalse(report['profitability_proven'])
             self.assertTrue((Path(tmp)/'readonly-observer/latest.json').exists())
-
-
-# This synthetic suite patches only its observer call sites and restores them.
-from tests.synthetic_clock_fixture import ModuleClockFixture
-_clock_fixture = ModuleClockFixture()
-
-def setUpModule():
-    _clock_fixture.start()
-
-def tearDownModule():
-    _clock_fixture.stop()
