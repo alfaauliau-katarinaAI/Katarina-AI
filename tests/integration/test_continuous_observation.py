@@ -88,6 +88,21 @@ class ContinuousObservationTests(unittest.TestCase):
         self.assertEqual(len(self.instances), 1)
         self.assertEqual(result['consecutive_failures'], 0)
 
+    def test_clock_recovery_polling_remains_within_five_minutes(self):
+        calls, idle = [], []
+        original = self.Brain.observe_connected_market
+        def observe(brain, *args, **kwargs):
+            calls.append(1)
+            if len(calls) == 1:
+                raise RuntimeError('NO_TRUSTED_HOST_CLOCK')
+            return original(brain, *args, **kwargs)
+        with patch.object(self.Brain, 'observe_connected_market', observe):
+            result = run_continuous(self.root, config=CONFIG, brain_type=self.Brain,
+                factories={'local':lambda _:Sensor()}, wait=lambda _:idle.append(1),
+                interval_seconds=3600, max_cycles=2)
+        self.assertEqual(result['successful_cycles'], 1)
+        self.assertEqual(len(idle), 300)
+
     def test_idle_terminal_connect_failure_retries_without_blocking_owner(self):
         from types import SimpleNamespace
         pool=SimpleNamespace(background_count=13,state={},model=None,close=lambda:None)
