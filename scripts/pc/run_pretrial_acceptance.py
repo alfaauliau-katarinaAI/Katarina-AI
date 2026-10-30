@@ -69,9 +69,7 @@ def run(root, *, model_config=None):
             require(blocked['status'] == 'BLOCKED' and blocked['orders_submitted'] == 0)
         report['checks'].append('PASS: model cannot acquire an execution tool')
         sensor = BoundLocalBroker(FixtureBroker(), ConnectionConfig(12345,'SYNTHETIC_DEMO'))
-        from scripts.pc.synthetic_clock_fixture import synthetic_clock
-        with synthetic_clock():
-            UnifiedKatarinaBrain.observe_once(work/'roundtrip', broker=sensor, max_symbols=3, fetch_news=False)
+        UnifiedKatarinaBrain.observe_once(work/'roundtrip', broker=sensor, max_symbols=3, fetch_news=False)
         market = json.loads((work/'roundtrip/latest.json').read_text())
         require(len(market['brain_hands_feedback']['receipts']) == 3)
         require(market['orders_submitted'] == 0)

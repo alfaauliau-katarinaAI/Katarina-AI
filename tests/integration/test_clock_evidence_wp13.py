@@ -5,7 +5,6 @@ import unittest
 
 from katarina.intelligence.broker.broker_clock_alignment import (
     ClockEvidence,
-    HostClockTrust,
     infer_clock_shift,
     capture_time_reference,
     normalize_incoming_time,
@@ -57,6 +56,7 @@ class ClockEvidenceIntegrationWP13Tests(unittest.TestCase):
         finding = infer_clock_shift(ticks, now_ts, evidence=ev, broker_server="ICMarkets-Server")
         ref = capture_time_reference(finding, now)
 
+        # Naive broker wall time (15:00:00 = 12:00:00 UTC + 3 hours shift)
         wall_str = (now + timedelta(hours=3)).replace(tzinfo=None).isoformat()
         normalized = normalize_incoming_time(
             wall_str,
@@ -66,6 +66,7 @@ class ClockEvidenceIntegrationWP13Tests(unittest.TestCase):
         )
         self.assertEqual(normalized.utc, now)
 
+        # Outside evidence valid_until window raises ValueError
         future_now = now + timedelta(days=2)
         with self.assertRaisesRegex(ValueError, "broker_clock_evidence_expired"):
             normalize_incoming_time(
