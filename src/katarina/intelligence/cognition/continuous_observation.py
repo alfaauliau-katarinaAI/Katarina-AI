@@ -28,7 +28,11 @@ FATAL_BINDING = frozenset(('ACCOUNT_LOGIN_MISMATCH', 'ACCOUNT_SERVER_MISMATCH',
 
 # Missing market metadata is retryable; permission, identity and unknown errors stay fatal.
 RECOVERABLE_SENSOR = frozenset(('BROKER_CATALOG_NOT_FOUND',
-    'NO_ELIGIBLE_BROKER_SYMBOLS', 'BROKER_CLOCK_NOT_VERIFIED'))
+    'NO_ELIGIBLE_BROKER_SYMBOLS', 'BROKER_CLOCK_NOT_VERIFIED',
+    'NO_TRUSTED_HOST_CLOCK', 'FX_MARKET_CLOSED',
+    'CLOCK_EVIDENCE_EXPIRED_OR_WRONG_BROKER', 'CLOCK_EVIDENCE_MISSING_OR_INVALID',
+    'INSUFFICIENT_FRESH_QUOTES', 'STALE_QUOTES', 'HOST_UTC_STEP_DETECTED',
+    'CLOCK_BROKER_IDENTITY_MISSING', 'QUARANTINED_UNEXPLAINED_SHIFT_JUMP'))
 
 
 def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
@@ -216,6 +220,11 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                 status["demo_forward"]=demo.step()
             # No overlapping passes or catch-up bursts. Stop latency while idle <=1s.
             delay = min(3600, interval_seconds * 2 ** min(status['consecutive_failures'], 4))
+            if result is None and fault in RECOVERABLE_SENSOR - {
+                    'BROKER_CATALOG_NOT_FOUND', 'NO_ELIGIBLE_BROKER_SYMBOLS'}:
+                # Clock evidence may recover while the worker is running. Do not
+                # let exponential backoff defer its next check past ten minutes.
+                delay = min(interval_seconds, 300)
             deadline = time.monotonic() + delay
             for idle_second in range(delay):
                 if stop.exists():

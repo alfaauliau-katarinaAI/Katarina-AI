@@ -21,9 +21,9 @@
 
 ## Blocker yang belum selesai
 
-**P0:** WP13 PR #233 — observer belum mewajibkan bukti jam independen pada canonical path, bukti server/DST belum tersedia, tes FakeBroker dan CI final harus diselesaikan, PR konflik. Tahap 0 10 hari bursa serta audit gap/tick/recovery **belum lulus**, meskipun observer 05:25 WAITING dan 0 order. [Rincian K-01 s.d. K-04](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md).
-**P1:** WP8c data nyata (kalender rilis BLS + alat pembuat sampel belum ada; ekspor tetap ditolak), WP6 auto-reboot belum terbukti dan risiko drift kode VPS vs GitHub, review status Jules/GitHub.
-**P2:** WP4 #229, WP14 setelah WP13/WP8c, validasi profitabilitas/edge dan otonomi riset menurut gerbang Roadmap. **Prioritas/antrean tunggal hanya [ROADMAP.md](ROADMAP.md)**.
+**P0:** WP13 PR #233 — observer belum mewajibkan bukti jam independen pada canonical path, bukti server/DST belum tersedia, tes FakeBroker dan CI final harus diselesaikan, PR konflik. Tahap 0 10 hari bursa serta audit gap/tick/recovery **belum lulus**, meskipun observer 05:25 WAITING dan 0 order. [Rincian K-01 s.d. K-04](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md).  
+**P1:** WP8c data nyata (kalender rilis BLS + alat pembuat sampel belum ada; ekspor tetap ditolak), WP6 auto-reboot belum terbukti dan risiko drift kode VPS vs GitHub, review status Jules/GitHub.  
+**P2:** WP4 #229, WP14 setelah WP13/WP8c, validasi profitabilitas/edge dan otonomi riset menurut gerbang Roadmap. **Prioritas/antrean tunggal hanya [ROADMAP.md](ROADMAP.md)**.  
 
 ## Pemeriksaan dan pelaporan
 
