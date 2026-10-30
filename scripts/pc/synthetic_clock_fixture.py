@@ -1,12 +1,8 @@
 """Scoped clock fixture for explicitly synthetic PC acceptance, never observe mode."""
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from unittest.mock import patch
-
-from katarina.intelligence.broker.broker_clock_alignment import HostClockTrust
-
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 from katarina.intelligence.broker.broker_clock_alignment import (
     HostClockTrust,

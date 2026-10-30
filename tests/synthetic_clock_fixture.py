@@ -1,12 +1,8 @@
 """Scoped synthetic NTP fixture; never imported by production code."""
 from contextlib import ExitStack
-from datetime import datetime, timezone
-from unittest.mock import patch
-
-from katarina.intelligence.broker.broker_clock_alignment import HostClockTrust
-
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 from katarina.intelligence.broker.broker_clock_alignment import (
     HostClockTrust,
