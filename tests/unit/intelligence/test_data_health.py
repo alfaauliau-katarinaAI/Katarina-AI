@@ -184,7 +184,7 @@ class DataHealthTest(unittest.TestCase):
         self.assertEqual(by_name(original)["cycle_success_rate"]["status"], "NOT_MET")
 
         cutoff = "2026-11-02T00:00:00+00:00"
-        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff), \\
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff), \
              patch.object(data_health, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff):
             updated = data_health.assess(self.db, when_rollover + timedelta(hours=1))
         self.assertEqual(updated["cycles_total"], 2)
@@ -207,7 +207,7 @@ class DataHealthTest(unittest.TestCase):
             else:
                 ledger.close_cycle(self.db, finished_utc=when, status="FAILED", reason="STALE_QUOTES")
         cutoff = "2026-11-02T22:10:00+00:00"
-        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff), \\
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff), \
              patch.object(data_health, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff):
             report = data_health.assess(self.db, datetime(2026, 11, 3, tzinfo=UTC))
         self.assertEqual(report["cycles_total"], 4)
