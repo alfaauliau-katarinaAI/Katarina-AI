@@ -220,6 +220,25 @@ Tindak lanjut:
 - **PR #240 (dokumen rapat saja):** dapat di-merge setelah CI HEAD final Body/Ubuntu/Windows PASS
   dan `mergeable=true`; tidak membawa perubahan runtime atau izin operasi.
 
+
+#### Pembaruan D7 — 31 Okt 2026: regresi WP13 setelah review final (Manager)
+
+**Bukti terverifikasi (GitHub):**
+- PR #240 (dokumen rapat D7) telah **MERGED** ke `main` melalui `dff953a507b44eac5000507eb9c57f73f3ac9b9c`. Keputusan D7 kanonis tidak boleh ditimpa oleh tree dari sandbox lama.
+- Review independen Claude [#233 review 5716086157](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233#pullrequestreview-5716086157) berstatus **COMMENTED, bukan APPROVED**, dan **hanya berlaku untuk `76ce7e8f0bf8645217c6800f2df462441e7ed61a`**. Pada SHA itu CI Body/Ubuntu/Windows PASS dan manifest MATCH 308/308; reviewer tidak menemukan blocker kode P0.
+- Setelah review, bot `google-labs-jules[bot]` memublikasikan [commit `35323998f3d9e0dc1b76d6c45ed9c0381b7ef706`](https://github.com/alfaauliau-katarinaAI/Katarina-AI/commit/35323998f3d9e0dc1b76d6c45ed9c0381b7ef706) (31 Okt, sekitar 00:29 WIB), 36 berkas terdampak; dibanding `76ce7e8f`, menghapus `host_clock_probe.py`, `live_clock_probe.py`, tes negatif, dan mengembalikan `observer.py` ke `infer_clock_shift()` tanpa keharusan NTP/independent trust. Default `broker_clock_alignment.py::infer_clock_shift(require_evidence=False)` dapat kembali ke voting quote-only. **Ini P0 fail-open.**
+- CI [run 41099218011](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/41099218011) Body/Ubuntu/Windows SUCCESS pada `35323998` dan PR tampak `mergeable=true`, **tetapi CI hijau tidak membuktikan clock guard aman**. Pada tree HEAD bot ini, `docs/ROADMAP_DISCUSSION.md` juga kehilangan topik D7, sehingga merge akan berisiko menghapus keputusan rapat terbaru.
+- Publikasi commit bot menunjukkan kemampuan menulis branch, **bukan bukti bahwa UI task Jules telah di-resume**. Status UI hanya boleh dipastikan lewat sesi terautentikasi.
+
+**Keputusan Manager tambahan:**
+1. **D7-M7 — Regresi ulang Jules pada HEAD WP13 = MERGE BLOCKED P0.** Jangan merge PR #233 pada `35323998`, jangan mengandalkan review lama `76ce7e8f` atau CI hijau.
+2. **D7-M8 — Stabilkan jalur penulis dan pulihkan kode di PR sama.** Periksa/cegah penulisan ulang Jules melalui kontrol terautentikasi yang memang tersedia; jangan klaim sudah paused bila belum terbukti, jangan resume sandbox lama. Pulihkan safety tree dari `76ce7e8f` dengan **commit baru tanpa force-push**, pertahankan riwayat, sinkronkan dengan `main` terkini **tanpa menimpa D7** atau dokumen kanonis. Tidak membuat PR WP13 paralel dan tidak mengirim komentar berulang.
+3. **D7-M9 — Review ulang SHA final stabil.** Verifikasi trusted host UTC/NTP, ≥3 tick segar/progresif, offset/DST/broker change, no fake UTC, ledger `FAILED` recoverable, `--since` termasuk cutoff parsial/NO_DATA/0 order, negative FakeBroker tests, manifest MATCH, promotion lock, CI Body/Ubuntu/Windows SUCCESS pada SHA terakhir, mergeability dan review independen **baru**. Jika belum lengkap, tahan merge. `MERGED` bukan `DEPLOYED` atau `STAGE0 PASSED`.
+4. **D7-M10 — Rollover dinamis: desain paket terpisah DISETUJUI, perubahan kriteria belum disetujui.** Usulan zona `America/New_York` pukul **17:00** (termasuk DST berakhir 1 Nov 2026), tes waktu sebelum/sesudah DST, akhir pekan, batas sesi, dampak denominator keberhasilan dan data historis. Jangan menghapus failure lama/ledger atau mengubah kelulusan 10 hari secara diam-diam. Keputusan formal Owner/Manager tentang perubahan kriteria Stage0 masih diperlukan.
+5. **D7-M11 — Izin operasional masih tertahan.** Poll W32Time VPS 32.768 detik melampaui umur NTP tepercaya maksimum 14.400 detik. **Jangan longgarkan guard kode.** Usulan `MaxPollInterval=13` (8.192 detik) atau resync terjadwal hanya setelah izin eksplisit Owner, backup/rollback, dan verifikasi sinkronisasi aktual. Usulan kewajiban ≥1 approval independen di GitHub juga masih menunggu keputusan Owner. OAuth ditangani terpisah setelah P0.
+
+**Tindak lanjut:** manager memastikan satu jalur penulis PR #233 stabil; reviewer independen mengaudit SHA hasil pemulihan; Owner menentukan izin NTP VPS, aturan proteksi branch, dan pengubahan kriteria rollover. Sampai saat itu **LIVE OFF, 0 order, Risk Governor/promotion_lock/holdout tidak berubah; tidak ada deploy, restart, atau perubahan VPS**.
+
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
