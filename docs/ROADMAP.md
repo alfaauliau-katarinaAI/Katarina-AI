@@ -44,17 +44,20 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 | # | Paket / alur | Prioritas dan keluaran yang harus terbukti | Pelaksana dan status |
 |---|---|---|---|
 | 0 | **Tahap 0 — observasi 10 hari bursa** | Jaga satu observer resmi read-only; audit per hari/simbol sejak 28 Okt 16:57 UTC (cutoff WP12), target streak 10 hari, sukses siklus ≥98%, rekonsiliasi tick/snapshot, cakupan dan gap, restart otomatis dan **0 order**. Jangan menghitung backfill sebagai forward atau mengklaim lulus sebelum bukti. | **P0 / berjalan** — Yura pantau, Claude verifikasi bukti VPS; **belum lulus** |
-| 1 | **WP13 — jam broker MT5 dan `--since`** | Selesaikan [Issue #228](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/228) dan [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233), pengganti PR #219 yang konflik. Wajib evidence sumber broker independen, fail-closed observer, penanganan gap, DST, stale, tes/CI dan `--since`. | **P0 / Jules sudah coding, review menemukan regresi pengamanan; PR #233 belum merge/CI final**, evidence broker privat belum ada; Claude review/repair sesuai [audit](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md) |
+| 1 | **WP13 — jam broker MT5 dan `--since`** | [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233): jam live = NTP host tepercaya + ≥ 3 tick bergerak (D6/D7), siklus gagal tercatat `FAILED` + alasan, `--since` untuk Tahap 0. Spesifikasi terbaru di R4 WP13. | **Dalam review #233** — safety tree dipulihkan; `dd6d9b50` memiliki src identik baseline `76ce7e8f`, CI Body/Ubuntu/Windows PASS. Approval independen masih diperlukan. Bukan tugas Jules; tanpa deploy VPS |
+| 1b | **WP15 — rollover Tahap 0 ikut 17:00 New York** | Jendela pengecualian rollover di statistik Tahap 0 mengikuti 17:00 `America/New_York` (DST AS berakhir 1 Nov 2026), tanpa mengubah ledger, arsip tick, atau penilaian sebelum tanggal berlaku. | **Revisi #244, Manager** — override tanggal resmi dihapus; aktivasi tetap `None`. Menunggu CI final dan review independen; tanggal efektif baru ditetapkan terpisah, tidak lebih awal dari merge |
 | 2 | **WP8c — asal waktu bar historis** | Bukti UTC bar memakai rilis NFP yang terverifikasi dan tes deterministik; jangan ekspor data development tanpa bukti jam atau sentuh holdout. | **Kode selesai (merge #230, 30 Okt)** — fail-closed diperbaiki Claude; kalender rilis resmi + laporan sampel belum ada, jadi ekspor tetap ditolak |
 | 3 | **WP10b — swap & sensitivitas biaya** | CostModel swap BUY/SELL, rollover New York/DST dan sensitivitas 1,5×/2×; perbaikan baseline random-side; tidak mengubah gate promosi. | **P1 / kode MERGED [PR #225](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/225)** — CI Body/Linux/Windows PASS; belum validasi broker/VPS atau strategi |
-| 4 | **Tata kelola PR terbuka** | Review konflik [#216](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/216) / [#218](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/218) dengan tiga dokumen kanonis; tutup/selaraskan yang duplikat tanpa menghapus keputusan; jangan merge WP13 dalam keadaan konflik. | **P1 / perlu review** — Yura/Claude |
+| 4 | **Tata kelola PR** | Aturan `main`: ≥ 1 approval independen, CI Body/Ubuntu/Windows wajib, approval usang gugur saat HEAD berubah, tanpa force-push. | **Disetujui Owner (D7-M14), belum aktif** — butuh admin repo; #216/#218 merged 30 Okt |
 | 5 | **WP6 — pemulihan setelah reboot** | Verifikasi scheduled task observer yang kini hanya saat login; uji recovery dengan risiko observasi minimal. Penambahan 5→7 simbol tetap **menunggu WP13 + bukti jam 21:00–22:00 UTC**, tidak boleh mendahului kelulusan data. | **P1 / belum terverifikasi** — Claude |
 | 6 | **WP10a** | Profil spread broker deskriptif dari tick forward terverifikasi, bukan penyetelan strategi. | **Selesai (merge #231, 30 Okt)**; belum dijalankan di VPS |
 | 7 | **WP4** | Jurnal kandidat riset + replay sinyal teknis tanpa mengubah keputusan aktif. | **P2 / antrean [Issue #229](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/229)** — tunggu WP13 dan kapasitas Jules |
 | 8 | **WP14** | Auditor data baca-saja dengan keluaran PASS/BLOCKED/NO_DATA yang bersumber. | **P2 / menunggu WP13 dan WP8c** |
+| 9 | **WP8d — CLI sampel bukti jam bar** | Alat yang mengubah kalender rilis resmi + bar M5 broker di sekitar rilis menjadi laporan bukti WP8c (`bars_sha256` per sampel); fail-closed bila konsensus kurang. | **Revisi #248, Manager** — mapping broker `.vx`, bukti fail-closed dan provenance deterministik. Menunggu CI final/review; kalender resmi dan data broker nyata belum divalidasi |
+| 10 | **WP16 — OAuth gateway tanpa paparan profil** | `/oauth/status` tidak lagi mengembalikan profil MQL5; bind default `127.0.0.1`; tes statis. | **Dalam review #247** — kode dan CI PASS pada `99c06da7`; approval independen masih diperlukan. Belum deploy |
 | – | **WP8b, WP9c, WP9d, WP5** | Setup, syarat bukti, entry, dan perankingan; hanya setelah prasyarat R0 terpenuhi. | **Menunggu prasyarat** |
 
-**Handoff Google (audit 30 Okt):** WP10b **#225 merged**; WP8c **#230 merged** dan WP10a **#231 merged** (30 Okt, perbaikan review Claude), WP13 **#233 review BLOCKED** karena guard waktu hilang/CI+konflik (Issue #228 sudah ditangani Jules); WP4 #229 tetap antrean. Review formal GitHub sudah dikirim untuk #230/#231/#233. Status **Needs review di UI Jules berbeda dari GitHub**: hanya tandai Completed/Archived saat merge+CI lulus dan sesi Jules terautentikasi; belum ada bukti penandaan tersebut. Jules tidak memiliki akses VPS, data broker privat, atau kewenangan promosi. [Rincian untuk Claude](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md).
+**Handoff batch (31 Okt):** WP10b #225, WP8c #230, WP10a #231 merged. Closeout WP13 #233, WP15 #244, WP8d #248 dan WP16 #247 dikoordinasikan Manager/Claude melalui [Issue #249](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/249). CI Auto-Fixer Jules OFF; jangan resume writer lama atau membuat PR duplikat. Status pause dua task belum persisten dicatat di #249. WP4/WP14 menunggu prasyarat dan penugasan baru; tidak otomatis dimulai. Semua merge tetap menunggu approval independen sah dan CI final. Tanpa deploy VPS atau trading.
 
 
 **Akses**
@@ -456,14 +459,14 @@ di dokumen ini. Bila ada yang bertentangan, aturan di bagian lain roadmap dan `C
 **Urutan paket.** Paket bernomor dikerjakan berurutan; paket berlabel "paralel" boleh berjalan bersamaan karena
 berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (bukan hanya dibuka).
 
-Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, WP12.
+Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, WP12, WP10b, WP10a, WP8c (kode).
 
 | Fase | Paket | Oleh | Prasyarat | Ukuran perkiraan | Status (rinci di R5) |
 |---|---|---|---|---|---|
-| 1 (prioritas) | WP13 — jam broker tahan quote basi + `--since` | Claude / review Yura | — | ±4 berkas, ±200 baris | Dalam review #219, konflik dengan `main` |
-| 1 (paralel) | WP8c — bukti jam historis bar dari rilis resmi | Pelaksana | WP8a (selesai) | ±4 berkas, ±350 baris | Siap |
-| 2 | WP10b — swap + sensitivitas biaya | Google Jules (jika terotorisasi), review Claude | WP8a (selesai) | ±3 berkas, ±250 baris | Menunggu koneksi Jules GitHub, Issue #220 |
-| 2 (paralel) | WP10a — profil spread deskriptif | Pelaksana | WP2 (selesai) | ±4 berkas, ±250 baris | Siap |
+| 1 (prioritas) | WP13 — jam live NTP + tick bergerak, `--since` | Manager/Claude | — | PR #233 | Dalam review; CI PASS, approval independen pending |
+| 1 (paralel) | WP15 — rollover Tahap 0 ikut 17:00 New York | Manager, review Claude | — | PR #244 | Revisi nonretroaktif; CI final/review pending |
+| 2 | WP8d — CLI sampel bukti jam bar | Manager, review Claude | WP8c (selesai) | PR #248 | Revisi mapping `.vx`; CI final/review pending |
+| 2 (paralel) | WP16 — OAuth gateway tanpa paparan profil | Manager/Claude | — | PR #247 | Dalam review; CI PASS, approval independen pending |
 | 3 | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP9b (selesai) | ±6 berkas, ±450 baris | Siap |
 | 3b | WP14 — auditor data baca-saja | Pelaksana | WP13 + WP8c | ±4 berkas, ±350 baris | — |
 | terus | WP6 — 5 → 7 simbol di VPS | Claude | WP13 + pemantauan 21:00–22:00 UTC | — | Berjalan (5 simbol) |
@@ -499,7 +502,7 @@ Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, 
 | T10 | Mode 5 simbol, 22 Okt 21:00–22:02 UTC: 7 siklus `FAILED BROKER_CLOCK_NOT_VERIFIED`, 0 data untuk **semua** simbol ±62 menit. XAUUSD/NAS100 jeda harian ±21:00–22:00 UTC (DST AS); hanya 3/5 quote segar = 60% < ambang 70% dari **semua** simbol. Dengan 7 simbol: 3/7. Backoff ×2 sampai 16 menit memperpanjang lubang | `broker/broker_clock_alignment.py::infer_clock_shift` (`frac=count/considered`), `cognition/observer.py` (raise bila tidak `suitable_for_readonly_snapshot`), `cognition/continuous_observation.py` (backoff) | Selesai: WP11 (#201); VPS 5 simbol lagi sejak 23 Okt 00:16 UTC (WP6) |
 | T11 | **Jam tick MT5 = jam server broker (+3 jam), bukan UTC.** Probe baca-saja 23 Okt 00:19 UTC: `symbol_info_tick.time` dan `time_msc` dari `copy_ticks_range` sama-sama ≈ UTC+3 jam; bar `copy_rates_*` juga jam server (sudah dikoreksi `bars_for`). `last_past_quote(now)` mencari tick di [now−90 dtk, now] dalam koordinat server, sehingga quote observer berumur **±3 jam**: EURUSD 1.12124 vs 1.12221 sekarang, USDJPY 156.719 vs 156.162. Quote, `quote_age_seconds`, rekonsiliasi dan arsip tick Tahap 0 sejak 22 Okt 04:24 UTC tergeser 3 jam secara konsisten, sehingga pemeriksaan yang ada tidak mendeteksinya. XAUUSD/NAS100 `FAILED` 00:00–01:00 UTC = jeda harian 3 jam sebelumnya | `broker/causal_broker_quotes.py` (`last_past_quote`, `due_window_quote`, docstring "UTC"), `cognition/observer.py`, `operations/observation_ledger.py::_download_day`, `research/context_export.py`, `broker/data_recovery.py`, `demo/demo_forward.py` | Selesai: WP12 (#204), diterapkan 28 Okt 16:57 UTC; quote = harga sekarang |
 | T12 | Akhir pekan, quote basi dengan umur hampir kelipatan jam menghasilkan offset palsu yang "terverifikasi" (−4 pada 24 Okt 03:57 UTC, −7 pada 06:55 UTC; ≥ 3 simbol berhenti pada saat yang sama) | `broker/broker_clock_alignment.py::infer_clock_shift` (umur dihitung setelah pembulatan jam); ledger `observer_cycles` 24 Okt | Arsip tick: diabaikan sejak WP12 review (`NO_MARKET_DATA`); akar masalah → WP13 |
-| T13 | Jam VPS sempat berjalan dari CMOS (selisih ±15 dtk); kini NTP `time.windows.com`, polling ±4,5 jam. Penjaga per siklus "sinkron terakhir ≤ 2 jam" (#207) menghentikan worker uji 28 Okt 09:38 UTC, jadi ditolak | `w32tm /query /status`; laporan harian `host-time-daily.txt` | NTP aktif; status dicatat harian, tidak memblokir observer |
+| T13 | Jam VPS sempat berjalan dari CMOS (selisih ±15 dtk); kini NTP `time.windows.com`. Poll semula 32.768 dtk (±9,1 jam) melebihi batas umur sync WP13 14.400 dtk | `w32tm /query /status /verbose`; laporan harian `host-time-daily.txt` | `MaxPollInterval` 15 → 13 (8.192 dtk) 31 Okt (D7-M13, backup + rollback di VPS). WP13 menuntut `State Machine: 2 (Sync)`; 31 Okt 01:25 WIB terbaca `1 (Hold)` setelah resync — pantau beberapa interval sebelum deploy |
 
 ### R2. Cara kerja standar (wajib untuk setiap paket)
 
@@ -824,16 +827,23 @@ broker yang **deskriptif**. Tidak ada perubahan pada observer, keputusan, atau b
 6. Tes: malam melintasi perubahan DST, akhir pekan, triple Rabu; kredit diabaikan; sisi acak memakai swap sisinya;
    blok sensitivitas dan `cost_verdict` untuk ketiga kasus; verdict lama tidak berubah.
 
-#### WP13 — Jam broker tahan quote basi + penilaian Tahap 0 sejak tanggal (Tahap 0; R1 T12)
+#### WP13 — Jam live dari NTP host + tick bergerak; penilaian Tahap 0 sejak tanggal (Tahap 0; R1 T12–T13; D6/D7)
 
-1. `broker/broker_clock_alignment.py::infer_clock_shift`: sebelum voting, buang simbol yang epoch server-nya lebih tua
-   > 180 dtk dari epoch server **terbaru** di antara simbol (`stale_symbols`). Di luar sesi FX (Jumat ≥ 20:00 UTC sampai
-   Minggu 21:00 UTC) kembalikan tidak valid tanpa voting. Syarat lain (≥ 3 suara, 70%) tetap.
-2. `scripts/ai/check_stage0_health.py --since ISO` dan `operations/data_health.assess(..., since=None)`: semua kriteria
-   hanya memakai siklus, quote dan hari tick sejak `since` (default perilaku lama).
-3. Tes: tiga simbol berhenti bersamaan 4 jam lalu → tidak valid (hari kerja dan akhir pekan); 3 segar + 2 basi 1 jam
-   → valid dengan offset benar; Minggu 21:30 UTC dengan 3 segar → valid; `--since` membuang data sebelum tanggal;
-   tes WP11 tetap lulus tanpa diubah.
+Pemilik: **manager/Claude** di PR #233 (bukan Jules, D7-M8/M12). Acuan desain: tree `76ce7e8f`.
+
+1. `broker/host_clock_probe.py`: parser ketat `w32tm /query /status /verbose` (field wajib sekali; sumber dari allowlist;
+   `Leap=0`, `State=2`, `Last Sync Error=0`; umur sync ≤ 14.400 dtk; `|offset|` ≤ 1 dtk; deteksi lompatan UTC vs
+   monotonic). Probe yang gagal tidak pernah menghasilkan sync palsu.
+2. `broker/live_clock_probe.py`: dua sampel `time_msc` (atau siklus sebelumnya pada server yang sama ≤ 300 dtk); ≥ 3
+   simbol harus bergerak dan segar (−15…180 dtk terhadap offset jam bulat, mayoritas ≥ 70%); identitas server di-hash;
+   server baru tidak mewarisi offset; lompatan offset dikarantina. Tiga tick = konfirmasi feed, bukan tiga sumber jam.
+3. `cognition/observer.py` memakai jalur ini; alasan gagal (`NO_TRUSTED_HOST_CLOCK`, `STALE_QUOTES`, `FX_MARKET_CLOSED`,
+   ...) masuk `RECOVERABLE_SENSOR`; siklus ditutup `FAILED` + alasan tanpa quote/snapshot; audit `live_feed_clock_audit_v1`.
+4. `check_stage0_health.py --since ISO` / `data_health.assess(..., since=None)`: zona waktu wajib, tidak di masa depan,
+   batas atas `now`, hari parsial dikecualikan; default perilaku lama.
+5. Tes negatif wajib: NTP tidak sinkron/basi/sumber asing; tiga quote basi; 3 segar + 2 basi; akhir pekan; server
+   berganti; lompatan offset; fixture sintetis hanya berlingkup tes. Tes WP11 tidak diubah.
+6. Deploy hanya dengan izin terpisah setelah NTP VPS terbukti `Sync` beberapa interval (D7-M2/M13).
 
 #### WP14 — Auditor data baca-saja (Tahap 0–1; disetujui Owner 29 Okt; setelah WP13 dan WP8c)
 
@@ -852,6 +862,48 @@ sumber. Memperluas `operations/data_health.py` dan `scripts/ai/check_stage0_heal
    observer (tes membandingkan hash database sebelum/sesudah); tes sintetis per jenis masalah (quote hilang, offset
    campuran, hash berkas salah, `clock_evidence` hilang, baris shadow kurang); tidak memakai MT5/jaringan.
 5. Menjalankan di VPS bukan bagian PR (Claude, pada salinan data).
+
+#### WP15 — Rollover Tahap 0 mengikuti 17:00 New York (Tahap 0; Owner D7-M15)
+
+Masalah: `fx_session_open` mengecualikan rollover tetap 20:45–21:15 UTC. Data VPS 28–30 Okt: 23 siklus dengan < 3 simbol
+bergerak, 16 di 21:00–21:29 UTC. Setelah DST AS berakhir (1 Nov 2026) rollover = 22:00 UTC, seluruhnya di dalam sesi.
+
+1. `operations/observation_ledger.py`: fungsi baru `stage0_session_open(moment)`. Untuk `moment ≥ ROLLOVER_RULE_EFFECTIVE_UTC`:
+   Senin 00:00 – Jumat 20:00 UTC, kecuali jendela rollover `[17:00 NY − ROLLOVER_BEFORE_MINUTES, 17:00 NY +
+   ROLLOVER_AFTER_MINUTES)` (konstanta 15 dan 30). 17:00 NY = 21:00 UTC selama DST AS, 22:00 UTC di luar itu, dihitung
+   dengan aturan DST AS yang sudah ada (minggu ke-2 Maret 07:00 UTC – minggu ke-1 November 06:00 UTC), tanpa
+   `zoneinfo`/tzdata dan tanpa impor melingkar (pindahkan helper `_nth_sunday` ke `observation_ledger.py`;
+   `data_health` tetap mengekspor nama lama). Sebelum tanggal berlaku: hasil identik dengan `fx_session_open`.
+2. `fx_session_open` **tidak berubah** (dipakai klasifikasi celah arsip tick). `data_health.assess` memakai
+   `stage0_session_open` dan menulis `session_rule` yang menyebut kedua segmen + `rollover_rule_effective_utc`.
+3. `ROLLOVER_RULE_EFFECTIVE_UTC` tidak boleh lebih awal dari waktu merge; nilai di PR adalah usulan, manager
+   menetapkannya sebelum merge. Tidak ada perubahan ledger, failure lama, atau data historis.
+4. Tes: sebelum/sesudah 1 Nov 2026 dan 8 Mar 2026; Senin–Kamis tepi jendela (menit −16/−15/+29/+30); Jumat ≥ 20:00 dan
+   akhir pekan; batas tanggal berlaku; ledger sintetis dengan kegagalan `STALE_QUOTES` 22:05 UTC setelah DST
+   (aturan lama menghitung, aturan baru mengecualikan) dan laporan denominator; tes `fx_session_open`, WP11, WP13 lama
+   tetap lulus tanpa diubah.
+
+#### WP8d — CLI sampel bukti jam bar dari rilis resmi (Tahap 1; prasyarat ekspor WP8a; setelah WP8c)
+
+1. `research/bar_clock_evidence.py`: fungsi murni `collect_release_samples(broker, calendar_rows, *, symbols=CORE_SYMBOLS,
+   timeframe)` yang, per rilis, mengambil bar M5 jendela cukup lebar untuk shift −12…+14 jam ± 4 jam (+ 12 bar konteks)
+   lewat `copy_rates_range`, menjalankan `release_shift`, dan hanya menambah sampel bila hasilnya bilangan bulat.
+   `bars_sha256` = SHA-256 JSON kanonik bar mentah yang dipakai (semua simbol, urut). Rilis tanpa konsensus dicatat di
+   `rejected` dengan alasan, tidak diisi tebakan.
+2. CLI `scripts/research/build_bar_clock_evidence.py --calendar config/research/us_release_calendar.csv --out FILE`
+   (CLI tipis; MT5 hanya diimpor di `main()`; baca-saja; batas rilis per jalan `--max-releases`, default kecil). Keluaran
+   = `build_evidence_report` + daftar `rejected`; `--out` wajib di luar repo (tolak path di dalam repo).
+3. Tes dengan broker palsu: +2/+3 di sekitar DST, konsensus kurang → ditolak, `bars_sha256` deterministik, laporan lolos
+   `load_evidence_report`, path keluaran di dalam repo ditolak. Tanpa jaringan/MT5.
+4. Mengisi kalender BLS dan menjalankan CLI di VPS bukan bagian PR (Claude, pasar tutup).
+
+#### WP16 — OAuth gateway tanpa paparan profil (keamanan; manager D7-M4)
+
+1. `oauth_gateway/server.js`: `lastAuth` tidak menyimpan profil (`{ok, at, error}`); `/oauth/status` hanya
+   `ok`, `at`, `error`; `server.listen(PORT, HOST)` dengan `HOST = process.env.HOST || '127.0.0.1'`.
+2. Tes statis `tests/static/test_oauth_gateway_guard.py` (baca teks `server.js`): tidak ada `profile` di respons status,
+   default host loopback, token tidak pernah dikirim di respons.
+3. Tidak mengubah alur OAuth lain; tanpa dependensi npm; audit lokasi deploy lain dilakukan manager.
 
 #### WP7 — Keputusan Owner (bukan kode)
 
@@ -874,25 +926,98 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | **Dalam review BLOCKED P0**; Jules sudah membuka PR #233, guard canonical `require_evidence=True` hilang pada HEAD terakhir diaudit, konflik dan CI final belum lulus; bukti jam privat belum ada | Issue #228; **PR #233** (menggantikan #219) | Claude audit HEAD baru vs safety patch `2e504d3`; fail-closed tanpa memutus observer, fixture CI, sumber independen, merge hanya setelah CI aman; **jangan deploy** sebelum bukti broker nyata |
+| WP13 | Dalam review; MERGE BLOCKED tanpa approval independen | #233 | Guard NTP/tick progresif dipulihkan, CI 3/3 PASS pada `dd6d9b50`; belum deploy, bukan Tahap 0 PASS |
 | WP8c | **CODE DONE (merge)** — 30 Okt 2026, review Claude | #230 | 24 bar sekitar wajib; segmen VERIFIED hanya dengan sampel di dalamnya (tanpa ±200 hari); sampel wajib di kalender + `bars_sha256`; adapter menghitung ulang timeline/hash. Sisa: isi `us_release_calendar.csv` dari sumber resmi BLS dan buat laporan sampel dari bar nyata (belum ada alat CLI) |
 | WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
 | WP10a | **Selesai (merge)** — 30 Okt 2026, review Claude | #231 | Perbaikan review: parser ketat 4 kolom (baris rusak → `TICK_FILE_MALFORMED`, tidak dilewati), hari tanpa `server_shift_hours` (sebelum WP12) dikecualikan dan dilaporkan, quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`. Uji 2 juta tick < 50 MB lulus. Belum dijalankan di VPS |
-| WP4 | Menunggu kapasitas Jules dan WP13 | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
+| WP4 | Menunggu WP13 merge (sama-sama mengubah `observer.py`) — Jules | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
+| WP15 | Revisi Manager; menunggu review independen dan CI final | #244 | Override tanggal resmi dihapus; aktivasi `None`, cutoff nonretroaktif dan DST diuji; belum berlaku di runtime |
+| WP8d | Revisi Manager; menunggu review independen dan CI final | #248 (Issue #245) | Mapping canonical→broker `.vx`, bar fail-closed dan hash deterministik; belum dipakai pada data broker nyata |
+| WP16 | Dalam review; CI PASS, approval independen pending | #247 | Status tanpa profil/token, bind loopback default; audit deployment eksternal terpisah, tanpa deploy |
 | WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
 | WP9c | Menunggu prasyarat (≥ 3 hari bursa `decision_shadow`) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP7 | Menunggu Owner | – | – |
-| Selesai | WP1 #184 · WP2 #190 · WP3 #191 · WP8a #195 · WP9a #196 · WP9b #205 · WP11 #201 · WP12 #204 · **WP10b #225** | – | Catatan review ada di deskripsi/komentar PR masing-masing |
+| Selesai | WP1 #184 · WP2 #190 · WP3 #191 · WP8a #195 · WP9a #196 · WP9b #205 · WP11 #201 · WP12 #204 · WP10b #225 · WP10a #231 · WP8c #230 (kode) | – | Catatan review ada di deskripsi/komentar PR masing-masing |
 
 ### R6. Perintah siap pakai untuk pelaksana
 
 Salin **dua blok** ke pelaksana: blok **R6.0 Aturan umum** (selalu) lalu blok perintah paket yang dikerjakan.
+Untuk **Google Jules** salin **tiga blok**: R6.J (perintah induk, anti-regresi), R6.0, lalu blok paket.
+Perintah paket yang sudah selesai (WP8c, WP10a, WP10b) dihapus; teksnya ada di riwayat Git.
 Pelaksana yang hanya diminta "baca roadmap" tetap terikat R6.0 dan memakai blok paket sebagai instruksinya.
 Keduanya berdiri sendiri; pelaksana tidak perlu konteks percakapan lain.
+
+**R6.J Perintah induk Google Jules (salin utuh ke task Jules; satu task = satu paket)**
+```text
+Kamu Google Jules, pelaksana coding untuk repo GitHub alfaauliau-katarinaAI/Katarina-AI (riset trading MT5,
+Python 3.12, dokumen bahasa Indonesia). Manager = ChatGPT/Yura, reviewer = Claude, keputusan akhir = Owner.
+Kamu hanya menulis kode di GitHub: tanpa akses VPS, MT5, data broker, merge, atau kewenangan promosi. LIVE OFF.
+
+1. PILIH PAKET
+   - Batch WP13/WP15/WP8d/WP16 sudah memiliki PR existing dan sedang closeout di #249. Jangan membuat task/PR baru atau melanjutkan sandbox lama.
+     Paket berikutnya WP4 dan WP14 hanya setelah prasyarat serta penugasan eksplisit Manager.
+     Jangan mengambil WP13 (PR #233), WP9c, WP9d, WP6.
+   - Cek belum diambil: tidak ada PR terbuka atau branch untuk paket itu. Satu task Jules = satu paket = satu PR.
+   - Setelah PR dibuka, BERHENTI dan tunggu review. Paket berikutnya hanya setelah PR sebelumnya merged
+     (atau manager menyuruh lanjut).
+
+2. MULAI BERSIH (anti-regresi; wajib, pelajaran PR #233)
+   - Setiap task mulai dari `git fetch origin && git checkout -B jules/wpN-<ringkas>-YYYYMMDD origin/main`.
+     Jangan memakai ulang sandbox, branch, atau patch lama dari task lain.
+   - Jangan pernah push ke PR yang dibuat/diubah orang lain. Bila remote branch PR-mu punya commit yang tidak ada di
+     riwayat lokalmu: BERHENTI, jangan push, tulis komentar di PR.
+   - Sebelum SETIAP push: `git fetch origin`, lalu `git diff --name-status origin/main...HEAD`. Daftar itu hanya
+     boleh berisi berkas yang kamu umumkan di bagian "Pemahaman". Berkas berstatus D (dihapus) atau berkas yang
+     tidak kamu rencanakan = kesalahan; perbaiki sebelum push. Tanpa force-push; bila main bergerak, merge commit.
+   - Jangan menyentuh docs/ROADMAP_DISCUSSION.md, docs/REPAIR_HISTORY.md, docs/PROJECT_STATUS.md, berkas laporan di
+     docs/maintenance/, atau berkas paket lain. Di roadmap hanya baris paketmu di tabel R5.
+
+3. PAHAMI SEBELUM MENULIS (cara kerja Claude, R2 + R8)
+   - Baca CLAUDE.md, docs/ROADMAP.md "Mulai di sini", bagian 1-7, Lampiran A R0-R2, sub-bagian paketmu di R4, R5,
+     R6.0, R7, R8, R9, R10, lalu blok "Perintah WPn" paketmu di R6.
+   - Baca utuh setiap berkas yang disebut paket, lalu pemanggil dan yang dipanggilnya (grep -rn).
+   - Buka PR draft lebih dulu dengan bagian "Pemahaman" (R6.0 A3): tujuan dengan kata-katamu, berkas yang akan
+     diubah, berkas terkunci dari `python scripts/governance/promotion_gate.py --hashes`, tes yang akan ditambah,
+     risiko. Bila ambigu atau bertentangan dengan roadmap: tulis pertanyaan di PR dan BERHENTI.
+
+4. CARA MENULIS KODE (sama dengan Claude)
+   - Perubahan terkecil yang benar. Parameter baru opsional dengan default perilaku lama. Tanpa refactor, rename,
+     format ulang, atau abstraksi spekulatif di luar paket. Ikuti gaya berkas yang diubah.
+   - Tes dulu: tulis tes yang GAGAL, baru kode sampai lulus. Satu tes = satu perilaku; uji jalur gagal dan batas.
+     Tes deterministik: waktu disuntikkan, tanpa jaringan/MT5/sleep, koneksi SQLite ditutup (contextlib.closing).
+   - Fail-closed dengan kode alasan HURUF_BESAR stabil; tangkap exception spesifik; tanpa except kosong, print debug,
+     kode mati, TODO tanpa nomor paket. Waktu = datetime ber-zona UTC; tolak waktu naif.
+   - SQLite: parameter ?, tulis dalam `with db:`, pembaca mode=ro. JSON kanonik sort_keys=True; gzip mtime=0.
+   - Linux + Windows: pathlib, encoding="utf-8", tanpa perintah shell khusus OS. Tanpa dependensi baru, tanpa
+     thread/worker/observer baru, tanpa jalur order. Angka keputusan = konstanta bernama atau dari spec/config.
+   - Berkas di config/promotion_lock.json tidak boleh diubah. Risk Governor dan batas 35% tidak dilemahkan.
+     Holdout (>= 13 Okt 2026 00:00 UTC) tidak dipakai. Jangan melonggarkan pemeriksaan agar tes/CI hijau:
+     cari akar masalah (R8 butir 5).
+
+5. PENGECEKAN (standar Claude; semua harus lulus sebelum PR ditandai siap)
+   a. R2 langkah 6 lengkap: unit, static, integration, audit_repo_hygiene, audit_dependency_links,
+      promotion_gate --check, `git add -A` lalu release_manifest --generate, verifikasi manifest = MATCH,
+      runtime_import_map. Kegagalan lingkungan diperbaiki di lingkungan; jangan lapor "lulus sebagian".
+   b. Bukti tes bermakna: kembalikan sementara perubahan kode (bukan tes) dan tunjukkan tes baru GAGAL; pulihkan
+      kode dan tunjukkan LULUS. Tulis nama tes dan hasil dua kondisi itu di PR.
+   c. Tes lama tidak diubah kecuali paket memintanya (sebutkan alasannya).
+   d. Diff sendiri (`git diff origin/main...HEAD`): tidak ada baris yang tidak dibutuhkan paket; tidak ada berkas
+      terhapus; perilaku tanpa opsi baru identik.
+   e. CI GitHub Body, Portable Ubuntu, Portable Windows hijau pada SHA terakhir. Bila merah: perbaiki akar masalah
+      di branch yang sama (commit baru); maksimal dua percobaan, setelah itu tulis analisis di PR dan berhenti.
+   f. Daftar periksa R7 butir 1-11 disalin ke PR dengan [x] hanya untuk yang benar-benar diverifikasi.
+
+6. DOKUMEN DAN PR
+   - CHANGELOG.md satu entri baru (<= 10 baris). CLAUDE.md hanya bila ada CLI/modul baru. Roadmap hanya baris R5.
+   - Deskripsi PR = templat R6.0 E (Pemahaman, Perubahan, Keamanan, Pengujian dengan angka persis, Daftar periksa R7,
+     Belum yakin). Judul "WPn: ..." bahasa Indonesia; commit kalimat perintah <= 72 karakter.
+   - Setelah review: perbaiki setiap poin di branch yang sama (commit baru), balas tiap komentar, jalankan ulang
+     langkah 5, perbarui bagian Pengujian. Jangan memperluas cakupan PR.
+```
 
 **R6.0 Aturan umum pelaksana (ChatGPT boleh mengubahnya sebagai manager)**
 ```text
@@ -985,18 +1110,6 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sud
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris paket ini (WP8a/WP8b) di tabel R5.
 ```
 
-**Perintah WP8c (bukti jam historis bar)**
-```text
-Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sudah di-merge).
-1. Baca R6.0, "Mulai di sini", CLAUDE.md, bagian 5 "Pemisahan data", Lampiran A: R1 (T11), R2, R8, R9, R10, "WP8"
-   dan "WP8c". Baca seluruh src/katarina/research/dev_dataset.py, scripts/research/export_dev_bars.py dan tesnya,
-   serta fungsi DST di src/katarina/intelligence/operations/data_health.py.
-2. Kerjakan HANYA WP8c, satu PR "WP8c: bukti jam historis bar dari rilis resmi".
-3. Wajib: fungsi murni tanpa MT5/jaringan; tidak mengarang tanggal rilis (kalender diisi Claude; tes memakai kalender
-   sintetis); rentang tanpa bukti ditolak; tidak mengubah berkas terkunci; tidak menjalankan ekspor ke VPS.
-4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP8c di tabel R5.
-```
-
 **Perintah WP9c (syarat bukti proporsional — berkas terkunci)**
 ```text
 Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP9a dan WP9b sudah di-merge; Claude sudah
@@ -1012,42 +1125,13 @@ menyerahkan laporan WP9a dan data decision_shadow ber-hash).
    isi HANYA baris WP9c di tabel R5.
 ```
 
-**Perintah WP10a (profil spread deskriptif)**
+**Perintah WP13 (hanya manager/Claude; Jules tidak mengerjakan)**
 ```text
-Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP2 sudah di-merge).
-1. Baca R6.0, "Mulai di sini", CLAUDE.md, bagian 5 "Pemisahan data", "Arah lanjutan" butir 4, Lampiran A: R2, R8,
-   R9, R10 dan "WP10" (tujuan, WP10a). Baca seluruh src/katarina/research/context_export.py dan tesnya, serta
-   fungsi setup/collect_tick_days di src/katarina/intelligence/operations/observation_ledger.py (skema broker_tick_days).
-2. Kerjakan HANYA WP10a, satu PR "WP10a: profil spread broker deskriptif (baca-saja)".
-3. Wajib: iter_verified_ticks memverifikasi hash sebelum menghasilkan baris; _ticks keluarannya identik; sampel per
-   menit; JSON berlabel DESCRIPTIVE_ONLY_NOT_FOR_TUNING; tes statis bahwa hanya CLI-nya yang mengimpor
-   research.spread_profile; SQLite mode=ro; tanpa MT5/jaringan; tidak dijalankan ke VPS.
-4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP10a di tabel R5.
-```
-
-**Perintah WP10b (swap dan sensitivitas biaya)**
-```text
-Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP8a sudah di-merge).
-1. Baca R6.0, "Mulai di sini", CLAUDE.md, Lampiran A: R2, R8, R9, R10 dan "WP10" (tujuan, WP10b). Baca seluruh
-   src/katarina/research/validation.py, scripts/research/validate_strategy.py, docs/research/VALIDATION_PROTOCOL.md,
-   tests/unit/research/test_validation.py dan fungsi DST di src/katarina/intelligence/operations/data_health.py.
-2. Kerjakan HANYA WP10b, satu PR "WP10b: swap dan sensitivitas biaya di alat validasi".
-3. Wajib: field baru berdefault 0 sehingga costs.json lama menghasilkan angka identik (tes pembanding); rollover
-   17:00 New York memakai ulang aturan DST yang ada (tanpa zoneinfo/tzdata); kredit swap = 0; pembanding sisi acak
-   memakai swap sisinya; blok cost_sensitivity hanya informasi — verdict dan aturannya tidak berubah;
-   market_intelligence.py tidak diubah.
-4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP10b di tabel R5.
-```
-
-**Perintah WP13 (jam broker tahan quote basi)**
-```text
-Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
-1. Baca R6.0, "Mulai di sini", CLAUDE.md, Lampiran A: R0 "Aturan alur", R1 (T10–T12), R2, R8, R9, R10 dan "WP13".
-   Baca seluruh src/katarina/intelligence/broker/broker_clock_alignment.py, operations/data_health.py,
-   scripts/ai/check_stage0_health.py dan tes-tesnya.
-2. Kerjakan HANYA WP13, satu PR "WP13: jam broker tahan quote basi dan penilaian Tahap 0 sejak tanggal".
-3. Wajib: tidak memblokir observer berdasarkan NTP host; tidak mengubah VPS; tes WP11 tidak diubah.
-4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP13 di tabel R5.
+Repo alfaauliau-katarinaAI/Katarina-AI, PR #233 yang sama (jangan buat PR baru). Tree acuan = 76ce7e8f.
+1. Pulihkan tree 76ce7e8f di atas HEAD PR dengan commit baru (tanpa force-push), lalu merge origin/main
+   (pertahankan docs/ROADMAP_DISCUSSION.md D7 dan dokumen kanonis milik main).
+2. Ikuti R4 WP13 butir 1–6; jalankan R2 langkah 6; manifest MATCH; promotion gate PASS.
+3. Tunggu CI Body/Ubuntu/Windows pada SHA final, minta review independen baru. Merge ≠ deploy ≠ Tahap 0 PASS.
 ```
 
 **Perintah WP14 (auditor data baca-saja)**
@@ -1061,6 +1145,40 @@ Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru (WP13 dan
    deterministik dengan report_sha256; setiap temuan punya source; tes hash database sebelum/sesudah; tanpa MT5/jaringan;
    verdict kriteria Tahap 0 yang ada tidak berubah tanpa --audit.
 4. Ikuti seluruh R6.0 Aturan umum (A–F); isi HANYA baris WP14 di tabel R5.
+```
+
+**Perintah WP15 (rollover Tahap 0 ikut 17:00 New York)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
+1. Baca R6.J, R6.0, CLAUDE.md, bagian "Tahap 0", Lampiran A: R1 (T10, T13), R2, R8, R9, R10 dan "WP15". Baca seluruh
+   src/katarina/intelligence/operations/observation_ledger.py, operations/data_health.py, scripts/ai/check_stage0_health.py,
+   tests/unit/intelligence/test_observation_ledger.py dan semua tes yang memanggil fx_session_open (grep).
+2. Kerjakan HANYA WP15, satu PR "WP15: rollover Tahap 0 mengikuti 17:00 New York".
+3. Wajib: fx_session_open tidak berubah; aturan baru hanya untuk moment >= ROLLOVER_RULE_EFFECTIVE_UTC; DST tanpa
+   zoneinfo/tzdata; tanpa impor melingkar; tes lama tidak diubah; laporan menyebut kedua segmen aturan.
+4. Ikuti seluruh R6.J dan R6.0 (A–F); isi HANYA baris WP15 di tabel R5.
+```
+
+**Perintah WP8d (CLI sampel bukti jam bar)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
+1. Baca R6.J, R6.0, CLAUDE.md, bagian 5 "Pemisahan data", Lampiran A: R1 (T11), R2, R8, R9, R10, "WP8", "WP8c" dan
+   "WP8d". Baca seluruh src/katarina/research/bar_clock_evidence.py, research/dev_dataset.py,
+   scripts/research/export_dev_bars.py dan tes-tesnya.
+2. Kerjakan HANYA WP8d, satu PR "WP8d: CLI sampel bukti jam bar dari rilis resmi".
+3. Wajib: fungsi murni teruji dengan broker palsu; MT5 hanya diimpor di main(); tidak mengarang tanggal rilis dan
+   tidak mengisi config/research/us_release_calendar.csv; laporan ditulis di luar repo; release_shift tidak dilonggarkan.
+4. Ikuti seluruh R6.J dan R6.0 (A–F); isi HANYA baris WP8d di tabel R5.
+```
+
+**Perintah WP16 (OAuth gateway tanpa paparan profil)**
+```text
+Repo alfaauliau-katarinaAI/Katarina-AI. Mulai dari origin/main terbaru.
+1. Baca R6.J, R6.0, CLAUDE.md, Lampiran A: R2, R8, R9, R10 dan "WP16". Baca seluruh oauth_gateway/server.js dan
+   oauth_gateway/package.json.
+2. Kerjakan HANYA WP16, satu PR "WP16: OAuth gateway tanpa paparan profil".
+3. Wajib: status tanpa profil, bind default 127.0.0.1, tes statis Python; tanpa dependensi npm; alur OAuth lain tetap.
+4. Ikuti seluruh R6.J dan R6.0 (A–F); isi HANYA baris WP16 di tabel R5.
 ```
 
 **Perintah perbaikan setelah review**
@@ -1084,6 +1202,10 @@ balas setiap komentar dengan apa yang diubah (atau alasan bila tidak diubah). Ja
 7. Untuk paket yang diterapkan ke VPS: rencana WP6 dan batas pemantauan dipenuhi sebelum dinaikkan.
 8. Diff minimal (R8 butir 2): tidak ada refactor/format ulang di luar paket, tidak ada abstraksi spekulatif.
 9. Dokumen dan PR mengikuti R9: tanpa log di roadmap, CHANGELOG ≤ 10 baris, deskripsi PR faktual dan ringkas.
+10. Anti-regresi: `git diff --name-status origin/main...HEAD` hanya berisi berkas yang diumumkan di "Pemahaman";
+    tidak ada berkas terhapus atau dokumen milik orang lain (rapat, REPAIR_HISTORY, PROJECT_STATUS) yang berubah.
+11. Riwayat PR tidak menimpa commit orang lain (bandingkan dengan HEAD review sebelumnya); review hanya berlaku
+    untuk SHA yang ditinjau, dan HEAD baru selalu ditinjau ulang.
 
 ### R8. Cara Claude menulis kode (standar yang harus ditiru pelaksana)
 

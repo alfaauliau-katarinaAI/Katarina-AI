@@ -1,5 +1,17 @@
 # Perubahan material Katarina AI
 
+## 2026-10-31 — D7: selaraskan roadmap dan gerbang closeout
+
+- Ringkas checkpoint D7 yang berulang, pertahankan keputusan D7-M7–M15 dan bedakan bukti historis NTP dari status terbaru.
+- Selaraskan antrean/R0/R5 dan handoff WP13 #233, WP15 #244, WP8d #248, WP16 #247 dengan #249; hentikan penugasan ulang batch lama.
+- Approval independen dan CI final tetap wajib; tanpa merge/deploy/VPS/trading dari perubahan dokumen ini.
+
+## 2026-10-31 — roadmap: keputusan D7 dan perintah induk Google Jules
+
+- Antrean, R0, R1 T13, R4, R5, R6, R7 diselaraskan dengan D7-M7–M15: WP13 MERGE BLOCKED (regresi bot Jules `3532399`), dipulihkan manager/Claude, bukan Jules; NTP VPS `MaxPollInterval` 13.
+- Spesifikasi R4 WP13 diganti desain NTP host + tick bergerak (spesifikasi lama "tidak memblokir berdasarkan NTP" bertentangan dengan D6/D7). Paket baru WP15 (rollover 17:00 New York), WP8d (CLI sampel bukti jam bar), WP16 (OAuth tanpa profil).
+- R6.J: perintah induk Jules (urutan paket, anti-regresi, cara kode dan pengecekan standar Claude); R7 butir 10–11. Perintah paket selesai dihapus. Hanya dokumen; LIVE OFF.
+
 ## 2026-10-30 — laporan perapian PR Claude untuk manager
 
 - `docs/maintenance/CLAUDE_PR_CLEANUP_REPORT_20261030.md`: hasil per PR (#238, #231, #230, #218, #216 merged; #219 closed; #233 untuk Jules), error yang diperbaiki, cek VPS 06:08 WIB, sisa untuk manager/Owner. RH-004/RH-005, PROJECT_STATUS, roadmap dan CLAUDE.md diselaraskan. Tanpa perubahan kode.
