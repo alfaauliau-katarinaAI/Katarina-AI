@@ -1,5 +1,18 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — WP13: trust NTP nyata, tick bergerak, dan cutoff Stage 0 (#233)
+
+- Observer canonical memakai status Windows NTP terukur (leap/source/stratum/state/error/umur sync/offset), dua snapshot tick bermilidetik yang bergerak, identitas server dan pemeriksaan UTC vs monotonic. Platform/format tidak didukung tetap untrusted; tidak ada flag environment untuk melewati guard. Perubahan offset dikarantina sampai konfirmasi baru; bukti ini hanya LIVE_FEED_CLOCK, bukan DST historis WP8c.
+- Kegagalan menyimpan audit privat dan alasan FAILED; tidak menerbitkan quote/tick UTC valid. Uji lifecycle NTP gagal → pulih membuktikan worker tetap hidup, tanpa restart dan 0 order. Fixture synthetic PC terpisah dari mode observe dan tidak mengubah gerbang produksi.
+- `--since` membatasi periode hingga as-of, mengecualikan hari cutoff parsial dari streak dan tick-day, menjaga konteks outage/regresi lintas cutoff serta NO_DATA yang jujur.
+- Integrasi manager dari checkpoint Jules, satu PR existing; dokumen kanonis dan perbaikan Claude dipertahankan. Status: revisi draft menunggu review/CI final, belum MERGED/DEPLOYED/STAGE0 PASSED. VPS, Risk Governor, promotion lock dan holdout tidak diubah.
+
+## 2026-10-31 — roadmap: keputusan D7 dan perintah induk Google Jules
+
+- Antrean, R0, R1 T13, R4, R5, R6, R7 diselaraskan dengan D7-M7–M15: WP13 MERGE BLOCKED (regresi bot Jules `3532399`), dipulihkan manager/Claude, bukan Jules; NTP VPS `MaxPollInterval` 13.
+- Spesifikasi R4 WP13 diganti desain NTP host + tick bergerak (spesifikasi lama "tidak memblokir berdasarkan NTP" bertentangan dengan D6/D7). Paket baru WP15 (rollover 17:00 New York), WP8d (CLI sampel bukti jam bar), WP16 (OAuth tanpa profil).
+- R6.J: perintah induk Jules (urutan paket, anti-regresi, cara kode dan pengecekan standar Claude); R7 butir 10–11. Perintah paket selesai dihapus. Hanya dokumen; LIVE OFF.
+
 ## 2026-10-30 — laporan perapian PR Claude untuk manager
 
 - `docs/maintenance/CLAUDE_PR_CLEANUP_REPORT_20261030.md`: hasil per PR (#238, #231, #230, #218, #216 merged; #219 closed; #233 untuk Jules), error yang diperbaiki, cek VPS 06:08 WIB, sisa untuk manager/Owner. RH-004/RH-005, PROJECT_STATUS, roadmap dan CLAUDE.md diselaraskan. Tanpa perubahan kode.

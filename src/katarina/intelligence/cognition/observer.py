@@ -20,7 +20,8 @@ import time
 
 from katarina.intelligence.news.public_context import utc as parse_utc
 from katarina.intelligence.broker.broker_scan_universe import resolve_broker_symbols
-from katarina.intelligence.broker.broker_clock_alignment import infer_clock_shift, capture_time_reference, load_clock_evidence
+from katarina.intelligence.broker.broker_clock_alignment import capture_time_reference, inspect_host_clock
+from katarina.intelligence.broker.live_clock_probe import tick_sample, verify_live_feed_clock
 from katarina.intelligence.cognition.contextual_decision_intelligence import RiskSituation
 from katarina.intelligence.cognition.decision_inputs import (
     DecisionInputs, load_decision_inputs,
@@ -316,30 +317,36 @@ class BrainObserver:
                 symbols = select_batch(store.db, catalog, max_symbols, now)
         if not symbols:raise RuntimeError("NO_ELIGIBLE_BROKER_SYMBOLS")
         for sym in symbols:mt5.symbol_select(sym,True)
-        ticks={sym:mt5.symbol_info_tick(sym) for sym in symbols}
-        evidence=load_clock_evidence(root/"broker-clock-evidence.json")
-        broker_server=None
+        host_trust = inspect_host_clock()
+        first_utc, first_mono = datetime.now(timezone.utc), time.monotonic()
+        first_ticks = {sym: mt5.symbol_info_tick(sym) for sym in symbols}
+        time.sleep(.2)  # bounded second sample; a frozen snapshot cannot vote itself fresh
+        ticks = {sym: mt5.symbol_info_tick(sym) for sym in symbols}
+        now, second_mono = datetime.now(timezone.utc), time.monotonic()
+        broker_server = None
         try:
-            acc=mt5.account_info()
-            if acc and hasattr(acc,'server'):
-                broker_server=acc.server
+            broker_server = getattr(mt5.account_info(), 'server', None)
         except Exception:
             pass
-        clock=infer_clock_shift({
-            sym:int(t.time) for sym,t in ticks.items()
-            if t is not None and t.bid>0 and t.ask>=t.bid},
-            now.timestamp(),
-            evidence=evidence,
-            broker_server=broker_server)
+        if not hasattr(brain, '_live_clock_state'):
+            brain._live_clock_state = {}
+        clock, clock_audit = verify_live_feed_clock(
+            tick_sample(first_ticks), tick_sample(ticks), first_utc=first_utc,
+            second_utc=now, first_mono=first_mono, second_mono=second_mono,
+            host_trust=host_trust, broker_server=broker_server,
+            state=brain._live_clock_state)
+        brain.memory.append_operational_event('live_feed_clock_audit_v1', clock_audit)
         if not clock.suitable_for_readonly_snapshot:
-            raise RuntimeError("BROKER_CLOCK_NOT_VERIFIED")
+            raise RuntimeError(clock.reason)
         emit('SENSORS','DONE',count=len(symbols))
         offset=clock.observed_hours_shift
         time_reference=capture_time_reference(clock,now)
         correction=timedelta(hours=offset)
         report={"schema":1,"mode":"READ_ONLY_CONTEXTUAL_ONE_CANONICAL_OBSERVER",
                 "observed_at_utc":now.isoformat(),"broker_server_shift_hours":offset,
-                "time_reference":time_reference.as_dict(),
+                "time_reference":dict(time_reference.as_dict(), time_basis="LIVE_FEED_CLOCK",
+                                      shift_evidence="TRUSTED_HOST_NTP_AND_PROGRESSING_TICKS"),
+                "clock_audit":clock_audit,
                 "historical_clock_shift_verified":False,
                 "broker_clock_confirming_symbols":clock.confirming_symbols,
                 "news_feed_status":feed_status,"full_article_checks":article_diag,

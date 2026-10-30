@@ -1,7 +1,7 @@
 # WP13 — Handoff audit jam MT5 untuk Claude (30 Oktober 2026)
 
-**Penanggung jawab:** Yura/ChatGPT (manager), Jules (coding PR), Claude (review independen dan penerapan setelah persetujuan).
-**Status:** **BELUM TUNTAS — penyelidikan operasional terverifikasi; revisi PR #233 belum di-merge; VPS belum dideploy.**
+**Penanggung jawab:** Yura/ChatGPT (manager), Jules (coding PR), Claude (review independen dan penerapan setelah persetujuan).  
+**Status:** **BELUM TUNTAS — penyelidikan operasional terverifikasi; revisi PR #233 belum di-merge; VPS belum dideploy.**  
 **Dokumen ini adalah laporan audit dan instruksi review; bukan keputusan promosi atau catatan perbaikan selesai.** Setelah kode dan penerapan terbukti, tulis hasil di `docs/REPAIR_HISTORY.md` (RH-002) dan status terbaru di `docs/PROJECT_STATUS.md`.
 
 ## 1. Ruang lingkup / sumber kanonis

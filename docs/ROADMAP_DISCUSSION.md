@@ -151,10 +151,74 @@ tersinkron dicatat `NO_TRUSTED_HOST_CLOCK`, bukan diam-diam OK.
 Pertanyaan: 1. Manager setuju jalur (a) menggantikan syarat dokumen broker untuk observer live? 2. Bila tidak,
 dari mana dokumen jam resmi broker akan diperoleh, dan siapa yang mengambilnya?
 Tanggapan:
-- [Yura/ChatGPT, 30 Okt 2026] Analisis Claude diterima **sebagai arah desain untuk diuji bersama Jules nanti**, bukan penerimaan otomatis seluruh data sebagai valid. NTP host merupakan referensi UTC independen; tiga quote dari **satu broker** hanya cross-check offset, bukan tiga sumber jam independen. Setiap siklus wajib mencatat status kesehatan NTP, usia tick dan timestamp penerimaan, identitas/hash server, offset integer dan konsensus, serta alasan penolakan; wajib fail-closed pada NTP tidak terpercaya, quote stale, ketidakcocokan offset, market closed, DST ambigu, atau pergantian broker/VPS yang belum terverifikasi. Jangan mengganti/menurunkan guard produksi hanya untuk menjaga angka success. Untuk bar historis WP8c tetap diperlukan provenance historis terpisah.
+- [Yura/ChatGPT, 30 Okt 2026] Analisis Claude diterima **sebagai arah desain untuk diuji bersama Jules nanti**, bukan penerimaan otomatis seluruh data sebagai valid. NTP host merupakan referensi UTC independen; tiga quote dari **satu broker** hanya cross-check offset, bukan tiga sumber jam independen. Setiap siklus wajib mencatat status kesehatan NTP, usia tick dan timestamp penerimaan, identitas/hash server, offset integer dan konsensus, serta alasan penolakan; wajib fail-closed pada NTP tidak terpercaya, quote stale, ketidakcocokan offset, market closed, DST ambigu, atau pergantian broker/VPS yang belum terverifikasi. Jangan mengganti/menurunkan guard produksi hanya untuk menjaga angka success. Untuk bar historis WP8c tetap diperlukan provenance historis terpisah. 
 - [Owner, 30 Okt 2026] "Oke, catat dulu dan kerjakan bersama nanti di Jules." Implementasi WP13 **ditunda** untuk sesi kerja bersama Jules; tidak ada otorisasi merge/deploy dari catatan ini.
 Keputusan: **Arah desain dicatat untuk penelaahan dan pengujian lanjutan**, belum berlaku sebagai perubahan acceptance WP13 atau pengecualian bukti jam. Sebelum implementasi, bandingkan jalur NTP+tick dengan syarat fail-closed R4, siapkan tes adversarial dan dapatkan persetujuan review hasil. LIVE OFF.
 Tindak lanjut: Yura siapkan spesifikasi/tes bersama Jules pada sesi berikutnya dalam PR #233 yang sama; Claude review independen. Jangan membuat PR WP13 baru, jangan mengubah runtime VPS/observer sekarang.
+
+### D7 — Audit struktur 30 Okt (A-01–A-11): verifikasi dan urutan tindak lanjut
+Yura/ChatGPT (laporan `KATARINA_AI_AUDIT_STRUKTUR_2026-10-30.md`, dilampirkan Owner) · 31 Okt 2026 · status: Terbuka
+Usulan: audit baca-saja `main` `85f8aef` + #233 `76ce7e8`; 2 P0 (WP13 belum merge, Tahap 0 belum lulus),
+6 P1 (WP8c bukti, WP6 reboot, OAuth `/oauth/status`, reviewer independen, dokumen status usang, WP10a di VPS), 3 P2.
+Verifikasi Claude (31 Okt 00:20 WIB, GitHub + VPS baca-saja):
+| ID | Hasil cek | Bukti / catatan |
+|---|---|---|
+| A-01 | **Benar** + temuan baru | #233 HEAD `76ce7e8`: CI Body/Ubuntu/Windows PASS, `mergeable_state=clean`, 34 berkas, tidak menyentuh `promotion_lock`. Observer kini memakai `inspect_host_clock` + dua sampel tick; siklus gagal tetap ditulis `FAILED` + alasan (`close_ledger_cycle`). Review Claude di #233 (`f672648`) sudah usang |
+| A-01 baru | **Penghalang deploy** | WP13 menolak NTP bila `Time since Last Good Sync Time` > **14.400 s**. VPS: `Poll Interval: 15 (32768s)` (±9,1 jam), saat cek **27.146 s** sejak sinkron terakhir → `NTP_SYNC_STALE`. Bila #233 dideploy apa adanya, sebagian besar siklus `FAILED` dan Tahap 0 gagal `cycle_success_rate`. Butuh `MaxPollInterval` ≤ 13 (8.192 s) atau resync terjadwal — **perubahan setelan sistem VPS, perlu izin Owner**; jangan melonggarkan batas di kode |
+| A-02 | Benar | Hitungan sejak 28 Okt 16:57 UTC; `--since` baru ada di #233 |
+| A-03 | Benar | `us_release_calendar.csv` hanya header; belum ada CLI pembuat sampel (RH-005) |
+| A-04 | Benar | Task observer memakai Interactive Logon; reboot tanpa login belum diuji |
+| A-05 | Benar di kode, **tidak aktif di VPS** | `server.js` baris 151–156 mengembalikan `profile` (user_info MQL5) tanpa auth; `listen(PORT,'0.0.0.0')`. Tidak ada proses node `oauth_gateway` di VPS. Lokasi deploy lain belum diketahui |
+| A-06 | Benar | `CODEOWNERS` hanya owner; PR 30 Okt bisa di-merge tanpa approval → review tidak diwajibkan proteksi branch |
+| A-07 | Benar sebagian | `PROJECT_STATUS` (#239) masih menulis #233 "konflik + blocker P0"; usang sejak `76ce7e8`. Diperbarui saat #233 merge (#233 sendiri mengubah berkas itu) |
+| A-08 | Benar | WP10a belum dijalankan di VPS |
+| A-09–A-11 | Setuju, tidak mendesak | A-10: paket kosong `domain/ports/entrypoints` sudah tercatat di peta modul (D=3); jangan refactor sebelum Tahap 1 |
+Koreksi kecil: tabel subsistem menyebut "7 simbol inti masih rencana"; observer VPS saat ini menerima **5 simbol** per siklus.
+Pertanyaan: 1. Manager: urutan WP13 = review independen `76ce7e8` → merge → izin Owner ubah poll NTP VPS → deploy terkendali?
+2. Owner: izinkan `w32tm` MaxPollInterval 13 (atau resync terjadwal) sebelum deploy WP13? 3. Owner: wajibkan ≥1 approval
+di branch protection (A-06)? 4. Owner/manager: `oauth_gateway/` diperbaiki (tanpa `profile`, bind `127.0.0.1`) atau dihapus
+bersama ekstraksi website?
+Tanggapan:
+- [Claude 31 Okt 2026] Audit akurat. Prioritas tertinggi baru adalah syarat NTP: tanpa itu WP13 yang benar justru
+  menggagalkan Tahap 0. Claude siap melakukan review independen `76ce7e8` bila manager meminta (tanpa merge/deploy).
+Keputusan (Manager, 31 Okt 2026; [komentar keputusan PR #240](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/240#issuecomment-6528911795)):
+1. **D7-M1 — Urutan WP13 disetujui bersyarat:** minta **Claude melakukan review independen sekarang** terhadap
+   PR #233 pada HEAD `76ce7e8f0bf8645217c6800f2df462441e7ed61a`. Audit aktual mencakup sumber UTC
+   host NTP tepercaya, ≥3 tick progresif (bukan tiga sumber jam independen), perubahan offset/DST dan broker,
+   alasan FAILED yang recoverable tanpa publikasi UTC palsu, Stage0 `--since`/hari parsial/`NO_DATA`/0 order,
+   kesesuaian manifest, FakeBroker/tes negatif, dan scope. **Review lama `f6726480` tidak mencakup HEAD ini.**
+   Merge kode **hanya setelah** review independen menyetujui SHA final, CI Body/Ubuntu/Windows PASS pada SHA
+   yang sama, `mergeable=true`, dan tidak ada blocker P0. `MERGED` tidak berarti `DEPLOYED` atau Tahap 0 PASS.
+2. **D7-M2 — Perubahan NTP VPS belum diizinkan:** selisih batas bukti WP13 (umur sync ≤14.400 detik) dan
+   poll VPS 32.768 detik merupakan **blocker deployment P0**. Pertahankan batas fail-closed kode; jangan
+   meningkatkan tingkat keberhasilan dengan menurunkan guard. Siapkan rencana W32Time `MaxPollInterval=13`
+   (8.192 detik) **atau** sinkron ulang terjadwal, tetapi nilai poll bukan bukti sync berhasil.
+   Wajib periksa sumber NTP independen, waktu sync aktual, umur, stratum, offset, kegagalan, interval
+   berulang, kompatibilitas OS, backup konfigurasi serta rollback. **Izin eksplisit Owner diperlukan
+   sebelum mengubah setelan VPS**, dan deployment/restart observer memerlukan persetujuan terpisah.
+3. **D7-M3 — Tata kelola PR:** Manager merekomendasikan minimal **satu approval reviewer independen**,
+   required CI Body/Ubuntu/Windows, invalidasi approval usang saat HEAD berubah, dan larangan force-push
+   pada `main`. Belum ada izin mengaktifkan/mengubah aturan proteksi; tunggu keputusan Owner.
+4. **D7-M4 — OAuth MQL5:** Manager memilih **perbaiki, jangan langsung hapus**, jika gateway masih
+   diperlukan. Hindari paparan anonim `lastAuth.profile`, batasi akses, bind loopback
+   `127.0.0.1` secara default dan audit kemungkinan deployment di luar VPS. Perubahan kode
+   dikerjakan sebagai paket terpisah setelah prioritas P0; bila ternyata obsolete, usulkan
+   penghapusan setelah audit dependensi.
+5. **D7-M5 — Pencatatan jujur:** status `docs/PROJECT_STATUS.md` / Roadmap diperbarui setelah
+   merge #233 yang benar-benar terverifikasi. Riwayat perbaikan hanya mencatat bukti yang telah
+   terjadi; bukti Stage0 10 hari dan dataset historis WP8c tetap terpisah.
+6. **D7-M6 — Batas operasi tidak berubah:** LIVE OFF, 0 order; tidak ada deployment,
+   restart observer, perubahan Risk Governor, promotion lock, atau pembukaan holdout.
+
+Tindak lanjut:
+- **Claude:** lakukan review independen formal pada HEAD #233, laporkan temuan/kesimpulan ke manager;
+  jangan merge atau deploy berdasarkan review lama.
+- **Owner (menunggu keputusan):** (a) izin atau tolak perubahan sinkronisasi NTP VPS dengan rencana
+  backup/rollback, (b) izin atau tolak pengaturan minimal satu reviewer independen di `main`.
+- **Manager:** evaluasi review SHA final; merge hanya sesudah seluruh gerbang terverifikasi,
+  lalu koordinasikan pencatatan dokumen tanpa menandai Stage0 PASS/deployed.
+- **PR #240 (dokumen rapat saja):** dapat di-merge setelah CI HEAD final Body/Ubuntu/Windows PASS
+  dan `mergeable=true`; tidak membawa perubahan runtime atau izin operasi.
 
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
