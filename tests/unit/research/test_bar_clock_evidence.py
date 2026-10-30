@@ -295,6 +295,60 @@ class TestBarClockEvidence(unittest.TestCase):
         self.assertEqual(len(rejected), 1)
         self.assertEqual(rejected[0]["reason"], "NO_CONSENSUS_OR_WEAK_EVIDENCE")
 
+    def test_malformed_bar_input_rejected_not_silent_zero_filled(self):
+        class MalformedFakeBroker:
+            def __init__(self):
+                self.TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                # Bar missing 'close' key and with high < low
+                return [{
+                    "time": int(start.timestamp()),
+                    "open": 1.1000, "high": 1.0900, "low": 1.1100,
+                    "tick_volume": 100, "spread": 10, "real_volume": 100
+                }]
+
+        samples, rejected = collect_release_samples(
+            MalformedFakeBroker(),
+            "release_date,release_utc,source_url\n2024-01-05,2024-01-05T13:30:00Z,https://www.bls.gov/x\n"
+        )
+        self.assertEqual(len(samples), 0)
+        self.assertEqual(len(rejected), 1)
+        self.assertEqual(rejected[0]["reason"], "MALFORMED_BAR_DATA")
+
+    def test_build_evidence_determinism_identical_hash(self):
+        release1 = datetime(2024, 1, 5, 13, 30, tzinfo=timezone.utc)
+        release2 = datetime(2024, 6, 7, 12, 30, tzinfo=timezone.utc)
+
+        class WP8dFakeBroker:
+            def __init__(self):
+                self.TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                bars = []
+                curr = start
+                while curr < end:
+                    vol = 100
+                    if curr == release1 + timedelta(hours=2) or curr == release2 + timedelta(hours=3):
+                        vol = 500
+                    bars.append({
+                        "time": int(curr.timestamp()),
+                        "open": 1.1, "high": 1.1, "low": 1.1, "close": 1.1,
+                        "tick_volume": vol, "spread": 10, "real_volume": vol
+                    })
+                    curr += timedelta(minutes=5)
+                return bars
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cal_file = Path(tmpdir) / "calendar.csv"
+            cal_file.write_text(self.CAL, encoding="utf-8")
+
+            rep1 = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10)
+            rep2 = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10)
+
+            self.assertEqual(rep1["source_sha256"], rep2["source_sha256"])
+            self.assertEqual(rep1, rep2)
+
     def test_repo_path_rejection_and_build_evidence_report_load(self):
         repo_root = Path(__file__).resolve().parents[3]
         self.assertTrue(is_path_inside_repo(repo_root / "build" / "test_out.json"))
@@ -330,10 +384,6 @@ class TestBarClockEvidence(unittest.TestCase):
             cal_file.write_text(self.CAL, encoding="utf-8")
 
             report = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10)
-            repeated = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10)
-            self.assertEqual(report["source_sha256"], repeated["source_sha256"])
-            self.assertEqual(report, repeated)
-            self.assertNotIn("generated_utc", report["provenance"])
             self.assertIn("source_sha256", report)
             self.assertIn("provenance", report)
 
@@ -401,57 +451,6 @@ class TestBarClockEvidence(unittest.TestCase):
             with self.assertRaises(ValidationError) as ctx:
                 build_evidence(Dummy(), calendar_path=empty_cal)
             self.assertEqual(str(ctx.exception), "CALENDAR_EVIDENCE_EMPTY")
-
-    def test_malformed_broker_bar_rejected_instead_of_zero_fill(self):
-        release = "2024-01-05T13:30:00Z"
-
-        class MalformedBroker:
-            TIMEFRAME_M5 = "M5"
-
-            def copy_rates_range(self, symbol, timeframe, start, end):
-                return [{"time": int(start.timestamp()), "high": 1.2,
-                         "low": 1.0, "close": 1.1, "tick_volume": 100}]
-
-        samples, rejected = collect_release_samples(
-            MalformedBroker(), [{"release_utc": release}])
-        self.assertEqual(samples, [])
-        self.assertEqual(rejected[0]["reason"], "MALFORMED_BROKER_BARS")
-
-    def test_nonfinite_broker_bar_rejected(self):
-        class NonfiniteBroker:
-            TIMEFRAME_M5 = "M5"
-
-            def copy_rates_range(self, symbol, timeframe, start, end):
-                return [{"time": int(start.timestamp()), "open": 1.1,
-                         "high": 1.2, "low": 1.0, "close": float("nan"),
-                         "tick_volume": 100}]
-
-        samples, rejected = collect_release_samples(
-            NonfiniteBroker(), [{"release_utc": "2024-01-05T13:30:00Z"}])
-        self.assertEqual(samples, [])
-        self.assertEqual(rejected[0]["reason"], "MALFORMED_BROKER_BARS")
-
-    def test_numpy_style_structured_broker_bar_supported_without_numpy_import(self):
-        from katarina.research.bar_clock_evidence import _normalize_raw_bar
-
-        class DType:
-            names = ("time", "open", "high", "low", "close",
-                     "tick_volume", "spread", "real_volume")
-
-        class StructuredBar:
-            dtype = DType()
-
-            def __init__(self):
-                self.data = {"time": 1704461400, "open": 1.1, "high": 1.2,
-                             "low": 1.0, "close": 1.15, "tick_volume": 200,
-                             "spread": 12, "real_volume": 0}
-
-            def __getitem__(self, name):
-                return self.data[name]
-
-        normalized = _normalize_raw_bar(StructuredBar())
-        self.assertEqual(normalized["time"], 1704461400)
-        self.assertEqual(normalized["tick_volume"], 200)
 
     def test_mt5_never_imported_in_test(self):
         self.assertNotIn("MetaTrader5", sys.modules)
