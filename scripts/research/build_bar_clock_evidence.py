@@ -11,7 +11,6 @@ import argparse
 import csv
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -22,7 +21,7 @@ from katarina.research.bar_clock_evidence import (
     build_evidence_report,
     collect_release_samples,
 )
-from katarina.research.validation import ValidationError, canonical, sha256_text
+from katarina.research.validation import ValidationError, canonical
 
 
 def is_path_inside_repo(out_path: str | Path) -> bool:
@@ -38,8 +37,6 @@ def build_evidence(
     broker: object,
     calendar_path: str | Path = DEFAULT_CALENDAR_PATH,
     max_releases: int = 50,
-    *,
-    generated_utc: str | datetime | None = None,
 ) -> dict:
     cal_p = Path(calendar_path)
     if not cal_p.is_file():
@@ -67,14 +64,6 @@ def build_evidence(
         "max_releases": max_releases,
         "processed_releases": len(selected_rows),
     }
-    if generated_utc is not None:
-        if isinstance(generated_utc, str):
-            dt = datetime.fromisoformat(generated_utc.replace("Z", "+00:00"))
-        else:
-            dt = generated_utc
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        provenance["generated_utc"] = dt.astimezone(timezone.utc).isoformat()
 
     report = build_evidence_report(
         cal_content,

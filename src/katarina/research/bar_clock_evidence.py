@@ -403,69 +403,50 @@ def build_evidence_report(
 
 
 def _normalize_raw_bar(bar: dict | object) -> dict:
+    """Reject incomplete/nonfinite broker bars; accept MT5 NumPy structured rows.
+
+    Clock evidence must hash actual observed fields, never silently manufactured
+    zero OHLC values. No dependency on NumPy at import or test time.
+    """
     if isinstance(bar, dict):
-        t = bar.get("time_utc") if "time_utc" in bar else bar.get("time")
-        if any(k not in bar for k in ("open", "high", "low", "close")):
-            raise ValidationError("BAR_OHLC_MISSING")
-        op = bar["open"]
-        hi = bar["high"]
-        lo = bar["low"]
-        cl = bar["close"]
-        vol = bar.get("tick_volume", bar.get("real_volume", bar.get("volume")))
-        sp = bar.get("spread", 0)
-        rvol = bar.get("real_volume", 0)
+        fields = bar
+    elif getattr(getattr(bar, "dtype", None), "names", None):
+        fields = {name: bar[name] for name in bar.dtype.names}
     else:
-        t = getattr(bar, "time_utc", getattr(bar, "time", None))
-        if not all(hasattr(bar, k) for k in ("open", "high", "low", "close")):
-            raise ValidationError("BAR_OHLC_MISSING")
-        op = getattr(bar, "open")
-        hi = getattr(bar, "high")
-        lo = getattr(bar, "low")
-        cl = getattr(bar, "close")
-        vol = getattr(bar, "tick_volume", getattr(bar, "real_volume", getattr(bar, "volume", None)))
-        sp = getattr(bar, "spread", 0)
-        rvol = getattr(bar, "real_volume", 0)
+        keys = ("time_utc", "time", "open", "high", "low", "close",
+                "tick_volume", "volume", "spread", "real_volume")
+        fields = {key: getattr(bar, key) for key in keys if hasattr(bar, key)}
 
-    if t is None:
-        raise ValidationError("BAR_TIME_MISSING")
-    if vol is None:
+    if not isinstance(fields, dict) or not {"open", "high", "low", "close"} <= fields.keys():
+        raise ValidationError("BAR_OHLC_MISSING")
+    if "tick_volume" not in fields and "volume" not in fields:
         raise ValidationError("BAR_VOLUME_MISSING")
-
+    t = fields.get("time_utc", fields.get("time"))
+    if t is None or isinstance(t, bool):
+        raise ValidationError("BAR_TIME_MISSING")
     try:
-        op = float(op)
-        hi = float(hi)
-        lo = float(lo)
-        cl = float(cl)
-        vol = int(vol)
-        sp = int(sp)
-        rvol = int(rvol)
-    except (TypeError, ValueError, OverflowError) as error:
-        raise ValidationError("BAR_VALUES_INVALID") from error
-
-    prices = (op, hi, lo, cl)
-    if not all(math.isfinite(x) and x > 0 for x in prices):
-        raise ValidationError("BAR_PRICES_NON_FINITE_OR_NON_POSITIVE")
-    if lo > min(op, cl) or hi < max(op, cl) or hi < lo:
-        raise ValidationError("BAR_OHLC_GEOMETRY_INVALID")
-    if vol < 0 or sp < 0 or rvol < 0:
-        raise ValidationError("BAR_METRICS_NEGATIVE")
-
-    if isinstance(t, datetime):
-        t_val = _utc_dt(t).isoformat()
-    elif isinstance(t, (int, float)):
-        t_val = int(t)
-    else:
-        t_val = str(t)
-
+        if isinstance(t, (str, datetime)):
+            t_val = _utc_dt(t).isoformat()
+        else:
+            t_val = int(t)
+            if t_val <= 0 or not math.isfinite(float(t)):
+                raise ValueError("timestamp_invalid")
+        op, hi, lo, cl = (float(fields[key]) for key in ("open", "high", "low", "close"))
+        vol = int(fields.get("tick_volume", fields.get("volume")))
+        spread = int(fields.get("spread", 0))
+        real_volume = int(fields.get("real_volume", 0))
+    except (TypeError, ValueError, OverflowError) as err:
+        raise ValidationError("BAR_FIELD_INVALID") from err
+    if not all(math.isfinite(v) for v in (op, hi, lo, cl)):
+        raise ValidationError("BAR_OHLC_NONFINITE")
+    if min(op, hi, lo, cl) <= 0 or hi < max(op, lo, cl) or lo > min(op, hi, cl):
+        raise ValidationError("BAR_OHLC_INVALID")
+    if vol < 0 or spread < 0 or real_volume < 0:
+        raise ValidationError("BAR_VOLUME_INVALID")
     return {
-        "close": cl,
-        "high": hi,
-        "low": lo,
-        "open": op,
-        "real_volume": rvol,
-        "spread": sp,
-        "tick_volume": vol,
-        "time": t_val,
+        "close": cl, "high": hi, "low": lo, "open": op,
+        "real_volume": real_volume, "spread": spread,
+        "tick_volume": vol, "time": t_val,
     }
 
 
@@ -524,7 +505,7 @@ def collect_release_samples(
         bars_by_symbol = {}
         canonical_raw_by_symbol = {}
         all_empty = True
-        malformed_found = False
+        malformed = False
 
         for symbol in sorted_symbols:
             try:
@@ -542,13 +523,16 @@ def collect_release_samples(
                     norm_bars.sort(key=lambda x: str(x["time"]))
                     canonical_raw_by_symbol[symbol] = norm_bars
                     bars_by_symbol[symbol] = norm_bars
-                except ValidationError:
-                    malformed_found = True
+                except (ValidationError, TypeError, ValueError, OverflowError):
+                    malformed = True
                     bars_by_symbol[symbol] = []
                     canonical_raw_by_symbol[symbol] = []
 
         bars_sha256 = sha256_text(canonical(canonical_raw_by_symbol))
 
+        if malformed:
+            rejected.append({"release_utc": release_utc_iso, "reason": "MALFORMED_BROKER_BARS", "bars_sha256": bars_sha256})
+            continue
         if all_empty:
             rejected.append({"release_utc": release_utc_iso, "reason": "BROKER_BARS_UNAVAILABLE", "bars_sha256": bars_sha256})
             continue
@@ -562,10 +546,9 @@ def collect_release_samples(
                 "bars_sha256": bars_sha256,
             })
         else:
-            reason = "MALFORMED_BAR_DATA" if malformed_found else "NO_CONSENSUS_OR_WEAK_EVIDENCE"
             rejected.append({
                 "release_utc": release_utc_iso,
-                "reason": reason,
+                "reason": "NO_CONSENSUS_OR_WEAK_EVIDENCE",
                 "bars_sha256": bars_sha256,
             })
 
