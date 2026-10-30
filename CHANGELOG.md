@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-31 — WP8d: CLI sampel bukti jam bar resmi (#245)
+
+- Tambah fungsi murni `collect_release_samples` dan helper `_normalize_raw_bar` di `src/katarina/research/bar_clock_evidence.py` untuk mengumpulkan sampel shift terverifikasi dari rilis kalender dan bar M5 broker di sekitar jendela shift kandidat (-12..+14 jam ±4 jam + 12 bar konteks), dengan hash deterministik `bars_sha256` dari JSON kanonik bar mentah seluruh simbol. Rilis tanpa konsensus dicatat di `rejected`.
+- Tambah skrip CLI tipis `scripts/research/build_bar_clock_evidence.py` dengan parameter `--calendar`, `--out`, dan `--max-releases`. Path keluaran `--out` wajib di luar repo (menolak path repo/symlink). MetaTrader5 diimpor hanya di dalam `main()`.
+- Tambah unit dan integrasi tes deterministik di `tests/unit/research/test_bar_clock_evidence.py` dengan broker sintetis, menguji shift +2/+3, penolakan tanpa konsensus, determinisme hash, pembacaan `load_evidence_report`, penolakan path repo, dan kalender kosong → `CALENDAR_EVIDENCE_EMPTY`. MT5 tidak pernah diimpor selama tes.
+- Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
 ## 2026-10-31 — roadmap: keputusan D7 dan perintah induk Google Jules
 
 - Antrean, R0, R1 T13, R4, R5, R6, R7 diselaraskan dengan D7-M7–M15: WP13 MERGE BLOCKED (regresi bot Jules `3532399`), dipulihkan manager/Claude, bukan Jules; NTP VPS `MaxPollInterval` 13.

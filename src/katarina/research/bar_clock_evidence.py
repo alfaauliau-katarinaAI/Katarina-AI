@@ -371,7 +371,13 @@ def verify_report_body(report: dict) -> dict:
     return report
 
 
-def build_evidence_report(calendar_csv_content: str, samples: list[dict]) -> dict:
+def build_evidence_report(
+    calendar_csv_content: str,
+    samples: list[dict],
+    *,
+    rejected: list[dict] | None = None,
+    provenance: dict | None = None,
+) -> dict:
     """Generate canonical evidence report dict and lineage SHA256."""
     _check_samples(samples, _calendar_releases(calendar_csv_content))
     cal_hash = sha256_text(calendar_csv_content)
@@ -385,9 +391,156 @@ def build_evidence_report(calendar_csv_content: str, samples: list[dict]) -> dic
                        samples=samples,
                        schema_version=1,
                        timeline=timeline)
+    if rejected is not None:
+        report_body["rejected"] = rejected
+    if provenance is not None:
+        report_body["provenance"] = provenance
+
     source_sha256 = sha256_text(canonical(report_body))
     return dict(source_sha256=source_sha256,
                 **report_body)
+
+
+def _normalize_raw_bar(bar: dict | object) -> dict:
+    if isinstance(bar, dict):
+        t = bar.get("time_utc", bar.get("time"))
+        op = bar.get("open", 0.0)
+        hi = bar.get("high", 0.0)
+        lo = bar.get("low", 0.0)
+        cl = bar.get("close", 0.0)
+        vol = bar.get("tick_volume", bar.get("volume", 0))
+        sp = bar.get("spread", 0)
+        rvol = bar.get("real_volume", 0)
+    else:
+        t = getattr(bar, "time_utc", getattr(bar, "time", None))
+        op = getattr(bar, "open", 0.0)
+        hi = getattr(bar, "high", 0.0)
+        lo = getattr(bar, "low", 0.0)
+        cl = getattr(bar, "close", 0.0)
+        vol = getattr(bar, "tick_volume", getattr(bar, "volume", 0))
+        sp = getattr(bar, "spread", 0)
+        rvol = getattr(bar, "real_volume", 0)
+
+    if t is None:
+        raise ValidationError("BAR_TIME_MISSING")
+
+    if isinstance(t, datetime):
+        t_val = _utc_dt(t).isoformat()
+    elif isinstance(t, (int, float)):
+        t_val = int(t)
+    else:
+        t_val = str(t)
+
+    return {
+        "close": float(cl),
+        "high": float(hi),
+        "low": float(lo),
+        "open": float(op),
+        "real_volume": int(rvol),
+        "spread": int(sp),
+        "tick_volume": int(vol),
+        "time": t_val,
+    }
+
+
+def collect_release_samples(
+    broker: object,
+    calendar_rows: list[dict] | str | iter,
+    *,
+    symbols: tuple[str, ...] = CORE_SYMBOLS,
+    timeframe: str = "M5",
+) -> tuple[list[dict], list[dict]]:
+    """Collect release shift samples and rejected releases across calendar releases.
+
+    Queries M5 bars around each release utc (-17h..+19h to cover -12..+14 candidate shifts
+    ±4 hours + 12 context bars) for given symbols.
+    Computes deterministic bars_sha256 hash across canonical raw bar representations.
+    Fails closed: releases without consensus are recorded in rejected with a reason code.
+    """
+    if isinstance(calendar_rows, str):
+        if not calendar_rows.strip():
+            rows = []
+        else:
+            rows = list(csv.DictReader(calendar_rows.strip().splitlines()))
+    elif isinstance(calendar_rows, (list, tuple)):
+        rows = calendar_rows
+    else:
+        rows = list(calendar_rows)
+
+    frame = getattr(broker, "TIMEFRAME_" + timeframe, timeframe)
+    sorted_symbols = tuple(sorted(symbols))
+
+    samples = []
+    rejected = []
+
+    for row in rows:
+        if isinstance(row, dict):
+            release_val = row.get("release_utc")
+        else:
+            release_val = row
+
+        if not release_val:
+            rejected.append({"release_utc": None, "reason": "MISSING_RELEASE_UTC", "bars_sha256": None})
+            continue
+
+        try:
+            release_dt = _utc_dt(release_val)
+        except ValidationError:
+            rejected.append({"release_utc": str(release_val), "reason": "INVALID_RELEASE_DATETIME", "bars_sha256": None})
+            continue
+
+        release_utc_iso = release_dt.isoformat()
+
+        # Window covers candidate shift -12 (-12-4-1 = -17h) to +14 (+14+4+1 = +19h)
+        query_start = release_dt - timedelta(hours=17)
+        query_end = release_dt + timedelta(hours=19)
+
+        bars_by_symbol = {}
+        canonical_raw_by_symbol = {}
+        all_empty = True
+
+        for symbol in sorted_symbols:
+            try:
+                raw_rates = broker.copy_rates_range(symbol, frame, query_start, query_end)
+            except Exception:
+                raw_rates = None
+
+            if raw_rates is None or len(raw_rates) == 0:
+                bars_by_symbol[symbol] = []
+                canonical_raw_by_symbol[symbol] = []
+            else:
+                all_empty = False
+                try:
+                    norm_bars = [_normalize_raw_bar(b) for b in raw_rates]
+                    norm_bars.sort(key=lambda x: str(x["time"]))
+                    canonical_raw_by_symbol[symbol] = norm_bars
+                    bars_by_symbol[symbol] = norm_bars
+                except ValidationError:
+                    bars_by_symbol[symbol] = []
+                    canonical_raw_by_symbol[symbol] = []
+
+        bars_sha256 = sha256_text(canonical(canonical_raw_by_symbol))
+
+        if all_empty:
+            rejected.append({"release_utc": release_utc_iso, "reason": "BROKER_BARS_UNAVAILABLE", "bars_sha256": bars_sha256})
+            continue
+
+        shift = release_shift(bars_by_symbol, release_dt)
+
+        if shift is not None and type(shift) is int and -12 <= shift <= 14:
+            samples.append({
+                "release_utc": release_utc_iso,
+                "shift_hours": shift,
+                "bars_sha256": bars_sha256,
+            })
+        else:
+            rejected.append({
+                "release_utc": release_utc_iso,
+                "reason": "NO_CONSENSUS_OR_WEAK_EVIDENCE",
+                "bars_sha256": bars_sha256,
+            })
+
+    return samples, rejected
 
 
 def load_evidence_report(path: str | Path, calendar_path: str | Path = DEFAULT_CALENDAR_PATH) -> dict:

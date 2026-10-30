@@ -933,7 +933,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP4 | Menunggu WP13 merge (sama-sama mengubah `observer.py`) — Jules | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
 | WP15 | Siap dikerjakan — Jules | – | Owner D7-M15; jangan ubah `fx_session_open` atau data lama |
-| WP8d | Siap dikerjakan — Jules | – | Hasil dijalankan Claude di VPS; laporan bukti di luar repo |
+| WP8d | Sedang dikerjakan — Jules, PR #245 | #245 | CLI bukti jam bar historis fail-closed, fungsi collect_release_samples, tes deterministik FakeBroker |
 | WP16 | Siap dikerjakan — Jules | – | Manager D7-M4 |
 | WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
