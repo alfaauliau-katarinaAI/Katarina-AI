@@ -21,7 +21,9 @@ class PartiallyClosedBroker(SyntheticBroker):
         # The clock snapshot is old for two markets. Causal historical
         # prices remain available here so ledger behavior can be tested.
         age = 3800 if symbol in ("XAUUSD", "NAS100") else 2
+        self.tick_counter += 1
         return SimpleNamespace(time=self.now + 10800 - age,
+                               time_msc=(self.now+10800-age)*1000+self.tick_counter,
                                bid=2000., ask=2000.1)
 
 
@@ -76,6 +78,19 @@ class PartialClockCycleTests(unittest.TestCase):
                 self.assertEqual(report["symbols"][symbol]["action"], "WAIT")
             self.assertEqual(report["orders_submitted"], 0)
         self.assertEqual(broker.orders, 0)
+
+
+
+
+# This synthetic suite patches only its observer call sites and restores them.
+from tests.synthetic_clock_fixture import ModuleClockFixture
+_clock_fixture = ModuleClockFixture()
+
+def setUpModule():
+    _clock_fixture.start()
+
+def tearDownModule():
+    _clock_fixture.stop()
 
 
 if __name__ == "__main__":
