@@ -181,8 +181,44 @@ bersama ekstraksi website?
 Tanggapan:
 - [Claude 31 Okt 2026] Audit akurat. Prioritas tertinggi baru adalah syarat NTP: tanpa itu WP13 yang benar justru
   menggagalkan Tahap 0. Claude siap melakukan review independen `76ce7e8` bila manager meminta (tanpa merge/deploy).
-Keputusan:
-Tindak lanjut: manager (urutan WP13, A-07), Owner (NTP VPS, A-06, A-05/A-11), Claude (review `76ce7e8` bila diminta).
+Keputusan (Manager, 31 Okt 2026; [komentar keputusan PR #240](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/240#issuecomment-6528911795)):
+1. **D7-M1 — Urutan WP13 disetujui bersyarat:** minta **Claude melakukan review independen sekarang** terhadap
+   PR #233 pada HEAD `76ce7e8f0bf8645217c6800f2df462441e7ed61a`. Audit aktual mencakup sumber UTC
+   host NTP tepercaya, ≥3 tick progresif (bukan tiga sumber jam independen), perubahan offset/DST dan broker,
+   alasan FAILED yang recoverable tanpa publikasi UTC palsu, Stage0 `--since`/hari parsial/`NO_DATA`/0 order,
+   kesesuaian manifest, FakeBroker/tes negatif, dan scope. **Review lama `f6726480` tidak mencakup HEAD ini.**
+   Merge kode **hanya setelah** review independen menyetujui SHA final, CI Body/Ubuntu/Windows PASS pada SHA
+   yang sama, `mergeable=true`, dan tidak ada blocker P0. `MERGED` tidak berarti `DEPLOYED` atau Tahap 0 PASS.
+2. **D7-M2 — Perubahan NTP VPS belum diizinkan:** selisih batas bukti WP13 (umur sync ≤14.400 detik) dan
+   poll VPS 32.768 detik merupakan **blocker deployment P0**. Pertahankan batas fail-closed kode; jangan
+   meningkatkan tingkat keberhasilan dengan menurunkan guard. Siapkan rencana W32Time `MaxPollInterval=13`
+   (8.192 detik) **atau** sinkron ulang terjadwal, tetapi nilai poll bukan bukti sync berhasil.
+   Wajib periksa sumber NTP independen, waktu sync aktual, umur, stratum, offset, kegagalan, interval
+   berulang, kompatibilitas OS, backup konfigurasi serta rollback. **Izin eksplisit Owner diperlukan
+   sebelum mengubah setelan VPS**, dan deployment/restart observer memerlukan persetujuan terpisah.
+3. **D7-M3 — Tata kelola PR:** Manager merekomendasikan minimal **satu approval reviewer independen**,
+   required CI Body/Ubuntu/Windows, invalidasi approval usang saat HEAD berubah, dan larangan force-push
+   pada `main`. Belum ada izin mengaktifkan/mengubah aturan proteksi; tunggu keputusan Owner.
+4. **D7-M4 — OAuth MQL5:** Manager memilih **perbaiki, jangan langsung hapus**, jika gateway masih
+   diperlukan. Hindari paparan anonim `lastAuth.profile`, batasi akses, bind loopback
+   `127.0.0.1` secara default dan audit kemungkinan deployment di luar VPS. Perubahan kode
+   dikerjakan sebagai paket terpisah setelah prioritas P0; bila ternyata obsolete, usulkan
+   penghapusan setelah audit dependensi.
+5. **D7-M5 — Pencatatan jujur:** status `docs/PROJECT_STATUS.md` / Roadmap diperbarui setelah
+   merge #233 yang benar-benar terverifikasi. Riwayat perbaikan hanya mencatat bukti yang telah
+   terjadi; bukti Stage0 10 hari dan dataset historis WP8c tetap terpisah.
+6. **D7-M6 — Batas operasi tidak berubah:** LIVE OFF, 0 order; tidak ada deployment,
+   restart observer, perubahan Risk Governor, promotion lock, atau pembukaan holdout.
+
+Tindak lanjut:
+- **Claude:** lakukan review independen formal pada HEAD #233, laporkan temuan/kesimpulan ke manager;
+  jangan merge atau deploy berdasarkan review lama.
+- **Owner (menunggu keputusan):** (a) izin atau tolak perubahan sinkronisasi NTP VPS dengan rencana
+  backup/rollback, (b) izin atau tolak pengaturan minimal satu reviewer independen di `main`.
+- **Manager:** evaluasi review SHA final; merge hanya sesudah seluruh gerbang terverifikasi,
+  lalu koordinasikan pencatatan dokumen tanpa menandai Stage0 PASS/deployed.
+- **PR #240 (dokumen rapat saja):** dapat di-merge setelah CI HEAD final Body/Ubuntu/Windows PASS
+  dan `mergeable=true`; tidak membawa perubahan runtime atau izin operasi.
 
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
