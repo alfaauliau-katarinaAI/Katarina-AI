@@ -12,7 +12,6 @@ ROOT=Path(__file__).resolve().parents[2]
 TOP_FILES={'katarina_pc.py','START_KATARINA.bat','SETUP_KATARINA.bat',
            'requirements-pc.txt','requirements-stage07.txt','README.md'}
 EXTRA_FILES={'scripts/pc/bind_portable_runtime.py','scripts/pc/manage_owner_access.py','scripts/pc/run_system_acceptance.py',
-             'scripts/pc/synthetic_clock_fixture.py',
              'docs/architecture/KATARINA_FULL_SYSTEM_TEST.md','scripts/pc/run_assistant.py','scripts/pc/run_pretrial_acceptance.py',
              'scripts/pc/run_owner_research.py',
              'docs/architecture/KATARINA_MEETING_TARGET_20261016.md',

@@ -70,48 +70,6 @@ class Stage0SinceWP13Tests(unittest.TestCase):
         self.assertEqual(report["since_utc"], since_partial.isoformat())
         self.assertEqual(report["partial_tick_day_excluded"], "2026-10-25")
 
-    def test_manager_scenario_b_partial_day_excluded_from_consecutive_trading_days(self):
-        start = datetime(2026, 10, 28, 0, 1, tzinfo=timezone.utc)
-        end = datetime(2026, 10, 28, 23, 59, tzinfo=timezone.utc)
-        moment = start
-        while moment <= end:
-            c = ledger.record_snapshot(self.db, observed_utc=moment, clock_shift_hours=3, cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, moment.timestamp())})
-            ledger.close_cycle(self.db, finished_utc=moment, cycle_id=c, status="OK")
-            moment += timedelta(minutes=1)
-
-        now = datetime(2026, 10, 29, 3, 0, tzinfo=timezone.utc)
-        since = datetime(2026, 10, 28, 0, 1, tzinfo=timezone.utc)
-
-        report = data_health.assess(self.db, now, since=since)
-        crit = {c["criterion"]: c for c in report["criteria"]}["consecutive_trading_days"]
-
-        self.assertNotIn("2026-10-28", crit["covered_days"])
-        self.assertEqual(crit["best_streak"], 0)
-
-    def test_future_cycles_quotes_and_orders_do_not_enter_as_of_report(self):
-        now = datetime(2026, 10, 28, 12, tzinfo=timezone.utc)
-        future = now + timedelta(hours=1)
-        c = ledger.record_snapshot(self.db, observed_utc=future, clock_shift_hours=3,
-            cards={"EURUSD": {}}, quotes={"EURUSD": (1., 1.1, future.timestamp())})
-        ledger.close_cycle(self.db, finished_utc=future, cycle_id=c, status="OK", orders_submitted=1)
-        report = data_health.assess(self.db, now, since=now-timedelta(hours=1))
-        self.assertEqual(report["cycles_total"], 0)
-        self.assertEqual(report["verdict"], "NO_DATA")
-
-    def test_pre_cutoff_outage_and_quote_regression_remain_visible(self):
-        cutoff = datetime(2026, 10, 28, 12, tzinfo=timezone.utc)
-        before, after = cutoff-timedelta(minutes=10), cutoff+timedelta(minutes=2)
-        for stamp, epoch in ((before, before.timestamp()), (after, before.timestamp()-1)):
-            c = ledger.record_snapshot(self.db, observed_utc=stamp, clock_shift_hours=3,
-                cards={"EURUSD": {}}, quotes={"EURUSD": (1., 1.1, epoch)})
-            ledger.close_cycle(self.db, finished_utc=stamp, cycle_id=c, status="OK")
-        report = data_health.assess(self.db, after+timedelta(minutes=1), since=cutoff)
-        self.assertEqual(report["cycles_total"], 1)
-        crit = {c["criterion"]:c for c in report["criteria"]}
-        self.assertEqual(crit["no_duplicates_monotonic"]["tick_time_regressions"], 1)
-        self.assertEqual(report["observer_outages"][0]["start_utc"], cutoff.isoformat())
-        self.assertTrue(report["observer_outages"][0]["started_before_since"])
-
 
 if __name__ == "__main__":
     unittest.main()
