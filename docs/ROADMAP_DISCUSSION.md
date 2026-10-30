@@ -256,6 +256,23 @@ Tindak lanjut:
 
 **Langkah berikutnya:** pastikan Jules task `5365169223632429294` Paused dengan bukti UI; periksa ulang W32Time `State=Sync`, sumber, stratum, Last Sync Error, age, phase offset pada beberapa interval; aktifkan branch protection menggunakan admin GitHub; setelah writer stabil, pulihkan PR #233 dan minta review ulang SHA final. Rollover ditangani lewat paket sendiri tanpa perubahan data Stage0 lama.
 
+
+#### D7 — Notulen penegasan keputusan dan status pelaksanaan (31 Okt 2026)
+
+**Pengesahan rapat:** Owner meminta **seluruh keputusan terbaru dicatat dalam notulen D7**. Keputusan D7-M7 sampai D7-M15 di atas tetap berlaku; bagian ini merangkum **status pelaksanaan yang dapat dibuktikan**, bukan izin tambahan atau perubahan kriteria.
+
+| Agenda | Keputusan Owner/Manager | Pelaksanaan dan status verifikasi | Gerbang berikutnya |
+|---|---|---|---|
+| WP13 / task Jules | **SETUJU PAUSE** task existing WP13, satu PR #233, jangan force-push / merge pada kode regresif | **BELUM TERVERIFIKASI PAUSED** di UI Jules; HEAD #233 masih `35323998` (regresi NTP, quote-only). Review pada `76ce7e8` usang | Konfirmasi Paused lewat UI Jules terautentikasi; pulihkan tree `76ce7e8` di PR sama, pertahankan D7; tes CI dan review ulang SHA final independen |
+| Windows Time / NTP VPS | **SETUJU PERUBAHAN SETELAN SAJA** dengan backup, rollback, bukti sinkronisasi; bukan deploy, restart, atau trading | **TERLAKSANA SEBAGIAN:** `MaxPollInterval` 15→13 (32.768→8.192 s), registry/konfigurasi/status/peers sebelum dan sesudah tersimpan privat, rollback script disiapkan (tidak dieksekusi), `w32tm /resync /rediscover` berhasil. Sampel `w32tm /stripchart` tiga kali terhadap `time.windows.com` sekitar +0,21 s. **Status W32Time terakhir `State Machine: 1 (Hold)`, bukan `2 (Sync)`** meski stratum 5, leap 0, last sync error 0; guard WP13 belum PASS | Buktikan keadaan Sync dan freshness/offset/source konsisten pada beberapa interval dan setelah reboot/perubahan broker; jangan turunkan batas umur sync 14.400 s |
+| GitHub merge governance | **SETUJU** minimal satu approval independen, CI wajib Body/Ubuntu/Windows, dismiss stale review, dan larangan force-push | **BELUM DIAKTIFKAN:** pembacaan endpoint branch protection melalui GitHub integration menghasilkan HTTP 403; konektor tidak memberi kontrol perubahan settings. Hingga aturan benar-benar aktif, tahan merge yang belum punya approval | Admin repo mengaktifkan dan memverifikasi branch protection/ruleset, lalu cek required checks & reviewer independen bukan author |
+| Rollover Stage0 DST | **SETUJU paket desain dan pengujian TERPISAH** dengan acuan 17:00 `America/New_York`; tidak ada perubahan retroaktif atas hitungan sejak 28 Okt 2026 16:57 UTC | **BELUM IMPLEMENTASI**; perubahan definisi kelulusan Stage0 tetap tidak otomatis disetujui. Risiko jam pengecualian UTC tetap melewati akhir DST AS 1 Nov 2026 dicatat | Buat paket riset/tes terpisah, tunjukkan dampak denominator dan jam sesi pada kedua sisi DST; dapatkan review dan persetujuan kriteria resmi sebelum dipakai |
+| Rapat dan CI | Simpan keputusan D7 lewat PR aman, tanpa perubahan runtime | **PR #241** hanya `docs/ROADMAP_DISCUSSION.md` dan masih **OPEN** pada saat pengecekan; CI commit `caef0c2b` Body & Ubuntu PASS, Windows masih berjalan. **Belum ada approval PR #241** | Tunggu Windows PASS + review independen + aturan merge yang sesuai sebelum merge |
+
+**Urutan kerja resmi:** (1) pastikan Jules tidak dapat menimpa branch; (2) buktikan NTP VPS berstatus trusted dan monitor beberapa interval; (3) aktifkan serta verifikasi aturan approval GitHub; (4) pulihkan WP13 di PR #233 pada tree terbaru yang mempertahankan D7; (5) CI dan review independen SHA final; (6) keputusan merge kode; (7) izin deployment read-only terpisah dan validasi Stage0; (8) lanjutkan paket rollover pada PR dan review berbeda. Langkah-langkah ini tidak menghapus syarat histori WP8c dan WP10a yang belum terbukti di VPS.
+
+**Larangan tetap berlaku:** LIVE OFF, 0 order, Risk Governor/promotion_lock/holdout tidak diubah, tanpa deployment WP13, tanpa restart observer/MT5, tanpa pergeseran kriteria Stage0 diam-diam. Keberhasilan mengubah NTP bukan bukti Tahap 0 PASS.
+
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
