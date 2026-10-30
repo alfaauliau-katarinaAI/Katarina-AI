@@ -934,7 +934,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
 | WP15 | Siap dikerjakan — Jules | – | Owner D7-M15; jangan ubah `fx_session_open` atau data lama |
 | WP8d | Siap dikerjakan — Jules | – | Hasil dijalankan Claude di VPS; laporan bukti di luar repo |
-| WP16 | Siap dikerjakan — Jules | – | Manager D7-M4 |
+| WP16 | Sedang dikerjakan — Jules | – | Minimalisasi paparan status, bind loopback 127.0.0.1, tes statis guard |
 | WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
 | WP9c | Menunggu prasyarat (≥ 3 hari bursa `decision_shadow`) + persetujuan Owner | – | – |
