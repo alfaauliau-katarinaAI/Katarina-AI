@@ -273,6 +273,17 @@ Tindak lanjut:
 
 **Larangan tetap berlaku:** LIVE OFF, 0 order, Risk Governor/promotion_lock/holdout tidak diubah, tanpa deployment WP13, tanpa restart observer/MT5, tanpa pergeseran kriteria Stage0 diam-diam. Keberhasilan mengubah NTP bukan bukti Tahap 0 PASS.
 
+
+#### D7 — Checkpoint pemantauan 31 Okt 02:28 WIB (bukti terbaru)
+
+- **NTP VPS, read-only verifikasi 30 Okt 19:28:31 UTC (31 Okt 02:28 WIB):** Windows Time `State Machine: 2 (Sync)`, `Leap=0`, `Stratum=5`, `Last Sync Error=0`, sumber NTP tetap sama, `Phase Offset=+0.1136511s`, umur sinkron `875.8304868s`, poll aktif `11 (2048s)`, `MaxPollInterval=13 (8192s)`, servis RUNNING, backup masih ada. **Peningkatan nyata dari status Hold sebelumnya.** Ini satu snapshot Sync; **belum bukti konsistensi sepanjang beberapa interval** dan belum izin deploy WP13 atau Stage0 PASS.
+- **Pengamanan WP13:** [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233) HEAD masih `35323998` dan sudah dikonversi ke **Draft** untuk menahan merge. Label `jules` di [Issue #228](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/228) dihapus agar tidak memicu task lama lewat label; title issue diberi `BLOCKED P0`. **Ini tidak membuktikan task Jules lama di UI sudah Paused**; verifikasi UI masih diperlukan sebelum restorasi safety tree.
+- **Monitoring roadmap:** otomasi WP13 lama yang membawa instruksi sebelum D7 telah **dinonaktifkan**. Otomasi baru **Katarina Roadmap Watch** dibuat dan aktif untuk memeriksa status GitHub/Jules/CI/blocker setiap jam; hanya memberitahu perubahan material. Pekerjaan dilakukan satu paket demi satu paket, tidak ada jaminan penyelesaian tanpa memenuhi gerbang review dan izin.
+- **Roadmap terkini:** [PR #242](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/242) telah merged sebagai commit `217cd431`, mencantumkan WP13 Manager/Claude; antrean Jules WP15 → WP8d → WP16, lalu WP4/WP14 sesuai prasyarat. [Issue #243](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/243) memicu Jules [task WP15](https://jules.google.com/task/16754419899800423819), dan Jules membuat [PR #244](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/244) HEAD `b02f24c`. CI Body/Ubuntu/Windows pada SHA itu PASS. **Review teknis Manager berstatus perubahan diperlukan** ([review 5717707226](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/244#pullrequestreview-5717707226)) karena tanggal berlaku masih proposal, metadata `session_rule` hanya mencantumkan aturan baru, dan tes transisi DST/ledger lintas cutoff belum lengkap. Review tersimpan sebagai komentar (GitHub menolak formal REQUEST_CHANGES untuk akun author); **bukan approval**. Jangan merge sebelum revisi + CI dan review ulang.
+- **Dokumen rapat:** [PR #241](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/241) hanya mengubah berkas rapat, CI Body/Ubuntu/Windows PASS pada HEAD sebelumnya; belum mendapat approval independen dan belum merged. Berlaku larangan merge sampai approval yang diwajibkan oleh keputusan Owner dapat diverifikasi.
+
+**Ketentuan tidak berubah:** LIVE OFF, 0 orders, promotion_lock, Risk Governor, holdout dan data/ledger historis tetap. Pemantauan tidak mengesahkan trading, restart atau deployment.
+
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
