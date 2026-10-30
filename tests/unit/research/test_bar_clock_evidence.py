@@ -3,6 +3,7 @@ import io
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -50,6 +51,53 @@ class DummyBroker:
 
 
 class TestBarClockEvidence(unittest.TestCase):
+
+    def test_suffix_mapping_keeps_canonical_consensus_keys(self):
+        release = datetime(2024, 1, 5, 13, 30, tzinfo=timezone.utc)
+        bars = [dict(time=int(datetime.fromisoformat(b["time_utc"]).timestamp()),
+                     open=1.1, high=1.1, low=1.1, close=1.1, tick_volume=b["tick_volume"])
+                for b in self._generate_synthetic_bars(release, 2)]
+        calls = []
+
+        class SuffixedBroker:
+            def copy_rates_range(self, symbol, *args):
+                calls.append(symbol)
+                return bars if symbol in {"EURUSD.vx", "USDJPY.vx", "XAUUSD.vx"} else []
+
+        mapping = {s: s + ".vx" for s in ("EURUSD", "USDJPY", "XAUUSD")}
+        samples, rejected = collect_release_samples(SuffixedBroker(), [{"release_utc": release}], broker_symbols=mapping)
+        self.assertEqual([x["shift_hours"] for x in samples], [2])
+        self.assertEqual(rejected, [])
+        self.assertEqual(set(calls), set(mapping.values()))
+        samples, rejected = collect_release_samples(SuffixedBroker(), [{"release_utc": release}])
+        self.assertFalse(samples)
+        self.assertEqual(rejected[0]["reason"], "BROKER_BARS_UNAVAILABLE")
+
+    def test_incomplete_broker_mapping_rejected_before_query(self):
+        with self.assertRaisesRegex(ValidationError, "INVALID_BROKER_SYMBOL_MAPPING"):
+            collect_release_samples(object(), [], broker_symbols={"EURUSD": "EURUSD.vx"})
+
+    def test_mixed_timestamp_bars_sort_chronologically(self):
+        release = datetime(2024, 1, 5, 13, 30, tzinfo=timezone.utc)
+        bars = [dict(time=int(datetime.fromisoformat(b["time_utc"]).timestamp()),
+                     open=1.1, high=1.1, low=1.1, close=1.1, tick_volume=b["tick_volume"])
+                for b in self._generate_synthetic_bars(release, 2)]
+        for i, bar in enumerate(bars):
+            if i % 2:
+                bar["time"] = datetime.fromtimestamp(bar["time"], timezone.utc).isoformat()
+
+        class MixedBroker:
+            def copy_rates_range(self, *args):
+                return list(reversed(bars))
+
+        from katarina.research.bar_clock_evidence import _bar_time
+        def check_order(by_symbol, when):
+            for series in by_symbol.values():
+                stamps = [_bar_time(bar) for bar in series]
+                self.assertEqual(stamps, sorted(stamps))
+            return 2
+        with patch("katarina.research.bar_clock_evidence.release_shift", side_effect=check_order):
+            collect_release_samples(MixedBroker(), [{"release_utc": release}])
 
     def test_dst_functions(self):
         # Summer (EU DST active)
@@ -312,6 +360,8 @@ class TestBarClockEvidence(unittest.TestCase):
                     self.TIMEFRAME_M5 = "M5"
 
                 def copy_rates_range(self, symbol, timeframe, start, end):
+                    if symbol not in {"EURUSD.vx", "USDJPY.vx", "XAUUSD.vx"}:
+                        return []
                     bars = []
                     curr = start
                     while curr < end:
@@ -329,8 +379,10 @@ class TestBarClockEvidence(unittest.TestCase):
             cal_file = Path(tmpdir) / "calendar.csv"
             cal_file.write_text(self.CAL, encoding="utf-8")
 
-            report = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10)
-            repeated = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10)
+            report = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10, broker_suffix=".vx")
+            repeated = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10, broker_suffix=".vx")
+            self.assertNotIn(str(Path(tmpdir)), json.dumps(report))
+            self.assertEqual(report["provenance"]["broker_symbols"]["EURUSD"], "EURUSD.vx")
             self.assertEqual(report["source_sha256"], repeated["source_sha256"])
             self.assertEqual(report, repeated)
             self.assertNotIn("generated_utc", report["provenance"])

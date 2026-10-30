@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-31 — WP8d: mapping simbol broker dan urutan bukti
+
+- Kolektor memetakan simbol canonical ke nama broker; CLI `--broker-suffix` default `.vx` sesuai universe, sementara kunci konsensus tetap canonical.
+- Bar campuran timestamp epoch/ISO diurutkan secara kronologis; provenance memakai nama kalender tanpa path privat dan mencatat mapping broker.
+- Regresi broker suffixed, mapping tidak lengkap, timestamp campuran, determinisme dan round-trip laporan diuji dengan broker sintetis; tanpa MT5/VPS/order.
+
 ## 2026-10-31 — WP8d: CLI sampel bukti jam bar resmi (#245)
 
 - Tambah fungsi murni `collect_release_samples` dan helper `_normalize_raw_bar` di `src/katarina/research/bar_clock_evidence.py` untuk mengumpulkan sampel shift terverifikasi dari rilis kalender dan bar M5 broker di sekitar jendela shift kandidat (-12..+14 jam ±4 jam + 12 bar konteks), dengan hash deterministik `bars_sha256` dari JSON kanonik bar mentah seluruh simbol. Rilis tanpa konsensus dicatat di `rejected`.

@@ -456,6 +456,7 @@ def collect_release_samples(
     *,
     symbols: tuple[str, ...] = CORE_SYMBOLS,
     timeframe: str = "M5",
+    broker_symbols: dict[str, str] | None = None,
 ) -> tuple[list[dict], list[dict]]:
     """Collect release shift samples and rejected releases across calendar releases.
 
@@ -476,6 +477,11 @@ def collect_release_samples(
 
     frame = getattr(broker, "TIMEFRAME_" + timeframe, timeframe)
     sorted_symbols = tuple(sorted(symbols))
+    symbol_map = {symbol: symbol for symbol in sorted_symbols} if broker_symbols is None else dict(broker_symbols)
+    if (set(symbol_map) != set(sorted_symbols)
+            or any(not isinstance(name, str) or not name.strip() for name in symbol_map.values())
+            or len(set(symbol_map.values())) != len(symbol_map)):
+        raise ValidationError("INVALID_BROKER_SYMBOL_MAPPING")
 
     samples = []
     rejected = []
@@ -509,7 +515,7 @@ def collect_release_samples(
 
         for symbol in sorted_symbols:
             try:
-                raw_rates = broker.copy_rates_range(symbol, frame, query_start, query_end)
+                raw_rates = broker.copy_rates_range(symbol_map[symbol], frame, query_start, query_end)
             except Exception:
                 raw_rates = None
 
@@ -520,7 +526,7 @@ def collect_release_samples(
                 all_empty = False
                 try:
                     norm_bars = [_normalize_raw_bar(b) for b in raw_rates]
-                    norm_bars.sort(key=lambda x: str(x["time"]))
+                    norm_bars.sort(key=lambda bar: (_bar_time(bar), canonical(bar)))
                     canonical_raw_by_symbol[symbol] = norm_bars
                     bars_by_symbol[symbol] = norm_bars
                 except (ValidationError, TypeError, ValueError, OverflowError):

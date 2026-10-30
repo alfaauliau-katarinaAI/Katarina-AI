@@ -18,6 +18,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from katarina.research.bar_clock_evidence import (
     DEFAULT_CALENDAR_PATH,
+    CORE_SYMBOLS,
     build_evidence_report,
     collect_release_samples,
 )
@@ -37,6 +38,8 @@ def build_evidence(
     broker: object,
     calendar_path: str | Path = DEFAULT_CALENDAR_PATH,
     max_releases: int = 50,
+    *,
+    broker_suffix: str = "",
 ) -> dict:
     cal_p = Path(calendar_path)
     if not cal_p.is_file():
@@ -54,13 +57,15 @@ def build_evidence(
         raise ValidationError("INVALID_MAX_RELEASES")
 
     selected_rows = rows[:max_releases]
-    samples, rejected = collect_release_samples(broker, selected_rows)
+    broker_symbols = {symbol: symbol + broker_suffix for symbol in CORE_SYMBOLS}
+    samples, rejected = collect_release_samples(broker, selected_rows, broker_symbols=broker_symbols)
 
     if not samples:
         raise ValidationError("NO_SAMPLES_COLLECTED_FAIL_CLOSED")
 
     provenance = {
-        "calendar_path": str(cal_p),
+        "calendar_filename": cal_p.name,
+        "broker_symbols": broker_symbols,
         "max_releases": max_releases,
         "processed_releases": len(selected_rows),
     }
@@ -93,6 +98,8 @@ def main() -> int:
         help="Maximum releases to process (default: 50)",
     )
 
+    parser.add_argument("--broker-suffix", default=".vx",
+                        help="Broker symbol suffix (default: .vx, matching observer universe; use '' for unsuffixed symbols)")
     args = parser.parse_args()
 
     out_path = Path(args.out)
@@ -115,6 +122,7 @@ def main() -> int:
             broker=mt5,
             calendar_path=args.calendar,
             max_releases=args.max_releases,
+            broker_suffix=args.broker_suffix,
         )
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(canonical(report) + "\n", encoding="utf-8")
