@@ -19,6 +19,7 @@ def main(argv=None) -> int:
     parser.add_argument("--state-dir", required=True, help="Observer state directory (holds context.sqlite3)")
     parser.add_argument("--interval-seconds", type=int, default=60)
     parser.add_argument("--output", help="Write the JSON report here")
+    parser.add_argument("--effective-utc", help="Override rollover rule effective UTC timestamp for audit / proposal evaluation")
     parser.add_argument("--require-pass", action="store_true", help="Exit 1 unless every criterion passes")
     args = parser.parse_args(argv)
     path = Path(args.state_dir) / "context.sqlite3"
@@ -27,7 +28,12 @@ def main(argv=None) -> int:
         return 1 if args.require_pass else 0
     db = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
     try:
-        report = assess(db, datetime.now(timezone.utc), interval_seconds=args.interval_seconds)
+        report = assess(
+            db,
+            datetime.now(timezone.utc),
+            interval_seconds=args.interval_seconds,
+            effective_utc=args.effective_utc,
+        )
     finally:
         db.close()
     text = json.dumps(report, indent=2, sort_keys=True) + "\n"

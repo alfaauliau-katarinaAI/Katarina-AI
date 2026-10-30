@@ -30,7 +30,9 @@ from pathlib import Path
 SCHEMA_VERSION = 1
 ROLLOVER_BEFORE_MINUTES = 15
 ROLLOVER_AFTER_MINUTES = 30
-ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-01T00:00:00+00:00"
+PROPOSED_ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-01T00:00:00+00:00"
+# In draft state, ROLLOVER_RULE_EFFECTIVE_UTC is None (inactive) until manager approval at merge.
+ROLLOVER_RULE_EFFECTIVE_UTC: str | None = None
 TICK_DIR = "broker-ticks"
 # A day is collected only after it is safely over on the broker server as well.
 DAY_SETTLE_SECONDS = 2 * 3600
@@ -368,11 +370,12 @@ def fx_session_open(moment: datetime) -> bool:
     return not (20 * 60 + 45 <= minutes < 21 * 60 + 15)
 
 
-def stage0_session_open(moment: datetime) -> bool:
+def stage0_session_open(moment: datetime, *, effective_utc: str | datetime | None = None) -> bool:
     """Stage 0 cycle-counting FX trading window in UTC.
 
-    Before ROLLOVER_RULE_EFFECTIVE_UTC, behavior is identical to fx_session_open.
-    On or after ROLLOVER_RULE_EFFECTIVE_UTC:
+    Before the effective UTC timestamp (or when unconfigured / None), behavior is
+    strictly identical to fx_session_open.
+    On or after the effective UTC timestamp:
     Monday 00:00 to Friday 20:00 UTC, excluding 17:00 America/New_York rollover window
     [17:00 NY - 15 minutes, 17:00 NY + 30 minutes).
     Equivalently:
@@ -380,7 +383,17 @@ def stage0_session_open(moment: datetime) -> bool:
     - Outside US DST: 21:45 to 22:30 UTC.
     """
     moment = _utc(moment)
-    effective_dt = datetime.fromisoformat(ROLLOVER_RULE_EFFECTIVE_UTC).astimezone(timezone.utc)
+    target_effective = effective_utc if effective_utc is not None else ROLLOVER_RULE_EFFECTIVE_UTC
+    if target_effective is None:
+        return fx_session_open(moment)
+
+    if isinstance(target_effective, str):
+        effective_dt = datetime.fromisoformat(target_effective).astimezone(timezone.utc)
+    elif isinstance(target_effective, datetime):
+        effective_dt = _utc(target_effective)
+    else:
+        raise ValueError("invalid_effective_utc")
+
     if moment < effective_dt:
         return fx_session_open(moment)
 

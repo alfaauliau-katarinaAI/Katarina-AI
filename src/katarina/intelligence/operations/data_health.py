@@ -13,6 +13,7 @@ from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
 
 from katarina.intelligence.operations.observation_ledger import (
+    PROPOSED_ROLLOVER_RULE_EFFECTIVE_UTC,
     ROLLOVER_RULE_EFFECTIVE_UTC,
     _nth_sunday,
     fx_session_open,
@@ -54,13 +55,13 @@ def _near_dst(moment: datetime) -> bool:
     return any(abs((day - change).days) <= DST_TOLERANCE_DAYS for change in dst_transitions(day.year))
 
 
-def _day_coverage(day: date, stamps, window_seconds) -> float:
+def _day_coverage(day: date, stamps, window_seconds, *, effective_utc: str | datetime | None = None) -> float:
     """Share of the day's session minutes with a cycle in the preceding window."""
     start = datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
     total = covered = 0
     for minute in range(24 * 60):
         moment = start + timedelta(minutes=minute)
-        if not stage0_session_open(moment):
+        if not stage0_session_open(moment, effective_utc=effective_utc):
             continue
         total += 1
         point = moment.timestamp()
@@ -107,16 +108,27 @@ def _news_pipeline(db) -> dict:
     return stats
 
 
-def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
+def assess(db, now: datetime, *, interval_seconds: int = 60, effective_utc: str | datetime | None = None) -> dict:
     if now.tzinfo is None:
         raise ValueError("aware_clock_required")
     if type(interval_seconds) is not int or not 30 <= interval_seconds <= 3600:
         raise ValueError("invalid_interval")
     now = now.astimezone(timezone.utc)
+    resolved_effective = effective_utc if effective_utc is not None else ROLLOVER_RULE_EFFECTIVE_UTC
+    resolved_effective_str = (
+        resolved_effective.isoformat() if isinstance(resolved_effective, datetime)
+        else resolved_effective
+    )
     report = {"schema_version": 1, "stage": "TAHAP_0_OBSERVER_DATA", "as_of_utc": now.isoformat(),
               "interval_seconds": interval_seconds,
-              "session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 17:00 America/New_York rollover window [-15m, +30m)",
-              "rollover_rule_effective_utc": ROLLOVER_RULE_EFFECTIVE_UTC,
+              "session_rule": (
+                  "Mon 00:00 - Fri 20:00 UTC; before effective UTC excludes 20:45-21:15 UTC fixed rollover; "
+                  "on/after effective UTC excludes 17:00 America/New_York rollover window [-15m, +30m)"
+              ),
+              "legacy_session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 20:45-21:15 UTC rollover",
+              "active_session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 17:00 America/New_York rollover window [-15m, +30m)",
+              "rollover_rule_effective_utc": resolved_effective_str,
+              "proposed_rollover_rule_effective_utc": PROPOSED_ROLLOVER_RULE_EFFECTIVE_UTC,
               "live_execution_authorized": False, "criteria": []}
     criteria = report["criteria"]
     report["news_pipeline"] = _news_pipeline(db)
@@ -128,7 +140,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
               for stamp, status, reason, shift, orders in db.execute(
                   f"SELECT observed_utc, status, reason, clock_shift_hours, orders_submitted "
                   f"FROM observer_cycles WHERE {COUNTED} ORDER BY observed_utc")]
-    session = [c for c in cycles if stage0_session_open(c[0])]
+    session = [c for c in cycles if stage0_session_open(c[0], effective_utc=resolved_effective)]
     report["cycles_total"] = len(cycles)
     report["cycles_in_session"] = len(session)
     report["first_cycle_utc"] = cycles[0][0].isoformat() if cycles else None
@@ -143,7 +155,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
         day = cycles[0][0].date()
         while day < now.date():
             if day.weekday() < 5:
-                if _day_coverage(day, stamps, 3 * interval_seconds) >= DAY_COVERAGE:
+                if _day_coverage(day, stamps, 3 * interval_seconds, effective_utc=resolved_effective) >= DAY_COVERAGE:
                     streak += 1
                     covered_days.append(day.isoformat())
                 else:
@@ -204,7 +216,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     rows = [(datetime.fromisoformat(stamp), status, reason) for stamp, status, reason in db.execute(
         "SELECT q.observed_utc, q.status, q.reason FROM observer_quotes q JOIN observer_cycles c "
         f"ON c.cycle_id=q.cycle_id WHERE c.{COUNTED}")]
-    rows = [r for r in rows if stage0_session_open(r[0])]
+    rows = [r for r in rows if stage0_session_open(r[0], effective_utc=resolved_effective)]
     with_quote = sum(1 for r in rows if r[1] == "OK")
     coverage = with_quote / len(rows) if rows else None
     no_reason = sum(1 for r in rows if r[1] != "OK" and not r[2])
@@ -259,7 +271,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     outages = []
     for a, b in zip(cycles, cycles[1:]):
         gap = (b[0] - a[0]).total_seconds()
-        if gap > 3 * interval_seconds and stage0_session_open(a[0] + timedelta(seconds=interval_seconds)):
+        if gap > 3 * interval_seconds and stage0_session_open(a[0] + timedelta(seconds=interval_seconds), effective_utc=resolved_effective):
             outages.append({"start_utc": a[0].isoformat(), "end_utc": b[0].isoformat(), "seconds": int(gap)})
     report["observer_outages"] = outages
 
