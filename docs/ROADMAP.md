@@ -932,7 +932,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP10a | **Selesai (merge)** — 30 Okt 2026, review Claude | #231 | Perbaikan review: parser ketat 4 kolom (baris rusak → `TICK_FILE_MALFORMED`, tidak dilewati), hari tanpa `server_shift_hours` (sebelum WP12) dikecualikan dan dilaporkan, quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`. Uji 2 juta tick < 50 MB lulus. Belum dijalankan di VPS |
 | WP4 | Menunggu WP13 merge (sama-sama mengubah `observer.py`) — Jules | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
-| WP15 | Siap dikerjakan — Jules | – | Owner D7-M15; jangan ubah `fx_session_open` atau data lama |
+| WP15 | Dalam review — Jules | – | `stage0_session_open` + DST AS deterministik; `fx_session_open` & data lama utuh |
 | WP8d | Siap dikerjakan — Jules | – | Hasil dijalankan Claude di VPS; laporan bukti di luar repo |
 | WP16 | Siap dikerjakan — Jules | – | Manager D7-M4 |
 | WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |

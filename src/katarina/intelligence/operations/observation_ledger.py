@@ -24,10 +24,13 @@ import json
 import math
 import os
 from bisect import bisect_right
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 SCHEMA_VERSION = 1
+ROLLOVER_BEFORE_MINUTES = 15
+ROLLOVER_AFTER_MINUTES = 30
+ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-01T00:00:00+00:00"
 TICK_DIR = "broker-ticks"
 # A day is collected only after it is safely over on the broker server as well.
 DAY_SETTLE_SECONDS = 2 * 3600
@@ -338,8 +341,21 @@ def _record_gap(db, stream, symbol, start: datetime, end: datetime, reason, now:
                                        now.isoformat()))
 
 
+def _nth_sunday(year: int, month: int, nth: int) -> date:
+    first = date(year, month, 1)
+    return first + timedelta(days=(6 - first.weekday()) % 7 + 7 * (nth - 1))
+
+
+def _is_us_dst(moment: datetime) -> bool:
+    moment = _utc(moment)
+    year = moment.year
+    start_utc = datetime(year, 3, _nth_sunday(year, 3, 2).day, 7, 0, tzinfo=timezone.utc)
+    end_utc = datetime(year, 11, _nth_sunday(year, 11, 1).day, 6, 0, tzinfo=timezone.utc)
+    return start_utc <= moment < end_utc
+
+
 def fx_session_open(moment: datetime) -> bool:
-    """Conservative FX trading window in UTC used for Stage 0 statistics.
+    """Conservative FX trading window in UTC used for gap / tick archive classification.
 
     Monday 00:00 to Friday 20:00 UTC, excluding the daily rollover 20:45-21:15 UTC. The window is
     deliberately narrower than the real session so that DST shifts never count a closed market
@@ -350,6 +366,36 @@ def fx_session_open(moment: datetime) -> bool:
         return False
     minutes = moment.hour * 60 + moment.minute
     return not (20 * 60 + 45 <= minutes < 21 * 60 + 15)
+
+
+def stage0_session_open(moment: datetime) -> bool:
+    """Stage 0 cycle-counting FX trading window in UTC.
+
+    Before ROLLOVER_RULE_EFFECTIVE_UTC, behavior is identical to fx_session_open.
+    On or after ROLLOVER_RULE_EFFECTIVE_UTC:
+    Monday 00:00 to Friday 20:00 UTC, excluding 17:00 America/New_York rollover window
+    [17:00 NY - 15 minutes, 17:00 NY + 30 minutes).
+    Equivalently:
+    - US DST: 20:45 to 21:30 UTC.
+    - Outside US DST: 21:45 to 22:30 UTC.
+    """
+    moment = _utc(moment)
+    effective_dt = datetime.fromisoformat(ROLLOVER_RULE_EFFECTIVE_UTC).astimezone(timezone.utc)
+    if moment < effective_dt:
+        return fx_session_open(moment)
+
+    if moment.weekday() > 4 or (moment.weekday() == 4 and moment.hour >= 20):
+        return False
+
+    minutes = moment.hour * 60 + moment.minute
+    if _is_us_dst(moment):
+        rollover_start = 20 * 60 + (60 - ROLLOVER_BEFORE_MINUTES)  # 20:45
+        rollover_end = 21 * 60 + ROLLOVER_AFTER_MINUTES            # 21:30
+    else:
+        rollover_start = 21 * 60 + (60 - ROLLOVER_BEFORE_MINUTES)  # 21:45
+        rollover_end = 22 * 60 + ROLLOVER_AFTER_MINUTES            # 22:30
+
+    return not (rollover_start <= minutes < rollover_end)
 
 
 def _download_day(mt5, symbol: str, day_start: datetime, path: Path, *, server_shift_hours):

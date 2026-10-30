@@ -159,6 +159,36 @@ class DataHealthTest(unittest.TestCase):
         criteria = by_name(data_health.assess(self.db, when + timedelta(hours=1)))
         self.assertEqual(criteria["zero_orders"]["status"], "NOT_MET")
 
+    def test_data_health_reports_new_session_rule_and_effective_utc(self):
+        when = datetime(2026, 11, 10, 9, tzinfo=UTC)
+        cycle = ledger.record_snapshot(self.db, observed_utc=when, clock_shift_hours=2,
+                                       cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, when.timestamp())})
+        ledger.close_cycle(self.db, finished_utc=when, cycle_id=cycle, status="OK")
+        report = data_health.assess(self.db, when + timedelta(hours=1))
+        self.assertIn("17:00 America/New_York", report["session_rule"])
+        self.assertIn("rollover_rule_effective_utc", report)
+
+    def test_post_dst_rollover_failure_at_2205_utc_excluded_from_session_cycles(self):
+        # Mon Nov 2, 2026 (post US DST). 22:05 UTC is in NY rollover [21:45, 22:30).
+        when_open = datetime(2026, 11, 2, 12, 0, tzinfo=UTC)
+        when_rollover = datetime(2026, 11, 2, 22, 5, tzinfo=UTC)
+
+        cycle1 = ledger.record_snapshot(self.db, observed_utc=when_open, clock_shift_hours=2,
+                                        cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, when_open.timestamp())})
+        ledger.close_cycle(self.db, finished_utc=when_open, cycle_id=cycle1, status="OK")
+
+        # Failure at 22:05 UTC during rollover window
+        ledger.close_cycle(self.db, finished_utc=when_rollover, status="FAILED", reason="STALE_QUOTES")
+
+        report = data_health.assess(self.db, when_rollover + timedelta(hours=1))
+        # Total cycles is 2, but session cycles should only be 1 (when_open), because 22:05 is in rollover window!
+        self.assertEqual(report["cycles_total"], 2)
+        self.assertEqual(report["cycles_in_session"], 1)
+        succ = by_name(report)["cycle_success_rate"]
+        self.assertEqual(succ["ok"], 1)
+        self.assertEqual(succ["cycles"], 1)
+        self.assertEqual(succ["status"], "PASS")
+
 
 if __name__ == "__main__":
     unittest.main()

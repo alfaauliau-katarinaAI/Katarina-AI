@@ -12,7 +12,12 @@ import json
 from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
 
-from katarina.intelligence.operations.observation_ledger import fx_session_open
+from katarina.intelligence.operations.observation_ledger import (
+    ROLLOVER_RULE_EFFECTIVE_UTC,
+    _nth_sunday,
+    fx_session_open,
+    stage0_session_open,
+)
 
 MIN_TRADING_DAYS = 10
 MIN_SUCCESS_RATE = 0.98
@@ -31,11 +36,6 @@ def _criterion(name, status, **detail):
 
 def _tables(db):
     return {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-
-
-def _nth_sunday(year, month, nth):
-    first = date(year, month, 1)
-    return first + timedelta(days=(6 - first.weekday()) % 7 + 7 * (nth - 1))
 
 
 def _last_sunday(year, month):
@@ -60,7 +60,7 @@ def _day_coverage(day: date, stamps, window_seconds) -> float:
     total = covered = 0
     for minute in range(24 * 60):
         moment = start + timedelta(minutes=minute)
-        if not fx_session_open(moment):
+        if not stage0_session_open(moment):
             continue
         total += 1
         point = moment.timestamp()
@@ -115,7 +115,8 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     now = now.astimezone(timezone.utc)
     report = {"schema_version": 1, "stage": "TAHAP_0_OBSERVER_DATA", "as_of_utc": now.isoformat(),
               "interval_seconds": interval_seconds,
-              "session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 20:45-21:15 UTC rollover",
+              "session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 17:00 America/New_York rollover window [-15m, +30m)",
+              "rollover_rule_effective_utc": ROLLOVER_RULE_EFFECTIVE_UTC,
               "live_execution_authorized": False, "criteria": []}
     criteria = report["criteria"]
     report["news_pipeline"] = _news_pipeline(db)
@@ -127,7 +128,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
               for stamp, status, reason, shift, orders in db.execute(
                   f"SELECT observed_utc, status, reason, clock_shift_hours, orders_submitted "
                   f"FROM observer_cycles WHERE {COUNTED} ORDER BY observed_utc")]
-    session = [c for c in cycles if fx_session_open(c[0])]
+    session = [c for c in cycles if stage0_session_open(c[0])]
     report["cycles_total"] = len(cycles)
     report["cycles_in_session"] = len(session)
     report["first_cycle_utc"] = cycles[0][0].isoformat() if cycles else None
@@ -203,7 +204,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     rows = [(datetime.fromisoformat(stamp), status, reason) for stamp, status, reason in db.execute(
         "SELECT q.observed_utc, q.status, q.reason FROM observer_quotes q JOIN observer_cycles c "
         f"ON c.cycle_id=q.cycle_id WHERE c.{COUNTED}")]
-    rows = [r for r in rows if fx_session_open(r[0])]
+    rows = [r for r in rows if stage0_session_open(r[0])]
     with_quote = sum(1 for r in rows if r[1] == "OK")
     coverage = with_quote / len(rows) if rows else None
     no_reason = sum(1 for r in rows if r[1] != "OK" and not r[2])
@@ -258,7 +259,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     outages = []
     for a, b in zip(cycles, cycles[1:]):
         gap = (b[0] - a[0]).total_seconds()
-        if gap > 3 * interval_seconds and fx_session_open(a[0] + timedelta(seconds=interval_seconds)):
+        if gap > 3 * interval_seconds and stage0_session_open(a[0] + timedelta(seconds=interval_seconds)):
             outages.append({"start_utc": a[0].isoformat(), "end_utc": b[0].isoformat(), "seconds": int(gap)})
     report["observer_outages"] = outages
 

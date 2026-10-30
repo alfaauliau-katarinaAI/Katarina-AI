@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-31 — WP15: rollover Tahap 0 mengikuti 17:00 New York
+
+- Modul `katarina.intelligence.operations.observation_ledger`: tambah `stage0_session_open(moment)` khusus penghitung siklus Stage 0 dengan jendela rollover relatif ke 17:00 New York (-15m, +30m) untuk timestamp >= `ROLLOVER_RULE_EFFECTIVE_UTC` ("2026-11-01T00:00:00+00:00"). Aturan DST AS deterministik tanpa dependensi zoneinfo/tzdata.
+- `fx_session_open` dipertahankan tanpa perubahan untuk klasifikasi gap/arsip tick. Timestamp sebelum tanggal berlaku tetap identik dengan versi lama.
+- Modul `katarina.intelligence.operations.data_health`: `assess` memakai `stage0_session_open` untuk kriteria Stage 0 dan mengidentifikasi `session_rule` + `rollover_rule_effective_utc` di laporan.
+- 33 unit tes dalam `test_observation_ledger.py` dan `test_data_health.py` lulus. Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
 ## 2026-10-31 — roadmap: keputusan D7 dan perintah induk Google Jules
 
 - Antrean, R0, R1 T13, R4, R5, R6, R7 diselaraskan dengan D7-M7–M15: WP13 MERGE BLOCKED (regresi bot Jules `3532399`), dipulihkan manager/Claude, bukan Jules; NTP VPS `MaxPollInterval` 13.
