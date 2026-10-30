@@ -821,9 +821,9 @@
       "sha256": "6bab0926b0f497254c7b4ad0745cbb87deb3629ebd3dbb04c8bc5854aa41c845"
     },
     "src/katarina/intelligence/broker/broker_clock_alignment.py": {
-      "bytes": 17702,
-      "normalized_sha256": "d5a5d9c8d8dafc332fe41060adc1ca014abcea146d24953aa1c28f1cca408186",
-      "sha256": "d5a5d9c8d8dafc332fe41060adc1ca014abcea146d24953aa1c28f1cca408186"
+      "bytes": 17268,
+      "normalized_sha256": "fa8328ce938c00cc1b05aa2ec43864f5dbc2ca0000efe5e6516281a15dea4214",
+      "sha256": "fa8328ce938c00cc1b05aa2ec43864f5dbc2ca0000efe5e6516281a15dea4214"
     },
     "src/katarina/intelligence/broker/broker_history_coverage.py": {
       "bytes": 4508,

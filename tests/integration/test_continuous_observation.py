@@ -231,3 +231,14 @@ class ContinuousObservationTests(unittest.TestCase):
             self.assertEqual(diagnostics['fed_article_fetch_disabled'],1)
         finally:
             store.db.close()
+
+
+# This synthetic suite patches only its observer call sites and restores them.
+from tests.synthetic_clock_fixture import ModuleClockFixture
+_clock_fixture = ModuleClockFixture()
+
+def setUpModule():
+    _clock_fixture.start()
+
+def tearDownModule():
+    _clock_fixture.stop()

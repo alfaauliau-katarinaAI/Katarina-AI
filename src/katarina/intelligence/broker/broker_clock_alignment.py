@@ -13,7 +13,7 @@ import json
 from math import isfinite
 from pathlib import Path
 import re
-from typing import Callable, Mapping
+from typing import Mapping
 
 
 @dataclass(frozen=True)
@@ -31,15 +31,6 @@ class HostClockTrust:
     source_sha256: str | None = None
 
 
-_HOST_CLOCK_PROVIDER: Callable[[datetime | None], HostClockTrust] | None = None
-
-
-def set_host_clock_provider(provider_fn: Callable[[datetime | None], HostClockTrust] | None) -> None:
-    """Set custom host clock provider function (for unit and integration tests)."""
-    global _HOST_CLOCK_PROVIDER
-    _HOST_CLOCK_PROVIDER = provider_fn
-
-
 def query_windows_w32tm(now: datetime | None = None, *, max_sync_age_seconds=14400.) -> HostClockTrust:
     """Use measured Windows status, never synthesize a successful sync."""
     from katarina.intelligence.broker.host_clock_probe import inspect_windows_host_clock
@@ -54,9 +45,7 @@ def query_windows_w32tm(now: datetime | None = None, *, max_sync_age_seconds=144
 
 
 def inspect_host_clock(now: datetime | None = None, *, max_sync_age_seconds=14400.) -> HostClockTrust:
-    """Probe OS trust. The injection hook is used only by scoped synthetic tests."""
-    if _HOST_CLOCK_PROVIDER is not None:
-        return _HOST_CLOCK_PROVIDER(now)
+    """Probe measured OS status; fixtures must patch callers only in test scope."""
     return query_windows_w32tm(now, max_sync_age_seconds=max_sync_age_seconds)
 
 

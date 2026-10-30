@@ -65,6 +65,12 @@ class HostClockProbeTests(unittest.TestCase):
         self.assertFalse(result.trusted)
         run.assert_not_called()
 
+    def test_production_inspector_ignores_test_environment_flags(self):
+        from katarina.intelligence.broker.broker_clock_alignment import inspect_host_clock
+        with patch("platform.system", return_value="Linux"), patch.dict(
+                "os.environ", {"KATARINA_TEST_HOST_CLOCK_TRUST":"1"}):
+            self.assertFalse(inspect_host_clock().trusted)
+
     def test_timeout_failure_and_unavailable_command(self):
         for error in (FileNotFoundError(), subprocess.TimeoutExpired("w32tm", 3)):
             with self.subTest(error=type(error).__name__):

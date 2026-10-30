@@ -278,3 +278,14 @@ class AutomaticConnectionTests(unittest.TestCase):
             with self.subTest(route=route), self.assertRaises(ConnectionUnavailable):
                 adapter.symbols_get()
             adapter.shutdown()
+
+
+# This synthetic suite patches only its observer call sites and restores them.
+from tests.synthetic_clock_fixture import ModuleClockFixture
+_clock_fixture = ModuleClockFixture()
+
+def setUpModule():
+    _clock_fixture.start()
+
+def tearDownModule():
+    _clock_fixture.stop()

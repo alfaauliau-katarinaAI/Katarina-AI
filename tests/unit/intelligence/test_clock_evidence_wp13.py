@@ -3,12 +3,11 @@ import json
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 import unittest
+from unittest.mock import patch
 
 from katarina.intelligence.broker.broker_clock_alignment import (
     ClockEvidence,
     HostClockTrust,
-    set_host_clock_provider,
-    inspect_host_clock,
     infer_clock_shift,
     load_clock_evidence,
     capture_time_reference,
@@ -35,32 +34,15 @@ def evidence(
 
 
 class ClockEvidenceWP13Tests(unittest.TestCase):
-    def setUp(self):
-        set_host_clock_provider(lambda now: HostClockTrust(
-            trusted=True,
-            time_basis="TRUSTED_HOST_NTP",
-            reason="NTP_SYNCHRONIZED",
-            last_sync_utc=now or datetime.now(timezone.utc),
-            skew_seconds=0.0,
-        ))
-
-    def tearDown(self):
-        set_host_clock_provider(None)
-
     def test_untrusted_host_clock_returns_no_trusted_host_clock(self):
-        set_host_clock_provider(lambda now: HostClockTrust(
-            trusted=False,
-            time_basis="UNTRUSTED_OR_DESYNC",
-            reason="NO_TRUSTED_HOST_CLOCK",
-            last_sync_utc=None,
-            skew_seconds=15.0,
-        ))
         now = datetime(2026, 10, 28, 12, 0, tzinfo=timezone.utc)
         now_ts = now.timestamp()
         tick_ts = int(now_ts + 3 * 3600 - 2)
         ticks = {"EURUSD": tick_ts, "GBPUSD": tick_ts, "USDJPY": tick_ts}
 
-        finding = infer_clock_shift(ticks, now_ts, require_host_trust=True)
+        with patch("katarina.intelligence.broker.broker_clock_alignment.inspect_host_clock",
+                   return_value=HostClockTrust(False,"UNTRUSTED_OR_DESYNC","fixture")):
+            finding = infer_clock_shift(ticks, now_ts, require_host_trust=True)
         self.assertFalse(finding.suitable_for_readonly_snapshot)
         self.assertEqual(finding.reason, "NO_TRUSTED_HOST_CLOCK")
 

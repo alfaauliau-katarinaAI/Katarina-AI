@@ -26,16 +26,6 @@ class SyntheticBroker:
         self.active, self.flip_permission = active, flip_permission
         self.tick_counter = 0
         self.initializations = self.shutdowns = self.terminal_reads = self.orders = 0
-        from katarina.intelligence.broker.broker_clock_alignment import (
-            HostClockTrust, set_host_clock_provider,
-        )
-        set_host_clock_provider(lambda now: HostClockTrust(
-            trusted=True,
-            time_basis="TRUSTED_HOST_NTP",
-            reason="NTP_SYNCHRONIZED",
-            last_sync_utc=now or datetime.now(timezone.utc),
-            skew_seconds=0.0,
-        ))
 
     def initialize(self):
         self.initializations += 1
@@ -251,3 +241,14 @@ class BrainOwnedWorkflowTests(unittest.TestCase):
             self.assertFalse(report['foundation_readiness']['engineering_checks']['sensors_without_errors'])
             self.assertEqual(report['brain_runtime']['pending_delivery_queue'], 0)
         self.assertEqual(broker.orders, 0)
+
+
+# This synthetic suite patches only its observer call sites and restores them.
+from tests.synthetic_clock_fixture import ModuleClockFixture
+_clock_fixture = ModuleClockFixture()
+
+def setUpModule():
+    _clock_fixture.start()
+
+def tearDownModule():
+    _clock_fixture.stop()

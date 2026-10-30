@@ -6,7 +6,6 @@ import unittest
 from katarina.intelligence.broker.broker_clock_alignment import (
     ClockEvidence,
     HostClockTrust,
-    set_host_clock_provider,
     infer_clock_shift,
     capture_time_reference,
     normalize_incoming_time,
@@ -14,18 +13,6 @@ from katarina.intelligence.broker.broker_clock_alignment import (
 
 
 class ClockEvidenceIntegrationWP13Tests(unittest.TestCase):
-    def setUp(self):
-        set_host_clock_provider(lambda now: HostClockTrust(
-            trusted=True,
-            time_basis="TRUSTED_HOST_NTP",
-            reason="NTP_SYNCHRONIZED",
-            last_sync_utc=now or datetime.now(timezone.utc),
-            skew_seconds=0.0,
-        ))
-
-    def tearDown(self):
-        set_host_clock_provider(None)
-
     def test_capture_time_reference_includes_evidence_metadata(self):
         now = datetime(2026, 10, 28, 12, 0, tzinfo=timezone.utc)
         now_ts = now.timestamp()
