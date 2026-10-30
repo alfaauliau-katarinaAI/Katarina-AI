@@ -115,7 +115,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     now = now.astimezone(timezone.utc)
     report = {"schema_version": 1, "stage": "TAHAP_0_OBSERVER_DATA", "as_of_utc": now.isoformat(),
               "interval_seconds": interval_seconds,
-              "session_rule": "Mon 00:00 - Fri 20:00 UTC; before effective (or while disabled): exclude 20:45-21:15 UTC (legacy fx_session_open); on/after approved effective: exclude 17:00 America/New_York rollover [-15m, +30m), DST aware",
+              "session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 17:00 America/New_York rollover window [-15m, +30m)",
               "rollover_rule_effective_utc": ROLLOVER_RULE_EFFECTIVE_UTC,
               "live_execution_authorized": False, "criteria": []}
     criteria = report["criteria"]

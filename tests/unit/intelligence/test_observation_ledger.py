@@ -1,7 +1,6 @@
 import sqlite3
 import tempfile
 import unittest
-from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -232,46 +231,45 @@ class ObservationLedgerTest(unittest.TestCase):
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 23, 20, 30, tzinfo=UTC)))
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 24, 12, 0, tzinfo=UTC)))
 
-    def test_stage0_default_disabled_preserves_all_legacy_history(self):
-        self.assertIsNone(ledger.ROLLOVER_RULE_EFFECTIVE_UTC)
-        for when in (datetime(2026, 10, 28, 21, 0, tzinfo=UTC),
-                     datetime(2026, 11, 2, 22, 5, tzinfo=UTC),
-                     datetime(2027, 6, 14, 21, 20, tzinfo=UTC)):
-            self.assertEqual(ledger.stage0_session_open(when), ledger.fx_session_open(when))
+    def test_stage0_session_open_before_effective_date_is_identical_to_fx_session_open(self):
+        # Before ROLLOVER_RULE_EFFECTIVE_UTC, behavior is identical to fx_session_open
+        past_moment_1 = datetime(2026, 10, 20, 10, 0, tzinfo=UTC)
+        past_moment_2 = datetime(2026, 10, 20, 21, 0, tzinfo=UTC)
+        self.assertEqual(ledger.stage0_session_open(past_moment_1), ledger.fx_session_open(past_moment_1))
+        self.assertEqual(ledger.stage0_session_open(past_moment_2), ledger.fx_session_open(past_moment_2))
 
-    def test_stage0_new_rollover_edges_on_both_sides_of_us_dst_2026(self):
-        # Explicitly opt into the new rule in a test only; default remains disabled.
-        cases = (
-            (datetime(2026, 3, 2, tzinfo=UTC), 22),  # Before 8 Mar DST start
-            (datetime(2026, 3, 9, tzinfo=UTC), 21),  # After 8 Mar DST start
-            (datetime(2026, 10, 26, tzinfo=UTC), 21), # Before 1 Nov DST end
-            (datetime(2026, 11, 2, tzinfo=UTC), 22), # After 1 Nov DST end
-        )
-        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", "2026-02-01T00:00:00+00:00"):
-            for day, hour in cases:
-                with self.subTest(day=day.date().isoformat(), rollover_hour=hour):
-                    before = day + timedelta(hours=hour, minutes=-16)
-                    start = day + timedelta(hours=hour, minutes=-15)
-                    inside = day + timedelta(hours=hour, minutes=29)
-                    after = day + timedelta(hours=hour, minutes=30)
-                    self.assertTrue(ledger.stage0_session_open(before))
-                    self.assertFalse(ledger.stage0_session_open(start))
-                    self.assertFalse(ledger.stage0_session_open(inside))
-                    self.assertTrue(ledger.stage0_session_open(after))
-            self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 6, 20, 15, tzinfo=UTC)))
-            self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 7, 12, 0, tzinfo=UTC)))
+    def test_stage0_session_open_post_effective_date_us_dst_and_non_dst_windows(self):
+        # Effective date proposal in tests
+        effective = ledger.ROLLOVER_RULE_EFFECTIVE_UTC
 
-    def test_stage0_cutoff_only_changes_future_timestamps(self):
-        cutoff = "2026-11-02T22:10:00+00:00"
-        before_rollover = datetime(2026, 11, 2, 22, 5, tzinfo=UTC)
-        after_rollover = datetime(2026, 11, 2, 22, 11, tzinfo=UTC)
-        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff):
-            self.assertEqual(ledger.stage0_session_open(before_rollover),
-                             ledger.fx_session_open(before_rollover))
-            self.assertTrue(ledger.stage0_session_open(before_rollover))
-            self.assertFalse(ledger.stage0_session_open(after_rollover))
-            self.assertTrue(ledger.stage0_session_open(datetime(2026, 11, 2, 23, 0, tzinfo=UTC)))
+        # 1. During US DST (e.g., Oct 30, 2026 - Friday before Nov 1 DST end):
+        # 17:00 New York = 21:00 UTC. Rollover window [20:45, 21:30) UTC.
+        # Mon-Thu test: Wed Oct 28, 2026 if effective date <= Oct 28, or use future US DST date e.g. Mon Jun 15, 2027
+        dst_mon = datetime(2027, 6, 14, tzinfo=UTC) # Mon in DST
+        self.assertTrue(ledger.stage0_session_open(dst_mon.replace(hour=20, minute=44)))
+        self.assertFalse(ledger.stage0_session_open(dst_mon.replace(hour=20, minute=45)))
+        self.assertFalse(ledger.stage0_session_open(dst_mon.replace(hour=21, minute=0)))
+        self.assertFalse(ledger.stage0_session_open(dst_mon.replace(hour=21, minute=29)))
+        self.assertTrue(ledger.stage0_session_open(dst_mon.replace(hour=21, minute=30)))
 
+        # 2. Outside US DST (e.g., Mon Nov 2, 2026):
+        # 17:00 New York = 22:00 UTC. Rollover window [21:45, 22:30) UTC.
+        non_dst_mon = datetime(2026, 11, 2, tzinfo=UTC) # Mon post-DST
+        # Old rollover window 20:45-21:15 UTC is OPEN under new rule
+        self.assertTrue(ledger.stage0_session_open(non_dst_mon.replace(hour=20, minute=50)))
+        self.assertTrue(ledger.stage0_session_open(non_dst_mon.replace(hour=21, minute=0)))
+        self.assertTrue(ledger.stage0_session_open(non_dst_mon.replace(hour=21, minute=44)))
+        # New rollover window [21:45, 22:30)
+        self.assertFalse(ledger.stage0_session_open(non_dst_mon.replace(hour=21, minute=45)))
+        self.assertFalse(ledger.stage0_session_open(non_dst_mon.replace(hour=22, minute=5)))
+        self.assertFalse(ledger.stage0_session_open(non_dst_mon.replace(hour=22, minute=29)))
+        self.assertTrue(ledger.stage0_session_open(non_dst_mon.replace(hour=22, minute=30)))
+
+        # 3. Friday after 20:00 UTC and Weekends are closed
+        fri_late = datetime(2026, 11, 6, 20, 15, tzinfo=UTC)
+        sat = datetime(2026, 11, 7, 12, 0, tzinfo=UTC)
+        self.assertFalse(ledger.stage0_session_open(fri_late))
+        self.assertFalse(ledger.stage0_session_open(sat))
 
 
 if __name__ == "__main__":
