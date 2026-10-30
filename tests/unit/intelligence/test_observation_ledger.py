@@ -1,6 +1,7 @@
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -231,65 +232,46 @@ class ObservationLedgerTest(unittest.TestCase):
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 23, 20, 30, tzinfo=UTC)))
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 24, 12, 0, tzinfo=UTC)))
 
-    def test_stage0_session_open_when_effective_utc_is_none_is_identical_to_fx_session_open(self):
-        # With default draft state (ROLLOVER_RULE_EFFECTIVE_UTC is None), all moments behave identical to fx_session_open
+    def test_stage0_default_disabled_preserves_all_legacy_history(self):
         self.assertIsNone(ledger.ROLLOVER_RULE_EFFECTIVE_UTC)
-        past_open = datetime(2026, 10, 20, 10, 0, tzinfo=UTC)
-        past_rollover = datetime(2026, 10, 20, 21, 0, tzinfo=UTC)
-        future_open = datetime(2026, 11, 2, 10, 0, tzinfo=UTC)
-        future_22 = datetime(2026, 11, 2, 22, 0, tzinfo=UTC)
-        self.assertEqual(ledger.stage0_session_open(past_open), ledger.fx_session_open(past_open))
-        self.assertEqual(ledger.stage0_session_open(past_rollover), ledger.fx_session_open(past_rollover))
-        self.assertEqual(ledger.stage0_session_open(future_open), ledger.fx_session_open(future_open))
-        self.assertEqual(ledger.stage0_session_open(future_22), ledger.fx_session_open(future_22))
+        for when in (datetime(2026, 10, 28, 21, 0, tzinfo=UTC),
+                     datetime(2026, 11, 2, 22, 5, tzinfo=UTC),
+                     datetime(2027, 6, 14, 21, 20, tzinfo=UTC)):
+            self.assertEqual(ledger.stage0_session_open(when), ledger.fx_session_open(when))
 
-    def test_stage0_session_open_post_effective_date_us_dst_and_non_dst_windows(self):
-        # Test with proposed effective date passed explicitly
-        effective = ledger.PROPOSED_ROLLOVER_RULE_EFFECTIVE_UTC
+    def test_stage0_new_rollover_edges_on_both_sides_of_us_dst_2026(self):
+        # Explicitly opt into the new rule in a test only; default remains disabled.
+        cases = (
+            (datetime(2026, 3, 2, tzinfo=UTC), 22),  # Before 8 Mar DST start
+            (datetime(2026, 3, 9, tzinfo=UTC), 21),  # After 8 Mar DST start
+            (datetime(2026, 10, 26, tzinfo=UTC), 21), # Before 1 Nov DST end
+            (datetime(2026, 11, 2, tzinfo=UTC), 22), # After 1 Nov DST end
+        )
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", "2026-02-01T00:00:00+00:00"):
+            for day, hour in cases:
+                with self.subTest(day=day.date().isoformat(), rollover_hour=hour):
+                    before = day + timedelta(hours=hour, minutes=-16)
+                    start = day + timedelta(hours=hour, minutes=-15)
+                    inside = day + timedelta(hours=hour, minutes=29)
+                    after = day + timedelta(hours=hour, minutes=30)
+                    self.assertTrue(ledger.stage0_session_open(before))
+                    self.assertFalse(ledger.stage0_session_open(start))
+                    self.assertFalse(ledger.stage0_session_open(inside))
+                    self.assertTrue(ledger.stage0_session_open(after))
+            self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 6, 20, 15, tzinfo=UTC)))
+            self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 7, 12, 0, tzinfo=UTC)))
 
-        # Before effective timestamp: delegates to fx_session_open
-        before = datetime(2026, 10, 31, 21, 0, tzinfo=UTC)
-        self.assertEqual(ledger.stage0_session_open(before, effective_utc=effective),
-                         ledger.fx_session_open(before))
+    def test_stage0_cutoff_only_changes_future_timestamps(self):
+        cutoff = "2026-11-02T22:10:00+00:00"
+        before_rollover = datetime(2026, 11, 2, 22, 5, tzinfo=UTC)
+        after_rollover = datetime(2026, 11, 2, 22, 11, tzinfo=UTC)
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff):
+            self.assertEqual(ledger.stage0_session_open(before_rollover),
+                             ledger.fx_session_open(before_rollover))
+            self.assertTrue(ledger.stage0_session_open(before_rollover))
+            self.assertFalse(ledger.stage0_session_open(after_rollover))
+            self.assertTrue(ledger.stage0_session_open(datetime(2026, 11, 2, 23, 0, tzinfo=UTC)))
 
-        # 1. During US DST (e.g., Mon Jun 14, 2027):
-        # 17:00 New York = 21:00 UTC. Rollover window [20:45, 21:30) UTC.
-        # Window edges: -16m (20:44), -15m (20:45), +29m (21:29), +30m (21:30)
-        dst_mon = datetime(2027, 6, 14, tzinfo=UTC)
-        self.assertTrue(ledger.stage0_session_open(dst_mon.replace(hour=20, minute=44), effective_utc=effective))
-        self.assertFalse(ledger.stage0_session_open(dst_mon.replace(hour=20, minute=45), effective_utc=effective))
-        self.assertFalse(ledger.stage0_session_open(dst_mon.replace(hour=21, minute=0), effective_utc=effective))
-        self.assertFalse(ledger.stage0_session_open(dst_mon.replace(hour=21, minute=29), effective_utc=effective))
-        self.assertTrue(ledger.stage0_session_open(dst_mon.replace(hour=21, minute=30), effective_utc=effective))
-
-        # 2. Outside US DST (e.g., Mon Nov 2, 2026):
-        # 17:00 New York = 22:00 UTC. Rollover window [21:45, 22:30) UTC.
-        # Window edges: -16m (21:44), -15m (21:45), +29m (22:29), +30m (22:30)
-        non_dst_mon = datetime(2026, 11, 2, tzinfo=UTC)
-        # Old rollover window 20:45-21:15 UTC is OPEN under new rule
-        self.assertTrue(ledger.stage0_session_open(non_dst_mon.replace(hour=20, minute=50), effective_utc=effective))
-        self.assertTrue(ledger.stage0_session_open(non_dst_mon.replace(hour=21, minute=0), effective_utc=effective))
-        self.assertTrue(ledger.stage0_session_open(non_dst_mon.replace(hour=21, minute=44), effective_utc=effective))
-        # New rollover window [21:45, 22:30)
-        self.assertFalse(ledger.stage0_session_open(non_dst_mon.replace(hour=21, minute=45), effective_utc=effective))
-        self.assertFalse(ledger.stage0_session_open(non_dst_mon.replace(hour=22, minute=5), effective_utc=effective))
-        self.assertFalse(ledger.stage0_session_open(non_dst_mon.replace(hour=22, minute=29), effective_utc=effective))
-        self.assertTrue(ledger.stage0_session_open(non_dst_mon.replace(hour=22, minute=30), effective_utc=effective))
-
-        # 3. Friday after 20:00 UTC and Weekends are closed
-        fri_late = datetime(2026, 11, 6, 20, 15, tzinfo=UTC)
-        sat = datetime(2026, 11, 7, 12, 0, tzinfo=UTC)
-        self.assertFalse(ledger.stage0_session_open(fri_late, effective_utc=effective))
-        self.assertFalse(ledger.stage0_session_open(sat, effective_utc=effective))
-
-    def test_us_dst_transition_boundaries_2026(self):
-        # US DST 2026 starts: Sunday 8 March 2026 at 07:00 UTC
-        # US DST 2026 ends: Sunday 1 November 2026 at 06:00 UTC
-        self.assertFalse(ledger._is_us_dst(datetime(2026, 3, 8, 6, 59, 59, tzinfo=UTC)))
-        self.assertTrue(ledger._is_us_dst(datetime(2026, 3, 8, 7, 0, 0, tzinfo=UTC)))
-
-        self.assertTrue(ledger._is_us_dst(datetime(2026, 11, 1, 5, 59, 59, tzinfo=UTC)))
-        self.assertFalse(ledger._is_us_dst(datetime(2026, 11, 1, 6, 0, 0, tzinfo=UTC)))
 
 
 if __name__ == "__main__":

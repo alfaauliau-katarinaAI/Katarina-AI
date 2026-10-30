@@ -30,9 +30,7 @@ from pathlib import Path
 SCHEMA_VERSION = 1
 ROLLOVER_BEFORE_MINUTES = 15
 ROLLOVER_AFTER_MINUTES = 30
-PROPOSED_ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-01T00:00:00+00:00"
-# In draft state, ROLLOVER_RULE_EFFECTIVE_UTC is None (inactive) until manager approval at merge.
-ROLLOVER_RULE_EFFECTIVE_UTC: str | None = None
+ROLLOVER_RULE_EFFECTIVE_UTC = None  # Manager sets an approved future UTC instant at merge.
 TICK_DIR = "broker-ticks"
 # A day is collected only after it is safely over on the broker server as well.
 DAY_SETTLE_SECONDS = 2 * 3600
@@ -370,12 +368,11 @@ def fx_session_open(moment: datetime) -> bool:
     return not (20 * 60 + 45 <= minutes < 21 * 60 + 15)
 
 
-def stage0_session_open(moment: datetime, *, effective_utc: str | datetime | None = None) -> bool:
+def stage0_session_open(moment: datetime) -> bool:
     """Stage 0 cycle-counting FX trading window in UTC.
 
-    Before the effective UTC timestamp (or when unconfigured / None), behavior is
-    strictly identical to fx_session_open.
-    On or after the effective UTC timestamp:
+    Before ROLLOVER_RULE_EFFECTIVE_UTC, behavior is identical to fx_session_open.
+    On or after ROLLOVER_RULE_EFFECTIVE_UTC:
     Monday 00:00 to Friday 20:00 UTC, excluding 17:00 America/New_York rollover window
     [17:00 NY - 15 minutes, 17:00 NY + 30 minutes).
     Equivalently:
@@ -383,18 +380,12 @@ def stage0_session_open(moment: datetime, *, effective_utc: str | datetime | Non
     - Outside US DST: 21:45 to 22:30 UTC.
     """
     moment = _utc(moment)
-    target_effective = effective_utc if effective_utc is not None else ROLLOVER_RULE_EFFECTIVE_UTC
-    if target_effective is None:
-        return fx_session_open(moment)
-
-    if isinstance(target_effective, str):
-        effective_dt = datetime.fromisoformat(target_effective).astimezone(timezone.utc)
-    elif isinstance(target_effective, datetime):
-        effective_dt = _utc(target_effective)
-    else:
-        raise ValueError("invalid_effective_utc")
-
-    if moment < effective_dt:
+    if ROLLOVER_RULE_EFFECTIVE_UTC is None:
+        return fx_session_open(moment)  # Until approval, no historical Stage0 denominator changes.
+    effective_dt = datetime.fromisoformat(ROLLOVER_RULE_EFFECTIVE_UTC)
+    if effective_dt.tzinfo is None:
+        raise ValueError("rollover_effective_utc_must_be_aware")
+    if moment < effective_dt.astimezone(timezone.utc):
         return fx_session_open(moment)
 
     if moment.weekday() > 4 or (moment.weekday() == 4 and moment.hour >= 20):
