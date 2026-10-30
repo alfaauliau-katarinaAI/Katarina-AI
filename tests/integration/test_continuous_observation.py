@@ -209,7 +209,8 @@ class ContinuousObservationTests(unittest.TestCase):
         self.assertEqual(result['successful_cycles'], 1)
         self.assertEqual(result['consecutive_failures'], 0)
         self.assertEqual(native.orders, 0)
-        with sqlite3.connect(self.root/'context.sqlite3') as db:
+        from contextlib import closing
+        with closing(sqlite3.connect(self.root/'context.sqlite3')) as db:
             rows = db.execute('SELECT status,reason FROM observer_cycles ORDER BY observed_utc').fetchall()
             self.assertEqual(rows, [('FAILED','NO_TRUSTED_HOST_CLOCK'), ('OK',None)])
             self.assertEqual(db.execute('SELECT COUNT(*) FROM observer_quotes').fetchone()[0], 3)
