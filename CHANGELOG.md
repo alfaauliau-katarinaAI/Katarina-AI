@@ -1,5 +1,32 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — WP13: trust NTP nyata, tick bergerak, dan cutoff Stage 0 (#233)
+
+- Observer canonical memakai status Windows NTP terukur (leap/source/stratum/state/error/umur sync/offset), dua snapshot tick bermilidetik yang bergerak, identitas server dan pemeriksaan UTC vs monotonic. Platform/format tidak didukung tetap untrusted; tidak ada flag environment untuk melewati guard. Perubahan offset dikarantina sampai konfirmasi baru; bukti ini hanya LIVE_FEED_CLOCK, bukan DST historis WP8c.
+- Kegagalan menyimpan audit privat dan alasan FAILED; tidak menerbitkan quote/tick UTC valid. Uji lifecycle NTP gagal → pulih membuktikan worker tetap hidup, tanpa restart dan 0 order. Fixture synthetic PC terpisah dari mode observe dan tidak mengubah gerbang produksi.
+- `--since` membatasi periode hingga as-of, mengecualikan hari cutoff parsial dari streak dan tick-day, menjaga konteks outage/regresi lintas cutoff serta NO_DATA yang jujur.
+- Integrasi manager dari checkpoint Jules, satu PR existing; dokumen kanonis dan perbaikan Claude dipertahankan. Status: revisi draft menunggu review/CI final, belum MERGED/DEPLOYED/STAGE0 PASSED. VPS, Risk Governor, promotion lock dan holdout tidak diubah.
+
+## 2026-10-30 — laporan perapian PR Claude untuk manager
+
+- `docs/maintenance/CLAUDE_PR_CLEANUP_REPORT_20261030.md`: hasil per PR (#238, #231, #230, #218, #216 merged; #219 closed; #233 untuk Jules), error yang diperbaiki, cek VPS 06:08 WIB, sisa untuk manager/Owner. RH-004/RH-005, PROJECT_STATUS, roadmap dan CLAUDE.md diselaraskan. Tanpa perubahan kode.
+
+## 2026-10-30 — WP8c: bukti jam bar historis fail-closed (#230)
+
+- Modul baru `katarina.research.bar_clock_evidence` (Jules) dengan perbaikan review Claude: lonjakan volume M5 wajib punya **24 bar** sekitar (12+12) atau ditolak; segmen DST hanya `VERIFIED` bila ada sampel yang diukur **di dalam segmen itu** (perpanjangan ±200 hari dihapus); sampel wajib ada di kalender rilis (`source_url` https) dan membawa `bars_sha256`; `BarClockEvidenceAdapter` kini menerima laporan, menghitung ulang hash **dan** timeline dari sampel, serta menolak timeline tulisan tangan atau yang di-hash ulang.
+- `config/research/us_release_calendar.csv` masih kosong (hanya header) → ekspor development tetap ditolak sampai kalender resmi dan laporan sampel dibuat. Status: CODE DONE, belum ada bukti nyata; tidak menyentuh holdout, VPS, atau berkas terkunci. LIVE OFF.
+
+## 2026-10-30 — WP10a: profil spread broker deskriptif (#231)
+
+- Review Claude: parser tick ketat 4 kolom (gagal pada baris rusak), hari arsip sebelum WP12 dikecualikan
+  (`excluded_sources`), quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`.
+
+- Refactor `katarina.research.context_export.iter_verified_ticks` dua pass streaming untuk verifikasi SHA-256 dan pembacaan tick terverifikasi. Refactor `_ticks` menggunakan `iter_verified_ticks` tanpa perubahan keluaran.
+- Tambah `src/katarina/research/spread_profile.py` dan CLI `scripts/research/spread_profile.py` (SQLite `mode=ro` hari `STORED`/`STORED_WITH_GAPS` dalam rentang `[since, until]`).
+- Profil spread (ask - bid) berbasis quote terakhir per menit UTC per simbol x jam UTC 0–23 dan total simbol dengan nearest-rank p50/p90/p99/max dan minute count. Label deskriptif `"usage": "DESCRIPTIVE_ONLY_NOT_FOR_TUNING"`.
+- Pagar static test `tests/static/test_spread_profile_guard.py` memastikan tidak ada importer lain di `src/katarina` dan `scripts` selain CLI.
+- Tes sintetis unit/integration (parity, hash mismatch, sampling, percentiles, streaming 2M ticks < 50MB peak, connection closure, determinisme). Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
 ## 2026-10-30 — WP10b: swap dan sensitivitas biaya di alat validasi (#225)
 
 - Modul `katarina.research.validation`: `CostModel` menambah `swap_long_per_night`, `swap_short_per_night`, dan `triple_swap_weekday` (default 0 dan 2, backward compatible). Rollover dihitung pukul 17:00 waktu New York (21:00 UTC saat DST AS, 22:00 UTC di luar DST AS) memakai ulang helper `_nth_sunday` dari `data_health.py` untuk posisi terbuka `entry_at < rollover <= exit_at`. Swap kredit ditulis nol (konservatif).
@@ -19,6 +46,11 @@
 - Tegaskan `docs/ROADMAP_DISCUSSION.md` sebagai **MEETING** untuk topik belum diputuskan; selaraskan peran ChatGPT/Yura sebagai manager yang sama.
 - Tambah **satu** file `docs/REPAIR_HISTORY.md` untuk bukti hasil perbaikan (kasus observer #221/#222, normalisasi waktu WP12), dengan status merge/deploy/tes/kelulusan dipisahkan.
 - Tautkan pembagian sumber ini di `docs/README.md` dan `CLAUDE.md`. Status operasional tetap di `PROJECT_STATUS.md`; detail teknis commit tetap di CHANGELOG/PR. LIVE OFF.
+
+## 2026-10-29 — Owner mengukuhkan visi agentic AI mandiri
+
+- `docs/ROADMAP.md`: sasaran riset mandiri, lima kemampuan, siklus evaluasi, bukti keuntungan bersih,
+  serta batas promosi dan modal. Rapat hanya merujuk keputusan kanonis; belum ada kode atau izin trading berubah.
 
 ## 2026-10-29 — rapikan dokumentasi yang tidak dipakai
 

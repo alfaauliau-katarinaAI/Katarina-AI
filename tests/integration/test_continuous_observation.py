@@ -171,6 +171,34 @@ class ContinuousObservationTests(unittest.TestCase):
         self.assertEqual(quotes, (6, 6))
         self.assertEqual(native.orders, 0)
 
+    def test_actual_ntp_failure_records_failed_cycle_and_recovers_without_restart(self):
+        import sqlite3
+        from datetime import datetime, timezone
+        from tests.integration.test_automatic_connection import AccountBroker, config
+        from katarina.adapters.automatic_connection import BoundLocalBroker
+        from katarina.intelligence.broker.broker_clock_alignment import HostClockTrust
+        native = AccountBroker()
+        attempts = []
+        def probe(*args, **kwargs):
+            trusted = len(attempts) > 1
+            return HostClockTrust(trusted, "TRUSTED_HOST_NTP", "SYNTHETIC_TEST_ONLY",
+                                  datetime.now(timezone.utc), 0.)
+        def factory(c):
+            if attempts:
+                self.assertFalse((self.root/'latest.json').exists())
+            attempts.append(1)
+            return BoundLocalBroker(native, c)
+        with patch('katarina.intelligence.cognition.observer.inspect_host_clock', side_effect=probe):
+            result = run_continuous(self.root, config=config(priority=('local',), attempts=1),
+                max_cycles=2, factories={'local':factory}, wait=lambda _:None)
+        self.assertEqual(result['successful_cycles'], 1)
+        self.assertEqual(result['consecutive_failures'], 0)
+        self.assertEqual(native.orders, 0)
+        with sqlite3.connect(self.root/'context.sqlite3') as db:
+            rows = db.execute('SELECT status,reason FROM observer_cycles ORDER BY observed_utc').fetchall()
+            self.assertEqual(rows, [('FAILED','NO_TRUSTED_HOST_CLOCK'), ('OK',None)])
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM observer_quotes').fetchone()[0], 3)
+
     def test_disabled_news_fetch_does_not_fetch_uncached_article_from_cached_feed(self):
         from datetime import datetime, timezone
         from katarina.intelligence.cognition.observer import load_articles

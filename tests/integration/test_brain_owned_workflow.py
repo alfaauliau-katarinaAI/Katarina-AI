@@ -24,7 +24,18 @@ class SyntheticBroker:
     def __init__(self, *, active=False, flip_permission=False):
         self.now = int(datetime.now(timezone.utc).timestamp()) - 1
         self.active, self.flip_permission = active, flip_permission
+        self.tick_counter = 0
         self.initializations = self.shutdowns = self.terminal_reads = self.orders = 0
+        from katarina.intelligence.broker.broker_clock_alignment import (
+            HostClockTrust, set_host_clock_provider,
+        )
+        set_host_clock_provider(lambda now: HostClockTrust(
+            trusted=True,
+            time_basis="TRUSTED_HOST_NTP",
+            reason="NTP_SYNCHRONIZED",
+            last_sync_utc=now or datetime.now(timezone.utc),
+            skew_seconds=0.0,
+        ))
 
     def initialize(self):
         self.initializations += 1
@@ -39,7 +50,7 @@ class SyntheticBroker:
                                (self.flip_permission and self.terminal_reads >= 3))
 
     def account_info(self):
-        return SimpleNamespace(balance=1000., equity=1000., margin=0., margin_free=1000., trade_mode=0)
+        return SimpleNamespace(balance=1000., equity=1000., margin=0., margin_free=1000., trade_mode=0, server="Synthetic-Test-Only")
 
     def positions_get(self):return ()
     def orders_get(self):return ()
@@ -47,7 +58,10 @@ class SyntheticBroker:
     def symbols_get(self):
         return [SimpleNamespace(name=s, trade_mode=4) for s in ('EURUSD', 'GBPUSD', 'XAUUSD')]
     def symbol_info_tick(self, symbol):
-        return SimpleNamespace(time=self.now+10800, bid=2000., ask=2000.1)
+        self.tick_counter += 1
+        return SimpleNamespace(time=self.now+10800,
+                               time_msc=(self.now+10800)*1000+self.tick_counter,
+                               bid=2000., ask=2000.1)
     def symbol_info(self, symbol):return SimpleNamespace(trade_mode=4)
     def symbol_select(self, symbol, value):return True
     def copy_ticks_range(self, symbol, start, end, flags):

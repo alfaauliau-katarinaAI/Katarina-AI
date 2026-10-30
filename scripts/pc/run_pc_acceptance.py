@@ -10,6 +10,7 @@ import uuid
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path.insert(0,str(ROOT/'src'))
+sys.path.insert(0,str(ROOT))
 from katarina.host import inspect_host, state_directory
 from katarina.intelligence.cognition.unified_brain import UnifiedKatarinaBrain
 from katarina.adapters.automatic_connection import ConnectionConfig, run_connected
@@ -51,7 +52,9 @@ def run(root,*,mode='demo',connection_config=None):
             raise RuntimeError('HOST_PREFLIGHT_BLOCKED')
         if mode=='demo':
             sensor=PCSimulationBroker()
-            result=UnifiedKatarinaBrain.observe_once(work,broker=sensor,max_symbols=3,fetch_news=False)
+            from scripts.pc.synthetic_clock_fixture import synthetic_clock
+            with synthetic_clock():
+                result=UnifiedKatarinaBrain.observe_once(work,broker=sensor,max_symbols=3,fetch_news=False)
             observed=json.loads((work/'latest.json').read_text())
             if (not _safe(observed) or result.get('orders')!=0 or result.get('observed_symbols')!=3 or not sensor.closed
                     or any('sensor_error:' in '|'.join(x['blocking_reasons']) for x in observed['symbols'].values())):

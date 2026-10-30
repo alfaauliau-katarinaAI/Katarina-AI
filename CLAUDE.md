@@ -3,9 +3,13 @@
 **Peran (Owner, 29 Okt 2026): ChatGPT = manager (akses penuh: roadmap, antrean, merge, VPS); Claude = eksekutor rencana ChatGPT. Mulai dari `docs/ROADMAP.md` bagian "Mulai di sini"; rapat di `docs/ROADMAP_DISCUSSION.md`. Aturan tetap Owner (bagian 1–7) tetap berlaku.**
 
 Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~800 berkas setelah perampingan 22 Okt).
+**PRIORITAS AUDIT MANAGER (30 Okt 2026):** [Laporan kelemahan Katarina K-01–K-10 + daftar pekerjaan Claude](docs/maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md). Mulai dari WP13 PR #233: pastikan canonical observer menolak clock tanpa evidence broker independen, perbaiki fixture integrasi, CI final, dan rencana deployment yang aman; jangan klaim selesai bila file bukti broker masih tidak ada. WP8c #230, WP10a #231, WP10b #225 sudah merged (30 Okt); hasil perapian PR: [laporan Claude](docs/maintenance/CLAUDE_PR_CLEANUP_REPORT_20261030.md). Bedakan CODE DONE / MERGED / DEPLOYED / STAGE0 PASSED. Saat cek VPS 05:25 WIB observer WAITING 298 siklus, 292 sukses, 0 order, evidence belum ada. Lanjut baca laporan WP13 khusus yang sudah ditautkan di bawah.
+
 **Peta dokumentasi (keputusan Owner, 30 Oktober 2026):** `docs/ROADMAP.md` = perjalanan, milestone, antrean dan acceptance; `docs/ROADMAP_DISCUSSION.md` = **MEETING**, hanya hal belum diputuskan; `docs/REPAIR_HISTORY.md` = **hasil perbaikan yang benar-benar diterapkan, apa yang diubah, dan buktinya**. Jangan menyalin satu log ke ketiga tempat.
 **WP13 / jam MT5 (30 Okt 2026): sebelum menangani PR #233 atau VPS, baca [laporan audit dan handoff Claude](docs/maintenance/WP13_CLOCK_CLAUDE_HANDOFF_20261030.md). Berkas bukti clock independen di state VPS belum tersedia saat cek; jangan klaim selesai/merge/deploy otomatis.**
 Status operasional satu sumber: `docs/PROJECT_STATUS.md`; ringkasan teknis per commit/PR: `CHANGELOG.md`. Aturan tahap 0–5, gerbang promosi, dan holdout tetap di roadmap; riwayat serah-terima lama ada di Git (folder `archive/` dihapus 21 Oktober).
+
+**WP13 — revisi integrasi 30 Okt:** checkpoint Jules disimpan, sesi dijeda untuk review manager pada PR #233 existing. Jalur canonical baru memakai probe NTP terukur + dua sampel tick bergerak; tidak ada bypass environment. `--since` mengecualikan hari parsial dan membatasi as-of. Review source/negative tests/manifest/CI HEAD final sebelum merge; revisi draft ini belum deploy atau lulus Tahap 0. Jalur LIVE_FEED_CLOCK D6 terpisah dari bukti historis WP8c.
 
 ## Apa ini
 
