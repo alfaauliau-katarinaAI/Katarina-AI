@@ -30,7 +30,7 @@ from pathlib import Path
 SCHEMA_VERSION = 1
 ROLLOVER_BEFORE_MINUTES = 15
 ROLLOVER_AFTER_MINUTES = 30
-ROLLOVER_RULE_EFFECTIVE_UTC = None  # Manager sets an approved future UTC instant at merge.
+ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-01T00:00:00+00:00"
 TICK_DIR = "broker-ticks"
 # A day is collected only after it is safely over on the broker server as well.
 DAY_SETTLE_SECONDS = 2 * 3600
@@ -380,12 +380,8 @@ def stage0_session_open(moment: datetime) -> bool:
     - Outside US DST: 21:45 to 22:30 UTC.
     """
     moment = _utc(moment)
-    if ROLLOVER_RULE_EFFECTIVE_UTC is None:
-        return fx_session_open(moment)  # Until approval, no historical Stage0 denominator changes.
-    effective_dt = datetime.fromisoformat(ROLLOVER_RULE_EFFECTIVE_UTC)
-    if effective_dt.tzinfo is None:
-        raise ValueError("rollover_effective_utc_must_be_aware")
-    if moment < effective_dt.astimezone(timezone.utc):
+    effective_dt = datetime.fromisoformat(ROLLOVER_RULE_EFFECTIVE_UTC).astimezone(timezone.utc)
+    if moment < effective_dt:
         return fx_session_open(moment)
 
     if moment.weekday() > 4 or (moment.weekday() == 4 and moment.hour >= 20):
