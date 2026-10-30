@@ -11,6 +11,7 @@ class PCSimulationBroker:
     def __init__(self):
         self.now=int(datetime.now(timezone.utc).timestamp())-1
         self.closed=False
+        self.tick_counter=0
 
     def initialize(self):
         self.closed=False
@@ -19,13 +20,16 @@ class PCSimulationBroker:
     def shutdown(self): self.closed=True
     def terminal_info(self): return SimpleNamespace(connected=True,trade_allowed=False)
     def account_info(self):
-        return SimpleNamespace(balance=10000.,equity=10000.,margin=0.,margin_free=10000.,trade_mode=0)
+        return SimpleNamespace(balance=10000.,equity=10000.,margin=0.,margin_free=10000.,trade_mode=0,server="Synthetic-PC-Only")
     def positions_get(self): return ()
     def orders_get(self): return ()
     def history_deals_get(self,*args): return ()
     def symbols_get(self):
         return [SimpleNamespace(name=s,trade_mode=4) for s in ('EURUSD','GBPUSD','XAUUSD')]
-    def symbol_info_tick(self,symbol): return SimpleNamespace(time=self.now,bid=2000.,ask=2000.1)
+    def symbol_info_tick(self,symbol):
+        self.tick_counter+=1
+        return SimpleNamespace(time=self.now,time_msc=self.now*1000+self.tick_counter,
+                               bid=2000.,ask=2000.1)
     def symbol_info(self,symbol): return SimpleNamespace(trade_mode=4)
     def symbol_select(self,symbol,value): return True
     def copy_ticks_range(self,symbol,start,end,flags):

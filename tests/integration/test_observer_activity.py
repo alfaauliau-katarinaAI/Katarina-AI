@@ -96,3 +96,14 @@ class ObserverActivityTests(unittest.TestCase):
             self.assertTrue(all(card['market_state']!='UNKNOWN' for card in report['symbols'].values()))
             self.assertTrue(all(card['live_execution_authorized'] is False for card in report['symbols'].values()))
             self.assertEqual(broker.orders,0)
+
+
+# This synthetic suite patches only its observer call sites and restores them.
+from tests.synthetic_clock_fixture import ModuleClockFixture
+_clock_fixture = ModuleClockFixture()
+
+def setUpModule():
+    _clock_fixture.start()
+
+def tearDownModule():
+    _clock_fixture.stop()

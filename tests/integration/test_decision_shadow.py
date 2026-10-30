@@ -81,5 +81,18 @@ class DecisionShadowAcceptanceTests(unittest.TestCase):
             self.assertEqual(broker.orders, 0)
 
 
+
+
+# This synthetic suite patches only its observer call sites and restores them.
+from tests.synthetic_clock_fixture import ModuleClockFixture
+_clock_fixture = ModuleClockFixture()
+
+def setUpModule():
+    _clock_fixture.start()
+
+def tearDownModule():
+    _clock_fixture.stop()
+
+
 if __name__ == "__main__":
     unittest.main()
