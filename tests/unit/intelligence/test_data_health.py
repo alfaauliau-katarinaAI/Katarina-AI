@@ -1,5 +1,6 @@
 import sqlite3
 import unittest
+from unittest.mock import patch
 from datetime import date, datetime, timedelta, timezone
 
 from katarina.intelligence.operations import data_health
@@ -159,35 +160,63 @@ class DataHealthTest(unittest.TestCase):
         criteria = by_name(data_health.assess(self.db, when + timedelta(hours=1)))
         self.assertEqual(criteria["zero_orders"]["status"], "NOT_MET")
 
-    def test_data_health_reports_new_session_rule_and_effective_utc(self):
+    def test_data_health_exposes_both_rules_with_activation_disabled(self):
         when = datetime(2026, 11, 10, 9, tzinfo=UTC)
         cycle = ledger.record_snapshot(self.db, observed_utc=when, clock_shift_hours=2,
                                        cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, when.timestamp())})
         ledger.close_cycle(self.db, finished_utc=when, cycle_id=cycle, status="OK")
         report = data_health.assess(self.db, when + timedelta(hours=1))
+        self.assertIn("20:45-21:15 UTC", report["session_rule"])
         self.assertIn("17:00 America/New_York", report["session_rule"])
-        self.assertIn("rollover_rule_effective_utc", report)
+        self.assertIsNone(report["rollover_rule_effective_utc"])
+        self.assertFalse(report["live_execution_authorized"])
 
-    def test_post_dst_rollover_failure_at_2205_utc_excluded_from_session_cycles(self):
-        # Mon Nov 2, 2026 (post US DST). 22:05 UTC is in NY rollover [21:45, 22:30).
+    def test_post_dst_rollover_failure_excluded_only_after_approved_cutoff(self):
         when_open = datetime(2026, 11, 2, 12, 0, tzinfo=UTC)
         when_rollover = datetime(2026, 11, 2, 22, 5, tzinfo=UTC)
-
-        cycle1 = ledger.record_snapshot(self.db, observed_utc=when_open, clock_shift_hours=2,
-                                        cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, when_open.timestamp())})
-        ledger.close_cycle(self.db, finished_utc=when_open, cycle_id=cycle1, status="OK")
-
-        # Failure at 22:05 UTC during rollover window
+        cycle = ledger.record_snapshot(self.db, observed_utc=when_open, clock_shift_hours=2,
+                                       cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, when_open.timestamp())})
+        ledger.close_cycle(self.db, finished_utc=when_open, cycle_id=cycle, status="OK")
         ledger.close_cycle(self.db, finished_utc=when_rollover, status="FAILED", reason="STALE_QUOTES")
 
-        report = data_health.assess(self.db, when_rollover + timedelta(hours=1))
-        # Total cycles is 2, but session cycles should only be 1 (when_open), because 22:05 is in rollover window!
-        self.assertEqual(report["cycles_total"], 2)
-        self.assertEqual(report["cycles_in_session"], 1)
-        succ = by_name(report)["cycle_success_rate"]
-        self.assertEqual(succ["ok"], 1)
-        self.assertEqual(succ["cycles"], 1)
-        self.assertEqual(succ["status"], "PASS")
+        original = data_health.assess(self.db, when_rollover + timedelta(hours=1))
+        self.assertEqual(original["cycles_in_session"], 2)
+        self.assertEqual(by_name(original)["cycle_success_rate"]["status"], "NOT_MET")
+
+        cutoff = "2026-11-02T00:00:00+00:00"
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff), \\
+             patch.object(data_health, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff):
+            updated = data_health.assess(self.db, when_rollover + timedelta(hours=1))
+        self.assertEqual(updated["cycles_total"], 2)
+        self.assertEqual(updated["cycles_in_session"], 1)
+        self.assertEqual(by_name(updated)["cycle_success_rate"]["status"], "PASS")
+        self.assertEqual(updated["rollover_rule_effective_utc"], cutoff)
+
+    def test_rollover_cutoff_ledger_denominator_nonretroactive(self):
+        times = (
+            (datetime(2026, 11, 2, 20, 50, tzinfo=UTC), "OK"),
+            (datetime(2026, 11, 2, 22, 5, tzinfo=UTC), "FAILED"),
+            (datetime(2026, 11, 2, 22, 11, tzinfo=UTC), "FAILED"),
+            (datetime(2026, 11, 2, 23, 0, tzinfo=UTC), "OK"),
+        )
+        for when, state in times:
+            if state == "OK":
+                cycle = ledger.record_snapshot(self.db, observed_utc=when, clock_shift_hours=2,
+                                               cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, when.timestamp())})
+                ledger.close_cycle(self.db, finished_utc=when, cycle_id=cycle, status="OK")
+            else:
+                ledger.close_cycle(self.db, finished_utc=when, status="FAILED", reason="STALE_QUOTES")
+        cutoff = "2026-11-02T22:10:00+00:00"
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff), \\
+             patch.object(data_health, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff):
+            report = data_health.assess(self.db, datetime(2026, 11, 3, tzinfo=UTC))
+        self.assertEqual(report["cycles_total"], 4)
+        self.assertEqual(report["cycles_in_session"], 2)
+        criterion = by_name(report)["cycle_success_rate"]
+        self.assertEqual((criterion["ok"], criterion["cycles"]), (1, 2))
+        self.assertEqual(criterion["failure_reasons"], {"STALE_QUOTES": 1})
+        self.assertFalse(report["live_execution_authorized"])
+
 
 
 if __name__ == "__main__":

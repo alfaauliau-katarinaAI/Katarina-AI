@@ -1076,9 +1076,9 @@
       "sha256": "d6955aba47b1ebd2b13a0951e16ebbeb1d2aebc74d7e73db4e7784951768606e"
     },
     "src/katarina/intelligence/operations/data_health.py": {
-      "bytes": 15620,
-      "normalized_sha256": "af6ed64f86da35b22a20f84fe74468b1804e5fa47468bd3b0b19e9e8739c9159",
-      "sha256": "af6ed64f86da35b22a20f84fe74468b1804e5fa47468bd3b0b19e9e8739c9159"
+      "bytes": 15739,
+      "normalized_sha256": "fbf37a65625fc88c92b5d190336df74ae195e004c841e5c0ecea30eb324b37d7",
+      "sha256": "fbf37a65625fc88c92b5d190336df74ae195e004c841e5c0ecea30eb324b37d7"
     },
     "src/katarina/intelligence/operations/file_housekeeping.py": {
       "bytes": 6717,
@@ -1096,9 +1096,9 @@
       "sha256": "7226231d1cd5778e92088d422dae8754135ccef1c1f019ea8442a7c2eb07d0eb"
     },
     "src/katarina/intelligence/operations/observation_ledger.py": {
-      "bytes": 31299,
-      "normalized_sha256": "a3b62919df145bc7481a7666ffb3bca1d4e5de137d30bdb748c51e60d44114eb",
-      "sha256": "a3b62919df145bc7481a7666ffb3bca1d4e5de137d30bdb748c51e60d44114eb"
+      "bytes": 31578,
+      "normalized_sha256": "c12c1fd6ea6c3b5e1f931c2a8cc93f48a5a0050706ef6508cc213bc2a15dc3c0",
+      "sha256": "c12c1fd6ea6c3b5e1f931c2a8cc93f48a5a0050706ef6508cc213bc2a15dc3c0"
     },
     "src/katarina/intelligence/operations/parallel_storage.py": {
       "bytes": 727,
