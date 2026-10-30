@@ -49,6 +49,22 @@ def verify_live_feed_clock(first, second, *, first_utc: datetime, second_utc: da
     audit["sample_elapsed_seconds"] = round(elapsed, 6)
     progressed = {s: ts for s, ts in second.items() if s in first
                   and 0 < ts - first[s] <= (elapsed + 5) * 1000}
+    current_sample = dict(server=identity, ticks=dict(second), utc=second_utc,
+                          monotonic=second_mono)
+    previous_sample = state.get("last_sample")
+    state["last_sample"] = current_sample
+    # Quiet FX symbols need not tick in the same 200 ms. A sample from the
+    # preceding cycle can establish progress without declaring a frozen feed fresh.
+    if (len(progressed) < 3 and previous_sample is not None
+            and previous_sample["server"] == identity):
+        prior_elapsed = second_mono - previous_sample["monotonic"]
+        prior_wall = (second_utc - previous_sample["utc"]).total_seconds()
+        if .05 <= prior_elapsed <= 300 and abs(prior_wall-prior_elapsed) <= 1:
+            old_ticks = previous_sample["ticks"]
+            progressed = {s: ts for s, ts in second.items() if s in old_ticks
+                          and 0 < ts-old_ticks[s] <= (prior_elapsed+5)*1000}
+            audit["progress_basis"] = "PREVIOUS_CYCLE_SAME_SERVER"
+            audit["sample_elapsed_seconds"] = round(prior_elapsed, 6)
     audit["progressing_symbols"] = sorted(progressed)
     audit["nonprogressing_symbols"] = sorted(set(second) - set(progressed))
     if not isinstance(host_trust, HostClockTrust):
@@ -86,6 +102,7 @@ def verify_live_feed_clock(first, second, *, first_utc: datetime, second_utc: da
     if state.get("server") != identity:
         state.clear()
         state["server"] = identity
+        state["last_sample"] = current_sample
     shift = finding.observed_hours_shift
     if state.get("shift") is not None and state["shift"] != shift:
         pending = state.get("pending")

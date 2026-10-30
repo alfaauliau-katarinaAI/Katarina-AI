@@ -36,6 +36,22 @@ class LiveClockProbeTests(unittest.TestCase):
         self.assertFalse(finding.suitable_for_readonly_snapshot)
         self.assertEqual(audit["reason"], "STALE_QUOTES")
 
+    def test_quiet_symbols_can_prove_progress_from_previous_cycle_without_fake_freshness(self):
+        state = {}
+        self.assertTrue(self.evaluate(state=state)[0].suitable_for_readonly_snapshot)
+        finding, audit = self.evaluate(state=state, advance=60, frozen=True)
+        self.assertTrue(finding.suitable_for_readonly_snapshot)
+        self.assertEqual(audit["progress_basis"], "PREVIOUS_CYCLE_SAME_SERVER")
+        # Exactly the same old milliseconds do not pass in either sample window.
+        now = NOW + timedelta(seconds=120)
+        old = state["last_sample"]["ticks"]
+        finding, _ = verify_live_feed_clock(old, old,
+            first_utc=now-timedelta(seconds=.2), second_utc=now,
+            first_mono=130., second_mono=130.2,
+            host_trust=HostClockTrust(True,"TRUSTED_HOST_NTP","fixture",now,0.),
+            broker_server="fixture", state=state)
+        self.assertFalse(finding.suitable_for_readonly_snapshot)
+
     def test_missing_host_trust_never_falls_back_to_voting(self):
         finding, audit = self.evaluate(trust=False)
         self.assertFalse(finding.suitable_for_readonly_snapshot)

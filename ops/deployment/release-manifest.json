@@ -851,9 +851,9 @@
       "sha256": "aeb1451b3bd4fb63cc204c294d58f333eaa7507bff2f8ff251aab6828656bf2a"
     },
     "src/katarina/intelligence/broker/live_clock_probe.py": {
-      "bytes": 5407,
-      "normalized_sha256": "fa6a8b7a4abb0f1e90c1864c3ac85e5c68e8aaa49a96960e80d2eb99ba2641b3",
-      "sha256": "fa6a8b7a4abb0f1e90c1864c3ac85e5c68e8aaa49a96960e80d2eb99ba2641b3"
+      "bytes": 6507,
+      "normalized_sha256": "d14a240395c10b361f5825b8fb56a89fc2aab491768124b42fa3c5b0a20cf706",
+      "sha256": "d14a240395c10b361f5825b8fb56a89fc2aab491768124b42fa3c5b0a20cf706"
     },
     "src/katarina/intelligence/broker/observer_universe.py": {
       "bytes": 3394,
