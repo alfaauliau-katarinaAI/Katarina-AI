@@ -330,6 +330,10 @@ class TestBarClockEvidence(unittest.TestCase):
             cal_file.write_text(self.CAL, encoding="utf-8")
 
             report = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10)
+            repeated = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10)
+            self.assertEqual(report["source_sha256"], repeated["source_sha256"])
+            self.assertEqual(report, repeated)
+            self.assertNotIn("generated_utc", report["provenance"])
             self.assertIn("source_sha256", report)
             self.assertIn("provenance", report)
 
@@ -397,6 +401,57 @@ class TestBarClockEvidence(unittest.TestCase):
             with self.assertRaises(ValidationError) as ctx:
                 build_evidence(Dummy(), calendar_path=empty_cal)
             self.assertEqual(str(ctx.exception), "CALENDAR_EVIDENCE_EMPTY")
+
+    def test_malformed_broker_bar_rejected_instead_of_zero_fill(self):
+        release = "2024-01-05T13:30:00Z"
+
+        class MalformedBroker:
+            TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                return [{"time": int(start.timestamp()), "high": 1.2,
+                         "low": 1.0, "close": 1.1, "tick_volume": 100}]
+
+        samples, rejected = collect_release_samples(
+            MalformedBroker(), [{"release_utc": release}])
+        self.assertEqual(samples, [])
+        self.assertEqual(rejected[0]["reason"], "MALFORMED_BROKER_BARS")
+
+    def test_nonfinite_broker_bar_rejected(self):
+        class NonfiniteBroker:
+            TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                return [{"time": int(start.timestamp()), "open": 1.1,
+                         "high": 1.2, "low": 1.0, "close": float("nan"),
+                         "tick_volume": 100}]
+
+        samples, rejected = collect_release_samples(
+            NonfiniteBroker(), [{"release_utc": "2024-01-05T13:30:00Z"}])
+        self.assertEqual(samples, [])
+        self.assertEqual(rejected[0]["reason"], "MALFORMED_BROKER_BARS")
+
+    def test_numpy_style_structured_broker_bar_supported_without_numpy_import(self):
+        from katarina.research.bar_clock_evidence import _normalize_raw_bar
+
+        class DType:
+            names = ("time", "open", "high", "low", "close",
+                     "tick_volume", "spread", "real_volume")
+
+        class StructuredBar:
+            dtype = DType()
+
+            def __init__(self):
+                self.data = {"time": 1704461400, "open": 1.1, "high": 1.2,
+                             "low": 1.0, "close": 1.15, "tick_volume": 200,
+                             "spread": 12, "real_volume": 0}
+
+            def __getitem__(self, name):
+                return self.data[name]
+
+        normalized = _normalize_raw_bar(StructuredBar())
+        self.assertEqual(normalized["time"], 1704461400)
+        self.assertEqual(normalized["tick_volume"], 200)
 
     def test_mt5_never_imported_in_test(self):
         self.assertNotIn("MetaTrader5", sys.modules)

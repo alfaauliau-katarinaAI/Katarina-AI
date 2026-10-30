@@ -9,6 +9,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 import re
 import statistics
 from datetime import datetime, timedelta, timezone
@@ -402,44 +403,50 @@ def build_evidence_report(
 
 
 def _normalize_raw_bar(bar: dict | object) -> dict:
+    """Reject incomplete/nonfinite broker bars; accept MT5 NumPy structured rows.
+
+    Clock evidence must hash actual observed fields, never silently manufactured
+    zero OHLC values. No dependency on NumPy at import or test time.
+    """
     if isinstance(bar, dict):
-        t = bar.get("time_utc", bar.get("time"))
-        op = bar.get("open", 0.0)
-        hi = bar.get("high", 0.0)
-        lo = bar.get("low", 0.0)
-        cl = bar.get("close", 0.0)
-        vol = bar.get("tick_volume", bar.get("volume", 0))
-        sp = bar.get("spread", 0)
-        rvol = bar.get("real_volume", 0)
+        fields = bar
+    elif getattr(getattr(bar, "dtype", None), "names", None):
+        fields = {name: bar[name] for name in bar.dtype.names}
     else:
-        t = getattr(bar, "time_utc", getattr(bar, "time", None))
-        op = getattr(bar, "open", 0.0)
-        hi = getattr(bar, "high", 0.0)
-        lo = getattr(bar, "low", 0.0)
-        cl = getattr(bar, "close", 0.0)
-        vol = getattr(bar, "tick_volume", getattr(bar, "volume", 0))
-        sp = getattr(bar, "spread", 0)
-        rvol = getattr(bar, "real_volume", 0)
+        keys = ("time_utc", "time", "open", "high", "low", "close",
+                "tick_volume", "volume", "spread", "real_volume")
+        fields = {key: getattr(bar, key) for key in keys if hasattr(bar, key)}
 
-    if t is None:
+    if not isinstance(fields, dict) or not {"open", "high", "low", "close"} <= fields.keys():
+        raise ValidationError("BAR_OHLC_MISSING")
+    if "tick_volume" not in fields and "volume" not in fields:
+        raise ValidationError("BAR_VOLUME_MISSING")
+    t = fields.get("time_utc", fields.get("time"))
+    if t is None or isinstance(t, bool):
         raise ValidationError("BAR_TIME_MISSING")
-
-    if isinstance(t, datetime):
-        t_val = _utc_dt(t).isoformat()
-    elif isinstance(t, (int, float)):
-        t_val = int(t)
-    else:
-        t_val = str(t)
-
+    try:
+        if isinstance(t, (str, datetime)):
+            t_val = _utc_dt(t).isoformat()
+        else:
+            t_val = int(t)
+            if t_val <= 0 or not math.isfinite(float(t)):
+                raise ValueError("timestamp_invalid")
+        op, hi, lo, cl = (float(fields[key]) for key in ("open", "high", "low", "close"))
+        vol = int(fields.get("tick_volume", fields.get("volume")))
+        spread = int(fields.get("spread", 0))
+        real_volume = int(fields.get("real_volume", 0))
+    except (TypeError, ValueError, OverflowError) as err:
+        raise ValidationError("BAR_FIELD_INVALID") from err
+    if not all(math.isfinite(v) for v in (op, hi, lo, cl)):
+        raise ValidationError("BAR_OHLC_NONFINITE")
+    if min(op, hi, lo, cl) <= 0 or hi < max(op, lo, cl) or lo > min(op, hi, cl):
+        raise ValidationError("BAR_OHLC_INVALID")
+    if vol < 0 or spread < 0 or real_volume < 0:
+        raise ValidationError("BAR_VOLUME_INVALID")
     return {
-        "close": float(cl),
-        "high": float(hi),
-        "low": float(lo),
-        "open": float(op),
-        "real_volume": int(rvol),
-        "spread": int(sp),
-        "tick_volume": int(vol),
-        "time": t_val,
+        "close": cl, "high": hi, "low": lo, "open": op,
+        "real_volume": real_volume, "spread": spread,
+        "tick_volume": vol, "time": t_val,
     }
 
 
@@ -498,6 +505,7 @@ def collect_release_samples(
         bars_by_symbol = {}
         canonical_raw_by_symbol = {}
         all_empty = True
+        malformed = False
 
         for symbol in sorted_symbols:
             try:
@@ -515,12 +523,16 @@ def collect_release_samples(
                     norm_bars.sort(key=lambda x: str(x["time"]))
                     canonical_raw_by_symbol[symbol] = norm_bars
                     bars_by_symbol[symbol] = norm_bars
-                except ValidationError:
+                except (ValidationError, TypeError, ValueError, OverflowError):
+                    malformed = True
                     bars_by_symbol[symbol] = []
                     canonical_raw_by_symbol[symbol] = []
 
         bars_sha256 = sha256_text(canonical(canonical_raw_by_symbol))
 
+        if malformed:
+            rejected.append({"release_utc": release_utc_iso, "reason": "MALFORMED_BROKER_BARS", "bars_sha256": bars_sha256})
+            continue
         if all_empty:
             rejected.append({"release_utc": release_utc_iso, "reason": "BROKER_BARS_UNAVAILABLE", "bars_sha256": bars_sha256})
             continue

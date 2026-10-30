@@ -11,7 +11,6 @@ import argparse
 import csv
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -22,7 +21,7 @@ from katarina.research.bar_clock_evidence import (
     build_evidence_report,
     collect_release_samples,
 )
-from katarina.research.validation import ValidationError, canonical, sha256_text
+from katarina.research.validation import ValidationError, canonical
 
 
 def is_path_inside_repo(out_path: str | Path) -> bool:
@@ -61,7 +60,6 @@ def build_evidence(
         raise ValidationError("NO_SAMPLES_COLLECTED_FAIL_CLOSED")
 
     provenance = {
-        "generated_utc": datetime.now(timezone.utc).isoformat(),
         "calendar_path": str(cal_p),
         "max_releases": max_releases,
         "processed_releases": len(selected_rows),
