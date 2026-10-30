@@ -23,7 +23,7 @@ TOKEN='test-only-sensor-token-not-for-production-12345678'
 class AccountBroker(SyntheticBroker):
     def account_info(self):
         base=super().account_info()
-        return SimpleNamespace(**(vars(base) | dict(login=123,server='Test-Demo')))
+        return SimpleNamespace(**vars(base),login=123,server='Test-Demo')
 
 
 def config(**kwargs):

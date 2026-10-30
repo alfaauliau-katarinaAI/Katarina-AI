@@ -70,21 +70,11 @@ def _day_coverage(day: date, stamps, window_seconds) -> float:
     return covered / total if total else 0.0
 
 
-def _since_filter(column: str, since: datetime | None, now: datetime | None = None) -> tuple[str, tuple]:
-    clauses = []
-    params = []
-    if since is not None:
-        clauses.append(f"julianday({column}) >= julianday(?)")
-        params.append(since.isoformat())
-    if now is not None:
-        clauses.append(f"julianday({column}) <= julianday(?)")
-        params.append(now.isoformat())
-    if clauses:
-        return " AND " + " AND ".join(clauses), tuple(params)
-    return "", ()
+def _since_filter(column: str, since: datetime | None) -> tuple[str, tuple]:
+    return (f" AND julianday({column}) >= julianday(?)", (since.isoformat(),)) if since else ("", ())
 
 
-def _news_pipeline(db, since: datetime | None = None, now: datetime | None = None) -> dict:
+def _news_pipeline(db, since: datetime | None = None) -> dict:
     """WP3 informational diagnosis, never an exit criterion."""
     stats = dict(cycles_with_news_rows=0, cycles_without_verified_articles=0,
                  no_recent_release_cycles=0, retrieval_failed_cycles=0,
@@ -93,7 +83,7 @@ def _news_pipeline(db, since: datetime | None = None, now: datetime | None = Non
     if not {"observer_news", "observer_cycles"} <= _tables(db):
         return stats
     by_cycle = {}
-    clause, params = _since_filter("c.observed_utc", since, now)
+    clause, params = _since_filter("c.observed_utc", since)
     for cycle, window, verified, failures_json in db.execute(
             "SELECT n.cycle_id,n.in_window,n.verified,n.failures_json "
             "FROM observer_news n JOIN observer_cycles c ON c.cycle_id=n.cycle_id "
@@ -133,7 +123,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
             raise ValueError("since_requires_aware_datetime_not_in_future")
         since = since.astimezone(timezone.utc)
 
-    clause, params = _since_filter("observed_utc", since, now)
+    clause, params = _since_filter("observed_utc", since)
     report = {"schema_version": 1, "stage": "TAHAP_0_OBSERVER_DATA", "as_of_utc": now.isoformat(),
               "interval_seconds": interval_seconds,
               "session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 20:45-21:15 UTC rollover",
@@ -144,7 +134,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
             if since != since.replace(hour=0, minute=0, second=0, microsecond=0) else None)
 
     criteria = report["criteria"]
-    report["news_pipeline"] = _news_pipeline(db, since, now)
+    report["news_pipeline"] = _news_pipeline(db, since)
     if not {"observer_cycles", "observer_quotes"} <= _tables(db):
         criteria.append(_criterion("ledger_present", "NO_DATA", reason="OBSERVATION_LEDGER_MISSING"))
         return _finish(report)
@@ -164,13 +154,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
     streak = best = 0
     covered_days = []
     if cycles:
-        first_full_day = (
-            since.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-            if since is not None and since != since.replace(hour=0, minute=0, second=0, microsecond=0)
-            else since if since is not None else cycles[0][0]
-        )
-        start_date = first_full_day.date()
-        day = max(cycles[0][0].date(), start_date)
+        day = cycles[0][0].date()
         while day < now.date():
             if day.weekday() < 5:
                 if _day_coverage(day, stamps, 3 * interval_seconds) >= DAY_COVERAGE:
@@ -208,14 +192,6 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
         "GROUP BY observed_utc HAVING n>1)", params).fetchone()[0]
     regressions = 0
     last = {}
-    if since is not None:
-        # Context from before the cutoff detects a regression at its boundary;
-        # these rows never count as observations inside the requested period.
-        for symbol, epoch in db.execute(
-                "SELECT symbol,tick_epoch FROM observer_quotes WHERE status='OK' "
-                "AND julianday(observed_utc)<julianday(?) ORDER BY julianday(observed_utc)",
-                (since.isoformat(),)):
-            last[symbol] = epoch
     for symbol, epoch in db.execute(
             f"SELECT symbol, tick_epoch FROM observer_quotes WHERE status='OK'{clause} ORDER BY symbol, observed_utc", params):
         if symbol in last and epoch < last[symbol]:
@@ -239,8 +215,8 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
         shifts_seen=sorted({s for _, s in shifts}), changes=changes, cycles_without_shift=missing_shift))
 
     # 5. bid, ask and spread for every observed symbol in every cycle
-    quote_clause, quote_params = _since_filter("q.observed_utc", since, now)
-    cycle_clause, cycle_params = _since_filter("c.observed_utc", since, now)
+    quote_clause, quote_params = _since_filter("q.observed_utc", since)
+    cycle_clause, cycle_params = _since_filter("c.observed_utc", since)
     rows = [(datetime.fromisoformat(stamp), status, reason) for stamp, status, reason in db.execute(
         "SELECT q.observed_utc, q.status, q.reason FROM observer_quotes q JOIN observer_cycles c "
         f"ON c.cycle_id=q.cycle_id WHERE c.{COUNTED}{quote_clause}{cycle_clause}", quote_params + cycle_params)]
@@ -258,7 +234,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
     tests = []
     claimed_recoveries = set()
     if "reconnect_tests" in _tables(db):
-        reconnect_clause, reconnect_params = _since_filter("started_utc", since, now)
+        reconnect_clause, reconnect_params = _since_filter("started_utc", since)
         for started, method in db.execute(
                 f"SELECT started_utc, method FROM reconnect_tests WHERE 1=1{reconnect_clause} ORDER BY started_utc", reconnect_params):
             begin = datetime.fromisoformat(started)
@@ -306,19 +282,6 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
         gap = (b[0] - a[0]).total_seconds()
         if gap > 3 * interval_seconds and fx_session_open(a[0] + timedelta(seconds=interval_seconds)):
             outages.append({"start_utc": a[0].isoformat(), "end_utc": b[0].isoformat(), "seconds": int(gap)})
-    if since is not None and cycles:
-        prior_cycle = db.execute(
-            f"SELECT observed_utc FROM observer_cycles WHERE {COUNTED} "
-            "AND julianday(observed_utc)<julianday(?) "
-            "ORDER BY julianday(observed_utc) DESC LIMIT 1", (since.isoformat(),)).fetchone()
-        if prior_cycle is not None:
-            original_start = datetime.fromisoformat(prior_cycle[0])
-            first = cycles[0][0]
-            if ((first-original_start).total_seconds() > 3*interval_seconds
-                    and first > since and fx_session_open(since)):
-                outages.insert(0, {"start_utc": since.isoformat(), "end_utc": first.isoformat(),
-                                   "seconds": int((first-since).total_seconds()),
-                                   "started_before_since": True})
     report["observer_outages"] = outages
 
     # 7. broker ticks stored (or gap recorded) for every completed observed day
@@ -338,7 +301,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
         tick_rows = {k: v for k, v in tick_rows.items() if k[1] >= first_full_day.date().isoformat()}
         due = [k for k in due if k[1] >= first_full_day.date().isoformat()]
     settled = [k for k in due if tick_rows.get(k, ("",))[0] in SETTLED_TICK_STATES]
-    gap_clause, gap_params = _since_filter("end_utc", since, now)
+    gap_clause, gap_params = _since_filter("end_utc", since)
     gap_count = db.execute(f"SELECT COUNT(*) FROM data_gaps WHERE 1=1{gap_clause}", gap_params).fetchone()[0] if "data_gaps" in tables else 0
     criteria.append(_criterion(
         "broker_ticks_per_day", "NO_DATA" if not due else "PASS" if len(settled) == len(due) else "NOT_MET",

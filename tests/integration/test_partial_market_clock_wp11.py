@@ -21,9 +21,7 @@ class PartiallyClosedBroker(SyntheticBroker):
         # The clock snapshot is old for two markets. Causal historical
         # prices remain available here so ledger behavior can be tested.
         age = 3800 if symbol in ("XAUUSD", "NAS100") else 2
-        self.tick_counter += 1
         return SimpleNamespace(time=self.now + 10800 - age,
-                               time_msc=(self.now+10800-age)*1000+self.tick_counter,
                                bid=2000., ask=2000.1)
 
 

@@ -5,8 +5,6 @@ import unittest
 
 from katarina.intelligence.broker.broker_clock_alignment import (
     ClockEvidence,
-    HostClockTrust,
-    set_host_clock_provider,
     infer_clock_shift,
     capture_time_reference,
     normalize_incoming_time,
@@ -14,18 +12,6 @@ from katarina.intelligence.broker.broker_clock_alignment import (
 
 
 class ClockEvidenceIntegrationWP13Tests(unittest.TestCase):
-    def setUp(self):
-        set_host_clock_provider(lambda now: HostClockTrust(
-            trusted=True,
-            time_basis="TRUSTED_HOST_NTP",
-            reason="NTP_SYNCHRONIZED",
-            last_sync_utc=now or datetime.now(timezone.utc),
-            skew_seconds=0.0,
-        ))
-
-    def tearDown(self):
-        set_host_clock_provider(None)
-
     def test_capture_time_reference_includes_evidence_metadata(self):
         now = datetime(2026, 10, 28, 12, 0, tzinfo=timezone.utc)
         now_ts = now.timestamp()
@@ -70,6 +56,7 @@ class ClockEvidenceIntegrationWP13Tests(unittest.TestCase):
         finding = infer_clock_shift(ticks, now_ts, evidence=ev, broker_server="ICMarkets-Server")
         ref = capture_time_reference(finding, now)
 
+        # Naive broker wall time (15:00:00 = 12:00:00 UTC + 3 hours shift)
         wall_str = (now + timedelta(hours=3)).replace(tzinfo=None).isoformat()
         normalized = normalize_incoming_time(
             wall_str,
@@ -79,6 +66,7 @@ class ClockEvidenceIntegrationWP13Tests(unittest.TestCase):
         )
         self.assertEqual(normalized.utc, now)
 
+        # Outside evidence valid_until window raises ValueError
         future_now = now + timedelta(days=2)
         with self.assertRaisesRegex(ValueError, "broker_clock_evidence_expired"):
             normalize_incoming_time(
