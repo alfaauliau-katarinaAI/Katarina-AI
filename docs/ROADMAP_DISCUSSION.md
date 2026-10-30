@@ -156,6 +156,34 @@ Tanggapan:
 Keputusan: **Arah desain dicatat untuk penelaahan dan pengujian lanjutan**, belum berlaku sebagai perubahan acceptance WP13 atau pengecualian bukti jam. Sebelum implementasi, bandingkan jalur NTP+tick dengan syarat fail-closed R4, siapkan tes adversarial dan dapatkan persetujuan review hasil. LIVE OFF.
 Tindak lanjut: Yura siapkan spesifikasi/tes bersama Jules pada sesi berikutnya dalam PR #233 yang sama; Claude review independen. Jangan membuat PR WP13 baru, jangan mengubah runtime VPS/observer sekarang.
 
+### D7 — Audit struktur 30 Okt (A-01–A-11): verifikasi dan urutan tindak lanjut
+Yura/ChatGPT (laporan `KATARINA_AI_AUDIT_STRUKTUR_2026-10-30.md`, dilampirkan Owner) · 31 Okt 2026 · status: Terbuka
+Usulan: audit baca-saja `main` `85f8aef` + #233 `76ce7e8`; 2 P0 (WP13 belum merge, Tahap 0 belum lulus),
+6 P1 (WP8c bukti, WP6 reboot, OAuth `/oauth/status`, reviewer independen, dokumen status usang, WP10a di VPS), 3 P2.
+Verifikasi Claude (31 Okt 00:20 WIB, GitHub + VPS baca-saja):
+| ID | Hasil cek | Bukti / catatan |
+|---|---|---|
+| A-01 | **Benar** + temuan baru | #233 HEAD `76ce7e8`: CI Body/Ubuntu/Windows PASS, `mergeable_state=clean`, 34 berkas, tidak menyentuh `promotion_lock`. Observer kini memakai `inspect_host_clock` + dua sampel tick; siklus gagal tetap ditulis `FAILED` + alasan (`close_ledger_cycle`). Review Claude di #233 (`f672648`) sudah usang |
+| A-01 baru | **Penghalang deploy** | WP13 menolak NTP bila `Time since Last Good Sync Time` > **14.400 s**. VPS: `Poll Interval: 15 (32768s)` (±9,1 jam), saat cek **27.146 s** sejak sinkron terakhir → `NTP_SYNC_STALE`. Bila #233 dideploy apa adanya, sebagian besar siklus `FAILED` dan Tahap 0 gagal `cycle_success_rate`. Butuh `MaxPollInterval` ≤ 13 (8.192 s) atau resync terjadwal — **perubahan setelan sistem VPS, perlu izin Owner**; jangan melonggarkan batas di kode |
+| A-02 | Benar | Hitungan sejak 28 Okt 16:57 UTC; `--since` baru ada di #233 |
+| A-03 | Benar | `us_release_calendar.csv` hanya header; belum ada CLI pembuat sampel (RH-005) |
+| A-04 | Benar | Task observer memakai Interactive Logon; reboot tanpa login belum diuji |
+| A-05 | Benar di kode, **tidak aktif di VPS** | `server.js` baris 151–156 mengembalikan `profile` (user_info MQL5) tanpa auth; `listen(PORT,'0.0.0.0')`. Tidak ada proses node `oauth_gateway` di VPS. Lokasi deploy lain belum diketahui |
+| A-06 | Benar | `CODEOWNERS` hanya owner; PR 30 Okt bisa di-merge tanpa approval → review tidak diwajibkan proteksi branch |
+| A-07 | Benar sebagian | `PROJECT_STATUS` (#239) masih menulis #233 "konflik + blocker P0"; usang sejak `76ce7e8`. Diperbarui saat #233 merge (#233 sendiri mengubah berkas itu) |
+| A-08 | Benar | WP10a belum dijalankan di VPS |
+| A-09–A-11 | Setuju, tidak mendesak | A-10: paket kosong `domain/ports/entrypoints` sudah tercatat di peta modul (D=3); jangan refactor sebelum Tahap 1 |
+Koreksi kecil: tabel subsistem menyebut "7 simbol inti masih rencana"; observer VPS saat ini menerima **5 simbol** per siklus.
+Pertanyaan: 1. Manager: urutan WP13 = review independen `76ce7e8` → merge → izin Owner ubah poll NTP VPS → deploy terkendali?
+2. Owner: izinkan `w32tm` MaxPollInterval 13 (atau resync terjadwal) sebelum deploy WP13? 3. Owner: wajibkan ≥1 approval
+di branch protection (A-06)? 4. Owner/manager: `oauth_gateway/` diperbaiki (tanpa `profile`, bind `127.0.0.1`) atau dihapus
+bersama ekstraksi website?
+Tanggapan:
+- [Claude 31 Okt 2026] Audit akurat. Prioritas tertinggi baru adalah syarat NTP: tanpa itu WP13 yang benar justru
+  menggagalkan Tahap 0. Claude siap melakukan review independen `76ce7e8` bila manager meminta (tanpa merge/deploy).
+Keputusan:
+Tindak lanjut: manager (urutan WP13, A-07), Owner (NTP VPS, A-06, A-05/A-11), Claude (review `76ce7e8` bila diminta).
+
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
