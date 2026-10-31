@@ -70,55 +70,81 @@ def _day_coverage(day: date, stamps, window_seconds) -> float:
     return covered / total if total else 0.0
 
 
-def _news_pipeline(db) -> dict:
+def _since_filter(column: str, since: datetime | None, now: datetime | None = None) -> tuple[str, tuple]:
+    clauses = []
+    params = []
+    if since is not None:
+        clauses.append(f"julianday({column}) >= julianday(?)")
+        params.append(since.isoformat())
+    if now is not None:
+        clauses.append(f"julianday({column}) <= julianday(?)")
+        params.append(now.isoformat())
+    if clauses:
+        return " AND " + " AND ".join(clauses), tuple(params)
+    return "", ()
+
+
+def _news_pipeline(db, since: datetime | None = None, now: datetime | None = None) -> dict:
     """WP3 informational diagnosis, never an exit criterion."""
-    stats=dict(cycles_with_news_rows=0, cycles_without_verified_articles=0,
-               no_recent_release_cycles=0, retrieval_failed_cycles=0,
-               no_recent_release_percent=None, retrieval_failed_percent=None,
-               verdict_effect="NONE")
-    if not {"observer_news","observer_cycles"} <= _tables(db):
+    stats = dict(cycles_with_news_rows=0, cycles_without_verified_articles=0,
+                 no_recent_release_cycles=0, retrieval_failed_cycles=0,
+                 no_recent_release_percent=None, retrieval_failed_percent=None,
+                 verdict_effect="NONE")
+    if not {"observer_news", "observer_cycles"} <= _tables(db):
         return stats
-    by_cycle={}
-    for cycle,window,verified,failures_json in db.execute(
+    by_cycle = {}
+    clause, params = _since_filter("c.observed_utc", since, now)
+    for cycle, window, verified, failures_json in db.execute(
             "SELECT n.cycle_id,n.in_window,n.verified,n.failures_json "
             "FROM observer_news n JOIN observer_cycles c ON c.cycle_id=n.cycle_id "
-            f"WHERE {COUNTED} ORDER BY n.cycle_id,n.source"):
-        item=by_cycle.setdefault(cycle,{"window":0,"verified":0,"failure":False})
-        item["window"]+=window
-        item["verified"]+=verified
+            f"WHERE {COUNTED}{clause} ORDER BY n.cycle_id,n.source", params):
+        item = by_cycle.setdefault(cycle, {"window": 0, "verified": 0, "failure": False})
+        item["window"] += window
+        item["verified"] += verified
         try:
-            item["failure"]|=bool(json.loads(failures_json))
-        except (TypeError,ValueError):
-            item["failure"]=True
-    stats["cycles_with_news_rows"]=len(by_cycle)
-    absent=[r for r in by_cycle.values() if r["verified"]==0]
-    stats["cycles_without_verified_articles"]=len(absent)
+            item["failure"] |= bool(json.loads(failures_json))
+        except (TypeError, ValueError):
+            item["failure"] = True
+    stats["cycles_with_news_rows"] = len(by_cycle)
+    absent = [r for r in by_cycle.values() if r["verified"] == 0]
+    stats["cycles_without_verified_articles"] = len(absent)
     for row in absent:
         if row["failure"]:
-            stats["retrieval_failed_cycles"]+=1
-        elif row["window"]==0:
-            stats["no_recent_release_cycles"]+=1
+            stats["retrieval_failed_cycles"] += 1
+        elif row["window"] == 0:
+            stats["no_recent_release_cycles"] += 1
     if absent:
-        denominator=len(absent)
-        stats["no_recent_release_percent"]=round(
-            100*stats["no_recent_release_cycles"]/denominator,1)
-        stats["retrieval_failed_percent"]=round(
-            100*stats["retrieval_failed_cycles"]/denominator,1)
+        denominator = len(absent)
+        stats["no_recent_release_percent"] = round(
+            100 * stats["no_recent_release_cycles"] / denominator, 1)
+        stats["retrieval_failed_percent"] = round(
+            100 * stats["retrieval_failed_cycles"] / denominator, 1)
     return stats
 
 
-def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
+def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | None = None) -> dict:
     if now.tzinfo is None:
         raise ValueError("aware_clock_required")
     if type(interval_seconds) is not int or not 30 <= interval_seconds <= 3600:
         raise ValueError("invalid_interval")
     now = now.astimezone(timezone.utc)
+    if since is not None:
+        if not isinstance(since, datetime) or since.tzinfo is None or since > now:
+            raise ValueError("since_requires_aware_datetime_not_in_future")
+        since = since.astimezone(timezone.utc)
+
+    clause, params = _since_filter("observed_utc", since, now)
     report = {"schema_version": 1, "stage": "TAHAP_0_OBSERVER_DATA", "as_of_utc": now.isoformat(),
               "interval_seconds": interval_seconds,
               "session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 20:45-21:15 UTC rollover",
               "live_execution_authorized": False, "criteria": []}
+    if since is not None:
+        report["since_utc"] = since.isoformat()
+        report["partial_tick_day_excluded"] = (since.date().isoformat()
+            if since != since.replace(hour=0, minute=0, second=0, microsecond=0) else None)
+
     criteria = report["criteria"]
-    report["news_pipeline"] = _news_pipeline(db)
+    report["news_pipeline"] = _news_pipeline(db, since, now)
     if not {"observer_cycles", "observer_quotes"} <= _tables(db):
         criteria.append(_criterion("ledger_present", "NO_DATA", reason="OBSERVATION_LEDGER_MISSING"))
         return _finish(report)
@@ -126,20 +152,25 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
     cycles = [(datetime.fromisoformat(stamp), status, reason, shift, orders)
               for stamp, status, reason, shift, orders in db.execute(
                   f"SELECT observed_utc, status, reason, clock_shift_hours, orders_submitted "
-                  f"FROM observer_cycles WHERE {COUNTED} ORDER BY observed_utc")]
+                  f"FROM observer_cycles WHERE {COUNTED}{clause} ORDER BY observed_utc", params)]
     session = [c for c in cycles if fx_session_open(c[0])]
     report["cycles_total"] = len(cycles)
     report["cycles_in_session"] = len(session)
     report["first_cycle_utc"] = cycles[0][0].isoformat() if cycles else None
     report["last_cycle_utc"] = cycles[-1][0].isoformat() if cycles else None
 
-    # 1. consecutive trading days with near-complete session coverage: a session minute is covered
-    #    when a counted cycle happened within the previous 3 intervals (cycle time + idle varies).
+    # 1. consecutive trading days with near-complete session coverage
     stamps = [c[0].timestamp() for c in cycles]
     streak = best = 0
     covered_days = []
     if cycles:
-        day = cycles[0][0].date()
+        first_full_day = (
+            since.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            if since is not None and since != since.replace(hour=0, minute=0, second=0, microsecond=0)
+            else since if since is not None else cycles[0][0]
+        )
+        start_date = first_full_day.date()
+        day = max(cycles[0][0].date(), start_date)
         while day < now.date():
             if day.weekday() < 5:
                 if _day_coverage(day, stamps, 3 * interval_seconds) >= DAY_COVERAGE:
@@ -170,19 +201,27 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
 
     # 3. no duplicates; monotonic timestamps per symbol
     duplicate_quotes = db.execute(
-        "SELECT COALESCE(SUM(n-1),0) FROM (SELECT COUNT(*) n FROM observer_quotes "
-        "GROUP BY symbol, observed_utc HAVING n>1)").fetchone()[0]
+        f"SELECT COALESCE(SUM(n-1),0) FROM (SELECT COUNT(*) n FROM observer_quotes WHERE 1=1{clause} "
+        "GROUP BY symbol, observed_utc HAVING n>1)", params).fetchone()[0]
     duplicate_cycles = db.execute(
-        f"SELECT COALESCE(SUM(n-1),0) FROM (SELECT COUNT(*) n FROM observer_cycles WHERE {COUNTED} "
-        "GROUP BY observed_utc HAVING n>1)").fetchone()[0]
+        f"SELECT COALESCE(SUM(n-1),0) FROM (SELECT COUNT(*) n FROM observer_cycles WHERE {COUNTED}{clause} "
+        "GROUP BY observed_utc HAVING n>1)", params).fetchone()[0]
     regressions = 0
     last = {}
+    if since is not None:
+        # Context from before the cutoff detects a regression at its boundary;
+        # these rows never count as observations inside the requested period.
+        for symbol, epoch in db.execute(
+                "SELECT symbol,tick_epoch FROM observer_quotes WHERE status='OK' "
+                "AND julianday(observed_utc)<julianday(?) ORDER BY julianday(observed_utc)",
+                (since.isoformat(),)):
+            last[symbol] = epoch
     for symbol, epoch in db.execute(
-            "SELECT symbol, tick_epoch FROM observer_quotes WHERE status='OK' ORDER BY symbol, observed_utc"):
+            f"SELECT symbol, tick_epoch FROM observer_quotes WHERE status='OK'{clause} ORDER BY symbol, observed_utc", params):
         if symbol in last and epoch < last[symbol]:
             regressions += 1
         last[symbol] = epoch
-    quotes_total = db.execute("SELECT COUNT(*) FROM observer_quotes").fetchone()[0]
+    quotes_total = db.execute(f"SELECT COUNT(*) FROM observer_quotes WHERE 1=1{clause}", params).fetchone()[0]
     criteria.append(_criterion(
         "no_duplicates_monotonic", "NO_DATA" if not quotes_total else
         "PASS" if duplicate_quotes == duplicate_cycles == regressions == 0 else "NOT_MET",
@@ -200,9 +239,11 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
         shifts_seen=sorted({s for _, s in shifts}), changes=changes, cycles_without_shift=missing_shift))
 
     # 5. bid, ask and spread for every observed symbol in every cycle
+    quote_clause, quote_params = _since_filter("q.observed_utc", since, now)
+    cycle_clause, cycle_params = _since_filter("c.observed_utc", since, now)
     rows = [(datetime.fromisoformat(stamp), status, reason) for stamp, status, reason in db.execute(
         "SELECT q.observed_utc, q.status, q.reason FROM observer_quotes q JOIN observer_cycles c "
-        f"ON c.cycle_id=q.cycle_id WHERE c.{COUNTED}")]
+        f"ON c.cycle_id=q.cycle_id WHERE c.{COUNTED}{quote_clause}{cycle_clause}", quote_params + cycle_params)]
     rows = [r for r in rows if fx_session_open(r[0])]
     with_quote = sum(1 for r in rows if r[1] == "OK")
     coverage = with_quote / len(rows) if rows else None
@@ -213,12 +254,13 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
         required=MIN_QUOTE_COVERAGE, coverage=None if coverage is None else round(coverage, 6),
         symbol_rows=len(rows), missing_without_reason=no_reason))
 
-    # 6. reconnect recoveries: deliberate disconnect tests that recovered on their own within
-    #    RECOVERY_SECONDS, plus spontaneous failed stretches followed by an OK cycle.
+    # 6. reconnect recoveries
     tests = []
     claimed_recoveries = set()
     if "reconnect_tests" in _tables(db):
-        for started, method in db.execute("SELECT started_utc, method FROM reconnect_tests ORDER BY started_utc"):
+        reconnect_clause, reconnect_params = _since_filter("started_utc", since, now)
+        for started, method in db.execute(
+                f"SELECT started_utc, method FROM reconnect_tests WHERE 1=1{reconnect_clause} ORDER BY started_utc", reconnect_params):
             begin = datetime.fromisoformat(started)
             after = [c for c in cycles if c[0] > begin]
             recovered = next((c for c in after if c[1] == "OK"), None)
@@ -234,11 +276,15 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
                           "failed_cycles_before_recovery": sum(1 for c in after if recovered and c[0] < recovered[0]),
                           "duplicate_recovery": duplicate, "passed": passed})
     test_recoveries = {t["recovered_utc"] for t in tests if t["passed"]}
-    # Time from the FIRST failure, not the last retry; a long outage is not a fast recovery.
     spontaneous = 0
     failed_since = None
+    prior = db.execute(
+        f"SELECT status FROM observer_cycles WHERE {COUNTED} "
+        "AND status IN ('OK','FAILED','NO_MARKET_DATA') AND julianday(observed_utc)<julianday(?) ORDER BY julianday(observed_utc) DESC LIMIT 1",
+        (since.isoformat(),)).fetchone() if since else None
+    ongoing_before_since = bool(prior and prior[0] in ("FAILED", "NO_MARKET_DATA"))
     for cycle in cycles:
-        if cycle[1] in ("FAILED", "NO_MARKET_DATA") and failed_since is None:
+        if cycle[1] in ("FAILED", "NO_MARKET_DATA") and failed_since is None and not ongoing_before_since:
             failed_since = cycle[0]
         elif cycle[1] == "OK":
             if (failed_since is not None and
@@ -246,6 +292,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
                     cycle[0].isoformat() not in test_recoveries):
                 spontaneous += 1
             failed_since = None
+            ongoing_before_since = False
     passed_tests = sum(1 for t in tests if t["passed"])
     recoveries = passed_tests + spontaneous
     criteria.append(_criterion(
@@ -254,33 +301,52 @@ def assess(db, now: datetime, *, interval_seconds: int = 60) -> dict:
         required=MIN_RECOVERIES, recoveries=recoveries, passed_tests=passed_tests,
         spontaneous_recoveries=spontaneous, tests=tests, recovery_limit_seconds=RECOVERY_SECONDS))
 
-    # observer outages inside the session (reported, never filled)
     outages = []
     for a, b in zip(cycles, cycles[1:]):
         gap = (b[0] - a[0]).total_seconds()
         if gap > 3 * interval_seconds and fx_session_open(a[0] + timedelta(seconds=interval_seconds)):
             outages.append({"start_utc": a[0].isoformat(), "end_utc": b[0].isoformat(), "seconds": int(gap)})
+    if since is not None and cycles:
+        prior_cycle = db.execute(
+            f"SELECT observed_utc FROM observer_cycles WHERE {COUNTED} "
+            "AND julianday(observed_utc)<julianday(?) "
+            "ORDER BY julianday(observed_utc) DESC LIMIT 1", (since.isoformat(),)).fetchone()
+        if prior_cycle is not None:
+            original_start = datetime.fromisoformat(prior_cycle[0])
+            first = cycles[0][0]
+            if ((first-original_start).total_seconds() > 3*interval_seconds
+                    and first > since and fx_session_open(since)):
+                outages.insert(0, {"start_utc": since.isoformat(), "end_utc": first.isoformat(),
+                                   "seconds": int((first-since).total_seconds()),
+                                   "started_before_since": True})
     report["observer_outages"] = outages
 
     # 7. broker ticks stored (or gap recorded) for every completed observed day
     tables = _tables(db)
     observed_days = db.execute(
-        "SELECT DISTINCT symbol, substr(observed_utc,1,10) FROM observer_quotes WHERE status='OK'").fetchall()
+        f"SELECT DISTINCT symbol, substr(observed_utc,1,10) FROM observer_quotes WHERE status='OK'{clause}", params).fetchall()
     due = [(s, d) for s, d in observed_days
            if datetime.fromisoformat(d).replace(tzinfo=timezone.utc) + timedelta(days=1, hours=2) <= now]
     tick_rows = {}
     if "broker_tick_days" in tables:
         tick_rows = {(s, d): (status, checked, matched) for s, d, status, checked, matched in db.execute(
             "SELECT symbol, day, status, snapshots_checked, snapshots_matched FROM broker_tick_days")}
+    if since is not None:
+        first_full_day = since.replace(hour=0, minute=0, second=0, microsecond=0)
+        if since != first_full_day:
+            first_full_day += timedelta(days=1)
+        tick_rows = {k: v for k, v in tick_rows.items() if k[1] >= first_full_day.date().isoformat()}
+        due = [k for k in due if k[1] >= first_full_day.date().isoformat()]
     settled = [k for k in due if tick_rows.get(k, ("",))[0] in SETTLED_TICK_STATES]
-    gap_count = db.execute("SELECT COUNT(*) FROM data_gaps").fetchone()[0] if "data_gaps" in tables else 0
+    gap_clause, gap_params = _since_filter("end_utc", since, now)
+    gap_count = db.execute(f"SELECT COUNT(*) FROM data_gaps WHERE 1=1{gap_clause}", gap_params).fetchone()[0] if "data_gaps" in tables else 0
     criteria.append(_criterion(
         "broker_ticks_per_day", "NO_DATA" if not due else "PASS" if len(settled) == len(due) else "NOT_MET",
         due_symbol_days=len(due), settled_symbol_days=len(settled),
         stored=sum(1 for k in settled if tick_rows[k][0] != "GAP"),
         gap_days=sum(1 for k in settled if tick_rows[k][0] == "GAP"), gaps_recorded=gap_count))
 
-    # 8. stored ticks reconcile with the observer snapshots (within one tick size)
+    # 8. stored ticks reconcile with the observer snapshots
     checked = sum(tick_rows[k][1] for k in settled)
     matched = sum(tick_rows[k][2] for k in settled)
     criteria.append(_criterion(

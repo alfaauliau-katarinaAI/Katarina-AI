@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — WP13: trust NTP nyata, tick bergerak, dan cutoff Stage 0 (#233)
+
+- Observer canonical memakai status Windows NTP terukur (leap/source/stratum/state/error/umur sync/offset), dua snapshot tick bermilidetik yang bergerak, identitas server dan pemeriksaan UTC vs monotonic. Platform/format tidak didukung tetap untrusted; tidak ada flag environment untuk melewati guard. Perubahan offset dikarantina sampai konfirmasi baru; bukti ini hanya LIVE_FEED_CLOCK, bukan DST historis WP8c.
+- Kegagalan menyimpan audit privat dan alasan FAILED; tidak menerbitkan quote/tick UTC valid. Uji lifecycle NTP gagal → pulih membuktikan worker tetap hidup, tanpa restart dan 0 order. Fixture synthetic PC terpisah dari mode observe dan tidak mengubah gerbang produksi.
+- `--since` membatasi periode hingga as-of, mengecualikan hari cutoff parsial dari streak dan tick-day, menjaga konteks outage/regresi lintas cutoff serta NO_DATA yang jujur.
+- Integrasi manager dari checkpoint Jules, satu PR existing; dokumen kanonis dan perbaikan Claude dipertahankan. Status: revisi draft menunggu review/CI final, belum MERGED/DEPLOYED/STAGE0 PASSED. VPS, Risk Governor, promotion lock dan holdout tidak diubah.
+
 ## 2026-10-31 — WP8d: mapping simbol broker dan urutan bukti
 
 - Kolektor memetakan simbol canonical ke nama broker; CLI `--broker-suffix` default `.vx` sesuai universe, sementara kunci konsensus tetap canonical.
