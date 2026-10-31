@@ -44,8 +44,8 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 | # | Paket / alur | Prioritas dan keluaran yang harus terbukti | Pelaksana dan status |
 |---|---|---|---|
 | 0 | **Tahap 0 — observasi 10 hari bursa** | Jaga satu observer resmi read-only; audit per hari/simbol sejak 28 Okt 16:57 UTC (cutoff WP12), target streak 10 hari, sukses siklus ≥98%, rekonsiliasi tick/snapshot, cakupan dan gap, restart otomatis dan **0 order**. Jangan menghitung backfill sebagai forward atau mengklaim lulus sebelum bukti. | **P0 / berjalan** — Yura pantau, Claude verifikasi bukti VPS; **belum lulus** |
-| 1 | **WP13 — jam broker MT5 dan `--since`** | [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233): jam live = NTP host tepercaya + ≥ 3 tick bergerak (D6/D7), siklus gagal tercatat `FAILED` + alasan, `--since` untuk Tahap 0. Spesifikasi terbaru di R4 WP13. | **P0 / MERGE BLOCKED** — HEAD `3532399` (bot Jules, 30 Okt 17:28 UTC) menghapus guard NTP; pulihkan dari `76ce7e8` oleh manager/Claude (D7-M8), task Jules WP13 di-pause (D7-M12), lalu review ulang SHA final. **Bukan tugas Jules.** NTP VPS `MaxPollInterval` 13 sejak 31 Okt (D7-M13); deploy WP13 tetap butuh izin terpisah |
-| 1b | **WP15 — rollover Tahap 0 ikut 17:00 New York** | Jendela pengecualian rollover di statistik Tahap 0 mengikuti 17:00 `America/New_York` (DST AS berakhir 1 Nov 2026), tanpa mengubah ledger, arsip tick, atau penilaian sebelum tanggal berlaku. | **P1 / Siap — Jules** (Owner D7-M15). Mendesak: sejak 1 Nov rollover pindah ke 22:00 UTC |
+| 1 | **WP13 — jam broker MT5 dan `--since`** | [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233): jam live = NTP host tepercaya + ≥ 3 tick bergerak (D6/D7), siklus gagal tercatat `FAILED` + alasan, `--since` untuk Tahap 0. Spesifikasi terbaru di R4 WP13. | **Dalam review #233** — safety tree dipulihkan; `dd6d9b50` memiliki src identik baseline `76ce7e8f`, CI Body/Ubuntu/Windows PASS. Approval independen masih diperlukan. Bukan tugas Jules; tanpa deploy VPS |
+| 1b | **WP15 — rollover Tahap 0 ikut 17:00 New York** | Jendela pengecualian rollover di statistik Tahap 0 mengikuti 17:00 `America/New_York` (DST AS berakhir 1 Nov 2026), tanpa mengubah ledger, arsip tick, atau penilaian sebelum tanggal berlaku. | **Revisi #244, Manager** — override tanggal resmi dihapus; aktivasi tetap `None`. Menunggu CI final dan review independen; tanggal efektif baru ditetapkan terpisah, tidak lebih awal dari merge |
 | 2 | **WP8c — asal waktu bar historis** | Bukti UTC bar memakai rilis NFP yang terverifikasi dan tes deterministik; jangan ekspor data development tanpa bukti jam atau sentuh holdout. | **Kode selesai (merge #230, 30 Okt)** — fail-closed diperbaiki Claude; kalender rilis resmi + laporan sampel belum ada, jadi ekspor tetap ditolak |
 | 3 | **WP10b — swap & sensitivitas biaya** | CostModel swap BUY/SELL, rollover New York/DST dan sensitivitas 1,5×/2×; perbaikan baseline random-side; tidak mengubah gate promosi. | **P1 / kode MERGED [PR #225](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/225)** — CI Body/Linux/Windows PASS; belum validasi broker/VPS atau strategi |
 | 4 | **Tata kelola PR** | Aturan `main`: ≥ 1 approval independen, CI Body/Ubuntu/Windows wajib, approval usang gugur saat HEAD berubah, tanpa force-push. | **Disetujui Owner (D7-M14), belum aktif** — butuh admin repo; #216/#218 merged 30 Okt |
@@ -53,11 +53,11 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 | 6 | **WP10a** | Profil spread broker deskriptif dari tick forward terverifikasi, bukan penyetelan strategi. | **Selesai (merge #231, 30 Okt)**; belum dijalankan di VPS |
 | 7 | **WP4** | Jurnal kandidat riset + replay sinyal teknis tanpa mengubah keputusan aktif. | **P2 / antrean [Issue #229](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/229)** — tunggu WP13 dan kapasitas Jules |
 | 8 | **WP14** | Auditor data baca-saja dengan keluaran PASS/BLOCKED/NO_DATA yang bersumber. | **P2 / menunggu WP13 dan WP8c** |
-| 9 | **WP8d — CLI sampel bukti jam bar** | Alat yang mengubah kalender rilis resmi + bar M5 broker di sekitar rilis menjadi laporan bukti WP8c (`bars_sha256` per sampel); fail-closed bila konsensus kurang. | **P2 / Siap — Jules**; dijalankan Claude di VPS saat pasar tutup setelah kalender BLS diisi |
-| 10 | **WP16 — OAuth gateway tanpa paparan profil** | `/oauth/status` tidak lagi mengembalikan profil MQL5; bind default `127.0.0.1`; tes statis. | **P2 / Siap — Jules** (manager D7-M4: perbaiki, bukan hapus) |
+| 9 | **WP8d — CLI sampel bukti jam bar** | Alat yang mengubah kalender rilis resmi + bar M5 broker di sekitar rilis menjadi laporan bukti WP8c (`bars_sha256` per sampel); fail-closed bila konsensus kurang. | **Revisi #248, Manager** — mapping broker `.vx`, bukti fail-closed dan provenance deterministik. Menunggu CI final/review; kalender resmi dan data broker nyata belum divalidasi |
+| 10 | **WP16 — OAuth gateway tanpa paparan profil** | `/oauth/status` tidak lagi mengembalikan profil MQL5; bind default `127.0.0.1`; tes statis. | **Dalam review #247** — kode dan CI PASS pada `99c06da7`; approval independen masih diperlukan. Belum deploy |
 | – | **WP8b, WP9c, WP9d, WP5** | Setup, syarat bukti, entry, dan perankingan; hanya setelah prasyarat R0 terpenuhi. | **Menunggu prasyarat** |
 
-**Handoff Google (31 Okt):** WP10b #225, WP8c #230, WP10a #231 merged. Jules **tidak** mengerjakan WP13 lagi: dua kali (`686d1e7`, `3532399`) bot Jules memublikasikan pohon sandbox lama ke PR #233 dan menghapus guard yang dipulihkan manager. Paket Jules berikutnya: **WP15 → WP8d → WP16**, lalu WP4 dan WP14 setelah WP13 merge. Perintah induk Jules ada di **R6.J**; aturan anti-regresi wajib. Jules tidak memiliki akses VPS, data broker privat, merge, atau kewenangan promosi.
+**Handoff batch (31 Okt):** WP10b #225, WP8c #230, WP10a #231 merged. Closeout WP13 #233, WP15 #244, WP8d #248 dan WP16 #247 dikoordinasikan Manager/Claude melalui [Issue #249](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/249). CI Auto-Fixer Jules OFF; jangan resume writer lama atau membuat PR duplikat. Status pause dua task belum persisten dicatat di #249. WP4/WP14 menunggu prasyarat dan penugasan baru; tidak otomatis dimulai. Semua merge tetap menunggu approval independen sah dan CI final. Tanpa deploy VPS atau trading.
 
 
 **Akses**
@@ -463,10 +463,10 @@ Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, 
 
 | Fase | Paket | Oleh | Prasyarat | Ukuran perkiraan | Status (rinci di R5) |
 |---|---|---|---|---|---|
-| 1 (prioritas) | WP13 — jam live NTP + tick bergerak, `--since` | Manager/Claude (bukan Jules) | — | 34 berkas | MERGE BLOCKED; pulihkan `76ce7e8` |
-| 1 (paralel) | WP15 — rollover Tahap 0 ikut 17:00 New York | Jules, review Claude | — | ±3 berkas, ±200 baris | Siap |
-| 2 | WP8d — CLI sampel bukti jam bar | Jules, review Claude | WP8c (selesai) | ±3 berkas, ±300 baris | Siap |
-| 2 (paralel) | WP16 — OAuth gateway tanpa paparan profil | Jules, review Claude | — | ±2 berkas, ±60 baris | Siap |
+| 1 (prioritas) | WP13 — jam live NTP + tick bergerak, `--since` | Manager/Claude | — | PR #233 | Dalam review; CI PASS, approval independen pending |
+| 1 (paralel) | WP15 — rollover Tahap 0 ikut 17:00 New York | Manager, review Claude | — | PR #244 | Revisi nonretroaktif; CI final/review pending |
+| 2 | WP8d — CLI sampel bukti jam bar | Manager, review Claude | WP8c (selesai) | PR #248 | Revisi mapping `.vx`; CI final/review pending |
+| 2 (paralel) | WP16 — OAuth gateway tanpa paparan profil | Manager/Claude | — | PR #247 | Dalam review; CI PASS, approval independen pending |
 | 3 | WP4 — jurnal kandidat + replay sinyal | Pelaksana | WP9b (selesai) | ±6 berkas, ±450 baris | Siap |
 | 3b | WP14 — auditor data baca-saja | Pelaksana | WP13 + WP8c | ±4 berkas, ±350 baris | — |
 | terus | WP6 — 5 → 7 simbol di VPS | Claude | WP13 + pemantauan 21:00–22:00 UTC | — | Berjalan (5 simbol) |
@@ -926,15 +926,15 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | **MERGE BLOCKED P0** — HEAD `3532399` (bot Jules) mengembalikan voting quote-only; review Claude hanya untuk `76ce7e8` | **PR #233** | Pulihkan tree `76ce7e8` dengan commit baru (tanpa force-push), pertahankan D7, CI 3 job + review baru pada SHA final (D7-M7–M9). Deploy setelah NTP VPS `Sync` terbukti |
+| WP13 | Dalam review; MERGE BLOCKED tanpa approval independen | #233 | Guard NTP/tick progresif dipulihkan, CI 3/3 PASS pada `dd6d9b50`; belum deploy, bukan Tahap 0 PASS |
 | WP8c | **CODE DONE (merge)** — 30 Okt 2026, review Claude | #230 | 24 bar sekitar wajib; segmen VERIFIED hanya dengan sampel di dalamnya (tanpa ±200 hari); sampel wajib di kalender + `bars_sha256`; adapter menghitung ulang timeline/hash. Sisa: isi `us_release_calendar.csv` dari sumber resmi BLS dan buat laporan sampel dari bar nyata (belum ada alat CLI) |
 | WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
 | WP10a | **Selesai (merge)** — 30 Okt 2026, review Claude | #231 | Perbaikan review: parser ketat 4 kolom (baris rusak → `TICK_FILE_MALFORMED`, tidak dilewati), hari tanpa `server_shift_hours` (sebelum WP12) dikecualikan dan dilaporkan, quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`. Uji 2 juta tick < 50 MB lulus. Belum dijalankan di VPS |
 | WP4 | Menunggu WP13 merge (sama-sama mengubah `observer.py`) — Jules | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
-| WP15 | Siap dikerjakan — Jules | – | Owner D7-M15; jangan ubah `fx_session_open` atau data lama |
-| WP8d | Siap dikerjakan — Jules | – | Hasil dijalankan Claude di VPS; laporan bukti di luar repo |
-| WP16 | Siap dikerjakan — Jules | – | Manager D7-M4 |
+| WP15 | Revisi Manager; menunggu review independen dan CI final | #244 | Override tanggal resmi dihapus; aktivasi `None`, cutoff nonretroaktif dan DST diuji; belum berlaku di runtime |
+| WP8d | Revisi Manager; menunggu review independen dan CI final | #248 (Issue #245) | Mapping canonical→broker `.vx`, bar fail-closed dan hash deterministik; belum dipakai pada data broker nyata |
+| WP16 | Dalam review; CI PASS, approval independen pending | #247 | Status tanpa profil/token, bind loopback default; audit deployment eksternal terpisah, tanpa deploy |
 | WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
 | WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
 | WP9c | Menunggu prasyarat (≥ 3 hari bursa `decision_shadow`) + persetujuan Owner | – | – |
@@ -958,8 +958,8 @@ Python 3.12, dokumen bahasa Indonesia). Manager = ChatGPT/Yura, reviewer = Claud
 Kamu hanya menulis kode di GitHub: tanpa akses VPS, MT5, data broker, merge, atau kewenangan promosi. LIVE OFF.
 
 1. PILIH PAKET
-   - Ambil paket teratas berstatus "Siap — Jules" di tabel "Antrean kerja" docs/ROADMAP.md, urutan saat ini:
-     WP15 -> WP8d -> WP16, lalu WP4 dan WP14 setelah WP13 merge (keduanya menyentuh berkas WP13).
+   - Batch WP13/WP15/WP8d/WP16 sudah memiliki PR existing dan sedang closeout di #249. Jangan membuat task/PR baru atau melanjutkan sandbox lama.
+     Paket berikutnya WP4 dan WP14 hanya setelah prasyarat serta penugasan eksplisit Manager.
      Jangan mengambil WP13 (PR #233), WP9c, WP9d, WP6.
    - Cek belum diambil: tidak ada PR terbuka atau branch untuk paket itu. Satu task Jules = satu paket = satu PR.
    - Setelah PR dibuka, BERHENTI dan tunggu review. Paket berikutnya hanya setelah PR sebelumnya merged

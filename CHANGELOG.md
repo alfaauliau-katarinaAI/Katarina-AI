@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-31 — D7: selaraskan roadmap dan gerbang closeout
+
+- Ringkas checkpoint D7 yang berulang, pertahankan keputusan D7-M7–M15 dan bedakan bukti historis NTP dari status terbaru.
+- Selaraskan antrean/R0/R5 dan handoff WP13 #233, WP15 #244, WP8d #248, WP16 #247 dengan #249; hentikan penugasan ulang batch lama.
+- Approval independen dan CI final tetap wajib; tanpa merge/deploy/VPS/trading dari perubahan dokumen ini.
+
 ## 2026-10-31 — roadmap: keputusan D7 dan perintah induk Google Jules
 
 - Antrean, R0, R1 T13, R4, R5, R6, R7 diselaraskan dengan D7-M7–M15: WP13 MERGE BLOCKED (regresi bot Jules `3532399`), dipulihkan manager/Claude, bukan Jules; NTP VPS `MaxPollInterval` 13.
