@@ -665,15 +665,15 @@
       "normalized_sha256": "4f37eee5316241e0216203c8037601acf155a4a2147a36c14fd952ebb3a07e3d",
       "sha256": "4f37eee5316241e0216203c8037601acf155a4a2147a36c14fd952ebb3a07e3d"
     },
-    "src/katarina/engines/execution.py": {
-      "bytes": 2874,
-      "normalized_sha256": "6747ee249fb2dcb04a9846af34f0a9c7c60a607ae4f4c45aba0c123deec02344",
-      "sha256": "6747ee249fb2dcb04a9846af34f0a9c7c60a607ae4f4c45aba0c123deec02344"
-    },
     "src/katarina/engines/execution_recovery.py": {
       "bytes": 4521,
       "normalized_sha256": "7fc943ce95e871bf6b65d1bc80997f2f969eab5e835348f02030fc0a11cb4f45",
       "sha256": "7fc943ce95e871bf6b65d1bc80997f2f969eab5e835348f02030fc0a11cb4f45"
+    },
+    "src/katarina/engines/execution.py": {
+      "bytes": 2874,
+      "normalized_sha256": "6747ee249fb2dcb04a9846af34f0a9c7c60a607ae4f4c45aba0c123deec02344",
+      "sha256": "6747ee249fb2dcb04a9846af34f0a9c7c60a607ae4f4c45aba0c123deec02344"
     },
     "src/katarina/engines/exposure.py": {
       "bytes": 1188,
@@ -900,15 +900,15 @@
       "normalized_sha256": "65eb976507b65705e8a3743b2f51be24b9f1243d08986472f6ad9a0b6e9e149e",
       "sha256": "65eb976507b65705e8a3743b2f51be24b9f1243d08986472f6ad9a0b6e9e149e"
     },
-    "src/katarina/intelligence/cognition/market_decision.py": {
-      "bytes": 21189,
-      "normalized_sha256": "16762f5acd042063cf0f24a7aec40a5969349984e6c2d8bd2a70cf9d77a65fa4",
-      "sha256": "16762f5acd042063cf0f24a7aec40a5969349984e6c2d8bd2a70cf9d77a65fa4"
-    },
     "src/katarina/intelligence/cognition/market_decision_pipeline.py": {
       "bytes": 13567,
       "normalized_sha256": "78d277a63cefa7b44f19d9cc1b0c2adcad7e7355da2525db45daf2446dd369aa",
       "sha256": "78d277a63cefa7b44f19d9cc1b0c2adcad7e7355da2525db45daf2446dd369aa"
+    },
+    "src/katarina/intelligence/cognition/market_decision.py": {
+      "bytes": 21189,
+      "normalized_sha256": "16762f5acd042063cf0f24a7aec40a5969349984e6c2d8bd2a70cf9d77a65fa4",
+      "sha256": "16762f5acd042063cf0f24a7aec40a5969349984e6c2d8bd2a70cf9d77a65fa4"
     },
     "src/katarina/intelligence/cognition/observer.py": {
       "bytes": 34829,
@@ -1165,11 +1165,6 @@
       "normalized_sha256": "0cbe00952cff59f37ff5ff2f8dcefa24159571dabcd3882f861eeef6f8d800f3",
       "sha256": "0cbe00952cff59f37ff5ff2f8dcefa24159571dabcd3882f861eeef6f8d800f3"
     },
-    "src/katarina/intelligence/perception/market.py": {
-      "bytes": 1095,
-      "normalized_sha256": "1264dad065c80afd6d607763856feeb1a7202ed4c32d1af3965996972cc8a2ce",
-      "sha256": "1264dad065c80afd6d607763856feeb1a7202ed4c32d1af3965996972cc8a2ce"
-    },
     "src/katarina/intelligence/perception/market_regime_intelligence.py": {
       "bytes": 13127,
       "normalized_sha256": "3a6f7a32223df833cd8aa539c35d1836167256651d44157624a023fb1a9322bc",
@@ -1179,6 +1174,11 @@
       "bytes": 6658,
       "normalized_sha256": "1dee039e12cbf5a1ce5577d82e6c37ce57b5c74b813b142494084dc6c64d39bd",
       "sha256": "1dee039e12cbf5a1ce5577d82e6c37ce57b5c74b813b142494084dc6c64d39bd"
+    },
+    "src/katarina/intelligence/perception/market.py": {
+      "bytes": 1095,
+      "normalized_sha256": "1264dad065c80afd6d607763856feeb1a7202ed4c32d1af3965996972cc8a2ce",
+      "sha256": "1264dad065c80afd6d607763856feeb1a7202ed4c32d1af3965996972cc8a2ce"
     },
     "src/katarina/intelligence/perception/observational_associations.py": {
       "bytes": 4896,
@@ -1471,9 +1471,9 @@
       "sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da"
     },
     "src/katarina/research/bar_clock_evidence.py": {
-      "bytes": 17134,
-      "normalized_sha256": "9daf3126d65ddad33a7b2decfb4e67397ea9b81cddb691c2150f6e681e6783ee",
-      "sha256": "9daf3126d65ddad33a7b2decfb4e67397ea9b81cddb691c2150f6e681e6783ee"
+      "bytes": 23961,
+      "normalized_sha256": "b9b6f6bc3feb76221cce9c2970f7278454a9a0e059002b453a88fc58431f4ec3",
+      "sha256": "b9b6f6bc3feb76221cce9c2970f7278454a9a0e059002b453a88fc58431f4ec3"
     },
     "src/katarina/research/blocker_ladder.py": {
       "bytes": 7618,

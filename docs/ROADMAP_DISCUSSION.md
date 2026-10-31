@@ -151,7 +151,7 @@ tersinkron dicatat `NO_TRUSTED_HOST_CLOCK`, bukan diam-diam OK.
 Pertanyaan: 1. Manager setuju jalur (a) menggantikan syarat dokumen broker untuk observer live? 2. Bila tidak,
 dari mana dokumen jam resmi broker akan diperoleh, dan siapa yang mengambilnya?
 Tanggapan:
-- [Yura/ChatGPT, 30 Okt 2026] Analisis Claude diterima **sebagai arah desain untuk diuji bersama Jules nanti**, bukan penerimaan otomatis seluruh data sebagai valid. NTP host merupakan referensi UTC independen; tiga quote dari **satu broker** hanya cross-check offset, bukan tiga sumber jam independen. Setiap siklus wajib mencatat status kesehatan NTP, usia tick dan timestamp penerimaan, identitas/hash server, offset integer dan konsensus, serta alasan penolakan; wajib fail-closed pada NTP tidak terpercaya, quote stale, ketidakcocokan offset, market closed, DST ambigu, atau pergantian broker/VPS yang belum terverifikasi. Jangan mengganti/menurunkan guard produksi hanya untuk menjaga angka success. Untuk bar historis WP8c tetap diperlukan provenance historis terpisah.
+- [Yura/ChatGPT, 30 Okt 2026] Analisis Claude diterima **sebagai arah desain untuk diuji bersama Jules nanti**, bukan penerimaan otomatis seluruh data sebagai valid. NTP host merupakan referensi UTC independen; tiga quote dari **satu broker** hanya cross-check offset, bukan tiga sumber jam independen. Setiap siklus wajib mencatat status kesehatan NTP, usia tick dan timestamp penerimaan, identitas/hash server, offset integer dan konsensus, serta alasan penolakan; wajib fail-closed pada NTP tidak terpercaya, quote stale, ketidakcocokan offset, market closed, DST ambigu, atau pergantian broker/VPS yang belum terverifikasi. Jangan mengganti/menurunkan guard produksi hanya untuk menjaga angka success. Untuk bar historis WP8c tetap diperlukan provenance historis terpisah. 
 - [Owner, 30 Okt 2026] "Oke, catat dulu dan kerjakan bersama nanti di Jules." Implementasi WP13 **ditunda** untuk sesi kerja bersama Jules; tidak ada otorisasi merge/deploy dari catatan ini.
 Keputusan: **Arah desain dicatat untuk penelaahan dan pengujian lanjutan**, belum berlaku sebagai perubahan acceptance WP13 atau pengecualian bukti jam. Sebelum implementasi, bandingkan jalur NTP+tick dengan syarat fail-closed R4, siapkan tes adversarial dan dapatkan persetujuan review hasil. LIVE OFF.
 Tindak lanjut: Yura siapkan spesifikasi/tes bersama Jules pada sesi berikutnya dalam PR #233 yang sama; Claude review independen. Jangan membuat PR WP13 baru, jangan mengubah runtime VPS/observer sekarang.
@@ -219,6 +219,38 @@ Tindak lanjut:
   lalu koordinasikan pencatatan dokumen tanpa menandai Stage0 PASS/deployed.
 - **PR #240 (dokumen rapat saja):** dapat di-merge setelah CI HEAD final Body/Ubuntu/Windows PASS
   dan `mergeable=true`; tidak membawa perubahan runtime atau izin operasi.
+
+
+#### D7 — Keputusan Owner dan closeout batch (31 Okt 2026)
+
+Bagian ini menggantikan checkpoint berulang sebelumnya; detail riwayat tetap tersedia di Git.
+Koordinasi teknis dan bukti per SHA: [Issue #249](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/249).
+
+| Keputusan | Ketentuan yang tetap berlaku |
+|---|---|
+| D7-M7 | Regresi WP13 `35323998` fail-open tidak boleh di-merge; CI hijau tidak menggantikan pemeriksaan guard |
+| D7-M8 | Pulihkan pada PR #233 yang sama dengan commit biasa, pertahankan D7, tanpa force-push atau PR duplikat |
+| D7-M9 | Review harus mengikat SHA final: NTP nyata, ≥3 tick progresif, identitas broker, karantina offset, ledger failure/recovery, `--since`, tes negatif, manifest dan CI |
+| D7-M10 | Rollover 17:00 New York merupakan paket terpisah; hasil historis/ledger tidak boleh diubah retroaktif |
+| D7-M11 | Guard umur NTP 14.400 detik tidak dilonggarkan; izin sistem NTP dan governance kemudian ditegaskan D7-M13/M14 |
+| D7-M12 — Owner SETUJU | Hentikan writer task Jules WP13; jangan delete/resume sandbox lama. Penutupan batch juga mencakup WP15/WP8d/WP16 |
+| D7-M13 — Owner SETUJU | Perubahan konfigurasi NTP dengan backup/rollback dan verifikasi; bukan izin deploy, restart observer/MT5 atau trading |
+| D7-M14 — Owner SETUJU | ≥1 approval independen sah, required CI Body/Ubuntu/Windows, stale approvals gugur, tanpa force-push; implementasi pengaturan memerlukan admin yang berwenang |
+| D7-M15 — Owner SETUJU | Implementasi/pengujian rollover terpisah, DST dan denominator diuji; tanggal aktivasi resmi harus disahkan dan tidak mendahului merge |
+
+**Status closeout:**
+
+- **WP13 #233 `dd6d9b50`:** kode produksi sama baseline aman `76ce7e8f`; review Claude dan konfirmasi delta Manager tersedia. Body/Ubuntu/Windows PASS. Belum ada APPROVED independen.
+- **WP15 #244 `b437fe13`:** jalur override retroaktif di CLI/assessor dihapus, default aktivasi `None`; legacy `fx_session_open` dipertahankan. Uji lokal unit 1.329, static 72 (4 skip), integration 216 PASS; manifest MATCH 306. CI final dan review revisi masih harus diverifikasi.
+- **WP8d #248 `ca17f7f0`:** mapping canonical→broker `.vx`, sorting timestamp kronologis dan provenance tanpa path privat diperbaiki. Uji lokal unit 1.332, static 72 (4 skip), integration 216 PASS; manifest MATCH 306. CI final dan review revisi masih harus diverifikasi.
+- **WP16 #247 `99c06da7`:** status tanpa profil, bind loopback default; tes statis ulang 4/4 PASS, CI 3/3 PASS. Belum ada APPROVED independen; belum deploy.
+- **Writer:** CI Auto-Fixer Jules OFF terverifikasi setelah reload. WP13 dan WP16 pernah diverifikasi paused persisten; WP15/WP8d belum mempertahankan pause secara konsisten. Jangan menyamakan Ready for review dengan Paused. Manager memegang penulisan revisi, Claude diminta read-only; pembaruan branch memakai fast-forward dengan expected SHA. Konflik HEAD wajib direkonsiliasi, bukan ditimpa.
+- **NTP (bukti historis, bukan pengukuran baru):** MaxPollInterval 15→13 telah diterapkan dengan backup/rollback. Dua pengamatan 30 Okt 19:28:31 dan 19:38:36 UTC menunjukkan State=Sync, source tepercaya, stratum 5, leap/error 0 dan usia sync berkurang. Tidak ada pemeriksaan/perubahan VPS pada closeout Work Mode ini; bukti tersebut bukan Tahap 0 PASS atau izin deploy.
+- **Governance:** review GitHub yang diperiksa berstatus COMMENTED, bukan APPROVED independen. Koneksi GitHub tidak membuktikan pengaturan branch protection aktif; verifikasi admin masih tertunda. PR #241 tetap belum merged, dan perubahan dokumen ini memerlukan CI/review pada SHA baru.
+
+**Yang masih memerlukan keputusan/verifikasi:** penghentian persisten WP15/WP8d, review independen sah pada SHA final, penerapan/verifikasi branch protection oleh admin, dan tanggal efektif rollover di masa depan. Kalender rilis resmi/bar historis broker tetap belum tersedia untuk validasi operasional WP8d. Aktivasi rollover tidak dilakukan dalam batch ini.
+
+**Batas Owner terbaru:** LIVE OFF, zero orders, tanpa deploy VPS atau aktivasi trading. Risk Governor, promotion_lock, holdout dan data/ledger historis tetap. MERGED ≠ DEPLOYED ≠ STAGE0 PASSED. Tidak ada izin operasional tambahan dari closeout ini.
 
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 

@@ -292,7 +292,7 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.perception.symbol_playbooks` | scripts, tests | 1 | 1 |
 | `katarina.intelligence.perception.technical_regime` | scripts, tests | 2 | 1 |
 | `katarina.monitoring.monitor_relay` | scripts, tests | 0 | 2 |
-| `katarina.research.bar_clock_evidence` | research, tests | 0 | 2 |
+| `katarina.research.bar_clock_evidence` | research, tests | 0 | 3 |
 | `katarina.research.blocker_ladder` | research, tests | 0 | 2 |
 | `katarina.research.context_export` | research, tests | 1 | 3 |
 | `katarina.research.demo_readiness` | research, tests | 0 | 2 |
