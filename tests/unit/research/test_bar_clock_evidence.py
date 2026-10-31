@@ -3,17 +3,24 @@ import io
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import sys
 from katarina.research.bar_clock_evidence import (
     BarClockEvidenceAdapter,
     build_evidence_report,
+    collect_release_samples,
     is_eu_dst,
     is_us_dst,
     load_evidence_report,
     release_shift,
     shift_timeline,
+)
+from scripts.research.build_bar_clock_evidence import (
+    build_evidence,
+    is_path_inside_repo,
 )
 from katarina.research.dev_dataset import export_dev_bars
 from katarina.research.validation import ValidationError
@@ -44,6 +51,53 @@ class DummyBroker:
 
 
 class TestBarClockEvidence(unittest.TestCase):
+
+    def test_suffix_mapping_keeps_canonical_consensus_keys(self):
+        release = datetime(2024, 1, 5, 13, 30, tzinfo=timezone.utc)
+        bars = [dict(time=int(datetime.fromisoformat(b["time_utc"]).timestamp()),
+                     open=1.1, high=1.1, low=1.1, close=1.1, tick_volume=b["tick_volume"])
+                for b in self._generate_synthetic_bars(release, 2)]
+        calls = []
+
+        class SuffixedBroker:
+            def copy_rates_range(self, symbol, *args):
+                calls.append(symbol)
+                return bars if symbol in {"EURUSD.vx", "USDJPY.vx", "XAUUSD.vx"} else []
+
+        mapping = {s: s + ".vx" for s in ("EURUSD", "USDJPY", "XAUUSD")}
+        samples, rejected = collect_release_samples(SuffixedBroker(), [{"release_utc": release}], broker_symbols=mapping)
+        self.assertEqual([x["shift_hours"] for x in samples], [2])
+        self.assertEqual(rejected, [])
+        self.assertEqual(set(calls), set(mapping.values()))
+        samples, rejected = collect_release_samples(SuffixedBroker(), [{"release_utc": release}])
+        self.assertFalse(samples)
+        self.assertEqual(rejected[0]["reason"], "BROKER_BARS_UNAVAILABLE")
+
+    def test_incomplete_broker_mapping_rejected_before_query(self):
+        with self.assertRaisesRegex(ValidationError, "INVALID_BROKER_SYMBOL_MAPPING"):
+            collect_release_samples(object(), [], broker_symbols={"EURUSD": "EURUSD.vx"})
+
+    def test_mixed_timestamp_bars_sort_chronologically(self):
+        release = datetime(2024, 1, 5, 13, 30, tzinfo=timezone.utc)
+        bars = [dict(time=int(datetime.fromisoformat(b["time_utc"]).timestamp()),
+                     open=1.1, high=1.1, low=1.1, close=1.1, tick_volume=b["tick_volume"])
+                for b in self._generate_synthetic_bars(release, 2)]
+        for i, bar in enumerate(bars):
+            if i % 2:
+                bar["time"] = datetime.fromtimestamp(bar["time"], timezone.utc).isoformat()
+
+        class MixedBroker:
+            def copy_rates_range(self, *args):
+                return list(reversed(bars))
+
+        from katarina.research.bar_clock_evidence import _bar_time
+        def check_order(by_symbol, when):
+            for series in by_symbol.values():
+                stamps = [_bar_time(bar) for bar in series]
+                self.assertEqual(stamps, sorted(stamps))
+            return 2
+        with patch("katarina.research.bar_clock_evidence.release_shift", side_effect=check_order):
+            collect_release_samples(MixedBroker(), [{"release_utc": release}])
 
     def test_dst_functions(self):
         # Summer (EU DST active)
@@ -223,6 +277,236 @@ class TestBarClockEvidence(unittest.TestCase):
             with self.assertRaises(ValidationError) as ctx2:
                 load_evidence_report(tmp_rep, calendar_path=tmp_cal)
             self.assertEqual(str(ctx2.exception), "CALENDAR_HASH_MISMATCH")
+
+    def test_collect_release_samples_synthetic_and_hash_determinism(self):
+        release1 = datetime(2024, 1, 5, 13, 30, tzinfo=timezone.utc)
+        release2 = datetime(2024, 6, 7, 12, 30, tzinfo=timezone.utc)
+
+        class WP8dFakeBroker:
+            def __init__(self):
+                self.TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                bars = []
+                curr = start
+                while curr < end:
+                    vol = 100
+                    if curr == release1 + timedelta(hours=2) or curr == release2 + timedelta(hours=3):
+                        vol = 500
+                    bars.append({
+                        "time": int(curr.timestamp()),
+                        "open": 1.1000, "high": 1.1010, "low": 1.0990, "close": 1.1005,
+                        "tick_volume": vol, "spread": 10, "real_volume": vol
+                    })
+                    curr += timedelta(minutes=5)
+                return bars
+
+        broker = WP8dFakeBroker()
+        cal_content = (
+            "release_date,release_utc,source_url\n"
+            "2024-01-05,2024-01-05T13:30:00Z,https://www.bls.gov/schedule/news_release/empsit.htm\n"
+            "2024-06-07,2024-06-07T12:30:00Z,https://www.bls.gov/schedule/news_release/empsit.htm\n"
+        )
+        samples, rejected = collect_release_samples(broker, cal_content)
+        self.assertEqual(len(samples), 2)
+        self.assertEqual(len(rejected), 0)
+        self.assertEqual(samples[0]["shift_hours"], 2)
+        self.assertEqual(samples[1]["shift_hours"], 3)
+        self.assertEqual(len(samples[0]["bars_sha256"]), 64)
+
+        # Run twice to test determinism
+        samples2, _ = collect_release_samples(broker, cal_content)
+        self.assertEqual(samples[0]["bars_sha256"], samples2[0]["bars_sha256"])
+
+    def test_collect_release_samples_no_consensus_rejected(self):
+        class FlatFakeBroker:
+            def __init__(self):
+                self.TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                bars = []
+                curr = start
+                while curr < end:
+                    bars.append({
+                        "time": int(curr.timestamp()),
+                        "open": 1.1, "high": 1.1, "low": 1.1, "close": 1.1,
+                        "tick_volume": 100, "spread": 10, "real_volume": 100
+                    })
+                    curr += timedelta(minutes=5)
+                return bars
+
+        samples, rejected = collect_release_samples(
+            FlatFakeBroker(),
+            "release_date,release_utc,source_url\n2024-01-05,2024-01-05T13:30:00Z,https://www.bls.gov/x\n"
+        )
+        self.assertEqual(len(samples), 0)
+        self.assertEqual(len(rejected), 1)
+        self.assertEqual(rejected[0]["reason"], "NO_CONSENSUS_OR_WEAK_EVIDENCE")
+
+    def test_repo_path_rejection_and_build_evidence_report_load(self):
+        repo_root = Path(__file__).resolve().parents[3]
+        self.assertTrue(is_path_inside_repo(repo_root / "build" / "test_out.json"))
+        self.assertTrue(is_path_inside_repo("config/research/us_release_calendar.csv"))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_file = Path(tmpdir) / "evidence_out.json"
+            self.assertFalse(is_path_inside_repo(out_file))
+
+            release1 = datetime(2024, 1, 5, 13, 30, tzinfo=timezone.utc)
+            release2 = datetime(2024, 6, 7, 12, 30, tzinfo=timezone.utc)
+
+            class WP8dFakeBroker:
+                def __init__(self):
+                    self.TIMEFRAME_M5 = "M5"
+
+                def copy_rates_range(self, symbol, timeframe, start, end):
+                    if symbol not in {"EURUSD.vx", "USDJPY.vx", "XAUUSD.vx"}:
+                        return []
+                    bars = []
+                    curr = start
+                    while curr < end:
+                        vol = 100
+                        if curr == release1 + timedelta(hours=2) or curr == release2 + timedelta(hours=3):
+                            vol = 500
+                        bars.append({
+                            "time": int(curr.timestamp()),
+                            "open": 1.1, "high": 1.1, "low": 1.1, "close": 1.1,
+                            "tick_volume": vol, "spread": 10, "real_volume": vol
+                        })
+                        curr += timedelta(minutes=5)
+                    return bars
+
+            cal_file = Path(tmpdir) / "calendar.csv"
+            cal_file.write_text(self.CAL, encoding="utf-8")
+
+            report = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10, broker_suffix=".vx")
+            repeated = build_evidence(WP8dFakeBroker(), calendar_path=cal_file, max_releases=10, broker_suffix=".vx")
+            self.assertNotIn(str(Path(tmpdir)), json.dumps(report))
+            self.assertEqual(report["provenance"]["broker_symbols"]["EURUSD"], "EURUSD.vx")
+            self.assertEqual(report["source_sha256"], repeated["source_sha256"])
+            self.assertEqual(report, repeated)
+            self.assertNotIn("generated_utc", report["provenance"])
+            self.assertIn("source_sha256", report)
+            self.assertIn("provenance", report)
+
+            out_file.write_text(json.dumps(report), encoding="utf-8")
+            loaded = load_evidence_report(out_file, calendar_path=cal_file)
+            self.assertEqual(loaded["source_sha256"], report["source_sha256"])
+
+    def test_partial_consensus_and_max_releases_validation(self):
+        cal_content = (
+            "release_date,release_utc,source_url\n"
+            "2024-01-05,2024-01-05T13:30:00Z,https://www.bls.gov/schedule/news_release/empsit.htm\n"
+            "2024-02-02,2024-02-02T13:30:00Z,https://www.bls.gov/schedule/news_release/empsit.htm\n"
+            "2024-03-08,2024-03-08T13:30:00Z,https://www.bls.gov/schedule/news_release/empsit.htm\n"
+        )
+        release1 = datetime(2024, 1, 5, 13, 30, tzinfo=timezone.utc)
+
+        class MixedFakeBroker:
+            def __init__(self):
+                self.TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                bars = []
+                curr = start
+                while curr < end:
+                    vol = 100
+                    # Only release 1 has a 500x volume spike (+2 shift)
+                    if curr == release1 + timedelta(hours=2):
+                        vol = 500
+                    bars.append({
+                        "time": int(curr.timestamp()),
+                        "open": 1.1, "high": 1.1, "low": 1.1, "close": 1.1,
+                        "tick_volume": vol, "spread": 10, "real_volume": vol
+                    })
+                    curr += timedelta(minutes=5)
+                return bars
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cal_file = Path(tmpdir) / "cal.csv"
+            cal_file.write_text(cal_content, encoding="utf-8")
+            out_file = Path(tmpdir) / "out.json"
+
+            # 1 sample (release1), 2 rejected (release2, release3)
+            report = build_evidence(MixedFakeBroker(), calendar_path=cal_file, max_releases=10)
+            self.assertEqual(report["sample_count"], 1)
+            self.assertEqual(len(report["rejected"]), 2)
+
+            out_file.write_text(json.dumps(report), encoding="utf-8")
+            loaded = load_evidence_report(out_file, calendar_path=cal_file)
+            self.assertEqual(loaded["source_sha256"], report["source_sha256"])
+
+            # Test max_releases truncation (max_releases=2)
+            report_truncated = build_evidence(MixedFakeBroker(), calendar_path=cal_file, max_releases=2)
+            self.assertEqual(report_truncated["sample_count"], 1)
+            self.assertEqual(len(report_truncated["rejected"]), 1)
+            out_file.write_text(json.dumps(report_truncated), encoding="utf-8")
+            loaded_trunc = load_evidence_report(out_file, calendar_path=cal_file)
+            self.assertEqual(loaded_trunc["source_sha256"], report_truncated["source_sha256"])
+
+    def test_empty_calendar_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            empty_cal = Path(tmpdir) / "empty.csv"
+            empty_cal.write_text("release_date,release_utc,source_url\n", encoding="utf-8")
+            class Dummy:
+                pass
+            with self.assertRaises(ValidationError) as ctx:
+                build_evidence(Dummy(), calendar_path=empty_cal)
+            self.assertEqual(str(ctx.exception), "CALENDAR_EVIDENCE_EMPTY")
+
+    def test_malformed_broker_bar_rejected_instead_of_zero_fill(self):
+        release = "2024-01-05T13:30:00Z"
+
+        class MalformedBroker:
+            TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                return [{"time": int(start.timestamp()), "high": 1.2,
+                         "low": 1.0, "close": 1.1, "tick_volume": 100}]
+
+        samples, rejected = collect_release_samples(
+            MalformedBroker(), [{"release_utc": release}])
+        self.assertEqual(samples, [])
+        self.assertEqual(rejected[0]["reason"], "MALFORMED_BROKER_BARS")
+
+    def test_nonfinite_broker_bar_rejected(self):
+        class NonfiniteBroker:
+            TIMEFRAME_M5 = "M5"
+
+            def copy_rates_range(self, symbol, timeframe, start, end):
+                return [{"time": int(start.timestamp()), "open": 1.1,
+                         "high": 1.2, "low": 1.0, "close": float("nan"),
+                         "tick_volume": 100}]
+
+        samples, rejected = collect_release_samples(
+            NonfiniteBroker(), [{"release_utc": "2024-01-05T13:30:00Z"}])
+        self.assertEqual(samples, [])
+        self.assertEqual(rejected[0]["reason"], "MALFORMED_BROKER_BARS")
+
+    def test_numpy_style_structured_broker_bar_supported_without_numpy_import(self):
+        from katarina.research.bar_clock_evidence import _normalize_raw_bar
+
+        class DType:
+            names = ("time", "open", "high", "low", "close",
+                     "tick_volume", "spread", "real_volume")
+
+        class StructuredBar:
+            dtype = DType()
+
+            def __init__(self):
+                self.data = {"time": 1704461400, "open": 1.1, "high": 1.2,
+                             "low": 1.0, "close": 1.15, "tick_volume": 200,
+                             "spread": 12, "real_volume": 0}
+
+            def __getitem__(self, name):
+                return self.data[name]
+
+        normalized = _normalize_raw_bar(StructuredBar())
+        self.assertEqual(normalized["time"], 1704461400)
+        self.assertEqual(normalized["tick_volume"], 200)
+
+    def test_mt5_never_imported_in_test(self):
+        self.assertNotIn("MetaTrader5", sys.modules)
 
 if __name__ == "__main__":
     unittest.main()

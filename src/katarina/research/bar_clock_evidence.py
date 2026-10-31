@@ -9,6 +9,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 import re
 import statistics
 from datetime import datetime, timedelta, timezone
@@ -371,7 +372,13 @@ def verify_report_body(report: dict) -> dict:
     return report
 
 
-def build_evidence_report(calendar_csv_content: str, samples: list[dict]) -> dict:
+def build_evidence_report(
+    calendar_csv_content: str,
+    samples: list[dict],
+    *,
+    rejected: list[dict] | None = None,
+    provenance: dict | None = None,
+) -> dict:
     """Generate canonical evidence report dict and lineage SHA256."""
     _check_samples(samples, _calendar_releases(calendar_csv_content))
     cal_hash = sha256_text(calendar_csv_content)
@@ -385,9 +392,173 @@ def build_evidence_report(calendar_csv_content: str, samples: list[dict]) -> dic
                        samples=samples,
                        schema_version=1,
                        timeline=timeline)
+    if rejected is not None:
+        report_body["rejected"] = rejected
+    if provenance is not None:
+        report_body["provenance"] = provenance
+
     source_sha256 = sha256_text(canonical(report_body))
     return dict(source_sha256=source_sha256,
                 **report_body)
+
+
+def _normalize_raw_bar(bar: dict | object) -> dict:
+    """Reject incomplete/nonfinite broker bars; accept MT5 NumPy structured rows.
+
+    Clock evidence must hash actual observed fields, never silently manufactured
+    zero OHLC values. No dependency on NumPy at import or test time.
+    """
+    if isinstance(bar, dict):
+        fields = bar
+    elif getattr(getattr(bar, "dtype", None), "names", None):
+        fields = {name: bar[name] for name in bar.dtype.names}
+    else:
+        keys = ("time_utc", "time", "open", "high", "low", "close",
+                "tick_volume", "volume", "spread", "real_volume")
+        fields = {key: getattr(bar, key) for key in keys if hasattr(bar, key)}
+
+    if not isinstance(fields, dict) or not {"open", "high", "low", "close"} <= fields.keys():
+        raise ValidationError("BAR_OHLC_MISSING")
+    if "tick_volume" not in fields and "volume" not in fields:
+        raise ValidationError("BAR_VOLUME_MISSING")
+    t = fields.get("time_utc", fields.get("time"))
+    if t is None or isinstance(t, bool):
+        raise ValidationError("BAR_TIME_MISSING")
+    try:
+        if isinstance(t, (str, datetime)):
+            t_val = _utc_dt(t).isoformat()
+        else:
+            t_val = int(t)
+            if t_val <= 0 or not math.isfinite(float(t)):
+                raise ValueError("timestamp_invalid")
+        op, hi, lo, cl = (float(fields[key]) for key in ("open", "high", "low", "close"))
+        vol = int(fields.get("tick_volume", fields.get("volume")))
+        spread = int(fields.get("spread", 0))
+        real_volume = int(fields.get("real_volume", 0))
+    except (TypeError, ValueError, OverflowError) as err:
+        raise ValidationError("BAR_FIELD_INVALID") from err
+    if not all(math.isfinite(v) for v in (op, hi, lo, cl)):
+        raise ValidationError("BAR_OHLC_NONFINITE")
+    if min(op, hi, lo, cl) <= 0 or hi < max(op, lo, cl) or lo > min(op, hi, cl):
+        raise ValidationError("BAR_OHLC_INVALID")
+    if vol < 0 or spread < 0 or real_volume < 0:
+        raise ValidationError("BAR_VOLUME_INVALID")
+    return {
+        "close": cl, "high": hi, "low": lo, "open": op,
+        "real_volume": real_volume, "spread": spread,
+        "tick_volume": vol, "time": t_val,
+    }
+
+
+def collect_release_samples(
+    broker: object,
+    calendar_rows: list[dict] | str | iter,
+    *,
+    symbols: tuple[str, ...] = CORE_SYMBOLS,
+    timeframe: str = "M5",
+    broker_symbols: dict[str, str] | None = None,
+) -> tuple[list[dict], list[dict]]:
+    """Collect release shift samples and rejected releases across calendar releases.
+
+    Queries M5 bars around each release utc (-17h..+19h to cover -12..+14 candidate shifts
+    ±4 hours + 12 context bars) for given symbols.
+    Computes deterministic bars_sha256 hash across canonical raw bar representations.
+    Fails closed: releases without consensus are recorded in rejected with a reason code.
+    """
+    if isinstance(calendar_rows, str):
+        if not calendar_rows.strip():
+            rows = []
+        else:
+            rows = list(csv.DictReader(calendar_rows.strip().splitlines()))
+    elif isinstance(calendar_rows, (list, tuple)):
+        rows = calendar_rows
+    else:
+        rows = list(calendar_rows)
+
+    frame = getattr(broker, "TIMEFRAME_" + timeframe, timeframe)
+    sorted_symbols = tuple(sorted(symbols))
+    symbol_map = {symbol: symbol for symbol in sorted_symbols} if broker_symbols is None else dict(broker_symbols)
+    if (set(symbol_map) != set(sorted_symbols)
+            or any(not isinstance(name, str) or not name.strip() for name in symbol_map.values())
+            or len(set(symbol_map.values())) != len(symbol_map)):
+        raise ValidationError("INVALID_BROKER_SYMBOL_MAPPING")
+
+    samples = []
+    rejected = []
+
+    for row in rows:
+        if isinstance(row, dict):
+            release_val = row.get("release_utc")
+        else:
+            release_val = row
+
+        if not release_val:
+            rejected.append({"release_utc": None, "reason": "MISSING_RELEASE_UTC", "bars_sha256": None})
+            continue
+
+        try:
+            release_dt = _utc_dt(release_val)
+        except ValidationError:
+            rejected.append({"release_utc": str(release_val), "reason": "INVALID_RELEASE_DATETIME", "bars_sha256": None})
+            continue
+
+        release_utc_iso = release_dt.isoformat()
+
+        # Window covers candidate shift -12 (-12-4-1 = -17h) to +14 (+14+4+1 = +19h)
+        query_start = release_dt - timedelta(hours=17)
+        query_end = release_dt + timedelta(hours=19)
+
+        bars_by_symbol = {}
+        canonical_raw_by_symbol = {}
+        all_empty = True
+        malformed = False
+
+        for symbol in sorted_symbols:
+            try:
+                raw_rates = broker.copy_rates_range(symbol_map[symbol], frame, query_start, query_end)
+            except Exception:
+                raw_rates = None
+
+            if raw_rates is None or len(raw_rates) == 0:
+                bars_by_symbol[symbol] = []
+                canonical_raw_by_symbol[symbol] = []
+            else:
+                all_empty = False
+                try:
+                    norm_bars = [_normalize_raw_bar(b) for b in raw_rates]
+                    norm_bars.sort(key=lambda bar: (_bar_time(bar), canonical(bar)))
+                    canonical_raw_by_symbol[symbol] = norm_bars
+                    bars_by_symbol[symbol] = norm_bars
+                except (ValidationError, TypeError, ValueError, OverflowError):
+                    malformed = True
+                    bars_by_symbol[symbol] = []
+                    canonical_raw_by_symbol[symbol] = []
+
+        bars_sha256 = sha256_text(canonical(canonical_raw_by_symbol))
+
+        if malformed:
+            rejected.append({"release_utc": release_utc_iso, "reason": "MALFORMED_BROKER_BARS", "bars_sha256": bars_sha256})
+            continue
+        if all_empty:
+            rejected.append({"release_utc": release_utc_iso, "reason": "BROKER_BARS_UNAVAILABLE", "bars_sha256": bars_sha256})
+            continue
+
+        shift = release_shift(bars_by_symbol, release_dt)
+
+        if shift is not None and type(shift) is int and -12 <= shift <= 14:
+            samples.append({
+                "release_utc": release_utc_iso,
+                "shift_hours": shift,
+                "bars_sha256": bars_sha256,
+            })
+        else:
+            rejected.append({
+                "release_utc": release_utc_iso,
+                "reason": "NO_CONSENSUS_OR_WEAK_EVIDENCE",
+                "bars_sha256": bars_sha256,
+            })
+
+    return samples, rejected
 
 
 def load_evidence_report(path: str | Path, calendar_path: str | Path = DEFAULT_CALENDAR_PATH) -> dict:

@@ -1461,9 +1461,9 @@
       "sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da"
     },
     "src/katarina/research/bar_clock_evidence.py": {
-      "bytes": 17134,
-      "normalized_sha256": "9daf3126d65ddad33a7b2decfb4e67397ea9b81cddb691c2150f6e681e6783ee",
-      "sha256": "9daf3126d65ddad33a7b2decfb4e67397ea9b81cddb691c2150f6e681e6783ee"
+      "bytes": 23961,
+      "normalized_sha256": "b9b6f6bc3feb76221cce9c2970f7278454a9a0e059002b453a88fc58431f4ec3",
+      "sha256": "b9b6f6bc3feb76221cce9c2970f7278454a9a0e059002b453a88fc58431f4ec3"
     },
     "src/katarina/research/blocker_ladder.py": {
       "bytes": 7618,
