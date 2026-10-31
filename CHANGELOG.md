@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-10-31 — WP16: OAuth gateway tanpa paparan profil
+
+- Amankan `oauth_gateway/server.js`: hilangkan `profile` dari `lastAuth` dan respons status `/oauth/status`. Status kini hanya mengembalikan `{ok, at, error}`.
+- Ubah default host network binding dari `0.0.0.0` ke `127.0.0.1` (`HOST = process.env.HOST || '127.0.0.1'`) dengan catatan risiko binding eksternal.
+- Tambah tes statis deterministik `tests/static/test_oauth_gateway_guard.py` yang membaca `server.js` tanpa dependensi npm/internet. Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
 ## 2026-10-31 — D7: selaraskan roadmap dan gerbang closeout
 
 - Ringkas checkpoint D7 yang berulang, pertahankan keputusan D7-M7–M15 dan bedakan bukti historis NTP dari status terbaru.
