@@ -1,6 +1,7 @@
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -230,6 +231,47 @@ class ObservationLedgerTest(unittest.TestCase):
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 20, 21, 0, tzinfo=UTC)))
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 23, 20, 30, tzinfo=UTC)))
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 24, 12, 0, tzinfo=UTC)))
+
+    def test_stage0_default_disabled_preserves_all_legacy_history(self):
+        self.assertIsNone(ledger.ROLLOVER_RULE_EFFECTIVE_UTC)
+        for when in (datetime(2026, 10, 28, 21, 0, tzinfo=UTC),
+                     datetime(2026, 11, 2, 22, 5, tzinfo=UTC),
+                     datetime(2027, 6, 14, 21, 20, tzinfo=UTC)):
+            self.assertEqual(ledger.stage0_session_open(when), ledger.fx_session_open(when))
+
+    def test_stage0_new_rollover_edges_on_both_sides_of_us_dst_2026(self):
+        # Explicitly opt into the new rule in a test only; default remains disabled.
+        cases = (
+            (datetime(2026, 3, 2, tzinfo=UTC), 22),  # Before 8 Mar DST start
+            (datetime(2026, 3, 9, tzinfo=UTC), 21),  # After 8 Mar DST start
+            (datetime(2026, 10, 26, tzinfo=UTC), 21), # Before 1 Nov DST end
+            (datetime(2026, 11, 2, tzinfo=UTC), 22), # After 1 Nov DST end
+        )
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", "2026-02-01T00:00:00+00:00"):
+            for day, hour in cases:
+                with self.subTest(day=day.date().isoformat(), rollover_hour=hour):
+                    before = day + timedelta(hours=hour, minutes=-16)
+                    start = day + timedelta(hours=hour, minutes=-15)
+                    inside = day + timedelta(hours=hour, minutes=29)
+                    after = day + timedelta(hours=hour, minutes=30)
+                    self.assertTrue(ledger.stage0_session_open(before))
+                    self.assertFalse(ledger.stage0_session_open(start))
+                    self.assertFalse(ledger.stage0_session_open(inside))
+                    self.assertTrue(ledger.stage0_session_open(after))
+            self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 6, 20, 15, tzinfo=UTC)))
+            self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 7, 12, 0, tzinfo=UTC)))
+
+    def test_stage0_cutoff_only_changes_future_timestamps(self):
+        cutoff = "2026-11-02T22:10:00+00:00"
+        before_rollover = datetime(2026, 11, 2, 22, 5, tzinfo=UTC)
+        after_rollover = datetime(2026, 11, 2, 22, 11, tzinfo=UTC)
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", cutoff):
+            self.assertEqual(ledger.stage0_session_open(before_rollover),
+                             ledger.fx_session_open(before_rollover))
+            self.assertTrue(ledger.stage0_session_open(before_rollover))
+            self.assertFalse(ledger.stage0_session_open(after_rollover))
+            self.assertTrue(ledger.stage0_session_open(datetime(2026, 11, 2, 23, 0, tzinfo=UTC)))
+
 
 
 if __name__ == "__main__":

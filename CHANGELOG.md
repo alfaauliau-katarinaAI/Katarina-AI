@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-31 — WP15: rollover Tahap 0 mengikuti 17:00 New York
+
+- Modul `katarina.intelligence.operations.observation_ledger`: tambah `stage0_session_open(moment)` khusus penghitung siklus Stage 0 dengan jendela rollover relatif ke 17:00 New York (-15m, +30m) untuk timestamp >= `ROLLOVER_RULE_EFFECTIVE_UTC`; default `None` (nonaktif sampai waktu UTC yang tidak lebih awal dari merge disahkan manager). Aturan DST AS deterministik tanpa dependensi zoneinfo/tzdata.
+- `fx_session_open` dipertahankan tanpa perubahan untuk klasifikasi gap/arsip tick. Timestamp sebelum tanggal berlaku tetap identik dengan versi lama.
+- Modul `katarina.intelligence.operations.data_health`: `assess` memakai `stage0_session_open` untuk kriteria Stage 0 dan mengidentifikasi `session_rule` + `rollover_rule_effective_utc` di laporan.
+- Tambah uji batas DST AS 8 Mar/1 Nov 2026, cutoff nonretroaktif dan denominator sintetis. CI final wajib pada HEAD baru. Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
 ## 2026-10-30 — WP13: trust NTP nyata, tick bergerak, dan cutoff Stage 0 (#233)
 
 - Observer canonical memakai status Windows NTP terukur (leap/source/stratum/state/error/umur sync/offset), dua snapshot tick bermilidetik yang bergerak, identitas server dan pemeriksaan UTC vs monotonic. Platform/format tidak didukung tetap untrusted; tidak ada flag environment untuk melewati guard. Perubahan offset dikarantina sampai konfirmasi baru; bukti ini hanya LIVE_FEED_CLOCK, bukan DST historis WP8c.

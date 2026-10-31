@@ -12,7 +12,11 @@ import json
 from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
 
-from katarina.intelligence.operations.observation_ledger import fx_session_open
+from katarina.intelligence.operations.observation_ledger import (
+    ROLLOVER_RULE_EFFECTIVE_UTC,
+    fx_session_open,
+    stage0_session_open,
+)
 
 MIN_TRADING_DAYS = 10
 MIN_SUCCESS_RATE = 0.98
@@ -60,7 +64,7 @@ def _day_coverage(day: date, stamps, window_seconds) -> float:
     total = covered = 0
     for minute in range(24 * 60):
         moment = start + timedelta(minutes=minute)
-        if not fx_session_open(moment):
+        if not stage0_session_open(moment):
             continue
         total += 1
         point = moment.timestamp()
@@ -136,7 +140,8 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
     clause, params = _since_filter("observed_utc", since, now)
     report = {"schema_version": 1, "stage": "TAHAP_0_OBSERVER_DATA", "as_of_utc": now.isoformat(),
               "interval_seconds": interval_seconds,
-              "session_rule": "Mon 00:00 - Fri 20:00 UTC, excluding 20:45-21:15 UTC rollover",
+              "session_rule": "Mon 00:00 - Fri 20:00 UTC; before effective (or while disabled): exclude 20:45-21:15 UTC (legacy fx_session_open); on/after approved effective: exclude 17:00 America/New_York rollover [-15m, +30m), DST aware",
+              "rollover_rule_effective_utc": ROLLOVER_RULE_EFFECTIVE_UTC,
               "live_execution_authorized": False, "criteria": []}
     if since is not None:
         report["since_utc"] = since.isoformat()
@@ -153,7 +158,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
               for stamp, status, reason, shift, orders in db.execute(
                   f"SELECT observed_utc, status, reason, clock_shift_hours, orders_submitted "
                   f"FROM observer_cycles WHERE {COUNTED}{clause} ORDER BY observed_utc", params)]
-    session = [c for c in cycles if fx_session_open(c[0])]
+    session = [c for c in cycles if stage0_session_open(c[0])]
     report["cycles_total"] = len(cycles)
     report["cycles_in_session"] = len(session)
     report["first_cycle_utc"] = cycles[0][0].isoformat() if cycles else None
@@ -244,7 +249,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
     rows = [(datetime.fromisoformat(stamp), status, reason) for stamp, status, reason in db.execute(
         "SELECT q.observed_utc, q.status, q.reason FROM observer_quotes q JOIN observer_cycles c "
         f"ON c.cycle_id=q.cycle_id WHERE c.{COUNTED}{quote_clause}{cycle_clause}", quote_params + cycle_params)]
-    rows = [r for r in rows if fx_session_open(r[0])]
+    rows = [r for r in rows if stage0_session_open(r[0])]
     with_quote = sum(1 for r in rows if r[1] == "OK")
     coverage = with_quote / len(rows) if rows else None
     no_reason = sum(1 for r in rows if r[1] != "OK" and not r[2])
@@ -304,7 +309,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
     outages = []
     for a, b in zip(cycles, cycles[1:]):
         gap = (b[0] - a[0]).total_seconds()
-        if gap > 3 * interval_seconds and fx_session_open(a[0] + timedelta(seconds=interval_seconds)):
+        if gap > 3 * interval_seconds and stage0_session_open(a[0] + timedelta(seconds=interval_seconds)):
             outages.append({"start_utc": a[0].isoformat(), "end_utc": b[0].isoformat(), "seconds": int(gap)})
     if since is not None and cycles:
         prior_cycle = db.execute(
@@ -315,7 +320,7 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
             original_start = datetime.fromisoformat(prior_cycle[0])
             first = cycles[0][0]
             if ((first-original_start).total_seconds() > 3*interval_seconds
-                    and first > since and fx_session_open(since)):
+                    and first > since and stage0_session_open(since)):
                 outages.insert(0, {"start_utc": since.isoformat(), "end_utc": first.isoformat(),
                                    "seconds": int((first-since).total_seconds()),
                                    "started_before_since": True})
