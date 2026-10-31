@@ -7,6 +7,38 @@
 - Modul `katarina.intelligence.operations.data_health`: `assess` memakai `stage0_session_open` untuk kriteria Stage 0 dan mengidentifikasi `session_rule` + `rollover_rule_effective_utc` di laporan.
 - Tambah uji batas DST AS 8 Mar/1 Nov 2026, cutoff nonretroaktif dan denominator sintetis. CI final wajib pada HEAD baru. Tidak ada berkas terkunci diubah; LIVE tetap OFF.
 
+## 2026-10-30 — WP13: trust NTP nyata, tick bergerak, dan cutoff Stage 0 (#233)
+
+- Observer canonical memakai status Windows NTP terukur (leap/source/stratum/state/error/umur sync/offset), dua snapshot tick bermilidetik yang bergerak, identitas server dan pemeriksaan UTC vs monotonic. Platform/format tidak didukung tetap untrusted; tidak ada flag environment untuk melewati guard. Perubahan offset dikarantina sampai konfirmasi baru; bukti ini hanya LIVE_FEED_CLOCK, bukan DST historis WP8c.
+- Kegagalan menyimpan audit privat dan alasan FAILED; tidak menerbitkan quote/tick UTC valid. Uji lifecycle NTP gagal → pulih membuktikan worker tetap hidup, tanpa restart dan 0 order. Fixture synthetic PC terpisah dari mode observe dan tidak mengubah gerbang produksi.
+- `--since` membatasi periode hingga as-of, mengecualikan hari cutoff parsial dari streak dan tick-day, menjaga konteks outage/regresi lintas cutoff serta NO_DATA yang jujur.
+- Integrasi manager dari checkpoint Jules, satu PR existing; dokumen kanonis dan perbaikan Claude dipertahankan. Status: revisi draft menunggu review/CI final, belum MERGED/DEPLOYED/STAGE0 PASSED. VPS, Risk Governor, promotion lock dan holdout tidak diubah.
+
+## 2026-10-31 — WP8d: mapping simbol broker dan urutan bukti
+
+- Kolektor memetakan simbol canonical ke nama broker; CLI `--broker-suffix` default `.vx` sesuai universe, sementara kunci konsensus tetap canonical.
+- Bar campuran timestamp epoch/ISO diurutkan secara kronologis; provenance memakai nama kalender tanpa path privat dan mencatat mapping broker.
+- Regresi broker suffixed, mapping tidak lengkap, timestamp campuran, determinisme dan round-trip laporan diuji dengan broker sintetis; tanpa MT5/VPS/order.
+
+## 2026-10-31 — WP8d: CLI sampel bukti jam bar resmi (#245)
+
+- Tambah fungsi murni `collect_release_samples` dan helper `_normalize_raw_bar` di `src/katarina/research/bar_clock_evidence.py` untuk mengumpulkan sampel shift terverifikasi dari rilis kalender dan bar M5 broker di sekitar jendela shift kandidat (-12..+14 jam ±4 jam + 12 bar konteks), dengan hash deterministik `bars_sha256` dari JSON kanonik bar mentah seluruh simbol. Rilis tanpa konsensus dicatat di `rejected`.
+- Tambah skrip CLI tipis `scripts/research/build_bar_clock_evidence.py` dengan parameter `--calendar`, `--out`, dan `--max-releases`. Path keluaran `--out` wajib di luar repo (menolak path repo/symlink). MetaTrader5 diimpor hanya di dalam `main()`.
+- Tambah unit dan integrasi tes deterministik di `tests/unit/research/test_bar_clock_evidence.py` dengan broker sintetis, menguji shift +2/+3, penolakan tanpa konsensus, determinisme hash, pembacaan `load_evidence_report`, penolakan path repo, dan kalender kosong → `CALENDAR_EVIDENCE_EMPTY`. MT5 tidak pernah diimpor selama tes.
+- Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
+## 2026-10-31 — WP16: OAuth gateway tanpa paparan profil
+
+- Amankan `oauth_gateway/server.js`: hilangkan `profile` dari `lastAuth` dan respons status `/oauth/status`. Status kini hanya mengembalikan `{ok, at, error}`.
+- Ubah default host network binding dari `0.0.0.0` ke `127.0.0.1` (`HOST = process.env.HOST || '127.0.0.1'`) dengan catatan risiko binding eksternal.
+- Tambah tes statis deterministik `tests/static/test_oauth_gateway_guard.py` yang membaca `server.js` tanpa dependensi npm/internet. Tidak ada berkas terkunci diubah; LIVE tetap OFF.
+
+## 2026-10-31 — D7: selaraskan roadmap dan gerbang closeout
+
+- Ringkas checkpoint D7 yang berulang, pertahankan keputusan D7-M7–M15 dan bedakan bukti historis NTP dari status terbaru.
+- Selaraskan antrean/R0/R5 dan handoff WP13 #233, WP15 #244, WP8d #248, WP16 #247 dengan #249; hentikan penugasan ulang batch lama.
+- Approval independen dan CI final tetap wajib; tanpa merge/deploy/VPS/trading dari perubahan dokumen ini.
+
 ## 2026-10-31 — roadmap: keputusan D7 dan perintah induk Google Jules
 
 - Antrean, R0, R1 T13, R4, R5, R6, R7 diselaraskan dengan D7-M7–M15: WP13 MERGE BLOCKED (regresi bot Jules `3532399`), dipulihkan manager/Claude, bukan Jules; NTP VPS `MaxPollInterval` 13.

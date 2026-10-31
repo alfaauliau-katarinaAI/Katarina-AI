@@ -5,6 +5,7 @@ const { URL, URLSearchParams } = require('url');
 const crypto = require('crypto');
 
 const PORT = Number(process.env.PORT || 10000);
+const HOST = process.env.HOST || '127.0.0.1'; // Default loopback binding. WARNING: Binding externally exposes gateway.
 const CLIENT_ID = process.env.MQL5_CLIENT_ID || '';
 const CLIENT_SECRET = process.env.MQL5_CLIENT_SECRET || '';
 const BASE_URL = (process.env.APP_BASE_URL || '').replace(/\/$/, '');
@@ -14,7 +15,7 @@ const TOKEN_URL = 'https://www.mql5.com/api/oauth/access_token';
 const USER_URL = 'https://www.mql5.com/api/oauth/user_info';
 
 const states = new Map();
-let lastAuth = { ok: false, at: null, profile: null, error: null };
+let lastAuth = { ok: false, at: null, error: null };
 
 function sendJson(res, status, body) {
   res.writeHead(status, {
@@ -128,20 +129,19 @@ const server = http.createServer(async (req, res) => {
       });
       const accessToken = tokenResp.data?.access_token;
       if (!tokenResp.ok || !accessToken) {
-        lastAuth = { ok: false, at: new Date().toISOString(), profile: null, error: 'Token exchange failed' };
+        lastAuth = { ok: false, at: new Date().toISOString(), error: 'Token exchange failed' };
         return sendJson(res, 502, { ok: false, error: 'MQL5 token exchange failed', status: tokenResp.status });
       }
 
       const userResp = await fetchUserInfo(accessToken);
       if (!userResp?.ok || userResp.data?.error) {
-        lastAuth = { ok: false, at: new Date().toISOString(), profile: null, error: 'user_info failed' };
+        lastAuth = { ok: false, at: new Date().toISOString(), error: 'user_info failed' };
         return sendJson(res, 502, { ok: false, error: 'MQL5 user_info failed', status: userResp?.status || null });
       }
 
       lastAuth = {
         ok: true,
         at: new Date().toISOString(),
-        profile: userResp.data,
         error: null,
       };
 
@@ -152,7 +152,6 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, {
         ok: lastAuth.ok,
         at: lastAuth.at,
-        profile: lastAuth.profile,
         error: lastAuth.error,
       });
     }
@@ -164,6 +163,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log('Katarina MQL5 OAuth Gateway listening on port ' + PORT);
+server.listen(PORT, HOST, () => {
+  console.log(`Katarina MQL5 OAuth Gateway listening on ${HOST}:${PORT}`);
 });
