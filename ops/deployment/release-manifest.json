@@ -136,9 +136,9 @@
       "sha256": "0e7f1abaeab8bce523043baf6f3ed344604945180c03a66fed4c63c9b169ea19"
     },
     "requirements-brain-observer.txt": {
-      "bytes": 54,
-      "normalized_sha256": "e4c8e3ceebb522c3c00e4501accefa4d980d5c6b557fc97d922e03fa9fe82665",
-      "sha256": "e4c8e3ceebb522c3c00e4501accefa4d980d5c6b557fc97d922e03fa9fe82665"
+      "bytes": 55,
+      "normalized_sha256": "185b5e14c0a355c53a4b3f025a4616d8a6a61f2e7b6fb1e8aa8ab787f4b4cabc",
+      "sha256": "185b5e14c0a355c53a4b3f025a4616d8a6a61f2e7b6fb1e8aa8ab787f4b4cabc"
     },
     "requirements-hf-storage.txt": {
       "bytes": 475,
