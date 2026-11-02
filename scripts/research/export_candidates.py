@@ -10,12 +10,12 @@ from __future__ import annotations
 import argparse
 import csv
 from datetime import datetime, timedelta, timezone
+from dataclasses import asdict
 import gzip
 import hashlib
 import json
 import math
 from pathlib import Path
-import re
 import sqlite3
 import sys
 
@@ -28,6 +28,13 @@ from katarina.research.setups.simulator import trade_to_dict  # noqa: E402
 
 MAX_TICKS_PER_DAY = 3_000_000
 MAX_CANDIDATES = 400
+
+
+def _trade_dict(trade: Trade):
+    row = asdict(trade)
+    for key in ("entry_at", "exit_at", "known_at", "data_until"):
+        row[key] = row[key].isoformat()
+    return row
 
 
 def _utc(value):
@@ -231,7 +238,7 @@ def main(argv=None):
         finally:
             db.close()
     out.parent.mkdir(parents=True,exist_ok=True)
-    out.write_text("".join(canonical(trade_to_dict(t))+"\n" for t in trades),
+    out.write_text("".join(canonical(_trade_dict(t))+"\n" for t in trades),
                    encoding="utf-8",newline="\n")
     print(json.dumps({"status":"DEVELOPMENT_RESEARCH_ONLY","trades":len(trades),
                       "skipped":skipped,"live_execution_authorized":False},
