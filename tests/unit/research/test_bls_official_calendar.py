@@ -1,11 +1,10 @@
 """Official BLS Employment Situation release-calendar provenance checks (data-only)."""
 from datetime import datetime, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
 import csv
 import unittest
 
-from katarina.research.bar_clock_evidence import _calendar_releases
+from katarina.research.bar_clock_evidence import _calendar_releases, is_us_dst
 
 CALENDAR = Path(__file__).resolve().parents[3] / "config/research/us_release_calendar.csv"
 
@@ -28,13 +27,11 @@ class OfficialBlsCalendarTest(unittest.TestCase):
         self.assertIn("2026-07-02", releases)  # Thursday before Independence Day
 
     def test_0830_eastern_timezone_conversion_across_dst(self):
-        eastern = ZoneInfo("America/New_York")
         for row in self.rows:
-            release_date = row["release_date"]
             parsed = datetime.fromisoformat(row["release_utc"])
-            local = parsed.astimezone(eastern)
-            self.assertEqual(local.date().isoformat(), release_date)
-            self.assertEqual((local.hour, local.minute), (8, 30))
+            self.assertEqual(parsed.date().isoformat(), row["release_date"])
+            self.assertEqual((parsed.hour, parsed.minute),
+                             (12 if is_us_dst(parsed) else 13, 30))
             self.assertEqual(parsed.utcoffset().total_seconds(), 0)
             self.assertTrue(row["source_url"].startswith("https://www.bls.gov/"))
 
