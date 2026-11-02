@@ -1,5 +1,5 @@
 """Research-only tests for independent Stage0 cutoff diagnostic, not promotion code."""
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
 from datetime import datetime, timezone
 import hashlib
 import io
@@ -17,7 +17,7 @@ class TestStage0CutoffTriage(unittest.TestCase):
     def setUp(self):
         self.root = tempfile.TemporaryDirectory()
         self.dbpath = Path(self.root.name) / "context.sqlite3"
-        with sqlite3.connect(self.dbpath) as db:
+        with closing(sqlite3.connect(self.dbpath)) as db:
             db.execute("CREATE TABLE observer_cycles("
                        "observed_utc TEXT, status TEXT, reason TEXT, clock_shift_hours REAL, cycle_id TEXT)")
             db.execute("CREATE TABLE broker_tick_days("
@@ -50,12 +50,13 @@ class TestStage0CutoffTriage(unittest.TestCase):
                 ("XAUUSD.vx", "2026-10-30", "GAP", 0, 0,
                  "BROKER_SHIFT_CHANGED_DURING_DAY"),
             ])
+            db.commit()
 
     def tearDown(self):
         self.root.cleanup()
 
     def _report(self):
-        with sqlite3.connect(self.dbpath.resolve().as_uri() + "?mode=ro", uri=True) as db:
+        with closing(sqlite3.connect(self.dbpath.resolve().as_uri() + "?mode=ro", uri=True)) as db:
             db.execute("PRAGMA query_only=ON")
             return triage.summarize(db, as_of=datetime(2026, 11, 3, tzinfo=timezone.utc))
 
@@ -107,11 +108,12 @@ class TestStage0CutoffTriage(unittest.TestCase):
         self.assertNotIn("MetaTrader5.initialize(", text)
 
     def test_naive_time_fails_closed(self):
-        with self.assertRaisesRegex(ValueError, "UTC_AWARE_TIME_REQUIRED"):
-            triage.summarize(sqlite3.connect(":memory:"), as_of=datetime(2026, 11, 3))
+        with closing(sqlite3.connect(":memory:")) as db:
+            with self.assertRaisesRegex(ValueError, "UTC_AWARE_TIME_REQUIRED"):
+                triage.summarize(db, as_of=datetime(2026, 11, 3))
 
     def test_missing_tables_fail_closed(self):
-        with sqlite3.connect(":memory:") as db:
+        with closing(sqlite3.connect(":memory:")) as db:
             report = triage.summarize(db, as_of=datetime(2026, 11, 3, tzinfo=timezone.utc))
         self.assertEqual(report["verdict"], "NO_DATA")
 
