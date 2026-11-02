@@ -52,8 +52,6 @@ def _exit(bars, entry_index, stop, target, side, hold):
     """Conservative: invalidation before target on same bar; gaps fill at open when worse."""
     expected_open = as_utc(bars[entry_index]["time_utc"])
     last_index = min(entry_index + hold, len(bars))
-    if last_index - entry_index < hold:
-        return None
     for index in range(entry_index, last_index):
         bar = bars[index]
         opened = as_utc(bar["time_utc"])
@@ -71,6 +69,8 @@ def _exit(bars, entry_index, stop, target, side, hold):
                 return index, max(op, stop)
             if lo <= target:
                 return index, target
+    if last_index - entry_index < hold:
+        return None  # no exit and not enough bars for the declared timeout
     return last_index - 1, bars[last_index - 1]["close"]
 
 
