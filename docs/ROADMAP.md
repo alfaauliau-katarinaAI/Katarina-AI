@@ -44,21 +44,24 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 | # | Paket / alur | Prioritas dan keluaran yang harus terbukti | Pelaksana dan status |
 |---|---|---|---|
 | 0 | **Tahap 0 — observasi 10 hari bursa** | Jaga satu observer resmi read-only; audit per hari/simbol sejak 28 Okt 16:57 UTC (cutoff WP12), target streak 10 hari, sukses siklus ≥98%, rekonsiliasi tick/snapshot, cakupan dan gap, restart otomatis dan **0 order**. Jangan menghitung backfill sebagai forward atau mengklaim lulus sebelum bukti. | **P0 / berjalan** — Yura pantau, Claude verifikasi bukti VPS; **belum lulus** |
-| 1 | **WP13 — jam broker MT5 dan `--since`** | [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233): jam live = NTP host tepercaya + ≥ 3 tick bergerak (D6/D7), siklus gagal tercatat `FAILED` + alasan, `--since` untuk Tahap 0. Spesifikasi terbaru di R4 WP13. | **Dalam review #233** — safety tree dipulihkan; `dd6d9b50` memiliki src identik baseline `76ce7e8f`, CI Body/Ubuntu/Windows PASS. Approval independen masih diperlukan. Bukan tugas Jules; tanpa deploy VPS |
-| 1b | **WP15 — rollover Tahap 0 ikut 17:00 New York** | Jendela pengecualian rollover di statistik Tahap 0 mengikuti 17:00 `America/New_York` (DST AS berakhir 1 Nov 2026), tanpa mengubah ledger, arsip tick, atau penilaian sebelum tanggal berlaku. | **Revisi #244, Manager** — override tanggal resmi dihapus; aktivasi tetap `None`. Menunggu CI final dan review independen; tanggal efektif baru ditetapkan terpisah, tidak lebih awal dari merge |
-| 2 | **WP8c — asal waktu bar historis** | Bukti UTC bar memakai rilis NFP yang terverifikasi dan tes deterministik; jangan ekspor data development tanpa bukti jam atau sentuh holdout. | **Kode selesai (merge #230, 30 Okt)** — fail-closed diperbaiki Claude; kalender rilis resmi + laporan sampel belum ada, jadi ekspor tetap ditolak |
+| 1 | **WP13 — jam broker MT5 dan `--since`** | [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233): jam live = NTP host tepercaya + ≥ 3 tick bergerak (D6/D7), siklus gagal tercatat `FAILED` + alasan, `--since` untuk Tahap 0. Spesifikasi terbaru di R4 WP13. | **MERGED #233 / NOT DEPLOYED** — kode NTP, tick, dan `--since` pada GitHub; tidak menyatakan Stage0 lulus |
+| 1b | **WP15 — rollover Tahap 0 ikut 17:00 New York** | Jendela pengecualian rollover di statistik Tahap 0 mengikuti 17:00 `America/New_York` (DST AS berakhir 1 Nov 2026), tanpa mengubah ledger, arsip tick, atau penilaian sebelum tanggal berlaku. | **MERGED #244 / RULE INACTIVE** — rollover mengikuti New York, tanggal efektif `None`, tanpa deploy |
+| 2 | **WP8c — asal waktu bar historis** | Bukti UTC bar memakai rilis NFP yang terverifikasi dan tes deterministik; jangan ekspor data development tanpa bukti jam atau sentuh holdout. | **KODE MERGED #230** — kalender BLS 33 rilis di integrasi riset #265; bukti UTC bar broker M5 belum ada |
 | 3 | **WP10b — swap & sensitivitas biaya** | CostModel swap BUY/SELL, rollover New York/DST dan sensitivitas 1,5×/2×; perbaikan baseline random-side; tidak mengubah gate promosi. | **P1 / kode MERGED [PR #225](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/225)** — CI Body/Linux/Windows PASS; belum validasi broker/VPS atau strategi |
 | 4 | **Tata kelola PR** | Aturan `main`: ≥ 1 approval independen, CI Body/Ubuntu/Windows wajib, approval usang gugur saat HEAD berubah, tanpa force-push. | **Disetujui Owner (D7-M14), belum aktif** — butuh admin repo; #216/#218 merged 30 Okt |
 | 5 | **WP6 — pemulihan setelah reboot** | Verifikasi scheduled task observer yang kini hanya saat login; uji recovery dengan risiko observasi minimal. Penambahan 5→7 simbol tetap **menunggu WP13 + bukti jam 21:00–22:00 UTC**, tidak boleh mendahului kelulusan data. | **P1 / belum terverifikasi** — Claude |
 | 6 | **WP10a** | Profil spread broker deskriptif dari tick forward terverifikasi, bukan penyetelan strategi. | **Selesai (merge #231, 30 Okt)**; belum dijalankan di VPS |
-| 7 | **WP4** | Jurnal kandidat riset + replay sinyal teknis tanpa mengubah keputusan aktif. | **P2 / antrean [Issue #229](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/229)** — tunggu WP13 dan kapasitas Jules |
-| 8 | **WP14** | Auditor data baca-saja dengan keluaran PASS/BLOCKED/NO_DATA yang bersumber. | **P2 / menunggu WP13 dan WP8c** |
-| 9 | **WP8d — CLI sampel bukti jam bar** | Alat yang mengubah kalender rilis resmi + bar M5 broker di sekitar rilis menjadi laporan bukti WP8c (`bars_sha256` per sampel); fail-closed bila konsensus kurang. | **CODE DONE / PR #248** — mapping broker `.vx`, bukti fail-closed, provenance deterministik dan tes. CI/review ditautkan di PR #248; kalender BLS resmi dan data broker nyata tetap belum divalidasi. Merge tidak berarti deploy/STAGE0 PASS |
-| 10 | **WP16 — OAuth gateway tanpa paparan profil** | `/oauth/status` tidak lagi mengembalikan profil MQL5; bind default `127.0.0.1`; tes statis. | **Dalam review #247** — kode dan CI PASS pada `99c06da7`; approval independen masih diperlukan. Belum deploy |
-| – | **WP8b, WP9c, WP9d, WP5** | Setup, syarat bukti, entry, dan perankingan; hanya setelah prasyarat R0 terpenuhi. | **Menunggu prasyarat** |
+| 7 | **WP4** | Jurnal kandidat riset + replay sinyal teknis tanpa mengubah keputusan aktif. | **RESEARCH INTEGRATED Draft #265** (`cd3b576d`), CI 3/3 PASS; sumber #263/#261 disupersede, belum merge main |
+| 8 | **WP14** | Auditor data baca-saja dengan keluaran PASS/BLOCKED/NO_DATA yang bersumber. | **RESEARCH INTEGRATED Draft #265** — fail-closed PASS+NO_DATA, Windows SQLite dan tick hash diperbaiki; PR #259 terbaru tidak aman, ditutup |
+| 9 | **WP8d — CLI sampel bukti jam bar** | Alat yang mengubah kalender rilis resmi + bar M5 broker di sekitar rilis menjadi laporan bukti WP8c (`bars_sha256` per sampel); fail-closed bila konsensus kurang. | **MERGED #248** — CLI riset tersedia, kalender resmi di Draft #265; bukti shift historis broker masih BLOCKED |
+| 10 | **WP16 — OAuth gateway tanpa paparan profil** | `/oauth/status` tidak lagi mengembalikan profil MQL5; bind default `127.0.0.1`; tes statis. | **MERGED #247 / NOT DEPLOYED** — keamanan OAuth kode sudah merged, runtime deployment belum diperiksa |
+| – | **WP8b, WP9c, WP9d, WP5** | Setup, syarat bukti, entry, dan perankingan; hanya setelah prasyarat R0 terpenuhi. | **WP8b CODE+CI PASS di Draft #265** (SELL BID/ASK, midpoint, biaya via #266); WP9c/WP9d/WP5 tetap menunggu gate |
 
 **Handoff batch (31 Okt):** WP10b #225, WP8c #230, WP10a #231 merged. Closeout WP13 #233, WP15 #244, WP8d #248 dan WP16 #247 dikoordinasikan Manager/Claude melalui [Issue #249](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/249). CI Auto-Fixer Jules OFF; jangan resume writer lama atau membuat PR duplikat. Status pause dua task belum persisten dicatat di #249. WP4/WP14 menunggu prasyarat dan penugasan baru; tidak otomatis dimulai. Semua merge tetap menunggu approval independen sah dan CI final. Tanpa deploy VPS atau trading.
 
+
+
+**Checkpoint integrasi riset 2 Nov 2026 (bukan keputusan Owner baru):** Draft [#265](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/265) head `cd3b576d42aeb98dd8cdadbbac849cc8b568ef44` telah menerima perbaikan Claude #266 (WP14 hash/path fail-closed, WP8b ASK/timeout/midpoint biaya, WP4 observer isolation) dan CI Body/Ubuntu/Windows [41480635219](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/41480635219) sukses. Source PR #257/#259/#263/#264 ditutup sebagai digantikan, **tidak di-merge ke main**. Review manusia/Owner belum approve; VPS aktif `64497b5`, Stage0 belum PASS, LIVE OFF, 0 order. **P0 berikutnya:** dokumen bersih dan bukti M5 broker/UTC/sha256 sebelum backtest metode nyata ([Issue #255](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/255)); jangan memakai data tick observer setelah dev-cutoff 13 Okt 2026. Uji penyiapan terminal riset terisolasi tetap membutuhkan izin Owner tersendiri.
 
 **Akses**
 
@@ -926,17 +929,17 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | Dalam review; MERGE BLOCKED tanpa approval independen | #233 | Guard NTP/tick progresif dipulihkan, CI 3/3 PASS pada `dd6d9b50`; belum deploy, bukan Tahap 0 PASS |
+| WP13 | MERGED 31 Okt / NOT DEPLOYED | #233 | NTP/tick, --since tersedia dalam main; Stage0 belum lulus |
 | WP8c | **CODE DONE (merge)** — 30 Okt 2026, review Claude | #230 | 24 bar sekitar wajib; segmen VERIFIED hanya dengan sampel di dalamnya (tanpa ±200 hari); sampel wajib di kalender + `bars_sha256`; adapter menghitung ulang timeline/hash. Sisa: isi `us_release_calendar.csv` dari sumber resmi BLS dan buat laporan sampel dari bar nyata (belum ada alat CLI) |
 | WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
 | WP10a | **Selesai (merge)** — 30 Okt 2026, review Claude | #231 | Perbaikan review: parser ketat 4 kolom (baris rusak → `TICK_FILE_MALFORMED`, tidak dilewati), hari tanpa `server_shift_hours` (sebelum WP12) dikecualikan dan dilaporkan, quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`. Uji 2 juta tick < 50 MB lulus. Belum dijalankan di VPS |
-| WP4 | Menunggu WP13 merge (sama-sama mengubah `observer.py`) — Jules | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
-| WP14 | **CODE DONE** — auditor bukti data read-only, deterministik, fail-closed (`mode=ro` + `PRAGMA query_only`, periksa siklus/quote/shift/tick/shadow/manifest, verdict berbobot, laporan `report_sha256`) | Draft PR | Siap review independen; bukan Tahap 0 PASS |
-| WP15 | Revisi Manager; menunggu review independen dan CI final | #244 | Override tanggal resmi dihapus; aktivasi `None`, cutoff nonretroaktif dan DST diuji; belum berlaku di runtime |
-| WP8d | Revisi Manager; menunggu review independen dan CI final | #248 (Issue #245) | Mapping canonical→broker `.vx`, bar fail-closed dan hash deterministik; belum dipakai pada data broker nyata |
-| WP16 | Dalam review; CI PASS, approval independen pending | #247 | Status tanpa profil/token, bind loopback default; audit deployment eksternal terpisah, tanpa deploy |
+| WP4 | RESEARCH CODE DONE / CI 3/3, belum main | #265 (source #263/#261) | Ledger & replay; observer non-interference diperiksa, 0 order, final Owner gate #251 |
+| WP14 | RESEARCH CODE DONE / CI 3/3, fail-closed | #265 (source #259) | Versi Jules #259 head ce7c4074 tidak aman; gunakan auditor terintegrasi cd3b576d |
+| WP15 | MERGED 31 Okt / effective None | #244 | Nonretroaktif; aktivitas produksi memerlukan izin lain |
+| WP8d | MERGED 31 Okt; BROKER CLOCK BLOCKED | #248 / #255 | Kalender BLS sudah terintegrasi, belum ada M5 pre-cutoff terverifikasi |
+| WP16 | MERGED 31 Okt / NOT DEPLOYED | #247 | Profil tidak disebarkan oleh kode; pemeriksaan runtime terpisah |
 | WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
-| WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | – |
+| WP8b | RESEARCH CODE+CI DONE / BACKTEST BLOCKED | #265 (source #257/#266) | Empat setup BUY/SELL di simulator; hasil sintetis bukan edge riil; DATA #255 |
 | WP9c | Menunggu prasyarat (≥ 3 hari bursa `decision_shadow`) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
