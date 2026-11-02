@@ -8,6 +8,7 @@ from pathlib import Path
 from katarina.research.setups.simulator import simulate, trade_to_dict, validate_registration
 from katarina.research.validation import HypothesisRegistry, ValidationError, canonical, sha256_text
 from scripts.research.compare_setups import compare_reports
+from scripts.research.register_setup_hypothesis import register_setup
 
 ZERO = datetime(2026, 1, 5, tzinfo=timezone.utc)
 HID = "a" * 64
@@ -99,6 +100,25 @@ class WP8bSimulationTest(unittest.TestCase):
     def test_invalid_point_rejected(self):
         with self.assertRaises(ValidationError):
             simulate(dataset(),spec("BUY"),HID,point=0)
+
+    def test_sixth_registration_refused_and_duplicate_idempotent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            registry=HypothesisRegistry(Path(tmp)/"registry.jsonl")
+            first=None
+            for i in range(5):
+                x=spec("BUY")
+                x["parameters"]["max_hold_bars"]=i+1
+                entry=register_setup(registry,x,registered_utc=ZERO)
+                first=first or x
+            self.assertEqual(registry.trial_count(),5)
+            self.assertEqual(register_setup(registry,first,registered_utc=ZERO)["hypothesis_id"],
+                             registry.hypothesis_id(first))
+            self.assertEqual(registry.trial_count(),5)
+            extra=spec("BUY")
+            extra["parameters"]["max_hold_bars"]=6
+            with self.assertRaisesRegex(ValidationError,"too_many_hypotheses"):
+                register_setup(registry,extra,registered_utc=ZERO)
+            self.assertEqual(registry.trial_count(),5)
 
     def test_max_five_hypotheses_per_symbol_side(self):
         with tempfile.TemporaryDirectory() as tmp:
