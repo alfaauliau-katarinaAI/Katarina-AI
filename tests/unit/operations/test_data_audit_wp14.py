@@ -17,8 +17,16 @@ class TestDataAuditWP14(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.db_path = Path(self.temp_dir.name) / "context.sqlite3"
         # Create schema and initial baseline
-        with sqlite3.connect(self.db_path) as db:
+        with self._writable_db() as db:
             observation_ledger.setup(db)
+
+    @contextlib.contextmanager
+    def _writable_db(self):
+        # A sqlite3.Connection context manager commits but DOES NOT close.
+        # Windows keeps context.sqlite3 locked if connections are not closed.
+        with contextlib.closing(sqlite3.connect(self.db_path)) as db:
+            with db:
+                yield db
 
     def tearDown(self):
         self.temp_dir.cleanup()
@@ -27,11 +35,25 @@ class TestDataAuditWP14(unittest.TestCase):
         with open(path, "rb") as f:
             return hashlib.file_digest(f, "sha256").hexdigest()
 
+    def test_mixed_pass_and_no_data_never_passes_audit(self):
+        """Required missing evidence must not be obscured by unrelated PASS."""
+        now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
+        # Empty audit has some positive checks and some missing evidence.
+        uri = self.db_path.resolve().as_uri() + "?mode=ro"
+        with contextlib.closing(sqlite3.connect(uri, uri=True)) as db:
+            db.execute("PRAGMA query_only = ON")
+            report = data_health.audit(db, now)
+        statuses = {item["status"] for item in report["findings"]}
+        self.assertIn("NO_DATA", statuses)
+        self.assertIn("PASS", statuses)
+        self.assertNotEqual(report["verdict"], "PASS")
+        self.assertIn(report["verdict"], ("IN_PROGRESS", "NO_DATA", "BLOCKED"))
+
     def test_database_sha256_unmodified_proof_of_read_only(self):
         """Proof of zero DB write: context.sqlite3 SHA256 remains byte-identical before and after audit."""
         now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
         # Populate dummy cycle so DB has content
-        with sqlite3.connect(self.db_path) as db:
+        with self._writable_db() as db:
             cid = observation_ledger.record_snapshot(
                 db,
                 observed_utc=datetime(2026, 11, 2, 10, 0, tzinfo=timezone.utc),
@@ -69,7 +91,7 @@ class TestDataAuditWP14(unittest.TestCase):
     def test_deterministic_output(self):
         """Identical inputs and DB produce byte-identical reports and matching report_sha256."""
         now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
-        with sqlite3.connect(self.db_path) as db:
+        with self._writable_db() as db:
             cid = observation_ledger.record_snapshot(
                 db,
                 observed_utc=datetime(2026, 11, 2, 10, 0, tzinfo=timezone.utc),
@@ -98,7 +120,7 @@ class TestDataAuditWP14(unittest.TestCase):
     def test_missing_quote_and_negative_spread(self):
         """Detect missing quotes and negative spreads; marks symbols restricted or quarantined."""
         now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
-        with sqlite3.connect(self.db_path) as db:
+        with self._writable_db() as db:
             # Cycle 1: quote missing (sensor failure)
             cid1 = observation_ledger.record_snapshot(
                 db,
@@ -143,7 +165,7 @@ class TestDataAuditWP14(unittest.TestCase):
     def test_mixed_clock_shift_offsets_per_day(self):
         """Mixed clock shifts in a single day (except NO_MARKET_DATA) triggers BLOCKED and quarantine."""
         now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
-        with sqlite3.connect(self.db_path) as db:
+        with self._writable_db() as db:
             # Two cycles on 2026-11-02 with different shift hours (e.g., 2 and 3)
             cid1 = "c-1"
             cid2 = "c-2"
@@ -178,7 +200,7 @@ class TestDataAuditWP14(unittest.TestCase):
         tick_file = Path(self.temp_dir.name) / "ticks.csv.gz"
         tick_file.write_bytes(b"corrupted_tick_data")
 
-        with sqlite3.connect(self.db_path) as db:
+        with self._writable_db() as db:
             db.execute(
                 "INSERT INTO broker_tick_days(symbol, day, status, sha256, file, snapshots_checked, snapshots_matched, server_shift_hours) "
                 "VALUES(?,?,?,?,?,?,?,?)",
@@ -200,7 +222,7 @@ class TestDataAuditWP14(unittest.TestCase):
     def test_decision_shadow_completeness(self):
         """Incomplete decision_shadow modes per cycle x symbol triggers BLOCKED."""
         now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
-        with sqlite3.connect(self.db_path) as db:
+        with self._writable_db() as db:
             cid = observation_ledger.record_snapshot(
                 db,
                 observed_utc=datetime(2026, 11, 2, 10, 0, tzinfo=timezone.utc),
