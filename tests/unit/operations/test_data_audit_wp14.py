@@ -36,18 +36,21 @@ class TestDataAuditWP14(unittest.TestCase):
             return hashlib.file_digest(f, "sha256").hexdigest()
 
     def test_mixed_pass_and_no_data_never_passes_audit(self):
-        """Required missing evidence must not be obscured by unrelated PASS."""
+        """Partial required evidence cannot be promoted by an unrelated PASS."""
+        verdict = data_health._wp14_audit_verdict
+        self.assertEqual(verdict([{"status": "PASS"}, {"status": "NO_DATA"}]),
+                         "IN_PROGRESS")
+        self.assertEqual(verdict([{"status": "BLOCKED"}, {"status": "PASS"}]),
+                         "BLOCKED")
+        self.assertEqual(verdict([{"status": "NO_DATA"}]), "NO_DATA")
+        self.assertEqual(verdict([{"status": "PASS"}, {"status": "PASS"}]),
+                         "PASS")
         now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
-        # Empty audit has some positive checks and some missing evidence.
         uri = self.db_path.resolve().as_uri() + "?mode=ro"
         with contextlib.closing(sqlite3.connect(uri, uri=True)) as db:
             db.execute("PRAGMA query_only = ON")
             report = data_health.audit(db, now)
-        statuses = {item["status"] for item in report["findings"]}
-        self.assertIn("NO_DATA", statuses)
-        self.assertIn("PASS", statuses)
-        self.assertNotEqual(report["verdict"], "PASS")
-        self.assertIn(report["verdict"], ("IN_PROGRESS", "NO_DATA", "BLOCKED"))
+        self.assertEqual(report["verdict"], "NO_DATA")
 
     def test_database_sha256_unmodified_proof_of_read_only(self):
         """Proof of zero DB write: context.sqlite3 SHA256 remains byte-identical before and after audit."""
