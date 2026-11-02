@@ -1,7 +1,10 @@
 """WP8a Tahap 1–2: export development-only broker bars; read-only, no orders.
 
-Manual weekend-only use by Claude, outside the active 60-second observer:
-  python scripts/research/export_dev_bars.py --out D:\\dev-dataset --start 2024-01-01 --clock-evidence ops/research/bar_clock_evidence.json
+Run ONLY on a separately approved Windows research machine with portable MT5,
+AutoTrading OFF, no EAs and no observer. Before running, operator must put a
+.katarina-research-terminal file containing ISOLATED_RESEARCH_ONLY in the
+research terminal64.exe directory. Explicit --terminal-path and previously
+verified --clock-evidence are mandatory. Never use the production VPS.
 
 Requires an already installed MetaTrader5 package and authorized read-only
 broker connection on the operator's own machine. Never touches holdout data.
@@ -14,7 +17,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from katarina.intelligence.broker.observer_universe import load_universe  # noqa: E402
 from katarina.research.bar_clock_evidence import BarClockEvidenceAdapter, load_evidence_report  # noqa: E402
