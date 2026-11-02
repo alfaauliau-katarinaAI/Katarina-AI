@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, timezone
+import math
 import argparse
 import json
 from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
-from katarina.research.dev_dataset import load_dev_dataset  # noqa: E402
+from katarina.research.dev_dataset import load_dev_dataset, _validated_manifest  # noqa: E402
 from katarina.research.validation import ValidationError, canonical, sha256_text  # noqa: E402
 from katarina.intelligence.cognition.market_decision_pipeline import (  # noqa: E402
     MarketDecisionPipeline, SensorCandle,
@@ -24,10 +25,12 @@ from katarina.intelligence.cognition.market_decision_pipeline import (  # noqa: 
 TF = {"M5": 5, "M15": 15, "H1": 60, "H4": 240}
 
 
-def replay_symbol(bars_by_tf, symbol, *, pipeline=None, max_cycles=1200):
+def replay_symbol(bars_by_tf, symbol, *, point: float, pipeline=None, max_cycles=1200):
     """At each M5 close, call original evaluator with only previously CLOSED bars."""
     if type(max_cycles) is not int or max_cycles < 1 or max_cycles > 10000:
         raise ValidationError("replay_cycles_limit_invalid")
+    if isinstance(point, bool) or not isinstance(point, (int, float)) or not math.isfinite(point) or point <= 0:
+        raise ValidationError("replay_point_missing_or_invalid")
     pipeline = pipeline or MarketDecisionPipeline()
     moments = {}
     for tf in TF:
@@ -39,13 +42,14 @@ def replay_symbol(bars_by_tf, symbol, *, pipeline=None, max_cycles=1200):
              SensorCandle(
                  datetime.fromisoformat(r["closed_at_utc"]).astimezone(timezone.utc),
                  float(r["open"]), float(r["high"]), float(r["low"]),
-                 float(r["close"]), float(r["tick_volume"])))
+                 float(r["close"]), float(r["tick_volume"])),
+             float(r["spread"]))
             for r in rows
         ]
     count, counts, inspected = 0, Counter(), 0
     pointers = {tf: 0 for tf in TF}
     # The precommitted dataset itself was validated and ends before cutoff.
-    for as_of, row in moments["M5"]:
+    for as_of, row, spread in moments["M5"]:
         if inspected >= max_cycles:
             break
         inspected += 1
@@ -62,7 +66,7 @@ def replay_symbol(bars_by_tf, symbol, *, pipeline=None, max_cycles=1200):
                 raise ValidationError("REPLAY_LOOKAHEAD_FORBIDDEN")
         result = pipeline.evaluate(
             symbol=symbol, candles=candles, as_of_utc=as_of,
-            actual_spread=0.0, broker_session_open=True, data_fresh=False,
+            actual_spread=spread * point, broker_session_open=True, data_fresh=False,
             news_blackout=False, news_context_verified=False)
         detail = getattr(result, "decision_detail", None)
         technical = getattr(detail, "technical_signal", "WAIT") if detail is not None else "WAIT"
@@ -86,9 +90,13 @@ def main(argv=None):
     source, out = Path(args.bars_dir).resolve(), Path(args.out).resolve()
     if out == source or source in out.parents or out.exists() or out.is_symlink():
         raise ValidationError("replay_output_must_be_new_outside_frozen_dataset")
+    _, manifest, _, _, _ = _validated_manifest(source)
     data = load_dev_dataset(source, max_total_bars=args.max_total_bars)
-    results = [replay_symbol(data[symbol], symbol, max_cycles=args.max_cycles)
-               for symbol in sorted(data)]
+    results = [replay_symbol(
+        data[symbol], symbol,
+        point=manifest["files"][symbol + "/M5.csv.gz"]["point"],
+        max_cycles=args.max_cycles)
+        for symbol in sorted(data)]
     report = {"stage": "DEVELOPMENT_RESEARCH_ONLY",
               "method": "ORIGINAL_MARKET_DECISION_PIPELINE",
               "data_provenance": "WP8A_HASH_AND_INDEPENDENT_CLOCK_REQUIRED",
