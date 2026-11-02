@@ -5,8 +5,8 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from katarina.research.setups.simulator import simulate, trade_to_dict, validate_registration
-from katarina.research.validation import HypothesisRegistry, ValidationError, canonical, sha256_text
+from katarina.research.setups.simulator import _exit, simulate, trade_to_dict, validate_registration
+from katarina.research.validation import CostModel, HypothesisRegistry, ValidationError, canonical, sha256_text
 from scripts.research.compare_setups import compare_reports
 from scripts.research.register_setup_hypothesis import register_setup
 
@@ -56,7 +56,7 @@ class WP8bSimulationTest(unittest.TestCase):
         t = trades[0]
         self.assertEqual(t.side,"BUY")
         self.assertEqual(t.entry_at, ZERO+timedelta(minutes=20))
-        self.assertEqual(t.entry_mid,105.2)
+        self.assertAlmostEqual(t.entry_mid, 105.2 + .015)  # BID open + half spread = mid
         self.assertLess(t.exit_mid,t.entry_mid)
         self.assertEqual(t.spread_entry,.03)
         self.assertEqual(t.spread_exit,.03)
@@ -70,6 +70,41 @@ class WP8bSimulationTest(unittest.TestCase):
         t=trades[0]
         self.assertGreater(t.exit_mid,t.entry_mid)
         self.assertEqual(t.trend_side,"SELL")
+
+    def test_sell_stop_and_target_are_checked_at_ask_not_bid(self):
+        """Bars are BID; a SELL closes at ASK = bid + spread * point."""
+        rows = [bar(ZERO + timedelta(minutes=5*i), 5, 100.0, 100.95, 99.5, 100.0, spread=10)
+                for i in range(3)]
+        # bid high 100.95 < stop 101.0, but ask high = 100.95 + 10*0.01 = 101.05 >= stop
+        self.assertEqual(_exit(rows, 0, 101.0, 98.0, "SELL", 3, .01), (0, 101.0))
+        rows = [bar(ZERO + timedelta(minutes=5*i), 5, 100.0, 100.2, 98.0, 99.0, spread=10)
+                for i in range(3)]
+        # bid low 98.0 touches target 98.0, ask low 98.1 does not: no early SELL target;
+        # the timeout closes the SELL at the ASK close (99.0 + 0.10)
+        self.assertEqual(_exit(rows, 0, 101.0, 98.0, "SELL", 3, .01), (2, 99.1))
+        # BUY closes at bid: unchanged
+        self.assertEqual(_exit(rows, 0, 97.0, 100.2, "BUY", 3, .01), (0, 100.2))
+
+    def test_net_r_equals_execution_pnl_with_unequal_spreads(self):
+        """Mid prices + half-spread costs must equal ASK/BID execution P&L exactly."""
+        point = .01
+        for side in ("BUY", "SELL"):
+            data = dataset(side)
+            data["M5"][4]["spread"] = 3   # entry bar
+            data["M5"][5]["spread"] = 9   # exit bar (stop collision)
+            t = simulate(data, spec(side), HID, point=point)[0]
+            entry_bid, exit_bar = data["M5"][4]["open"], data["M5"][5]
+            if side == "BUY":
+                entry_exec = entry_bid + 3 * point
+                stop = entry_exec - t.stop_distance
+                true_pnl = min(exit_bar["open"], stop) - entry_exec
+            else:
+                stop = entry_bid + t.stop_distance
+                true_pnl = entry_bid - max(exit_bar["open"] + 9 * point, stop)
+            net = CostModel().net_r(t) * t.stop_distance
+            self.assertAlmostEqual(net, true_pnl, places=9, msg=side)
+            self.assertAlmostEqual(t.spread_entry, .03)
+            self.assertAlmostEqual(t.spread_exit, .09)
 
     def test_next_bar_open_is_real_entry_not_signal_close(self):
         t=simulate(dataset(),spec("BUY"),HID,point=.01)[0]

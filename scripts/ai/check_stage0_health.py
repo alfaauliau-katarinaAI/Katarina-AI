@@ -49,6 +49,7 @@ def main(argv=None) -> int:
                 since=since,
                 dataset_dir=args.dataset,
                 interval_seconds=args.interval_seconds,
+                state_dir=args.state_dir,
             )
         else:
             report = assess(db, datetime.now(timezone.utc), interval_seconds=args.interval_seconds, since=since)

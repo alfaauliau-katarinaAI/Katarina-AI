@@ -48,8 +48,14 @@ def _checked_rows(rows, tf, minutes):
     return output
 
 
-def _exit(bars, entry_index, stop, target, side, hold):
-    """Conservative: invalidation before target on same bar; gaps fill at open when worse."""
+def _exit(bars, entry_index, stop, target, side, hold, point):
+    """Conservative: invalidation before target on same bar; gaps fill at open when worse.
+
+    MT5 bars are BID prices. A SELL position is closed at the ASK, so its stop and
+    target are checked against bid + bar spread; checking the bid alone would hit
+    SELL stops late and targets early (optimistic). Returns the *execution* price:
+    BID for BUY exits, ASK for SELL exits (timeouts included).
+    """
     expected_open = as_utc(bars[entry_index]["time_utc"])
     last_index = min(entry_index + hold, len(bars))
     for index in range(entry_index, last_index):
@@ -65,13 +71,22 @@ def _exit(bars, entry_index, stop, target, side, hold):
             if hi >= target:
                 return index, target
         else:
-            if hi >= stop:
-                return index, max(op, stop)
-            if lo <= target:
+            ask_shift = bar["spread"] * point
+            if hi + ask_shift >= stop:
+                return index, max(op + ask_shift, stop)
+            if lo + ask_shift <= target:
                 return index, target
     if last_index - entry_index < hold:
         return None  # no exit and not enough bars for the declared timeout
-    return last_index - 1, bars[last_index - 1]["close"]
+    last = bars[last_index - 1]
+    ask_shift = last["spread"] * point if side == "SELL" else 0.0
+    return last_index - 1, last["close"] + ask_shift
+
+
+def _mid(execution_price, spread, side, *, opening):
+    """Execution price -> mid. Buying pays ASK (mid + s/2), selling receives BID (mid - s/2)."""
+    buys = (side == "BUY") == opening
+    return execution_price - spread / 2 if buys else execution_price + spread / 2
 
 
 def validate_registration(registry, hypothesis_id):
@@ -135,7 +150,9 @@ def simulate(bars_by_tf, spec, hypothesis_id, *, point: float):
         sig = detected[0]
         if sig.data_until > asof or sig.entry_at != asof or sig.side != side:
             raise ValidationError("simulation_lookahead_or_side")
-        entry = m5[i + 1]["open"]  # actual next candle OPEN, not prior signal close
+        spread_entry = m5[i + 1]["spread"] * point
+        # Actual next candle OPEN (BID). Execution: BUY at ASK, SELL at BID.
+        entry = m5[i + 1]["open"] + (spread_entry if side == "BUY" else 0.0)
         stop, target = sig.invalidation, sig.target
         if not (stop < entry < target if side == "BUY" else target < entry < stop):
             continue
@@ -143,19 +160,24 @@ def simulate(bars_by_tf, spec, hypothesis_id, *, point: float):
                      else (entry - target) / (stop - entry))
         if actual_rr < param(params, "min_rr", low=.01):
             continue  # next-open gap can destroy the prospective RR geometry
-        outcome = _exit(m5, i + 1, stop, target, side, hold)
+        outcome = _exit(m5, i + 1, stop, target, side, hold, point)
         if outcome is None:
             continue  # missing or gapped future: not a closed trade
-        j, price = outcome
+        j, exit_price = outcome
+        spread_exit = m5[j]["spread"] * point
         exit_at = as_utc(m5[j]["closed_at_utc"])
         if exit_at > DEV_CUTOFF_UTC:
             raise ValidationError("holdout_data_forbidden")
         tid = sha256_text(canonical([hypothesis_id, asof.isoformat(), side]))[:24]
         trade = Trade(trade_id=tid, side=side, entry_at=asof, exit_at=exit_at,
                       known_at=exit_at, data_until=sig.data_until,
-                      entry_mid=entry, exit_mid=price, stop_distance=abs(entry - stop),
-                      spread_entry=m5[i + 1]["spread"] * point,
-                      spread_exit=m5[j]["spread"] * point, trend_side=sig.trend_side)
+                      # CostModel charges half spread per side around a MID price, so
+                      # store mids: entry/exit execution price -/+ half its spread.
+                      entry_mid=_mid(entry, spread_entry, side, opening=True),
+                      exit_mid=_mid(exit_price, spread_exit, side, opening=False),
+                      stop_distance=abs(entry - stop),
+                      spread_entry=spread_entry, spread_exit=spread_exit,
+                      trend_side=sig.trend_side)
         results.append(trade)
         next_allowed = exit_at
     return results

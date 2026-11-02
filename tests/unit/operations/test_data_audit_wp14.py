@@ -222,6 +222,45 @@ class TestDataAuditWP14(unittest.TestCase):
         self.assertIn("RECONCILIATION_MISMATCH", checks["tick_snapshot_reconciliation"]["reason"])
         self.assertEqual(report["symbol_day_summary"].get("EURUSD.vx:2026-10-30"), "karantina")
 
+    def _audit_relative_tick_file(self, content: bytes, recorded_sha: str | None, state_dir):
+        now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
+        rel = Path("broker-ticks") / "EURUSD.vx" / "2026-10-30.csv.gz"
+        target = Path(self.temp_dir.name) / rel
+        target.parent.mkdir(parents=True)
+        target.write_bytes(content)
+        with self._writable_db() as db:
+            db.execute(
+                "INSERT INTO broker_tick_days(symbol, day, status, sha256, file, snapshots_checked, "
+                "snapshots_matched, server_shift_hours) VALUES(?,?,?,?,?,?,?,?)",
+                ("EURUSD.vx", "2026-10-30", "STORED", recorded_sha, rel.as_posix(), 10, 10, 2),
+            )
+        uri = self.db_path.resolve().as_uri() + "?mode=ro"
+        with contextlib.closing(sqlite3.connect(uri, uri=True)) as ro_db:
+            ro_db.execute("PRAGMA query_only = ON")
+            report = data_health.audit(ro_db, now, state_dir=state_dir)
+        return {f["check"]: f for f in report["findings"]}
+
+    def test_ledger_relative_tick_file_is_resolved_against_state_dir(self):
+        """The ledger stores 'broker-ticks/...' relative to the state dir, not to the CWD."""
+        content = b"tick-archive"
+        checks = self._audit_relative_tick_file(
+            content, hashlib.sha256(content).hexdigest(), self.temp_dir.name)
+        self.assertEqual(checks["tick_file_hash"]["status"], "PASS")
+
+    def test_stored_tick_file_without_recorded_hash_is_blocked(self):
+        checks = self._audit_relative_tick_file(b"tick-archive", None, self.temp_dir.name)
+        self.assertEqual(checks["tick_file_hash"]["status"], "BLOCKED")
+        self.assertEqual(checks["tick_file_hash"]["reason"], "TICK_FILE_HASH_NOT_RECORDED")
+
+    def test_cli_audit_passes_state_dir_for_relative_tick_files(self):
+        content = b"tick-archive"
+        self._audit_relative_tick_file(content, hashlib.sha256(content).hexdigest(), None)
+        out = Path(self.temp_dir.name) / "audit.json"
+        check_stage0_health.main(["--state-dir", self.temp_dir.name, "--audit", "--output", str(out)])
+        findings = json.loads(out.read_text(encoding="utf-8"))["findings"]
+        statuses = {f["status"] for f in findings if f["check"] == "tick_file_hash"}
+        self.assertEqual(statuses, {"PASS"})
+
     def test_decision_shadow_completeness(self):
         """Incomplete decision_shadow modes per cycle x symbol triggers BLOCKED."""
         now = datetime(2026, 11, 2, 12, 0, tzinfo=timezone.utc)
