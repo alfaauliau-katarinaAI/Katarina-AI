@@ -64,16 +64,21 @@ def _exit_spec(spec):
 
 def _frozen_ticks(db, root: Path, symbol: str, day: str):
     row = db.execute(
-        "SELECT status, sha256, file, ticks FROM broker_tick_days "
+        "SELECT status, sha256, file, ticks, server_shift_hours, "
+        "snapshots_checked, snapshots_matched FROM broker_tick_days "
         "WHERE symbol=? AND day=?", (symbol, day)
     ).fetchone()
     if row is None or row[0] != "STORED" or not isinstance(row[1], str):
         raise ValidationError("BROKER_TICKS_NOT_VERIFIED:" + day)
+    if (type(row[4]) is not int or row[4] < -12 or row[4] > 14
+            or row[5] is None or row[6] is None or row[5] != row[6]):
+        raise ValidationError("BROKER_TICK_CLOCK_OR_RECONCILIATION_UNVERIFIED")
     file = row[2]
     if not isinstance(file, str) or not file or Path(file).is_absolute():
         raise ValidationError("BROKER_TICK_FILE_UNSAFE")
-    path = (root / file).resolve()
-    if root.resolve() not in path.parents or not path.is_file() or path.is_symlink():
+    raw_path = root / file
+    path = raw_path.resolve()
+    if raw_path.is_symlink() or root.resolve() not in path.parents or not path.is_file():
         raise ValidationError("BROKER_TICK_FILE_UNSAFE")
     # Independent bytes verification against the Stage0 tick ledger hash.
     digest = hashlib.sha256()
