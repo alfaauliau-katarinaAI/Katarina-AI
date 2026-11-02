@@ -109,6 +109,23 @@ def summarize(db: sqlite3.Connection, *, since: datetime = CUTOFF,
     gaps = [{"utc_day": day, "symbol": symbol, "reason": reason}
             for symbol, day, status, _, _, reason in within if status == "GAP"]
     failures = Counter((c[2] or "UNKNOWN") for c in session if c[1] != "OK")
+    # Drill down to symbols whose real broker quote was missing; do not invent
+    # an acceptable market session or rewrite failed quote statuses.
+    quote_failure_counts = Counter()
+    if "observer_quotes" in tables:
+        for stamp, symbol, reason in db.execute(
+            "SELECT observed_utc,symbol,reason FROM observer_quotes "
+            "WHERE status='FAILED' AND julianday(observed_utc)>=julianday(?) "
+            "AND julianday(observed_utc)<=julianday(?)",
+            (since.isoformat(), as_of.isoformat())
+        ):
+            if stage0_session_open(_utc(datetime.fromisoformat(stamp))):
+                quote_failure_counts[(symbol, reason or "UNKNOWN")] += 1
+    quote_failure_summary = [
+        {"symbol": symbol, "reason": reason, "count": count}
+        for (symbol, reason), count in sorted(quote_failure_counts.items(),
+                                            key=lambda entry: (-entry[1], entry[0]))
+    ]
     return {
         "type": "STAGE0_READ_ONLY_TRIAGE",
         "verdict": "DIAGNOSTIC_ONLY_NOT_STAGE0_PASS",
@@ -119,6 +136,7 @@ def summarize(db: sqlite3.Connection, *, since: datetime = CUTOFF,
         "session_success_rate": (round(sum(c[1] == "OK" for c in session) / len(session), 6)
                                  if session else None),
         "session_failure_reasons": dict(sorted(failures.items())),
+        "session_quote_failure_reasons": quote_failure_summary,
         "daily": daily,
         "complete_trading_days": complete_days,
         "tick_reconciliation_pre_cutoff_or_partial_day_EXCLUDED": totals(excluded),
