@@ -33,7 +33,7 @@ def dataset(side="BUY"):
     else:
         rows = [(111, 113, 109, 110), (110, 112, 108, 109),
                 (109, 111, 107, 108), (107, 107.5, 106.4, 106.5),
-                (106.8, 108, 105, 106), (106, 113, 94, 100),
+                (106.8, 108, 105, 106), (106, 115, 90, 100),
                 (100, 101, 99, 100)]
     return {"M5": [bar(ZERO + timedelta(minutes=i*5), 5, *row) for i,row in enumerate(rows)],
             "H1": h1}
@@ -85,6 +85,8 @@ class WP8bSimulationTest(unittest.TestCase):
         bars=dataset()
         bars["M5"][5]["time_utc"]=(ZERO+timedelta(minutes=31)).isoformat()
         bars["M5"][5]["closed_at_utc"]=(ZERO+timedelta(minutes=36)).isoformat()
+        bars["M5"][6]["time_utc"]=(ZERO+timedelta(minutes=36)).isoformat()
+        bars["M5"][6]["closed_at_utc"]=(ZERO+timedelta(minutes=41)).isoformat()
         self.assertEqual(simulate(bars,spec("BUY"),HID,point=.01),[])
 
     def test_holdout_row_rejected(self):
