@@ -930,7 +930,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP8c | **CODE DONE (merge)** — 30 Okt 2026, review Claude | #230 | 24 bar sekitar wajib; segmen VERIFIED hanya dengan sampel di dalamnya (tanpa ±200 hari); sampel wajib di kalender + `bars_sha256`; adapter menghitung ulang timeline/hash. Sisa: isi `us_release_calendar.csv` dari sumber resmi BLS dan buat laporan sampel dari bar nyata (belum ada alat CLI) |
 | WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
 | WP10a | **Selesai (merge)** — 30 Okt 2026, review Claude | #231 | Perbaikan review: parser ketat 4 kolom (baris rusak → `TICK_FILE_MALFORMED`, tidak dilewati), hari tanpa `server_shift_hours` (sebelum WP12) dikecualikan dan dilaporkan, quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`. Uji 2 juta tick < 50 MB lulus. Belum dijalankan di VPS |
-| WP4 | Menunggu WP13 merge (sama-sama mengubah `observer.py`) — Jules | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
+| WP4 | **CODE DONE (PR)** — 2 Nov 2026, Jules | Issue #229 | Jurnal kandidat riset `research_candidates`, isolasi observer, replay sinyal teknis offline, ekspor trade terverifikasi hash; orders_submitted=0 |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
 | WP15 | Revisi Manager; menunggu review independen dan CI final | #244 | Override tanggal resmi dihapus; aktivasi `None`, cutoff nonretroaktif dan DST diuji; belum berlaku di runtime |
 | WP8d | Revisi Manager; menunggu review independen dan CI final | #248 (Issue #245) | Mapping canonical→broker `.vx`, bar fail-closed dan hash deterministik; belum dipakai pada data broker nyata |
