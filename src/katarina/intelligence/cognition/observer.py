@@ -27,6 +27,7 @@ from katarina.intelligence.cognition.decision_inputs import (
     DecisionInputs, load_decision_inputs,
 )
 from katarina.intelligence.operations import observation_ledger as ledger
+from katarina.intelligence.operations import candidate_ledger
 from katarina.intelligence.news.news_intelligence import (
     MultiSourceNewsEngine,
 )
@@ -558,6 +559,14 @@ class BrainObserver:
             ledger_cycle=ledger.record_snapshot(store.db,observed_utc=now,clock_shift_hours=offset,
                 cards=report["symbols"],quotes=latest_quotes)
             report["observation_ledger"]={"status":"RECORDED","cycle_id":ledger_cycle}
+            # WP4: append-only research evidence, isolated from the active decision.
+            try:
+                candidate_rows = candidate_ledger.record(
+                    store.db, cycle_id=ledger_cycle,
+                    cards=report["symbols"], quotes=latest_quotes)
+                report["research_candidates"]={"status":"RECORDED","rows":candidate_rows}
+            except Exception as ex:
+                report["research_candidates"]={"status":"FAILED","error":type(ex).__name__}
             try:
                 for symbol in sorted(report["symbols"]):
                     action,side,blockers=shadow_rows.get(symbol,("WAIT","WAIT",("SHADOW_SENSOR_UNAVAILABLE",)))

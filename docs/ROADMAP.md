@@ -931,7 +931,7 @@ Menunggu Owner · Dikerjakan Claude.
 | WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
 | WP10a | **Selesai (merge)** — 30 Okt 2026, review Claude | #231 | Perbaikan review: parser ketat 4 kolom (baris rusak → `TICK_FILE_MALFORMED`, tidak dilewati), hari tanpa `server_shift_hours` (sebelum WP12) dikecualikan dan dilaporkan, quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`. Uji 2 juta tick < 50 MB lulus. Belum dijalankan di VPS |
 | WP4 | Menunggu WP13 merge (sama-sama mengubah `observer.py`) — Jules | Issue #229 | Jangan aktifkan sebelum prioritas P0 |
-| WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |
+| WP14 | **CODE DONE** — auditor bukti data read-only, deterministik, fail-closed (`mode=ro` + `PRAGMA query_only`, periksa siklus/quote/shift/tick/shadow/manifest, verdict berbobot, laporan `report_sha256`) | Draft PR | Siap review independen; bukan Tahap 0 PASS |
 | WP15 | Revisi Manager; menunggu review independen dan CI final | #244 | Override tanggal resmi dihapus; aktivasi `None`, cutoff nonretroaktif dan DST diuji; belum berlaku di runtime |
 | WP8d | Revisi Manager; menunggu review independen dan CI final | #248 (Issue #245) | Mapping canonical→broker `.vx`, bar fail-closed dan hash deterministik; belum dipakai pada data broker nyata |
 | WP16 | Dalam review; CI PASS, approval independen pending | #247 | Status tanpa profil/token, bind loopback default; audit deployment eksternal terpisah, tanpa deploy |
