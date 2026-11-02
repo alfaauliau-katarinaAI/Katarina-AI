@@ -911,7 +911,8 @@ def audit(
         overall_verdict = "BLOCKED"
     elif not statuses or statuses == {"NO_DATA"}:
         overall_verdict = "NO_DATA"
-    elif "PASS" in statuses and "BLOCKED" not in statuses:
+    elif statuses == {"PASS"}:
+        # Fail closed: a positive check never masks missing required evidence.
         overall_verdict = "PASS"
     else:
         overall_verdict = "IN_PROGRESS"
