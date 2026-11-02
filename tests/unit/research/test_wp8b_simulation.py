@@ -79,7 +79,8 @@ class WP8bSimulationTest(unittest.TestCase):
         original=simulate(bars,spec("BUY"),HID,point=.01)
         bars["M5"].append(bar(ZERO+timedelta(minutes=35),5,300,400,200,350))
         again=simulate(bars,spec("BUY"),HID,point=.01)
-        self.assertEqual(original,again)
+        self.assertEqual(again[:len(original)],original)
+        # Additional future bars may create NEW trades but must not revise old outcomes.
 
     def test_future_gap_drops_incomplete_outcome(self):
         bars=dataset()
