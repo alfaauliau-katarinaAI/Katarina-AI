@@ -24,7 +24,6 @@ from katarina.research.dev_dataset import DEV_CUTOFF_UTC  # noqa: E402
 from katarina.research.validation import (  # noqa: E402
     HypothesisRegistry, Trade, ValidationError, canonical,
 )
-from katarina.research.setups.simulator import trade_to_dict  # noqa: E402
 
 MAX_TICKS_PER_DAY = 3_000_000
 MAX_CANDIDATES = 400
