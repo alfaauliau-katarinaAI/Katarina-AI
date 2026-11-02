@@ -48,8 +48,13 @@ def _checked_rows(rows, tf, minutes):
     return output
 
 
-def _exit(bars, entry_index, stop, target, side, hold):
-    """Conservative: invalidation before target on same bar; gaps fill at open when worse."""
+def _exit(bars, entry_index, stop, target, side, hold, point):
+    """Conservative: invalidation before target on same bar; gaps fill at open when worse.
+
+    MT5 bars are BID prices. A SELL position is closed at the ASK, so its stop and
+    target are checked against bid + bar spread; checking the bid alone would hit
+    SELL stops late and targets early (optimistic).
+    """
     expected_open = as_utc(bars[entry_index]["time_utc"])
     last_index = min(entry_index + hold, len(bars))
     for index in range(entry_index, last_index):
@@ -65,9 +70,10 @@ def _exit(bars, entry_index, stop, target, side, hold):
             if hi >= target:
                 return index, target
         else:
-            if hi >= stop:
-                return index, max(op, stop)
-            if lo <= target:
+            ask_shift = bar["spread"] * point
+            if hi + ask_shift >= stop:
+                return index, max(op + ask_shift, stop)
+            if lo + ask_shift <= target:
                 return index, target
     if last_index - entry_index < hold:
         return None  # no exit and not enough bars for the declared timeout
@@ -143,7 +149,7 @@ def simulate(bars_by_tf, spec, hypothesis_id, *, point: float):
                      else (entry - target) / (stop - entry))
         if actual_rr < param(params, "min_rr", low=.01):
             continue  # next-open gap can destroy the prospective RR geometry
-        outcome = _exit(m5, i + 1, stop, target, side, hold)
+        outcome = _exit(m5, i + 1, stop, target, side, hold, point)
         if outcome is None:
             continue  # missing or gapped future: not a closed trade
         j, price = outcome

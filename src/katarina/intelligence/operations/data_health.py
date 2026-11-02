@@ -393,6 +393,7 @@ def audit(
     since: datetime | None = None,
     dataset_dir: str | None = None,
     interval_seconds: int = 60,
+    state_dir: str | Path | None = None,
 ) -> dict:
     """WP14 read-only, deterministic data evidence audit (Tahap 0-1).
 
@@ -662,10 +663,21 @@ def audit(
             # Check tick file hash if file exists on disk
             if t_file and t_status != "GAP":
                 f_path = Path(t_file)
-                if f_path.is_file():
+                # The ledger stores tick files relative to the observer state directory.
+                if not f_path.is_absolute() and state_dir is not None:
+                    f_path = Path(state_dir) / f_path
+                if f_path.is_file() and not t_sha256:
+                    findings.append({
+                        "check": "tick_file_hash",
+                        "status": "BLOCKED",
+                        "reason": "TICK_FILE_HASH_NOT_RECORDED",
+                        "source": {"table": "broker_tick_days", "key": key_id},
+                    })
+                    _mark_symbol_day(symbol, day_str, "karantina")
+                elif f_path.is_file():
                     with f_path.open("rb") as f_obj:
                         calc_sha = hashlib.file_digest(f_obj, "sha256").hexdigest()
-                    if t_sha256 and calc_sha != t_sha256:
+                    if calc_sha != t_sha256:
                         findings.append({
                             "check": "tick_file_hash",
                             "status": "BLOCKED",
