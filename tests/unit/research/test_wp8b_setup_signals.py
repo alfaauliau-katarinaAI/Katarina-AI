@@ -63,14 +63,14 @@ class WP8bSignalsTest(unittest.TestCase):
         bars = {"M5": m5([(100.2, 101, 99.8, 100.5),
                            (100.5, 102, 100.0, 101),
                            (101, 102.5, 100.5, 101.5),
-                           (100.2, 102, 100.6, 101.3)]),
+                           (100.7, 102, 100.6, 101.3)]),
                 "H1": past_trend()}
         signals = pullback.detect(bars, BASE + timedelta(minutes=20), args(), "BUY")
         self.assertEqual(len(signals), 1)
         self.assertEqual(signals[0].trend_side, "BUY")
 
     def test_fibonacci_buy(self):
-        bars = {"M5": m5([(105.5, 107, 105, 106.0)]),
+        bars = {"M5": m5([(101.5, 103, 101, 102.0)]),
                 "H1": past_trend()}
         out = fibonacci.detect(bars, BASE + timedelta(minutes=5), args(), "BUY")
         self.assertEqual(len(out), 1)
@@ -85,6 +85,33 @@ class WP8bSignalsTest(unittest.TestCase):
         out = market_structure.detect(bars, BASE + timedelta(minutes=20), args(), "BUY")
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0].setup, "market_structure")
+
+    def test_pullback_sell(self):
+        bars = {"M5": m5([(111, 112, 109, 110),
+                           (110, 111, 108.5, 109),
+                           (109, 110, 108, 108.5),
+                           (110, 110.5, 108, 108.7)]),
+                "H1": past_trend("SELL")}
+        out = pullback.detect(bars, BASE + timedelta(minutes=20), args(), "SELL")
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0].trend_side, "SELL")
+
+    def test_fibonacci_sell(self):
+        bars = {"M5": m5([(112, 113, 110.5, 111)]),
+                "H1": past_trend("SELL")}
+        out = fibonacci.detect(bars, BASE + timedelta(minutes=5), args(), "SELL")
+        self.assertEqual(len(out), 1)
+        self.assertLess(out[0].target, out[0].entry_mid)
+
+    def test_structure_break_sell(self):
+        bars = {"M5": m5([(111, 113, 109, 110),
+                           (110, 112, 108, 109),
+                           (109, 111, 107, 108),
+                           (107, 107.5, 106.4, 106.5)]),
+                "H1": past_trend("SELL")}
+        out = market_structure.detect(bars, BASE + timedelta(minutes=20), args(), "SELL")
+        self.assertEqual(len(out), 1)
+        self.assertGreater(out[0].invalidation, out[0].entry_mid)
 
     def test_future_ohlc_never_read(self):
         bars = {"M5": m5([(101, 102, 100, 101)] * 3 +
