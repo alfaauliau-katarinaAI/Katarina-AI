@@ -114,9 +114,12 @@ def summarize(db: sqlite3.Connection, *, since: datetime = CUTOFF,
     quote_failure_counts = Counter()
     if "observer_quotes" in tables:
         for stamp, symbol, reason in db.execute(
-            "SELECT observed_utc,symbol,reason FROM observer_quotes "
-            "WHERE status='FAILED' AND julianday(observed_utc)>=julianday(?) "
-            "AND julianday(observed_utc)<=julianday(?)",
+            "SELECT c.observed_utc,q.symbol,q.reason "
+            "FROM observer_quotes q JOIN observer_cycles c ON c.cycle_id=q.cycle_id "
+            "WHERE q.status='FAILED' "
+            "AND c.status IN ('OK','PARTIAL','NO_MARKET_DATA','FAILED') "
+            "AND julianday(c.observed_utc)>=julianday(?) "
+            "AND julianday(c.observed_utc)<=julianday(?)",
             (since.isoformat(), as_of.isoformat())
         ):
             if stage0_session_open(_utc(datetime.fromisoformat(stamp))):
