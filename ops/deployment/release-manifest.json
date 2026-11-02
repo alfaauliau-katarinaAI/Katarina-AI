@@ -1086,9 +1086,9 @@
       "sha256": "d6955aba47b1ebd2b13a0951e16ebbeb1d2aebc74d7e73db4e7784951768606e"
     },
     "src/katarina/intelligence/operations/data_health.py": {
-      "bytes": 45002,
-      "normalized_sha256": "a6c3cf2a649c9107005c356f971e21876a2dbdf597f5eafd8517fe2c184f0703",
-      "sha256": "a6c3cf2a649c9107005c356f971e21876a2dbdf597f5eafd8517fe2c184f0703"
+      "bytes": 44883,
+      "normalized_sha256": "40b5144dab05cd90ad608dc4350689c79c7976a0d1b0b9d590bf7b661da04004",
+      "sha256": "40b5144dab05cd90ad608dc4350689c79c7976a0d1b0b9d590bf7b661da04004"
     },
     "src/katarina/intelligence/operations/file_housekeeping.py": {
       "bytes": 6717,

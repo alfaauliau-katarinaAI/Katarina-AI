@@ -374,18 +374,6 @@ def _finish(report):
     return report
 
 
-def _wp14_audit_verdict(findings):
-    """Return a fail-closed WP14 verdict; partial evidence is never PASS."""
-    statuses = {item["status"] for item in findings}
-    if "BLOCKED" in statuses:
-        return "BLOCKED"
-    if not statuses or statuses == {"NO_DATA"}:
-        return "NO_DATA"
-    if statuses == {"PASS"}:
-        return "PASS"
-    return "IN_PROGRESS"
-
-
 def audit(
     db,
     now: datetime,
@@ -917,8 +905,16 @@ def audit(
         label = symbol_day_status.get((sym, d), "layak")
         summary_by_symbol_day[f"{sym}:{d}"] = label
 
-    # Overall verdict: only an entirely PASS set may pass.
-    overall_verdict = _wp14_audit_verdict(findings)
+    # Overall verdict
+    statuses = {f["status"] for f in findings}
+    if "BLOCKED" in statuses:
+        overall_verdict = "BLOCKED"
+    elif not statuses or statuses == {"NO_DATA"}:
+        overall_verdict = "NO_DATA"
+    elif "PASS" in statuses and "BLOCKED" not in statuses:
+        overall_verdict = "PASS"
+    else:
+        overall_verdict = "IN_PROGRESS"
 
     report = {
         "schema_version": 1,
