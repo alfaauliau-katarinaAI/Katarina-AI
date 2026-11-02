@@ -558,7 +558,7 @@ class TestExplicitIsolatedMT5Guard(unittest.TestCase):
             exe = self._research_exe(root)
             ok = FakeMT5(exe)
             self.assertEqual(initialize_research_terminal(ok, exe), exe.resolve())
-            self.assertEqual(ok.calls, [{"path": str(exe), "portable": True}])
+            self.assertEqual(ok.calls, [{"path": str(exe.resolve()), "portable": True}])
             self.assertFalse(ok.closed)
             wrong = FakeMT5(exe, data_path=str(Path(other)))
             with self.assertRaisesRegex(ValidationError, "PATH_MISMATCH"):
