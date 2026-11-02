@@ -23,6 +23,8 @@ class TestStage0CutoffTriage(unittest.TestCase):
             db.execute("CREATE TABLE broker_tick_days("
                        "symbol TEXT, day TEXT, status TEXT, snapshots_checked INT, "
                        "snapshots_matched INT, reason TEXT)")
+            db.execute("CREATE TABLE observer_quotes("
+                       "observed_utc TEXT, symbol TEXT, status TEXT, reason TEXT)")
             db.executemany("INSERT INTO observer_cycles VALUES(?,?,?,?)", [
                 ("2026-10-27T10:00:00+00:00", "PARTIAL", "OLD_CLOCK", 2),
                 ("2026-10-28T17:01:00+00:00", "OK", None, 2),
@@ -30,6 +32,11 @@ class TestStage0CutoffTriage(unittest.TestCase):
                 ("2026-10-29T11:00:00+00:00", "PARTIAL", "PARTIAL_QUOTE", 2),
                 ("2026-10-30T10:00:00+00:00", "OK", None, 2),
                 ("2026-10-30T23:55:00+00:00", "OK", None, -1),
+            ])
+            db.executemany("INSERT INTO observer_quotes VALUES(?,?,?,?)", [
+                ("2026-10-27T10:00:00+00:00", "XAUUSD.vx", "FAILED", "OLD_CLOCK"),
+                ("2026-10-29T11:00:00+00:00", "XAUUSD.vx", "FAILED", "no_past_broker_bidask_quote"),
+                ("2026-10-30T23:55:00+00:00", "NAS100.vx", "FAILED", "MARKET_CLOSED"),
             ])
             db.executemany("INSERT INTO broker_tick_days VALUES(?,?,?,?,?,?)", [
                 ("XAUUSD.vx", "2026-10-27", "STORED", 120, 20, None),
@@ -52,6 +59,9 @@ class TestStage0CutoffTriage(unittest.TestCase):
         self.assertEqual(report["session_cycles"], 4)
         self.assertEqual(report["session_ok"], 3)
         self.assertEqual(report["session_failure_reasons"], {"PARTIAL_QUOTE": 1})
+        self.assertEqual(report["session_quote_failure_reasons"], [
+            {"symbol": "XAUUSD.vx", "reason": "no_past_broker_bidask_quote", "count": 1},
+        ])
         self.assertEqual(report["tick_reconciliation_pre_cutoff_or_partial_day_EXCLUDED"]["mismatches"], 100)
         self.assertEqual(report["tick_reconciliation_completed_days_after_cutoff"]["mismatches"], 0)
         self.assertEqual(report["tick_reconciliation_completed_days_after_cutoff"]["checked"], 20)
