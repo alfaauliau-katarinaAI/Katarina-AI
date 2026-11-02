@@ -90,6 +90,17 @@ class TestStage0CutoffTriage(unittest.TestCase):
         self.assertEqual(json.loads(output.getvalue())["live_execution_authorized"], False)
         self.assertNotIn("MetaTrader5", sys.modules)
 
+    def test_approved_future_scheduler_template_fails_closed_on_old_cli(self):
+        """Static only: never starts a task, imports MT5, or changes production."""
+        root = Path(__file__).resolve().parents[3]
+        text = (root / "ops" / "maintenance" /
+                "run-stage0-health-with-cutoff.example.ps1").read_text(encoding="utf-8")
+        self.assertIn("2026-10-28T16:57:00+00:00", text)
+        self.assertIn("STAGE0_HEALTH_CUTOFF_NOT_SUPPORTED_DO_NOT_REPLACE_SCHEDULER", text)
+        self.assertIn("Select-String -LiteralPath $cli", text)
+        self.assertIn("--since $cutoff", text)
+        self.assertNotIn("MetaTrader5.initialize(", text)
+
     def test_naive_time_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "UTC_AWARE_TIME_REQUIRED"):
             triage.summarize(sqlite3.connect(":memory:"), as_of=datetime(2026, 11, 3))
