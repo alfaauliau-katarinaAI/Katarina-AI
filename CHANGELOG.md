@@ -3,7 +3,7 @@
 ## 2026-11-02 — review Claude atas integrasi #265: tiga perbaikan
 
 - WP14: audit menyelesaikan path arsip tick relatif terhadap `--state-dir` (ledger menyimpan `broker-ticks/...`), dan berkas tick tanpa hash tercatat menjadi `BLOCKED` (`TICK_FILE_HASH_NOT_RECORDED`).
-- WP8b: stop/target SELL diperiksa di ASK (bid bar + spread × point); sebelumnya SELL kena stop terlambat dan target terlalu cepat.
+- WP8b: stop/target SELL diperiksa di ASK (bid bar + spread × point); semua harga eksekusi (entry ASK/BID, exit stop/target/timeout) dikonversi ke mid sebelum `CostModel` memotong setengah spread, sehingga net R = P&L ASK/BID persis, juga saat spread entry ≠ exit.
 - WP4: tes integrasi observer — kegagalan candidate ledger tidak mengubah keputusan, ledger, atau order (ide tes dari PR Jules #261). Tanpa berkas terkunci; LIVE tetap OFF.
 
 ## 2026-11-02 — WP14: auditor bukti data read-only, deterministik, fail-closed
