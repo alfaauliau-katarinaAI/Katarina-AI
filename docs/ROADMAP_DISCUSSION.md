@@ -252,6 +252,8 @@ Koordinasi teknis dan bukti per SHA: [Issue #249](https://github.com/alfaauliau-
 
 **Batas Owner terbaru:** LIVE OFF, zero orders, tanpa deploy VPS atau aktivasi trading. Risk Governor, promotion_lock, holdout dan data/ledger historis tetap. MERGED ≠ DEPLOYED ≠ STAGE0 PASSED. Tidak ada izin operasional tambahan dari closeout ini.
 
+**Verifikasi Manager 2 Nov 2026 (bukan keputusan Owner baru):** closeout kode batch D7 dikonfirmasi di [Issue #249](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/249): #241/#247/#248/#233/#244 semua MERGED, `main=30962e6`, CI Body/Ubuntu/Windows PASS. **VPS masih `64497b5`**, Stage0 belum lulus. Sisa keputusan/validasi yang tetap terbuka: aktivasi rollover masa depan, aturan branch protection belum terverifikasi aktif, uji NTP runtime setelah deployment yang diotorisasi, WP6 restart tanpa login, tanggal/berkas broker historis sah dan D2 mode aktif `measured_inputs` masih menunggu Owner. Hasil pemeriksaan `decision_shadow` read-only 2 Nov: 16.275 kartu `measured_inputs`, seluruhnya WAIT (bukan profit backtest), diagnosis lanjut WP4/WP9. Tidak ada perubahan setelan VPS atau promosi.
+
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
