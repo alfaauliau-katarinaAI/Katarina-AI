@@ -459,7 +459,7 @@ di dokumen ini. Bila ada yang bertentangan, aturan di bagian lain roadmap dan `C
 **Urutan paket.** Paket bernomor dikerjakan berurutan; paket berlabel "paralel" boleh berjalan bersamaan karena
 berkasnya berbeda. Paket berikutnya dimulai setelah prasyaratnya **di-merge** (bukan hanya dibuka).
 
-Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, WP12, WP10b, WP10a, WP8c (kode).
+Selesai (rincian di R5 dan riwayat Git): WP1, WP2, WP3, WP8a, WP9a, WP9b, WP11, WP12, WP10b, WP10a, WP8c, WP13, WP15, WP8d, WP16 (kode merged; deployment terpisah).
 
 | Fase | Paket | Oleh | Prasyarat | Ukuran perkiraan | Status (rinci di R5) |
 |---|---|---|---|---|---|
@@ -926,22 +926,22 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | Dalam review; MERGE BLOCKED tanpa approval independen | #233 | MERGED #233 (31 Okt); NOT DEPLOYED |
-| WP8c | **CODE DONE (merge)** — 30 Okt 2026, review Claude | #230 | 24 bar sekitar wajib; segmen VERIFIED hanya dengan sampel di dalamnya (tanpa ±200 hari); sampel wajib di kalender + `bars_sha256`; adapter menghitung ulang timeline/hash. Sisa: isi `us_release_calendar.csv` dari sumber resmi BLS dan buat laporan sampel dari bar nyata (belum ada alat CLI) |
+| WP13 | Selesai (merge 31 Okt); belum deploy | #233 | NTP/tick fail-closed dan `--since` merged; CI 3/3 PASS, VPS masih `64497b5`, Stage0 IN_PROGRESS |
+| WP8c | Selesai (merge 30 Okt); data resmi belum lengkap | #230 | Bukti historis fail-closed sudah di kode; WP8d CLI sudah merged #248; CSV BLS masih header, belum ada bukti broker asli |
 | WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
 | WP10a | **Selesai (merge)** — 30 Okt 2026, review Claude | #231 | Perbaikan review: parser ketat 4 kolom (baris rusak → `TICK_FILE_MALFORMED`, tidak dilewati), hari tanpa `server_shift_hours` (sebelum WP12) dikecualikan dan dilaporkan, quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`. Uji 2 juta tick < 50 MB lulus. Belum dijalankan di VPS |
-| WP4 | Menunggu WP13 merge (sama-sama mengubah `observer.py`) — Jules | Issue #229 | Coding berlangsung — Jules task #229; belum PR/merge |
-| WP14 | Menunggu prasyarat (WP13, WP8c) | – | Coding berlangsung — Jules task #250; belum PR/merge |
-| WP15 | Revisi Manager; menunggu review independen dan CI final | #244 | MERGED #244; tanggal aktivasi None, belum deploy |
-| WP8d | Revisi Manager; menunggu review independen dan CI final | #248 (Issue #245) | MERGED #248; kalender BLS/bar broker nyata belum divalidasi |
-| WP16 | Dalam review; CI PASS, approval independen pending | #247 | MERGED #247; penerapan keamanan runtime eksternal belum diverifikasi |
+| WP4 | Sedang dikerjakan Jules (ACK task 2 Nov) | Issue #229; PR pending | Candidate ledger/replay, tanpa VPS atau pengubahan keputusan; review/CI menunggu |
+| WP14 | Sedang dikerjakan Jules (ACK task 2 Nov) | Issue #250; PR pending | Auditor read-only deterministik; review/CI menunggu |
+| WP15 | Selesai (merge 31 Okt); aktivasi None | #244 | Nonretroaktif; tanggal efektif future belum disahkan; belum deploy |
+| WP8d | Selesai (merge 31 Okt); bukti broker belum ada | #248 | Mapping `.vx`, CLI evidence; belum mengisi kalender BLS dan belum dijalankan pada bar broker asli |
+| WP16 | Selesai (merge 31 Okt); deployment unverified | #247 | Status OAuth tanpa profil + default loopback; tidak ada verifikasi instance eksternal berjalan |
 | WP6 | Berjalan 5 simbol; **startup pasca-reboot belum terbukti** | – | 7 simbol setelah WP13 dan pemantauan 21:00–22:00 UTC. Jalan mundur: ganti nama `C:\Katarina\private\observer_universe.json` |
-| WP8b | Menunggu prasyarat (WP8c + dataset diekspor) | – | Antrean coding #253; task Jules belum diterima; bukti historis belum siap |
+| WP8b | Coding siap spesifikasi, belum ada task Jules aktif | Issue #253 | Trigger Jules gagal (2 Nov); backtest real menunggu dev dataset berprovenance jam independen |
 | WP9c | Menunggu prasyarat (≥ 3 hari bursa `decision_shadow`) + persetujuan Owner | – | – |
 | WP9d | Menunggu prasyarat (WP4, WP8b) | – | – |
 | WP5 | Menunggu prasyarat (WP4 + ≥ 5 hari bursa data kandidat) | – | – |
 | WP7 | Menunggu Owner | – | – |
-| Selesai | WP1 #184 · WP2 #190 · WP3 #191 · WP8a #195 · WP9a #196 · WP9b #205 · WP11 #201 · WP12 #204 · WP10b #225 · WP10a #231 · WP8c #230 (kode) | – | Catatan review ada di deskripsi/komentar PR masing-masing |
+| Selesai | WP1 #184 · WP2 #190 · WP3 #191 · WP8a #195 · WP9a #196 · WP9b #205 · WP11 #201 · WP12 #204 · WP10b #225 · WP10a #231 · WP8c #230 · WP13 #233 · WP15 #244 · WP8d #248 · WP16 #247 (kode merged, bukan deployed) | – | Catatan review ada di deskripsi/komentar PR masing-masing |
 
 ### R6. Perintah siap pakai untuk pelaksana
 
