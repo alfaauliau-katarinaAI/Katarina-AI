@@ -846,7 +846,7 @@ Menunggu Owner · Dikerjakan Claude.
 |---|---|---|---|
 | WP13 | Dalam review; konflik dengan `main`, **jangan deploy** | #219 | Periksa konflik, bukti offset dan `--since`, CI penuh serta fail-closed sebelum merge |
 | WP8c | Siap dikerjakan (prioritas setelah WP13) | – | Wajib bukti jam bar historis dan tes deterministik |
-| WP10b | Menunggu akses/aktivitas **Google Jules**; label `jules` belum berarti coding | Issue #220 | Owner sambungkan Jules–GitHub, Jules satu branch/PR; review Claude |
+| WP10b | Dalam review #225 (coding selesai) | #225 | Swap dan sensitivitas biaya di CostModel; reuse _nth_sunday data_health |
 | WP10a | Siap setelah urgensi P0/P1 | – | – |
 | WP4 | Siap setelah urgensi P0/P1 | – | – |
 | WP14 | Menunggu prasyarat (WP13, WP8c) | – | – |

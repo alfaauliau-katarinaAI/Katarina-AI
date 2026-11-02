@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-10-30 — WP10b: swap dan sensitivitas biaya di alat validasi (#225)
+
+- Modul `katarina.research.validation`: `CostModel` menambah `swap_long_per_night`, `swap_short_per_night`, dan `triple_swap_weekday` (default 0 dan 2, backward compatible). Rollover dihitung pukul 17:00 waktu New York (21:00 UTC saat DST AS, 22:00 UTC di luar DST AS) memakai ulang helper `_nth_sunday` dari `data_health.py` untuk posisi terbuka `entry_at < rollover <= exit_at`. Swap kredit ditulis nol (konservatif).
+- Pembanding sisi acak (`baselines`) menggunakan biaya ekspektasi 50/50 rata-rata BUY/SELL per trade.
+- Tambah blok `cost_sensitivity` di laporan validasi: `net_expectancy_r_1_5x`, `net_expectancy_r_2_0x`, `breakeven_cost_multiple`, dan `cost_verdict` (`NO_GROSS_EDGE`, `NOT_ECONOMIC_AFTER_COSTS`, `POSITIVE_AFTER_COSTS`). Verdict promosi dan aturan gate tidak berubah.
+- Update `docs/research/VALIDATION_PROTOCOL.md` (paragraf biaya) dan 7 unit tes baru di `tests/unit/research/test_validation.py`. Berkas terkunci tidak diubah; LIVE OFF; tanpa perubahan VPS.
+
 ## 2026-10-30 — prioritas operasional dan handoff Google Jules
 
 - Sinkronkan antrean darurat di `docs/ROADMAP.md`: Tahap 0 observer/10 hari bursa, WP13 jam broker, WP8c, delegasi WP10b via Jules, konflik PR docs, dan WP6 reboot. Tidak ada paket atau gerbang trading baru.
