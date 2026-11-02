@@ -19,25 +19,30 @@ class TestStage0CutoffTriage(unittest.TestCase):
         self.dbpath = Path(self.root.name) / "context.sqlite3"
         with sqlite3.connect(self.dbpath) as db:
             db.execute("CREATE TABLE observer_cycles("
-                       "observed_utc TEXT, status TEXT, reason TEXT, clock_shift_hours REAL)")
+                       "observed_utc TEXT, status TEXT, reason TEXT, clock_shift_hours REAL, cycle_id TEXT)")
             db.execute("CREATE TABLE broker_tick_days("
                        "symbol TEXT, day TEXT, status TEXT, snapshots_checked INT, "
                        "snapshots_matched INT, reason TEXT)")
             db.execute("CREATE TABLE observer_quotes("
-                       "observed_utc TEXT, symbol TEXT, status TEXT, reason TEXT)")
-            db.executemany("INSERT INTO observer_cycles VALUES(?,?,?,?)", [
-                ("2026-10-27T10:00:00+00:00", "PARTIAL", "OLD_CLOCK", 2),
-                ("2026-10-28T17:01:00+00:00", "OK", None, 2),
-                ("2026-10-29T10:00:00+00:00", "OK", None, 2),
-                ("2026-10-29T11:00:00+00:00", "PARTIAL", "PARTIAL_QUOTE", 2),
-                ("2026-10-30T10:00:00+00:00", "OK", None, 2),
-                ("2026-10-30T23:55:00+00:00", "OK", None, -1),
+                       "observed_utc TEXT, symbol TEXT, status TEXT, reason TEXT, cycle_id TEXT)")
+            db.executemany("INSERT INTO observer_cycles VALUES(?,?,?,?,?)", [
+                ("2026-10-27T10:00:00+00:00", "PARTIAL", "OLD_CLOCK", 2, "old"),
+                ("2026-10-28T17:01:00+00:00", "OK", None, 2, "oct28"),
+                ("2026-10-29T10:00:00+00:00", "OK", None, 2, "oct29ok"),
+                ("2026-10-29T11:00:00+00:00", "PARTIAL", "PARTIAL_QUOTE", 2, "oct29partial"),
+                ("2026-10-30T10:00:00+00:00", "OK", None, 2, "oct30ok"),
+                ("2026-10-30T23:55:00+00:00", "OK", None, -1, "oct30late"),
             ])
-            db.executemany("INSERT INTO observer_quotes VALUES(?,?,?,?)", [
-                ("2026-10-27T10:00:00+00:00", "XAUUSD.vx", "FAILED", "OLD_CLOCK"),
-                ("2026-10-29T11:00:00+00:00", "XAUUSD.vx", "FAILED", "no_past_broker_bidask_quote"),
-                ("2026-10-30T23:55:00+00:00", "NAS100.vx", "FAILED", "MARKET_CLOSED"),
+            db.executemany("INSERT INTO observer_quotes VALUES(?,?,?,?,?)", [
+                ("2026-10-27T10:00:00+00:00", "XAUUSD.vx", "FAILED", "OLD_CLOCK", "old"),
+                ("2026-10-29T11:00:00+00:00", "XAUUSD.vx", "FAILED", "no_past_broker_bidask_quote", "oct29partial"),
+                ("2026-10-30T23:55:00+00:00", "NAS100.vx", "FAILED", "MARKET_CLOSED", "oct30late"),
             ])
+            db.execute("INSERT INTO observer_cycles VALUES(?,?,?,?,?)",
+                       ("2026-10-29T12:00:00+00:00", "ATTEMPT_FAILED", None, 2, "attempt"))
+            db.execute("INSERT INTO observer_quotes VALUES(?,?,?,?,?)",
+                       ("2026-10-29T12:00:00+00:00",
+                        "NAS100.vx", "FAILED", "FAILED_ATTEMPT_SHOULD_NOT_COUNT", "attempt"))
             db.executemany("INSERT INTO broker_tick_days VALUES(?,?,?,?,?,?)", [
                 ("XAUUSD.vx", "2026-10-27", "STORED", 120, 20, None),
                 ("XAUUSD.vx", "2026-10-28", "STORED", 15, 15, None),
