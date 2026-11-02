@@ -139,6 +139,10 @@ def simulate(bars_by_tf, spec, hypothesis_id, *, point: float):
         stop, target = sig.invalidation, sig.target
         if not (stop < entry < target if side == "BUY" else target < entry < stop):
             continue
+        actual_rr = ((target - entry) / (entry - stop) if side == "BUY"
+                     else (entry - target) / (stop - entry))
+        if actual_rr < param(params, "min_rr", low=.01):
+            continue  # next-open gap can destroy the prospective RR geometry
         outcome = _exit(m5, i + 1, stop, target, side, hold)
         if outcome is None:
             continue  # missing or gapped future: not a closed trade
