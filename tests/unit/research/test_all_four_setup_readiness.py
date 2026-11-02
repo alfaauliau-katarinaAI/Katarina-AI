@@ -43,6 +43,12 @@ def synthetic_case(method, side):
     prev = [(100, 102, 99, 100),
             (100, 103, 99.5, 101),
             (101, 104, 99.8, 102)]
+    # Fibonacci must not signal on the warm-up bars: only the final closed M5
+    # candle is a directional retracement confirmation (and its mirror for SELL).
+    if method == "fibonacci":
+        prev = [(101, 102, 99, 100),
+                (102, 103, 99.5, 101),
+                (103, 104, 99.8, 102)]
     last = {
         "market_structure": (104.5, 106, 103.5, 105),
         "pullback": (100.5, 103, 100, 102),
