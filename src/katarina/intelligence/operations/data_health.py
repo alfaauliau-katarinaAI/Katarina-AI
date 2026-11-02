@@ -372,3 +372,561 @@ def _finish(report):
     canonical = json.dumps(report, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     report["report_sha256"] = hashlib.sha256(canonical.encode("ascii")).hexdigest()
     return report
+
+
+def audit(
+    db,
+    now: datetime,
+    *,
+    since: datetime | None = None,
+    dataset_dir: str | None = None,
+    interval_seconds: int = 60,
+) -> dict:
+    """WP14 read-only, deterministic data evidence audit (Tahap 0-1).
+
+    Evaluates:
+      - Cycles: status, reason, cycle gaps (outages).
+      - Quotes: presence, quote_age, negative spread / inverted quote.
+      - Daily clock shift: mixed shifts per day (excluding NO_MARKET_DATA).
+      - Tick days: status, server_shift_hours, file sha256.
+      - Data gaps: data_gaps table entries.
+      - Reconciliation: snapshots_matched / snapshots_checked ratio.
+      - Decision shadow: full rows per cycle x symbol for expected modes.
+      - Optional dataset manifest: WP8a manifest hash, file sha256, chunk clock_evidence.
+
+    Returns deterministic findings:
+      {"check": str, "status": PASS|BLOCKED|NO_DATA, "reason": str|None, "source": {"table"|"file": ..., ...}}
+    and summary per symbol x day: "layak" | "terbatas" | "karantina".
+    Report contains a canonical report_sha256.
+    """
+    from pathlib import Path
+    import re
+
+    if now.tzinfo is None:
+        raise ValueError("aware_clock_required")
+    now = now.astimezone(timezone.utc)
+    if since is not None:
+        if not isinstance(since, datetime) or since.tzinfo is None or since > now:
+            raise ValueError("since_requires_aware_datetime_not_in_future")
+        since = since.astimezone(timezone.utc)
+
+    tables = _tables(db)
+    findings: list[dict] = []
+    symbol_day_status: dict[tuple[str, str], str] = {}  # (symbol, day) -> "layak" | "terbatas" | "karantina"
+
+    def _mark_symbol_day(sym: str, d: str, status: str):
+        key = (sym, d)
+        current = symbol_day_status.get(key, "layak")
+        priority = {"karantina": 3, "terbatas": 2, "layak": 1}
+        if priority.get(status, 1) > priority.get(current, 1):
+            symbol_day_status[key] = status
+
+    # 1. Base ledger presence
+    if not {"observer_cycles", "observer_quotes"} <= tables:
+        findings.append({
+            "check": "ledger_present",
+            "status": "NO_DATA",
+            "reason": "OBSERVATION_LEDGER_MISSING",
+            "source": {"table": "sqlite_master", "key": "observer_cycles"},
+        })
+        report = {
+            "schema_version": 1,
+            "stage": "WP14_DATA_EVIDENCE_AUDIT",
+            "as_of_utc": now.isoformat(),
+            "since_utc": since.isoformat() if since is not None else None,
+            "dataset_dir": str(dataset_dir) if dataset_dir is not None else None,
+            "live_execution_authorized": False,
+            "findings": findings,
+            "symbol_day_summary": {},
+            "verdict": "NO_DATA",
+        }
+        canonical_str = json.dumps(report, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+        report["report_sha256"] = hashlib.sha256(canonical_str.encode("ascii")).hexdigest()
+        return report
+
+    clause_cycles, params_cycles = _since_filter("observed_utc", since, now)
+
+    # Fetch all cycles in window
+    cycle_rows = db.execute(
+        f"SELECT cycle_id, observed_utc, status, reason, clock_shift_hours, orders_submitted "
+        f"FROM observer_cycles WHERE {COUNTED}{clause_cycles} ORDER BY observed_utc",
+        params_cycles,
+    ).fetchall()
+
+    if not cycle_rows:
+        findings.append({
+            "check": "cycles_recorded",
+            "status": "NO_DATA",
+            "reason": "NO_CYCLES_IN_WINDOW",
+            "source": {"table": "observer_cycles", "key": "observed_utc"},
+        })
+
+    # Group cycles by cycle_id
+    cycles_by_id = {row[0]: row for row in cycle_rows}
+    cycle_times = [datetime.fromisoformat(row[1]) for row in cycle_rows]
+
+    # Audit cycle failures and reasons
+    for cid, obs_utc, c_status, c_reason, shift, orders in cycle_rows:
+        day_str = obs_utc[:10]
+        if c_status != "OK":
+            if not c_reason:
+                findings.append({
+                    "check": "cycle_failure_reason",
+                    "status": "BLOCKED",
+                    "reason": "CYCLE_FAILURE_WITHOUT_REASON",
+                    "source": {"table": "observer_cycles", "key": cid},
+                })
+            else:
+                findings.append({
+                    "check": "cycle_status",
+                    "status": "BLOCKED" if c_status == "FAILED" else "PASS",
+                    "reason": c_reason,
+                    "source": {"table": "observer_cycles", "key": cid},
+                })
+
+    # Cycle outages / gaps (gaps between cycles > 3 * interval_seconds in session)
+    outages = []
+    for a, b in zip(cycle_times, cycle_times[1:]):
+        gap_sec = (b - a).total_seconds()
+        if gap_sec > 3 * interval_seconds and stage0_session_open(a + timedelta(seconds=interval_seconds)):
+            outages.append((a.isoformat(), b.isoformat(), int(gap_sec)))
+
+    for start_gap, end_gap, gap_sec in outages:
+        findings.append({
+            "check": "cycle_continuity",
+            "status": "BLOCKED",
+            "reason": f"CYCLE_GAP_EXCEEDED_{gap_sec}S",
+            "source": {"table": "observer_cycles", "key": f"{start_gap}/{end_gap}"},
+        })
+
+    # 2. Daily Clock Shift Check: mixed clock shift per day except when status == 'NO_MARKET_DATA'
+    # Group non-null shift values per day
+    shifts_per_day: dict[str, set[float]] = {}
+    for cid, obs_utc, c_status, c_reason, shift, orders in cycle_rows:
+        if c_status == "NO_MARKET_DATA":
+            continue
+        if shift is not None:
+            shifts_per_day.setdefault(obs_utc[:10], set()).add(float(shift))
+
+    for day_str, shifts in sorted(shifts_per_day.items()):
+        if len(shifts) > 1:
+            findings.append({
+                "check": "daily_clock_shift_uniform",
+                "status": "BLOCKED",
+                "reason": f"MIXED_DAILY_CLOCK_SHIFTS_{sorted(shifts)}",
+                "source": {"table": "observer_cycles", "key": day_str},
+            })
+            # Mark all symbols on this day as quarantined
+            # We will mark symbols after fetching quotes
+        else:
+            findings.append({
+                "check": "daily_clock_shift_uniform",
+                "status": "PASS",
+                "reason": None,
+                "source": {"table": "observer_cycles", "key": day_str},
+            })
+
+    mixed_shift_days = {d for d, s in shifts_per_day.items() if len(s) > 1}
+
+    # 3. Quotes Audit: presence, age, negative spread / inverted quote
+    clause_quotes, params_quotes = _since_filter("observed_utc", since, now)
+    quote_rows = db.execute(
+        f"SELECT cycle_id, symbol, observed_utc, tick_epoch, bid, ask, spread, quote_age_seconds, status, reason "
+        f"FROM observer_quotes WHERE 1=1{clause_quotes} ORDER BY observed_utc, symbol",
+        params_quotes,
+    ).fetchall()
+
+    if not quote_rows and cycle_rows:
+        findings.append({
+            "check": "quotes_recorded",
+            "status": "NO_DATA",
+            "reason": "NO_QUOTES_IN_WINDOW",
+            "source": {"table": "observer_quotes", "key": "observed_utc"},
+        })
+
+    MAX_ALLOWED_QUOTE_AGE_SECONDS = 300.0
+
+    all_symbols = set()
+    all_symbol_days = set()
+
+    for cid, symbol, obs_utc, tick_epoch, bid, ask, spread, quote_age, q_status, q_reason in quote_rows:
+        day_str = obs_utc[:10]
+        key_id = f"{cid}:{symbol}"
+        all_symbols.add(symbol)
+        all_symbol_days.add((symbol, day_str))
+
+        if day_str in mixed_shift_days:
+            _mark_symbol_day(symbol, day_str, "karantina")
+
+        if q_status != "OK":
+            findings.append({
+                "check": "quote_status",
+                "status": "BLOCKED",
+                "reason": q_reason or "QUOTE_NOT_OK",
+                "source": {"table": "observer_quotes", "key": key_id},
+            })
+            _mark_symbol_day(symbol, day_str, "terbatas")
+            continue
+
+        # Inverted quote or negative spread
+        is_negative_spread = False
+        if bid is not None and ask is not None and (ask < bid or (spread is not None and spread < 0)):
+            is_negative_spread = True
+            findings.append({
+                "check": "quote_spread_non_negative",
+                "status": "BLOCKED",
+                "reason": f"NEGATIVE_SPREAD_{spread}_BID_{bid}_ASK_{ask}",
+                "source": {"table": "observer_quotes", "key": key_id},
+            })
+            _mark_symbol_day(symbol, day_str, "karantina")
+
+        # Quote age excessive
+        if quote_age is not None and quote_age > MAX_ALLOWED_QUOTE_AGE_SECONDS:
+            findings.append({
+                "check": "quote_freshness",
+                "status": "BLOCKED",
+                "reason": f"STALE_QUOTE_AGE_{quote_age}S",
+                "source": {"table": "observer_quotes", "key": key_id},
+            })
+            _mark_symbol_day(symbol, day_str, "terbatas")
+
+        if not is_negative_spread and (quote_age is None or quote_age <= MAX_ALLOWED_QUOTE_AGE_SECONDS):
+            _mark_symbol_day(symbol, day_str, "layak")
+
+    # 4. Tick Days Audit: status, server_shift_hours, file sha256
+    if "broker_tick_days" in tables:
+        has_server_shift = "server_shift_hours" in {row[1] for row in db.execute("PRAGMA table_info(broker_tick_days)")}
+        shift_col = "server_shift_hours" if has_server_shift else "NULL"
+        tick_day_rows = db.execute(
+            f"SELECT symbol, day, status, sha256, file, snapshots_checked, snapshots_matched, {shift_col} "
+            "FROM broker_tick_days ORDER BY day, symbol"
+        ).fetchall()
+
+        for symbol, day_str, t_status, t_sha256, t_file, sn_checked, sn_matched, s_shift in tick_day_rows:
+            day_moment = datetime.fromisoformat(day_str).replace(tzinfo=timezone.utc)
+            if since is not None and day_moment < since.replace(hour=0, minute=0, second=0, microsecond=0):
+                continue
+            if day_moment > now:
+                continue
+
+            all_symbols.add(symbol)
+            all_symbol_days.add((symbol, day_str))
+            key_id = f"{symbol}:{day_str}"
+
+            # Check status
+            if t_status not in SETTLED_TICK_STATES:
+                findings.append({
+                    "check": "tick_day_settled",
+                    "status": "BLOCKED",
+                    "reason": f"TICK_DAY_STATUS_{t_status}",
+                    "source": {"table": "broker_tick_days", "key": key_id},
+                })
+                _mark_symbol_day(symbol, day_str, "terbatas")
+            else:
+                findings.append({
+                    "check": "tick_day_settled",
+                    "status": "PASS",
+                    "reason": None,
+                    "source": {"table": "broker_tick_days", "key": key_id},
+                })
+
+            # Check server_shift_hours
+            if s_shift is None and t_status != "GAP":
+                findings.append({
+                    "check": "tick_day_server_shift",
+                    "status": "BLOCKED",
+                    "reason": "MISSING_SERVER_SHIFT_HOURS",
+                    "source": {"table": "broker_tick_days", "key": key_id},
+                })
+                _mark_symbol_day(symbol, day_str, "karantina")
+            elif s_shift is not None:
+                findings.append({
+                    "check": "tick_day_server_shift",
+                    "status": "PASS",
+                    "reason": None,
+                    "source": {"table": "broker_tick_days", "key": key_id},
+                })
+
+            # Check tick file hash if file exists on disk
+            if t_file and t_status != "GAP":
+                f_path = Path(t_file)
+                if f_path.is_file():
+                    with f_path.open("rb") as f_obj:
+                        calc_sha = hashlib.file_digest(f_obj, "sha256").hexdigest()
+                    if t_sha256 and calc_sha != t_sha256:
+                        findings.append({
+                            "check": "tick_file_hash",
+                            "status": "BLOCKED",
+                            "reason": f"TICK_FILE_HASH_MISMATCH_{calc_sha}_EXPECTED_{t_sha256}",
+                            "source": {"file": str(f_path), "sha256": calc_sha},
+                        })
+                        _mark_symbol_day(symbol, day_str, "karantina")
+                    else:
+                        findings.append({
+                            "check": "tick_file_hash",
+                            "status": "PASS",
+                            "reason": None,
+                            "source": {"file": str(f_path), "sha256": calc_sha},
+                        })
+                elif t_sha256:
+                    findings.append({
+                        "check": "tick_file_hash",
+                        "status": "NO_DATA",
+                        "reason": f"TICK_FILE_NOT_FOUND_ON_DISK_{t_file}",
+                        "source": {"table": "broker_tick_days", "key": key_id},
+                    })
+
+            # Reconciliation ratio
+            if sn_checked > 0:
+                if sn_matched == sn_checked:
+                    findings.append({
+                        "check": "tick_snapshot_reconciliation",
+                        "status": "PASS",
+                        "reason": None,
+                        "source": {"table": "broker_tick_days", "key": key_id},
+                    })
+                else:
+                    findings.append({
+                        "check": "tick_snapshot_reconciliation",
+                        "status": "BLOCKED",
+                        "reason": f"RECONCILIATION_MISMATCH_MATCHED_{sn_matched}_CHECKED_{sn_checked}",
+                        "source": {"table": "broker_tick_days", "key": key_id},
+                    })
+                    _mark_symbol_day(symbol, day_str, "karantina")
+            else:
+                findings.append({
+                    "check": "tick_snapshot_reconciliation",
+                    "status": "NO_DATA",
+                    "reason": "NO_SNAPSHOTS_CHECKED",
+                    "source": {"table": "broker_tick_days", "key": key_id},
+                })
+    else:
+        findings.append({
+            "check": "broker_tick_days_table",
+            "status": "NO_DATA",
+            "reason": "BROKER_TICK_DAYS_TABLE_MISSING",
+            "source": {"table": "sqlite_master", "key": "broker_tick_days"},
+        })
+
+    # 5. Data Gaps Audit
+    if "data_gaps" in tables:
+        gap_clause, gap_params = _since_filter("end_utc", since, now)
+        gap_rows = db.execute(
+            f"SELECT stream, symbol, start_utc, end_utc, reason FROM data_gaps WHERE 1=1{gap_clause} "
+            "ORDER BY start_utc",
+            gap_params,
+        ).fetchall()
+        for stream, sym, g_start, g_end, g_reason in gap_rows:
+            day_str = g_start[:10]
+            findings.append({
+                "check": "data_gap_recorded",
+                "status": "BLOCKED",
+                "reason": f"DATA_GAP_{stream}_{g_reason}",
+                "source": {"table": "data_gaps", "key": f"{stream}:{sym or '*'}:{g_start}:{g_end}"},
+            })
+            if sym:
+                _mark_symbol_day(sym, day_str, "terbatas")
+    else:
+        findings.append({
+            "check": "data_gaps_table",
+            "status": "NO_DATA",
+            "reason": "DATA_GAPS_TABLE_MISSING",
+            "source": {"table": "sqlite_master", "key": "data_gaps"},
+        })
+
+    # 6. Decision Shadow Completeness Audit
+    # Per cycle x symbol, check whether decision_shadow has both modes: legacy_fail_closed and measured_inputs
+    if "decision_shadow" in tables:
+        from katarina.intelligence.cognition.decision_inputs import VALID_MODES
+
+        # Get all (cycle_id, symbol) observed in quotes for cycles in window
+        quotes_by_cycle = {}
+        for row in quote_rows:
+            quotes_by_cycle.setdefault(row[0], set()).add(row[1])
+
+        # Get all decision_shadow entries
+        shadow_clause, shadow_params = _since_filter("c.observed_utc", since, now)
+        shadow_rows = db.execute(
+            "SELECT d.cycle_id, d.symbol, d.mode, d.action, d.conditional_side "
+            "FROM decision_shadow d JOIN observer_cycles c ON c.cycle_id=d.cycle_id "
+            f"WHERE {COUNTED}{shadow_clause} ORDER BY d.cycle_id, d.symbol, d.mode",
+            shadow_params,
+        ).fetchall()
+
+        shadow_by_cycle_sym = {}
+        for cid, sym, mode, act, side in shadow_rows:
+            shadow_by_cycle_sym.setdefault((cid, sym), set()).add(mode)
+
+        # Check completeness for each cycle with status OK
+        for cid, c_row in cycles_by_id.items():
+            if c_row[2] != "OK":
+                continue  # only completed/OK cycles expect shadow records
+            obs_utc = c_row[1]
+            day_str = obs_utc[:10]
+            syms_in_cycle = quotes_by_cycle.get(cid, set())
+            for sym in sorted(syms_in_cycle):
+                modes_present = shadow_by_cycle_sym.get((cid, sym), set())
+                missing_modes = sorted(VALID_MODES - modes_present)
+                key_id = f"{cid}:{sym}"
+                if missing_modes:
+                    findings.append({
+                        "check": "decision_shadow_completeness",
+                        "status": "BLOCKED",
+                        "reason": f"MISSING_SHADOW_MODES_{missing_modes}",
+                        "source": {"table": "decision_shadow", "key": key_id},
+                    })
+                    _mark_symbol_day(sym, day_str, "terbatas")
+                else:
+                    findings.append({
+                        "check": "decision_shadow_completeness",
+                        "status": "PASS",
+                        "reason": None,
+                        "source": {"table": "decision_shadow", "key": key_id},
+                    })
+    else:
+        findings.append({
+            "check": "decision_shadow_table",
+            "status": "NO_DATA",
+            "reason": "DECISION_SHADOW_TABLE_MISSING",
+            "source": {"table": "sqlite_master", "key": "decision_shadow"},
+        })
+
+    # 7. Optional Dataset Manifest Check (WP8a dataset DIR)
+    if dataset_dir is not None:
+        d_path = Path(dataset_dir)
+        manifest_path = d_path / "manifest.json"
+        if not manifest_path.is_file():
+            findings.append({
+                "check": "dataset_manifest_exists",
+                "status": "BLOCKED",
+                "reason": "MANIFEST_FILE_NOT_FOUND",
+                "source": {"file": str(manifest_path), "sha256": ""},
+            })
+        else:
+            try:
+                manifest_text = manifest_path.read_text(encoding="utf-8")
+                manifest_data = json.loads(manifest_text)
+                expected_sha = manifest_data.get("manifest_sha256")
+                body = {k: v for k, v in manifest_data.items() if k != "manifest_sha256"}
+                canonical_manifest = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+                calc_manifest_sha = hashlib.sha256(canonical_manifest.encode("utf-8")).hexdigest()
+
+                if calc_manifest_sha != expected_sha:
+                    findings.append({
+                        "check": "dataset_manifest_hash",
+                        "status": "BLOCKED",
+                        "reason": f"MANIFEST_HASH_MISMATCH_{calc_manifest_sha}_EXPECTED_{expected_sha}",
+                        "source": {"file": str(manifest_path), "sha256": calc_manifest_sha},
+                    })
+                else:
+                    findings.append({
+                        "check": "dataset_manifest_hash",
+                        "status": "PASS",
+                        "reason": None,
+                        "source": {"file": str(manifest_path), "sha256": calc_manifest_sha},
+                    })
+
+                # Check files and clock_evidence in manifest
+                files = manifest_data.get("files", {})
+                for f_rel, meta in sorted(files.items()):
+                    f_file_path = d_path / f_rel
+                    f_expected_sha = meta.get("sha256")
+                    if not f_file_path.is_file():
+                        findings.append({
+                            "check": "dataset_file_exists",
+                            "status": "BLOCKED",
+                            "reason": f"DATASET_FILE_MISSING_{f_rel}",
+                            "source": {"file": str(f_file_path), "sha256": ""},
+                        })
+                    else:
+                        with f_file_path.open("rb") as f_in:
+                            f_sha = hashlib.file_digest(f_in, "sha256").hexdigest()
+                        if f_sha != f_expected_sha:
+                            findings.append({
+                                "check": "dataset_file_hash",
+                                "status": "BLOCKED",
+                                "reason": f"FILE_HASH_MISMATCH_{f_sha}_EXPECTED_{f_expected_sha}",
+                                "source": {"file": str(f_file_path), "sha256": f_sha},
+                            })
+                        else:
+                            findings.append({
+                                "check": "dataset_file_hash",
+                                "status": "PASS",
+                                "reason": None,
+                                "source": {"file": str(f_file_path), "sha256": f_sha},
+                            })
+
+                    # Verify clock_evidence
+                    clock_evidence = meta.get("clock_evidence", [])
+                    if not clock_evidence:
+                        findings.append({
+                            "check": "dataset_clock_evidence",
+                            "status": "BLOCKED",
+                            "reason": f"CLOCK_EVIDENCE_MISSING_FOR_{f_rel}",
+                            "source": {"file": str(f_file_path), "sha256": f_expected_sha or ""},
+                        })
+                    else:
+                        evidence_valid = True
+                        for chunk in clock_evidence:
+                            shift = chunk.get("shift_hours")
+                            src_sha = chunk.get("source_sha256")
+                            time_basis = chunk.get("time_basis")
+                            if (type(shift) is not int or not -12 <= shift <= 14
+                                    or time_basis != "INDEPENDENT_UTC"
+                                    or not isinstance(src_sha, str)
+                                    or not re.fullmatch(r"[a-fA-F0-9]{64}", src_sha)):
+                                evidence_valid = False
+                                break
+                        if not evidence_valid:
+                            findings.append({
+                                "check": "dataset_clock_evidence",
+                                "status": "BLOCKED",
+                                "reason": f"INVALID_CLOCK_EVIDENCE_IN_{f_rel}",
+                                "source": {"file": str(f_file_path), "sha256": f_expected_sha or ""},
+                            })
+                        else:
+                            findings.append({
+                                "check": "dataset_clock_evidence",
+                                "status": "PASS",
+                                "reason": None,
+                                "source": {"file": str(f_file_path), "sha256": f_expected_sha or ""},
+                            })
+            except Exception as exc:
+                findings.append({
+                    "check": "dataset_manifest_readable",
+                    "status": "BLOCKED",
+                    "reason": f"MANIFEST_READ_ERROR_{type(exc).__name__}",
+                    "source": {"file": str(manifest_path), "sha256": ""},
+                })
+
+    # Build summary per symbol x day: "layak" | "terbatas" | "karantina"
+    summary_by_symbol_day = {}
+    for (sym, d) in sorted(all_symbol_days):
+        label = symbol_day_status.get((sym, d), "layak")
+        summary_by_symbol_day[f"{sym}:{d}"] = label
+
+    # Overall verdict
+    statuses = {f["status"] for f in findings}
+    if "BLOCKED" in statuses:
+        overall_verdict = "BLOCKED"
+    elif not statuses or statuses == {"NO_DATA"}:
+        overall_verdict = "NO_DATA"
+    elif "PASS" in statuses and "BLOCKED" not in statuses:
+        overall_verdict = "PASS"
+    else:
+        overall_verdict = "IN_PROGRESS"
+
+    report = {
+        "schema_version": 1,
+        "stage": "WP14_DATA_EVIDENCE_AUDIT",
+        "as_of_utc": now.isoformat(),
+        "since_utc": since.isoformat() if since is not None else None,
+        "dataset_dir": str(dataset_dir) if dataset_dir is not None else None,
+        "live_execution_authorized": False,
+        "findings": sorted(findings, key=lambda x: (x["check"], x["status"], json.dumps(x["source"], sort_keys=True))),
+        "symbol_day_summary": summary_by_symbol_day,
+        "verdict": overall_verdict,
+    }
+    canonical_str = json.dumps(report, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    report["report_sha256"] = hashlib.sha256(canonical_str.encode("ascii")).hexdigest()
+    return report
