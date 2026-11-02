@@ -171,9 +171,9 @@
       "sha256": "162d8a25b76e1ca42f8d0fd23e59e97b8d77dfcab5faf9acfaf12bfc25a91cdb"
     },
     "scripts/ai/check_stage0_health.py": {
-      "bytes": 2381,
-      "normalized_sha256": "019c2305c37736565f19f94635875d39ca56e05f0298d58a389cca6259ea6513",
-      "sha256": "019c2305c37736565f19f94635875d39ca56e05f0298d58a389cca6259ea6513"
+      "bytes": 3257,
+      "normalized_sha256": "0d69c355e298e99247c7545b7fb72dc9529093b4d95b6739a593c8de4dad4a70",
+      "sha256": "0d69c355e298e99247c7545b7fb72dc9529093b4d95b6739a593c8de4dad4a70"
     },
     "scripts/ai/hf_archive_sync.py": {
       "bytes": 32143,
