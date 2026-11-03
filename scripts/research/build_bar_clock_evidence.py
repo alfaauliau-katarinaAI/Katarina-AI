@@ -79,6 +79,56 @@ def build_evidence(
     return report
 
 
+def validate_research_terminal_path(path: str | Path) -> Path:
+    """Require an explicitly nominated, operator-marked portable research terminal.
+
+    The marker is an operator assertion, NOT permission to launch MT5 on the active VPS.
+    Never fall back to implicit MetaTrader5.initialize() discovery.
+    """
+    candidate = Path(path).expanduser()
+    if not candidate.is_absolute() or candidate.is_symlink():
+        raise ValidationError("ISOLATED_TERMINAL_ABSOLUTE_PATH_REQUIRED")
+    try:
+        terminal = candidate.resolve(strict=True)
+    except (OSError, RuntimeError):
+        raise ValidationError("ISOLATED_TERMINAL_NOT_FOUND") from None
+    if terminal.name.lower() != "terminal64.exe" or not terminal.is_file():
+        raise ValidationError("ISOLATED_TERMINAL_EXE_REQUIRED")
+    if is_path_inside_repo(terminal):
+        raise ValidationError("ISOLATED_TERMINAL_MUST_BE_OUTSIDE_REPO")
+    attestation = terminal.parent / ".katarina-research-terminal"
+    if attestation.is_symlink() or not attestation.is_file():
+        raise ValidationError("ISOLATED_TERMINAL_MARKER_REQUIRED")
+    try:
+        approved = attestation.read_text(encoding="utf-8").strip() == "ISOLATED_RESEARCH_ONLY"
+    except (OSError, UnicodeError):
+        approved = False
+    if not approved:
+        raise ValidationError("ISOLATED_TERMINAL_MARKER_INVALID")
+    return terminal
+
+
+def initialize_research_terminal(mt5, terminal_path: str | Path) -> Path:
+    """Refuse implicit attachment, nonportable data roots or enabled AutoTrading."""
+    terminal = validate_research_terminal_path(terminal_path)
+    if not mt5.initialize(path=str(terminal), portable=True):
+        raise ValidationError("ISOLATED_TERMINAL_INITIALIZE_FAILED")
+    try:
+        info = mt5.terminal_info()
+        if info is None:
+            raise ValidationError("ISOLATED_TERMINAL_IDENTITY_UNAVAILABLE")
+        expected = terminal.parent
+        if (Path(info.path).resolve() != expected or
+                Path(info.data_path).resolve() != expected):
+            raise ValidationError("ISOLATED_TERMINAL_PATH_MISMATCH")
+        if info.trade_allowed is not False:
+            raise ValidationError("ISOLATED_TERMINAL_AUTOTRADING_MUST_BE_OFF")
+    except Exception:
+        mt5.shutdown()
+        raise
+    return terminal
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build historical bar clock evidence report.")
     parser.add_argument(
@@ -98,6 +148,8 @@ def main() -> int:
         help="Maximum releases to process (default: 50)",
     )
 
+    parser.add_argument("--terminal-path", required=True,
+                        help="Absolute terminal64.exe of a SEPARATE portable MT5 research instance; operator marker required")
     parser.add_argument("--broker-suffix", default=".vx",
                         help="Broker symbol suffix (default: .vx, matching observer universe; use '' for unsuffixed symbols)")
     args = parser.parse_args()
@@ -113,8 +165,10 @@ def main() -> int:
         sys.stderr.write("ERROR: MetaTrader5 package not available.\n")
         return 1
 
-    if not mt5.initialize():
-        sys.stderr.write("ERROR: Failed to initialize MT5 connection.\n")
+    try:
+        initialize_research_terminal(mt5, args.terminal_path)
+    except (ValidationError, OSError) as err:
+        sys.stderr.write(f"FAIL-CLOSED: {err}\n")
         return 1
 
     try:

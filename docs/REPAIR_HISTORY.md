@@ -21,6 +21,51 @@ Dokumen ini adalah **satu-satunya jurnal hasil perbaikan yang terverifikasi**: m
 4. `CHANGELOG.md` tetap mencatat ringkasan perubahan per PR; detail diagnosis dan hasil pemulihan hanya di sini, dengan tautan ke PR. `PROJECT_STATUS.md` hanya menyimpan kondisi saat ini dan merujuk ID perbaikan bila diperlukan.
 5. Pengembangan lewat GitHub dan PR + CI. VPS hanya untuk pengujian yang diizinkan. Tidak ada perubahan yang mengaktifkan LIVE, order, membuka holdout, atau melemahkan Risk Governor tanpa keputusan Owner yang berlaku.
 
+## RH-010 — Audit gabungan WP14 / WP8b / WP4: pengamanan data dan koreksi akuntansi spread
+
+**Tanggal bukti:** 2 November 2026 (WIB) · **Status:** hanya **BRANCH RISET TERINTEGRASI**, CI 3/3 PASS; belum merged ke `main` maupun dideploy.
+
+| Aspek | Bukti verifikasi |
+|---|---|
+| Gejala dan akar masalah | **TERBUKTI pada review Claude/Manager:** WP14 membuka tick relatif dari CWD, bukan state-dir, dan file ada tanpa SHA dapat dianggap PASS; simulator SELL menggunakan BID untuk exit/TP/SL serta inkonsistensi exit timeout dan penghitungan spread dua kali pada harga yang bukan mid; tes isolasi ledger saat gagal belum tercakup. |
+| Perbaikan sumber | `src/katarina/intelligence/operations/data_health.py` dan `scripts/ai/check_stage0_health.py`: path tick terhadap state-dir, hash hilang -> BLOCKED, tetap fail-closed `PASS+NO_DATA != PASS`; `src/katarina/research/setups/simulator.py`: BUY entry ASK/exit BID, SELL entry BID/exit ASK, timeout dan stop, simpan mid untuk `CostModel` tanpa double-charge; tes isolasi ledger/observer. |
+| PR dan SHA | [#266](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/266) `ebd358b4` masuk **hanya ke branch integrasi riset** [#265](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/265) pada merge `cd3b576d42aeb98dd8cdadbbac849cc8b568ef44`. |
+| Bukti tes | CI [41478763744](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/41478763744) dan **CI final gabungan** [41480635219](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/41480635219) **Body/Ubuntu/Windows sukses**. Test tambahan membandingkan P&L ASK/BID dengan `CostModel` untuk spread entry/exit berbeda; isolasi observer 0 order. |
+| Perlindungan terhadap regresi source Jules | PR #259 HEAD `ce7c4074` sesudah versi fixed `f919d5c9` mengembalikan `PASS+NO_DATA -> PASS` dan menghapus sejumlah tes penutupan SQLite Windows. Branch itu **CLOSED UNMERGED**; kode terintegrasi mempertahankan helper fail-closed dan tesnya. |
+| Batas hasil | Tidak ada approval manusia untuk merge `main`, tidak ada deploy, tidak ada bukti jam M5 broker sebelum cutoff, belum ada backtest nyata, Stage0 IN_PROGRESS dan LIVE OFF. |
+
+## RH-009 — WP15 rollover New York nonretroaktif
+
+**Tanggal:** 31 Oktober 2026 · **Status:** KODE MERGED + CI PASS; tanggal efektif `None` (nonaktif), VPS belum dideploy.
+- **Masalah/akar:** aturan sesi Stage0 memakai rollover UTC tetap dan berisiko salah saat DST; override retroaktif dalam revisi PR dinilai tidak aman pada review (terbukti dalam diff/review).
+- **Perbaikan:** `stage0_session_open` dan aturan DST dengan tes batas; mempertahankan `fx_session_open` untuk histori, `--since` WP13 tetap; tidak mengubah data lama atau mengaktifkan aturan historis.
+- **Bukti:** [PR #244](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/244), merge `30962e6`; CI 3/3 PASS (batch/merge didokumentasikan di [#249](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/249)).
+- **Sisa risiko:** tanggal efektif future dan rollout/restart memerlukan keputusan/izin terpisah; Stage0 tidak otomatis PASS.
+
+## RH-008 — WP13 trusted host NTP + progressive tick dan Stage0 --since
+
+**Tanggal:** 31 Oktober 2026 · **Status:** KODE MERGED + CI PASS; belum deploy.
+- **Masalah/akar:** inferensi jam broker dari quote stale/fallback berisiko UTC palsu; laporan Stage0 perlu cutoff sejak WP12 (terbukti pada audit WP13 dan review).
+- **Perbaikan:** `host_clock_probe.py`, `live_clock_probe.py`, `broker_clock_alignment.py`, `observer.py`, `data_health.py` dan CLI `--since` dengan fail-closed NTP/tick, alasan gagal yang tercatat, tes negatif.
+- **Bukti:** [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233) merge `27bf40c`; CI Body/Ubuntu/Windows PASS run `41149786169`; manifest 308 entries pada main final.
+- **Sisa risiko:** NTP runtime Windows dan hubungan broker nyata wajib diverifikasi beberapa interval sesudah izin deploy; observer lama berjalan di `64497b5`, Stage0 belum lulus.
+
+## RH-007 — WP8d alat bukti jam bar historis .vx
+
+**Tanggal:** 31 Oktober 2026 · **Status:** KODE MERGED + CI PASS; data/hasil broker nyata belum tersedia.
+- **Masalah/akar:** CLI awal memetakan canonical symbol langsung, bukan simbol broker `.vx`; provenance bar perlu deterministik (terbukti review).
+- **Perbaikan:** `research/bar_clock_evidence.py` + `scripts/research/build_bar_clock_evidence.py`, mapping `.vx`, kronologi bar, hash, reject bila tidak ada konsensus.
+- **Bukti:** [PR #248](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/248) merge `94c058e`; CI Body/Ubuntu/Windows PASS run `41149221348`.
+- **Sisa risiko:** kalender resmi BLS di repo masih header dan bar broker asli belum dijalankan/diuji; jangan klaim dataset dev terverifikasi.
+
+## RH-006 — WP16 keamanan OAuth status
+
+**Tanggal:** 31 Oktober 2026 · **Status:** KODE MERGED + CI PASS; deployment belum diaudit.
+- **Masalah/akar:** respons `/oauth/status` dan bind sebelumnya bisa memperluas paparan profil (terbukti review sumber).
+- **Perbaikan:** `oauth_gateway/server.js` menghapus profil dari status, default loopback `127.0.0.1`; tes statis negatif.
+- **Bukti:** [PR #247](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/247) merge `b720563`; CI Body/Ubuntu/Windows PASS run `41148118046`.
+- **Sisa risiko:** lokasi deploy eksternal dan konfigurasi gateway berjalan perlu audit; tidak menyatakan runtime otomatis aman.
+
 ## RH-005 — Bukti jam bar historis WP8c dibuat fail-closed
 
 **Tanggal:** 30 Oktober 2026 WIB

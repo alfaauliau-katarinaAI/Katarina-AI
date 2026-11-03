@@ -105,6 +105,27 @@ class ClockEvidenceWP13Tests(unittest.TestCase):
         self.assertFalse(finding.suitable_for_readonly_snapshot)
         self.assertEqual(finding.reason, "FX_MARKET_CLOSED")
 
+    def test_friday_after_close_stale_quotes_cannot_vote_a_false_shift(self):
+        """Production incident 30 Oct 2026 23:55 UTC (pre-WP13 code, VPS 64497b5).
+
+        Quotes frozen at the Friday close (~20:55 UTC, server +2) looked about
+        one hour *behind* the host clock, so the old voter accepted shift -1 and
+        all five tick days of 30 Oct became GAP (BROKER_SHIFT_CHANGED_DURING_DAY).
+        With a trusted host clock the canonical path must refuse to vote.
+        """
+        now = datetime(2026, 10, 30, 23, 55, 48, tzinfo=timezone.utc)
+        frozen = int(datetime(2026, 10, 30, 20, 55, 40, tzinfo=timezone.utc).timestamp() + 2 * 3600)
+        ticks = {"EURUSD.vx": frozen, "GBPUSD.vx": frozen - 7, "USDJPY.vx": frozen - 3}
+        self.assertEqual(round((frozen - now.timestamp()) / 3600), -1)  # the old false vote
+        trust = HostClockTrust(True, "TRUSTED_HOST_NTP", "NTP_SYNCHRONIZED",
+                               now - timedelta(minutes=10), 0.01, now, None,
+                               "time.windows.com", 5, "a" * 64)
+        finding = infer_clock_shift(ticks, now.timestamp(), host_trust=trust,
+                                    require_host_trust=True, broker_server="fixture")
+        self.assertFalse(finding.suitable_for_readonly_snapshot)
+        self.assertIsNone(finding.observed_hours_shift)
+        self.assertEqual(finding.reason, "FX_MARKET_CLOSED")
+
     def test_sunday_after_market_open_valid_with_fresh_quotes(self):
         sunday_open = datetime(2026, 10, 25, 21, 30, tzinfo=timezone.utc)
         sunday_ts = sunday_open.timestamp()

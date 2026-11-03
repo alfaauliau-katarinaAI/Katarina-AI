@@ -17,12 +17,12 @@ kategori D adalah kandidat untuk dicek manual, bukan bukti tidak terpakai.
 
 | Kategori | Arti | Jumlah |
 |---|---|---|
-| A | dipakai runtime/operasional atau workflow | 189 |
+| A | dipakai runtime/operasional atau workflow | 190 |
 | B | hanya dipakai tests | 40 |
-| C | hanya dipakai script non-operasional (riset dll.) | 17 |
+| C | hanya dipakai script non-operasional (riset dll.) | 24 |
 | D | tidak terjangkau dari root mana pun | 3 |
 
-Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
+Total modul: 257. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
 
 ## Root yang dipakai
 
@@ -35,16 +35,16 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | Modul | Kategori | via | Diimpor modul src |
 |---|---|---|---|
 | `katarina.intelligence.cognition.unified_brain` | A | runtime, ops, workflow, scripts, tests | `katarina.governance.unified_verification`, `katarina.intelligence.cognition.continuous_observation` |
-| `katarina.intelligence.cognition.adaptive_observation` | A | runtime, ops, workflow, scripts, tests | `katarina.intelligence.cognition.market_decision_pipeline`, `katarina.intelligence.cognition.unified_adaptive_research_cycle`, `katarina.intelligence.cognition.unified_research_handoff` |
+| `katarina.intelligence.cognition.adaptive_observation` | A | runtime, ops, workflow, research, scripts, tests | `katarina.intelligence.cognition.market_decision_pipeline`, `katarina.intelligence.cognition.unified_adaptive_research_cycle`, `katarina.intelligence.cognition.unified_research_handoff` |
 | `katarina.intelligence.cognition.market_decision` | A | runtime, ops, workflow, scripts, tests | `katarina.governance.unified_verification`, `katarina.intelligence.cognition.contextual_decision_intelligence`, `katarina.intelligence.cognition.unified_brain` |
 | `katarina.intelligence.perception.screening` | C | scripts, tests | `katarina.intelligence.perception.market_regime_intelligence`, `katarina.intelligence.perception.symbol_playbooks` |
 | `katarina.intelligence.cognition.observer` | A | runtime, ops, workflow, scripts, tests | `katarina.governance.unified_verification`, `katarina.intelligence.cognition.continuous_observation`, `katarina.intelligence.cognition.unified_brain` |
 
-## A — dipakai runtime/operasional atau workflow (189)
+## A — dipakai runtime/operasional atau workflow (190)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina` | runtime, ops, workflow, research, scripts, tests | 149 | 227 |
+| `katarina` | runtime, ops, workflow, research, scripts, tests | 156 | 243 |
 | `katarina.adapters` | runtime, ops, workflow, scripts, tests | 17 | 27 |
 | `katarina.adapters.agent_dashboard_page` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 15 |
@@ -107,7 +107,7 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.core.state` | runtime, ops, workflow, research, scripts, tests | 1 | 0 |
 | `katarina.engines` | runtime, ops, workflow, research, scripts, tests | 19 | 39 |
 | `katarina.engines.adaptive_risk` | runtime, ops, workflow, research, scripts, tests | 2 | 1 |
-| `katarina.engines.adaptive_scalper` | runtime, ops, workflow, scripts, tests | 2 | 6 |
+| `katarina.engines.adaptive_scalper` | runtime, ops, workflow, research, scripts, tests | 2 | 6 |
 | `katarina.engines.broker_aware_sizing` | workflow, tests | 0 | 3 |
 | `katarina.engines.capital` | runtime, ops, workflow, scripts, tests | 2 | 5 |
 | `katarina.engines.demo_execution` | runtime, ops, workflow, scripts, tests | 1 | 3 |
@@ -124,7 +124,7 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.health` | runtime, ops, workflow, scripts, tests | 2 | 4 |
 | `katarina.health.engine` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.host` | runtime, ops, workflow, scripts, tests | 2 | 7 |
-| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 57 | 130 |
+| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 57 | 136 |
 | `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 13 | 27 |
 | `katarina.intelligence.broker.auto_calibration` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_account_monitor` | runtime, ops, workflow, scripts, tests | 3 | 4 |
@@ -136,21 +136,21 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.broker.host_clock_probe` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.live_clock_probe` | runtime, ops, workflow, scripts, tests | 1 | 4 |
 | `katarina.intelligence.broker.observer_universe` | runtime, ops, workflow, research, scripts, tests | 4 | 4 |
-| `katarina.intelligence.cognition` | runtime, ops, workflow, research, scripts, tests | 21 | 47 |
-| `katarina.intelligence.cognition.adaptive_observation` | runtime, ops, workflow, scripts, tests | 3 | 7 |
+| `katarina.intelligence.cognition` | runtime, ops, workflow, research, scripts, tests | 22 | 49 |
+| `katarina.intelligence.cognition.adaptive_observation` | runtime, ops, workflow, research, scripts, tests | 3 | 7 |
 | `katarina.intelligence.cognition.assistant_cycle` | runtime, ops, workflow, scripts, tests | 1 | 0 |
 | `katarina.intelligence.cognition.brain_runtime_control` | runtime, ops, workflow, scripts, tests | 2 | 3 |
 | `katarina.intelligence.cognition.contextual_decision_intelligence` | runtime, ops, workflow, scripts, tests | 3 | 1 |
 | `katarina.intelligence.cognition.continuous_observation` | runtime, ops, workflow, scripts, tests | 0 | 5 |
-| `katarina.intelligence.cognition.decision_inputs` | runtime, ops, workflow, research, scripts, tests | 2 | 2 |
-| `katarina.intelligence.cognition.explainable_market_decision` | runtime, ops, workflow, scripts, tests | 1 | 0 |
+| `katarina.intelligence.cognition.decision_inputs` | runtime, ops, workflow, research, scripts, tests | 3 | 2 |
+| `katarina.intelligence.cognition.explainable_market_decision` | runtime, ops, workflow, research, scripts, tests | 1 | 0 |
 | `katarina.intelligence.cognition.market_decision` | runtime, ops, workflow, scripts, tests | 3 | 4 |
-| `katarina.intelligence.cognition.market_decision_pipeline` | runtime, ops, workflow, scripts, tests | 3 | 10 |
+| `katarina.intelligence.cognition.market_decision_pipeline` | runtime, ops, workflow, research, scripts, tests | 3 | 11 |
 | `katarina.intelligence.cognition.observer` | runtime, ops, workflow, scripts, tests | 3 | 12 |
 | `katarina.intelligence.cognition.owner_research_review` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.cognition.self_evolution_lab` | runtime, ops, workflow, scripts, tests | 5 | 3 |
 | `katarina.intelligence.cognition.unified_adaptive_research_cycle` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.cognition.unified_brain` | runtime, ops, workflow, scripts, tests | 2 | 21 |
+| `katarina.intelligence.cognition.unified_brain` | runtime, ops, workflow, scripts, tests | 2 | 22 |
 | `katarina.intelligence.cognition.unified_cognitive_cycle` | runtime, ops, workflow, scripts, tests | 4 | 5 |
 | `katarina.intelligence.cognition.unified_research_handoff` | runtime, ops, workflow, scripts, tests | 4 | 4 |
 | `katarina.intelligence.demo` | runtime, ops, workflow, scripts, tests | 3 | 7 |
@@ -175,23 +175,24 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.news.research_agenda` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.news.research_news_collection` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.news.verified_policy_context` | runtime, ops, workflow, scripts, tests | 3 | 2 |
-| `katarina.intelligence.operations` | runtime, ops, workflow, research, scripts, tests | 9 | 15 |
+| `katarina.intelligence.operations` | runtime, ops, workflow, research, scripts, tests | 9 | 20 |
+| `katarina.intelligence.operations.candidate_ledger` | runtime, ops, workflow, scripts, tests | 1 | 3 |
 | `katarina.intelligence.operations.file_housekeeping` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.foundation_readiness` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.network_doctor` | runtime, ops, workflow, scripts, tests | 1 | 2 |
-| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, research, scripts, tests | 3 | 8 |
+| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, research, scripts, tests | 3 | 12 |
 | `katarina.intelligence.operations.parallel_storage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.runtime_evidence` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.perception` | runtime, ops, workflow, research, scripts, tests | 20 | 32 |
-| `katarina.intelligence.perception.adaptive_regime` | runtime, ops, workflow, scripts, tests | 5 | 8 |
-| `katarina.intelligence.perception.causal_seasonality` | runtime, ops, workflow, scripts, tests | 1 | 1 |
-| `katarina.intelligence.perception.closed_swing_structure` | runtime, ops, workflow, scripts, tests | 2 | 1 |
+| `katarina.intelligence.perception.adaptive_regime` | runtime, ops, workflow, research, scripts, tests | 5 | 8 |
+| `katarina.intelligence.perception.causal_seasonality` | runtime, ops, workflow, research, scripts, tests | 1 | 1 |
+| `katarina.intelligence.perception.closed_swing_structure` | runtime, ops, workflow, research, scripts, tests | 2 | 1 |
 | `katarina.intelligence.perception.directional_consensus` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.perception.observational_associations` | runtime, ops, workflow, scripts, tests | 1 | 2 |
-| `katarina.intelligence.perception.semantic_setup_truth` | runtime, ops, workflow, scripts, tests | 1 | 1 |
+| `katarina.intelligence.perception.semantic_setup_truth` | runtime, ops, workflow, research, scripts, tests | 1 | 1 |
 | `katarina.intelligence.perception.session_gaps` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.intelligence.perception.structural_entry_quality` | runtime, ops, workflow, scripts, tests | 1 | 1 |
-| `katarina.intelligence.perception.structure_exit_plan` | runtime, ops, workflow, scripts, tests | 3 | 6 |
+| `katarina.intelligence.perception.structural_entry_quality` | runtime, ops, workflow, research, scripts, tests | 1 | 1 |
+| `katarina.intelligence.perception.structure_exit_plan` | runtime, ops, workflow, research, scripts, tests | 3 | 6 |
 | `katarina.intelligence.shadow` | runtime, ops, workflow, scripts, tests | 4 | 8 |
 | `katarina.intelligence.shadow.contextual_observation_journal` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.shadow.prospective_shadow_book` | runtime, ops, workflow, scripts, tests | 3 | 7 |
@@ -229,7 +230,7 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.policies` | workflow, scripts, tests | 1 | 4 |
 | `katarina.policies.risk` | workflow, scripts, tests | 1 | 1 |
 | `katarina.policies.strategy` | workflow, scripts, tests | 1 | 3 |
-| `katarina.research` | workflow, research, tests | 6 | 18 |
+| `katarina.research` | workflow, research, tests | 13 | 30 |
 | `katarina.research.alpha_survival` | workflow, research, tests | 0 | 3 |
 | `katarina.validation` | runtime, ops, workflow, research, scripts, tests | 4 | 10 |
 | `katarina.validation.engine` | runtime, ops, workflow, research, scripts, tests | 5 | 10 |
@@ -279,11 +280,11 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.research.shadow` | tests | 0 | 1 |
 | `katarina.research.walkforward` | tests | 0 | 1 |
 
-## C — hanya dipakai script non-operasional (riset dll.) (17)
+## C — hanya dipakai script non-operasional (riset dll.) (24)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina.intelligence.operations.data_health` | research, scripts, tests | 2 | 4 |
+| `katarina.intelligence.operations.data_health` | research, scripts, tests | 2 | 6 |
 | `katarina.intelligence.perception.analog_feature_schema` | research, tests | 1 | 0 |
 | `katarina.intelligence.perception.historical_analog_memory` | research, tests | 0 | 2 |
 | `katarina.intelligence.perception.market_regime_intelligence` | scripts, tests | 1 | 1 |
@@ -292,14 +293,21 @@ Total modul: 249. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.perception.symbol_playbooks` | scripts, tests | 1 | 1 |
 | `katarina.intelligence.perception.technical_regime` | scripts, tests | 2 | 1 |
 | `katarina.monitoring.monitor_relay` | scripts, tests | 0 | 2 |
-| `katarina.research.bar_clock_evidence` | research, tests | 0 | 3 |
+| `katarina.research.bar_clock_evidence` | research, tests | 0 | 4 |
 | `katarina.research.blocker_ladder` | research, tests | 0 | 2 |
 | `katarina.research.context_export` | research, tests | 1 | 3 |
 | `katarina.research.demo_readiness` | research, tests | 0 | 2 |
-| `katarina.research.dev_dataset` | research, tests | 0 | 3 |
+| `katarina.research.dev_dataset` | research, tests | 2 | 7 |
 | `katarina.research.market_intelligence` | research, tests | 1 | 3 |
+| `katarina.research.setups` | research, tests | 5 | 4 |
+| `katarina.research.setups.core` | research, tests | 6 | 0 |
+| `katarina.research.setups.fibonacci` | research, tests | 1 | 1 |
+| `katarina.research.setups.liquidity_sweep` | research, tests | 1 | 1 |
+| `katarina.research.setups.market_structure` | research, tests | 1 | 1 |
+| `katarina.research.setups.pullback` | research, tests | 1 | 1 |
+| `katarina.research.setups.simulator` | research, tests | 0 | 3 |
 | `katarina.research.spread_profile` | research, tests | 0 | 2 |
-| `katarina.research.validation` | research, tests | 6 | 10 |
+| `katarina.research.validation` | research, tests | 8 | 21 |
 
 ## D — tidak terjangkau dari root mana pun (3)
 
