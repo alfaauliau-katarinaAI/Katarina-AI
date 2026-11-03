@@ -1,8 +1,6 @@
 """Deterministic test suite for Stage 0 health assessment --since ISO filtering."""
 import sqlite3
-import tempfile
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 import unittest
 
 from katarina.intelligence.operations import data_health
@@ -11,13 +9,13 @@ from katarina.intelligence.operations import observation_ledger as ledger
 
 class Stage0SinceWP13Tests(unittest.TestCase):
     def setUp(self):
-        self.tmpdir = tempfile.TemporaryDirectory()
-        self.db_path = Path(self.tmpdir.name) / "context.sqlite3"
-        self.db = sqlite3.connect(self.db_path)
+        # The suite checks logical cutoff semantics only, not filesystem behavior.
+        # Use an isolated in-memory DB so 1,440 fixture commits do not block
+        # the 2 GB Windows observer host on slow disk synchronization.
+        self.db = sqlite3.connect(":memory:")
 
     def tearDown(self):
         self.db.close()
-        self.tmpdir.cleanup()
 
     def test_since_boundary_validation(self):
         now = datetime(2026, 10, 28, 12, 0, tzinfo=timezone.utc)
