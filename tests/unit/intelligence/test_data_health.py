@@ -140,6 +140,25 @@ class DataHealthTest(unittest.TestCase):
         criteria = by_name(data_health.assess(self.db, start + timedelta(days=5), interval_seconds=900))
         self.assertEqual(criteria["clock_shift_stable"]["status"], "PASS")
 
+    def test_stale_quote_shift_votes_near_dst_are_not_excused(self):
+        """VPS 30 Oct-1 Nov 2026: weekend stale quotes voted 2 -> -1 -> -8 -> 2.
+
+        Every change fell within +-3 days of the 1 Nov US DST end, so the old rule
+        reported PASS. Only a one-hour step near a transition is a DST change.
+        """
+        start = datetime(2026, 10, 29, tzinfo=UTC)
+        for moment, shift in ((start, 2), (datetime(2026, 10, 30, 23, 55, tzinfo=UTC), -1),
+                              (datetime(2026, 10, 31, 6, 57, tzinfo=UTC), -8),
+                              (datetime(2026, 11, 1, 22, 7, tzinfo=UTC), 2)):
+            cycle = ledger.record_snapshot(self.db, observed_utc=moment, clock_shift_hours=shift,
+                                           cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, moment.timestamp() - 1)})
+            ledger.close_cycle(self.db, finished_utc=moment, cycle_id=cycle, status="OK")
+        criterion = by_name(data_health.assess(self.db, datetime(2026, 11, 2, tzinfo=UTC),
+                                               interval_seconds=600))["clock_shift_stable"]
+        self.assertEqual(criterion["status"], "NOT_MET")
+        self.assertTrue(all(change["near_dst"] for change in criterion["changes"]))
+        self.assertFalse(any(change["dst_plausible"] for change in criterion["changes"]))
+
     def test_dst_transitions_2026(self):
         self.assertEqual(data_health.dst_transitions(2026),
                          [date(2026, 3, 8), date(2026, 3, 29), date(2026, 10, 25), date(2026, 11, 1)])

@@ -508,5 +508,80 @@ class TestBarClockEvidence(unittest.TestCase):
     def test_mt5_never_imported_in_test(self):
         self.assertNotIn("MetaTrader5", sys.modules)
 
+
+class TestExplicitIsolatedMT5Guard(unittest.TestCase):
+    """No actual MetaTrader5 import, network connection, or observer interaction."""
+
+    def _research_exe(self, root):
+        exe = Path(root) / "terminal64.exe"
+        exe.write_bytes(b"synthetic-placeholder-not-executed")
+        (Path(root) / ".katarina-research-terminal").write_text(
+            "ISOLATED_RESEARCH_ONLY\n", encoding="utf-8"
+        )
+        return exe
+
+    def test_path_required_and_marked_without_broker_import(self):
+        from scripts.research.build_bar_clock_evidence import validate_research_terminal_path
+        with tempfile.TemporaryDirectory() as root:
+            exe = self._research_exe(root)
+            self.assertEqual(validate_research_terminal_path(exe), exe.resolve())
+            self.assertRaisesRegex(ValidationError, "ABSOLUTE_PATH", validate_research_terminal_path, "terminal64.exe")
+            (Path(root) / ".katarina-research-terminal").unlink()
+            self.assertRaisesRegex(ValidationError, "MARKER_REQUIRED", validate_research_terminal_path, exe)
+            self.assertNotIn("MetaTrader5", sys.modules)
+
+    def test_identity_data_directory_and_autotrading_must_match(self):
+        from scripts.research.build_bar_clock_evidence import initialize_research_terminal
+
+        class FakeMT5:
+            def __init__(self, expected, *, data_path=None, trade_allowed=False):
+                self.expected = expected
+                self.data_path = data_path or str(expected.parent)
+                self.trade_allowed = trade_allowed
+                self.calls = []
+                self.closed = False
+
+            def initialize(self, **kwargs):
+                self.calls.append(kwargs)
+                return True
+
+            def terminal_info(self):
+                return type("Info", (), {
+                    "path": str(self.expected.parent), "data_path": self.data_path,
+                    "trade_allowed": self.trade_allowed
+                })()
+
+            def shutdown(self):
+                self.closed = True
+
+        with tempfile.TemporaryDirectory() as root, tempfile.TemporaryDirectory() as other:
+            exe = self._research_exe(root)
+            ok = FakeMT5(exe)
+            self.assertEqual(initialize_research_terminal(ok, exe), exe.resolve())
+            self.assertEqual(ok.calls, [{"path": str(exe.resolve()), "portable": True}])
+            self.assertFalse(ok.closed)
+            wrong = FakeMT5(exe, data_path=str(Path(other)))
+            with self.assertRaisesRegex(ValidationError, "PATH_MISMATCH"):
+                initialize_research_terminal(wrong, exe)
+            self.assertTrue(wrong.closed)
+            unsafe = FakeMT5(exe, trade_allowed=True)
+            with self.assertRaisesRegex(ValidationError, "AUTOTRADING_MUST_BE_OFF"):
+                initialize_research_terminal(unsafe, exe)
+            self.assertTrue(unsafe.closed)
+            self.assertNotIn("MetaTrader5", sys.modules)
+
+    def test_both_cli_require_explicit_terminal_before_mt5_import(self):
+        from scripts.research import build_bar_clock_evidence as clock_cli
+        from scripts.research import export_dev_bars as export_cli
+        with patch.object(sys, "argv", ["clock", "--out", "research-clock.json"]):
+            with self.assertRaises(SystemExit) as err:
+                clock_cli.main()
+            self.assertEqual(err.exception.code, 2)
+        with self.assertRaises(SystemExit) as err:
+            export_cli.main(["--out", "research-dataset", "--clock-evidence", "clock.json"])
+        self.assertEqual(err.exception.code, 2)
+        self.assertNotIn("MetaTrader5", sys.modules)
+
+
 if __name__ == "__main__":
     unittest.main()

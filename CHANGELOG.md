@@ -1,5 +1,21 @@
 # Perubahan material Katarina AI
 
+## 2026-11-03 — K-04: `clock_shift_stable` hanya memaafkan langkah DST satu jam
+
+- `data_health.assess`: perubahan shift dekat transisi DST hanya PASS bila besarnya tepat 1 jam (`dst_plausible`). Data VPS 30 Okt–1 Nov (2 → −1 → −8 → 2, vote quote basi akhir pekan pada kode produksi lama) sebelumnya lolos karena berada dalam ±3 hari dari akhir DST AS. Pemeriksaan menjadi lebih ketat; tidak ada data/ledger yang diubah. LIVE tetap OFF.
+
+## 2026-11-02 — review Claude atas integrasi #265: tiga perbaikan
+
+- WP14: audit menyelesaikan path arsip tick relatif terhadap `--state-dir` (ledger menyimpan `broker-ticks/...`), dan berkas tick tanpa hash tercatat menjadi `BLOCKED` (`TICK_FILE_HASH_NOT_RECORDED`).
+- WP8b: stop/target SELL diperiksa di ASK (bid bar + spread × point); semua harga eksekusi (entry ASK/BID, exit stop/target/timeout) dikonversi ke mid sebelum `CostModel` memotong setengah spread, sehingga net R = P&L ASK/BID persis, juga saat spread entry ≠ exit.
+- WP4: tes integrasi observer — kegagalan candidate ledger tidak mengubah keputusan, ledger, atau order (ide tes dari PR Jules #261). Tanpa berkas terkunci; LIVE tetap OFF.
+
+## 2026-11-02 — WP14: auditor bukti data read-only, deterministik, fail-closed
+
+- Perluas `src/katarina/intelligence/operations/data_health.py` dengan fungsi `audit()`: membaca SQLite via `mode=ro` dan `PRAGMA query_only = ON` tanpa modifikasi DB, mengevaluasi siklus/outage, quote spread negatif & umur, shift harian seragam (kecuali `NO_MARKET_DATA`), broker tick days, data gaps, rekonsiliasi snapshot, kelengkapan decision shadow per cycle×symbol, serta manifest WP8a dan `clock_evidence`.
+- CLI `scripts/ai/check_stage0_health.py` tambah opsi `--audit` dan `--dataset`; keluaran deterministik `report_sha256`, ringkasan simbol×hari (layak/terbatas/karantina), dan bukti hash DB tidak berubah sebelum/sesudah audit.
+- Tanpa dependensi baru, tanpa MT5/jaringan, Risk Governor dan promotion lock tidak disentuh.
+
 ## 2026-10-31 — WP15: rollover Tahap 0 mengikuti 17:00 New York
 
 - Modul `katarina.intelligence.operations.observation_ledger`: tambah `stage0_session_open(moment)` khusus penghitung siklus Stage 0 dengan jendela rollover relatif ke 17:00 New York (-15m, +30m) untuk timestamp >= `ROLLOVER_RULE_EFFECTIVE_UTC`; default `None` (nonaktif sampai waktu UTC yang tidak lebih awal dari merge disahkan manager). Aturan DST AS deterministik tanpa dependensi zoneinfo/tzdata.

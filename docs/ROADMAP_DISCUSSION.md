@@ -252,6 +252,13 @@ Koordinasi teknis dan bukti per SHA: [Issue #249](https://github.com/alfaauliau-
 
 **Batas Owner terbaru:** LIVE OFF, zero orders, tanpa deploy VPS atau aktivasi trading. Risk Governor, promotion_lock, holdout dan data/ledger historis tetap. MERGED ≠ DEPLOYED ≠ STAGE0 PASSED. Tidak ada izin operasional tambahan dari closeout ini.
 
+## Checkpoint Manager — 3 November 2026 (catatan koordinasi, BUKAN keputusan Owner baru)
+
+- **Bukti kode:** Draft [integrasi #265](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/265) head `cd3b576d`, setelah perbaikan audit Claude/Manager [#266](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/266), sudah [CI Body/Ubuntu/Windows sukses](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/41480635219). Source PR #257/#259/#263/#264 ditutup sebagai digantikan, tidak di-merge ke main. **Head Jules #259 terbaru `ce7c4074` reintroduksi PASS+NO_DATA -> PASS**; jangan cherry-pick branch tersebut.
+- **Syarat release belum berubah:** review manusia/Owner untuk `main` belum APPROVED; tidak ada deploy VPS (`C:\Katarina\code` `64497b5` saat cek), 0 order, Stage0 belum PASS, LIVE OFF.
+- **Keputusan terbuka untuk Owner:** apakah menggunakan mesin Windows/VM riset MT5 yang TERPISAH untuk mengambil bar M5 historis ValetaxIntl-Live2 bersufiks `.vx` dan membuktikan UTC/DST + SHA256 sebelum cutoff `2026-10-13T00:00:00Z`. Ini adalah izin operasional TERPISAH dari persetujuan merge/deploy. VPS produksi 2 GB RAM/terminal observer tidak boleh dipakai untuk riset broker tanpa izin baru.
+- **Tugas coding nonoperasional** boleh disiapkan tanpa izin MT5: Draft pengaman `--terminal-path`, tes fail-closed, dan rekonsiliasi dokumen. Tidak pernah memulai `MetaTrader5.initialize()` pada observer atau membuka holdout. Sumber tugas dan gate: [#255](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/255), [Manager Board #262](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/262).
+
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
