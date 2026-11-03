@@ -10,8 +10,8 @@ Platform MQL5 menyediakan fungsi *terpisah* untuk mengambil sesi **quote** (`Sym
 
 ## Alat
 
-- Source: `mt5/Scripts/KatarinaBrokerSessionProbe.mq5`.
-- Hanya memanggil `AccountInfoString`, `TimeTradeServer`, `TimeGMT`, `SymbolExist`, dan `SymbolInfoSessionQuote/Trade`; tidak memanggil `OrderSend`, `CTrade`, `WebRequest`, tidak mengubah konfigurasi, dan tidak memasang EA.
+- Source: `tools/diagnostics/mt5/KatarinaBrokerSessionProbe.mq5`.
+- **Disimpan di luar inventaris kode deployable** agar tidak ikut secara tidak sengaja saat rilis. Hanya memanggil `AccountInfoString`, `TimeTradeServer`, `TimeGMT`, `SymbolExist`, dan `SymbolInfoSessionQuote/Trade`; tidak memanggil `OrderSend`, `CTrade`, `WebRequest`, tidak mengubah konfigurasi, dan tidak memasang EA.
 - Default lima simbol pengamatan: XAUUSD.vx, NAS100.vx, EURUSD.vx, GBPUSD.vx, USDJPY.vx.
 - Mengeluarkan baris log lokal bertanda `KATARINA_SESSION_PROBE` dan `KATARINA_SESSION`, baik bila ada sesi maupun jika data tidak tersedia. **Tidak membuat keputusan open/closed jika data tidak ditemukan.**
 - Syntax check MetaEditor Windows VPS (isolated path) **0 errors, 0 warnings**. Full compile berhasil, `EX5` sekitar 13 KB dalam folder staging terisolasi. **Belum dipasang atau dijalankan pada MT5 produksi.**
