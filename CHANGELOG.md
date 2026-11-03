@@ -1,5 +1,9 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — perapian E1: gate akhir dan status codebase
+
+- Dokumen canonical diperbarui: RH-012 (`docs/REPAIR_HISTORY.md`), baris codebase/PR/blocker di `docs/PROJECT_STATUS.md`, ledger E1 (gate, inventaris VPS/branch, keputusan `CODEBASE_CLEAN_BUT_STAGE_GATE_BLOCKED`), peta modul dibuat ulang. Tanpa perubahan kode; LIVE tetap OFF.
+
 ## 2026-11-03 — perapian D1: indeks reason code untuk penelusuran error
 
 - Alat baru `scripts/governance/reason_code_index.py` + hasil `docs/maintenance/REASON_CODE_INDEX.md`: setiap reason code (540; P0 101/P1 229/P2 210) dipetakan ke `file:line` sumber dan tes yang menyebutnya; `--find KODE` untuk satu kode, termasuk keluarga dinamis `PREFIX_*`. Kode protokol beku hanya ditampilkan.
