@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-11-03 — perapian D1: indeks reason code untuk penelusuran error
+
+- Alat baru `scripts/governance/reason_code_index.py` + hasil `docs/maintenance/REASON_CODE_INDEX.md`: setiap reason code (540; P0 101/P1 229/P2 210) dipetakan ke `file:line` sumber dan tes yang menyebutnya; `--find KODE` untuk satu kode, termasuk keluarga dinamis `PREFIX_*`. Kode protokol beku hanya ditampilkan.
+- Tes jam live: `LIVE_FEED_CLOCK_VERIFIED` dan `CLOCK_BROKER_IDENTITY_MISSING` kini diuji secara literal. Tanpa perubahan kode runtime; LIVE tetap OFF.
+
 ## 2026-11-03 — perapian C1: satu kalender DST, tes owner surface stabil
 
 - Aturan DST AS (Minggu ke-2 Maret 07:00 UTC – Minggu ke-1 Nov 06:00 UTC) dan EU (Minggu terakhir Maret/Okt 01:00 UTC) sebelumnya ditulis ulang di lima modul (`observation_ledger`, `data_health`, `symbol_playbooks`, `bar_clock_evidence`, `validation`). Sekarang satu sumber: `src/katarina/domain/market_calendar.py` (stdlib, sesuai `DEPENDENCY_RULES.md`). Ekuivalensi diperiksa terhadap kode lama pada 107.892 momen 1990–2100 (setiap 30 menit ±2 hari di sekitar transisi + acak); tes penjaga menolak implementasi DST kedua. API lama (`data_health.dst_transitions`, `bar_clock_evidence.is_us_dst/is_eu_dst`, `validation.is_us_dst`) tetap ada.
