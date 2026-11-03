@@ -15,7 +15,8 @@ import statistics
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from katarina.intelligence.operations.data_health import _last_sunday, _nth_sunday
+from katarina.domain.market_calendar import is_eu_dst as _is_eu_dst_utc, is_us_dst as _is_us_dst_utc
+from katarina.domain.market_calendar import last_sunday as _last_sunday, nth_sunday as _nth_sunday
 from katarina.research.validation import ValidationError, canonical, sha256_text
 
 CORE_SYMBOLS = ("EURUSD", "USDJPY", "XAUUSD")
@@ -43,24 +44,12 @@ def _utc_dt(val: str | datetime | int | float) -> datetime:
 
 def is_eu_dst(dt: datetime) -> bool:
     """True if dt falls during EU Summer Time (EEST, last Sun Mar 01:00 UTC to last Sun Oct 01:00 UTC)."""
-    utc = _utc_dt(dt)
-    year = utc.year
-    start_date = _last_sunday(year, 3)
-    end_date = _last_sunday(year, 10)
-    start_dt = datetime(year, start_date.month, start_date.day, 1, 0, 0, tzinfo=timezone.utc)
-    end_dt = datetime(year, end_date.month, end_date.day, 1, 0, 0, tzinfo=timezone.utc)
-    return start_dt <= utc < end_dt
+    return _is_eu_dst_utc(_utc_dt(dt))
 
 
 def is_us_dst(dt: datetime) -> bool:
     """True if dt falls during US Daylight Saving Time (EDT, 2nd Sun Mar 07:00 UTC to 1st Sun Nov 06:00 UTC)."""
-    utc = _utc_dt(dt)
-    year = utc.year
-    start_date = _nth_sunday(year, 3, 2)
-    end_date = _nth_sunday(year, 11, 1)
-    start_dt = datetime(year, start_date.month, start_date.day, 7, 0, 0, tzinfo=timezone.utc)
-    end_dt = datetime(year, end_date.month, end_date.day, 6, 0, 0, tzinfo=timezone.utc)
-    return start_dt <= utc < end_dt
+    return _is_us_dst_utc(_utc_dt(dt))
 
 
 def _bar_time(bar: dict | object) -> datetime:

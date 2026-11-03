@@ -27,6 +27,8 @@ from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+from katarina.domain.market_calendar import is_us_dst
+
 SCHEMA_VERSION = 1
 ROLLOVER_BEFORE_MINUTES = 15
 ROLLOVER_AFTER_MINUTES = 30
@@ -341,19 +343,6 @@ def _record_gap(db, stream, symbol, start: datetime, end: datetime, reason, now:
                                        now.isoformat()))
 
 
-def _nth_sunday(year: int, month: int, nth: int) -> date:
-    first = date(year, month, 1)
-    return first + timedelta(days=(6 - first.weekday()) % 7 + 7 * (nth - 1))
-
-
-def _is_us_dst(moment: datetime) -> bool:
-    moment = _utc(moment)
-    year = moment.year
-    start_utc = datetime(year, 3, _nth_sunday(year, 3, 2).day, 7, 0, tzinfo=timezone.utc)
-    end_utc = datetime(year, 11, _nth_sunday(year, 11, 1).day, 6, 0, tzinfo=timezone.utc)
-    return start_utc <= moment < end_utc
-
-
 def fx_session_open(moment: datetime) -> bool:
     """Conservative FX trading window in UTC used for gap / tick archive classification.
 
@@ -392,7 +381,7 @@ def stage0_session_open(moment: datetime) -> bool:
         return False
 
     minutes = moment.hour * 60 + moment.minute
-    if _is_us_dst(moment):
+    if is_us_dst(moment):
         rollover_start = 20 * 60 + (60 - ROLLOVER_BEFORE_MINUTES)  # 20:45
         rollover_end = 21 * 60 + ROLLOVER_AFTER_MINUTES            # 21:30
     else:

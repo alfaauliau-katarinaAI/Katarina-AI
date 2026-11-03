@@ -34,7 +34,7 @@ Baca CLAUDE.md dulu. Aturan perapian:
 - Modul tahap 11–40 (`body/`, `engines/`, `governance/`, perception dasar, `research/`), walau sebagian
   hanya dipakai tes.
 - Skema pesan `protocol/` (kontrak validation dan health engine), dokumen `architecture/` dan `adr/`.
-- Paket kosong `domain`, `entrypoints`, `ports` (kontrak `config/repository_architecture.json`).
+- Paket `domain`, `entrypoints`, `ports` (kontrak `config/repository_architecture.json`). `entrypoints`/`ports` masih kosong; `domain` berisi logika murni stdlib (`market_calendar.py`, sejak perapian C1).
 - Website publik, EA MT5 status dashboard dan bridge Stage 06.
 - Tombstone `scripts/ai/run_market_brain.py` dan `run_decision_brain_v3.py`.
 

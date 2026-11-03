@@ -61,18 +61,12 @@ def _utc(value) -> datetime:
     return value.astimezone(timezone.utc)
 
 
-from katarina.intelligence.operations.data_health import _nth_sunday
+from katarina.domain.market_calendar import is_us_dst as _is_us_dst_utc
 
 
 def is_us_dst(moment: datetime) -> bool:
     """US Daylight Saving Time: 2nd Sunday in March 02:00 EST (07:00 UTC) to 1st Sunday in Nov 02:00 EDT (06:00 UTC)."""
-    moment = _utc(moment)
-    year = moment.year
-    start_date = _nth_sunday(year, 3, 2)
-    end_date = _nth_sunday(year, 11, 1)
-    start_utc = datetime(year, 3, start_date.day, 7, 0, tzinfo=timezone.utc)
-    end_utc = datetime(year, 11, end_date.day, 6, 0, tzinfo=timezone.utc)
-    return start_utc <= moment < end_utc
+    return _is_us_dst_utc(_utc(moment))
 
 
 def calculate_rollover_nights(entry_at: datetime, exit_at: datetime, triple_swap_weekday: int = 2) -> int:
