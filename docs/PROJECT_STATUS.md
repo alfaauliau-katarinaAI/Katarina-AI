@@ -1,5 +1,7 @@
 # Status Katarina AI — snapshot operasional
 
+> **Pembaruan bukti 3 November 2026:** [konsolidasi audit VPS Yura](maintenance/YURA_AUDIT_CONSOLIDATED_20261103.md) memuat keadaan observer, temuan Stage 0, penelusuran quote, PR/CI dan pembagian arsip. Angka pada tabel di bawah tetap **snapshot 30 Oktober**, bukan status terbaru. Untuk keputusan/antrean tetap ikuti [ROADMAP](ROADMAP.md); jangan gunakan laporan audit sebagai izin deployment atau trading.
+
 **Diperiksa:** 30 Oktober 2026 pukul **06:08 WIB** untuk observer VPS (Claude, baca-saja: Running/WAITING, 339 siklus, 333 sukses, 0 gagal beruntun, 0 order, 5 simbol, checkout `64497b5`, `broker-clock-evidence.json` tidak ada); [laporan perapian PR Claude](maintenance/CLAUDE_PR_CLEANUP_REPORT_20261030.md); PR GitHub dan review terkini diperiksa pada sesi sama. **Audit kelemahan dan instruksi Claude:** [laporan lengkap](maintenance/KATARINA_WEAKNESSES_CLAUDE_REVIEW_20261030.md). Audit jam rinci: [WP13 clock handoff](maintenance/WP13_CLOCK_CLAUDE_HANDOFF_20261030.md). Angka VPS adalah snapshot, bukan janji kondisi saat file dibaca nanti. Urutan kerja/acceptance ada di [ROADMAP](ROADMAP.md); perbaikan nyata di [REPAIR_HISTORY](REPAIR_HISTORY.md); keputusan terbuka di [MEETING](ROADMAP_DISCUSSION.md).
 
 ## Ringkasan terverifikasi
