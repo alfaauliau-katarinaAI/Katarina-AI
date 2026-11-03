@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0  # KAT-CG-00 compares the change against origin/main
 
       - name: Setup Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # actions/setup-python@v5
@@ -33,22 +34,23 @@ jobs:
           python -m pip install --disable-pip-version-check -r requirements-stage07.txt
           python -m pip install --disable-pip-version-check numpy==2.5.3
 
-      - name: Compile Python
-        run: python -m compileall -q src
+      # Coding gate (docs/maintenance/AUTO_CLEANUP_CODING_GATE.md): cheap gates first, fail-fast.
+      - name: KAT-CG-00/01 baseline, syntax, JSON, dependencies, hygiene (fail-fast)
+        run: python scripts/governance/code_change_gate.py --gate KAT-CG-00 --gate KAT-CG-01 --base origin/main
 
-      - name: Verify Python, MQL5, JSON, and website local dependencies
-        run: python scripts/governance/audit_dependency_links.py --repo-root . --output build/validation/dependency-links.json
+      - name: Safe cleanup report (check only, never deletes in CI)
+        run: python scripts/governance/safe_cleanup.py --check --output build/code-gate/safe-cleanup.json
 
       - name: Verify unified Katarina brain registry and fail-closed integration
         run: PYTHONPATH=src:. python scripts/ai/verify_unified_katarina.py
 
-      - name: Unit regression
+      - name: KAT-CG-02 Unit regression
         run: PYTHONPATH=src python -m unittest discover -s tests/unit -p 'test_*.py' -v
 
-      - name: Static regression
+      - name: KAT-CG-02 Static regression
         run: PYTHONPATH=src python -m unittest discover -s tests/static -p 'test_*.py' -v
 
-      - name: Integration regression
+      - name: KAT-CG-02 Integration regression
         run: PYTHONPATH=src python -m unittest discover -s tests/integration -p 'test_*.py' -v
 
       - name: Offline autonomous observer and virtual decision proof (synthetic)
@@ -79,12 +81,8 @@ jobs:
         run: |
           PYTHONPATH=src python scripts/stage10/audit_stage10_final.py --repo-root . --output build/stage10/stage10_local_final_clearance.json
 
-      - name: Constitution Guard
-        run: |
-          PYTHONPATH=src python scripts/governance/audit_constitution_guard.py --repo-root . --output build/governance/constitution_guard.json
-
-      - name: Promotion gate (active decision and risk files)
-        run: python scripts/governance/promotion_gate.py --check
+      - name: KAT-CG-03 promotion lock, Constitution Guard, release manifest MATCH
+        run: python scripts/governance/code_change_gate.py --gate KAT-CG-03
 
       - name: Stage 11-40 framework audit
         run: |
@@ -95,9 +93,6 @@ jobs:
           PYTHONPATH=src python scripts/body/audit_functional_body.py --repo-root . --output build/body/katarina_body_local_clearance.json
 
 
-      - name: Repository hygiene guard
-        run: python scripts/governance/audit_repo_hygiene.py --repo-root . --output build/repository-hygiene.json
-
       - name: Verify fail-closed evidence
         run: |
           python - <<'PY'
@@ -105,7 +100,7 @@ jobs:
           from pathlib import Path
           expectations = {
               "build/stage10/stage10_local_final_clearance.json": "PASS_STAGE10_LOCAL_FINAL_CLEARANCE",
-              "build/governance/constitution_guard.json": "PASS_KATARINA_CONSTITUTION_GUARD",
+              "build/code-gate/constitution_guard.json": "PASS_KATARINA_CONSTITUTION_GUARD",
               "build/body/body_framework_audit.json": "PASS_KATARINA_BODY_FRAMEWORK_11_40",
               "build/body/katarina_body_local_clearance.json": "PASS_KATARINA_BODY_LOCAL_10_40",
           }
@@ -124,11 +119,9 @@ jobs:
           name: katarina-body-gate-${{ github.run_id }}
           path: |
             build/stage10/stage10_local_final_clearance.json
-            build/governance/constitution_guard.json
+            build/code-gate/
             build/body/body_framework_audit.json
             build/body/katarina_body_local_clearance.json
-            build/repository-hygiene.json
-            build/validation/dependency-links.json
             build/validation/stage14-15-research-honesty.json
             build/validation/alpha-regime-program.json
             build/validation/private-alpha-holdout.json
@@ -136,6 +129,25 @@ jobs:
             build/validation/stage16-17-synthetic.json
           if-no-files-found: warn
           retention-days: 30
+
+  code-gate-ci:
+    # KAT-CG-04 inside CI: one aggregate check that is red unless Body and both portable OS jobs passed.
+    name: KAT-CG-04 CI gate (Body + Ubuntu + Windows)
+    if: always() && github.event_name != 'workflow_dispatch'
+    needs: [body, portable-host]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every upstream job to succeed
+        env:
+          BODY: ${{ needs.body.result }}
+          PORTABLE: ${{ needs.portable-host.result }}
+        run: |
+          echo "body=$BODY portable-host=$PORTABLE"
+          if [ "$BODY" != "success" ] || [ "$PORTABLE" != "success" ]; then
+            echo "KAT_CODE_CHANGE_GATE BLOCKED_CI_OR_REVIEW"; exit 1
+          fi
+          echo "KAT_CODE_CHANGE_GATE KAT-CG-04 PASS (merge still needs the review required by branch protection)"
 
   ai-model-connection-smoke:
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[ai-smoke]')
