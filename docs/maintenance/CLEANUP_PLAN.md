@@ -55,7 +55,7 @@ Baca CLAUDE.md dulu. Aturan perapian:
 ## Sisa yang diketahui
 
 - 20 tag `archive/2026-10-11/…` di GitHub (arsip lama, bertentangan dengan aturan hapus-langsung).
-- `scripts/ai/run_readonly_decisions.py` masih menulis ke path VPS lama `C:\KatarinaDev\artifacts\decision-observer`.
+- ~~`scripts/ai/run_readonly_decisions.py` menulis ke `C:\KatarinaDev`~~ — dihapus di perapian B1 (3 Nov 2026); semua rujukan `C:\KatarinaDev` di `scripts/`/`src/` dilarang tes. Ledger perapian 3 Nov: `docs/maintenance/CODEBASE_CLEANUP_20261103.md`.
 - VPS: 15 folder lama terkunci di `C:\`, installer dan Python 3.8/3.13 yang tidak dipakai.
 
 ## Setelah perapian
