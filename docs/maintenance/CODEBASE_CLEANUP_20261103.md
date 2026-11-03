@@ -71,3 +71,52 @@ Alur penelusuran baku (ditulis di kepala indeks): kode dari log → `--find` →
 Format/API lama tidak diubah. Tidak ada kode yang diganti nama: kode yang sudah ada di ledger VPS dan laporan bersifat stabil.
 
 Temuan terbuka (OPEN, bukan blocker codebase): 62 kode P0 belum disebut literal di tes. Sebarannya: `intelligence.broker` 29, `adapters.readonly_cloud` 9, `adapters.automatic_connection` 9, `engines.demo_execution` 8 (DEMO belum aktif), `adapters.dialog_model` 6, `continuous_owner_surface` 1. Banyak di antaranya diuji lewat perilaku (status FAILED/BLOCKED), bukan string kode. Daftar lengkap ada di indeks (kolom Tes = `—`). Disarankan ditambah per paket saat area itu disentuh, terutama sebelum Tahap 3 DEMO.
+
+D1 di-merge sebagai `main` `e186d3cc` (PR #281); CI Body/Ubuntu/Windows PASS pada percobaan pertama.
+
+## E1 — gate akhir dan keputusan
+
+| Gate (pada `main` `e186d3cc`) | Hasil |
+|---|---|
+| Unit / static / integration | 1.468 OK / 80 OK (4 skip) / 222 OK |
+| Hygiene, dependency links | PASS / PASS |
+| Promotion gate | PASS (tidak ada berkas terkunci yang berubah di B1–E1) |
+| Release manifest | MATCH 312 |
+| CI GitHub | Body + Portable brain Ubuntu/Windows PASS pada #279 (Windows dijalankan ulang 1×), #280, #281 |
+| Peta modul | A=193, B=40 (identitas body, PROTECTED), C=23 (alat riset Tahap 1–3), D=2 (`entrypoints`, `ports` kontrak) |
+| Berkas | 900 → 899 terlacak (8 dihapus; 7 ditambah: kalender domain, 2 tes, alat indeks + tes + indeks, ledger ini) |
+
+Sebelum → sesudah: 0 jalur MT5 di luar observer canonical (sebelumnya 2: `run_readonly_decisions.py`, EA scalper); 0 rujukan `C:\KatarinaDev` di kode (sebelumnya 5 berkas); 1 implementasi DST (sebelumnya 5); 0 tes flaky yang diketahui di `main` (sebelumnya 1); reason code terpetakan ke sumber dan tes (sebelumnya tidak ada).
+
+### Inventaris di luar mandat hapus otomatis (usulan, belum dieksekusi)
+
+VPS (`C:` bebas 12,4 / 39,2 GB). Semua folder ini di luar `code`/`state`/`private`/`backups`/`logs` dan tidak dipakai task mana pun. Usulan hapus perlu izin Owner sesuai §5.2:
+- Worktree review lama di `C:\Katarina`: `wp13-ci-review-20261030b` (7,1 MB), `wp13-review-20261030` (7,7 MB), `_audit_20261103_main`, `_release_candidate_v01_20261103`, `_repair_fixture_20261103`, `_review_pr265`, `_review_pr269` (masing-masing ±6 MB), 6 worktree `prunable` di `_roadmap_validation`, `_sync_staging` (97,8 MB), `downloads` (104,9 MB), `_archive`/`_validation_sessionprobe` (kosong). Bersihkan dengan `git -C C:\Katarina\code worktree remove`/`prune`, bukan hapus manual.
+- Folder lama di `C:\`: 13 folder riset bertanggal 16–17 Okt, `KatarinaDev`, `KatarinaGitBridge`, `KatarinaGitTest-4e14b098`, `KatarinaCleanup20261029`, `DNSTT-Test` (18,7 MB) beserta task `DNSTT-Test-AutoCleanup`, dan task uji `ChatGPTUserTest`.
+
+GitHub: 10 branch milik PR tertutup. Isinya sudah masuk lewat integrasi #265 atau PR penggantinya. Penghapusan ref ditolak proxy sesi Claude (HTTP 403), jadi perlu dilakukan Owner/manager. Commit tetap bisa dijangkau lewat `refs/pull/N/head` dan SHA berikut:
+
+| Branch | SHA |
+|---|---|
+| `chatgpt/wp13-clock-since-20261029` | `892c48a02bf4` |
+| `feat/roadmap-stage0-broker-discovery-20261022` | `5a894de62f04` |
+| `jules/wp10b-swap-cost-sensitivity-20261030-4394559798710015484` | `f36cc7fe2484` |
+| `jules-3382505266733406840-c6557a2a` | `d0db291e338d` |
+| `manager/roadmap-meeting-repair-sync-20261102` | `4ae1cdd609bb` |
+| `manager/wp4-candidate-ledger-20261102` | `59d1679906e9` |
+| `manager/wp8-bls-official-calendar-20261102` | `3a31210c0713` |
+| `manager/wp8b-pure-setups-20261102` | `ad92a832ccdc` |
+| `wp4-research-candidate-ledger-replay-9483643892799621328` | `36e674d589f8` |
+| `wp14-readonly-data-auditor-1946873786857947257` | `ce7c4074ee3a` |
+
+Dipertahankan: `main`, `claude-vps-bridge` (CLAUDE.md), `claude-openai-mcp` (UNVERIFIED_KEEP, tanpa PR), branch #278. Ada juga 20 tag `archive/2026-10-11/…` (sisa lama di `CLEANUP_PLAN.md`) yang menunggu keputusan Owner.
+
+### Keputusan
+
+**`CODEBASE_CLEAN_BUT_STAGE_GATE_BLOCKED`.** Codebase rapi, koheren, dan seluruh gate lulus. Tidak ada regresi P0/P1 yang diketahui. Tahap berikutnya masih tertahan bukti eksternal, bukan kode:
+1. Tahap 0: 10 hari bursa, sukses ≥ 98%, 3 recovery, 0 order. Data sejak 28 Okt masih `clock_shift_stable NOT_MET`, jadi hitungan harus berjalan dari data bersih pasca-deploy WP13.
+2. Bukti jam bar historis M5 (#255) butuh host riset MT5 terpisah.
+3. Probe sesi MT5 butuh GUI terminal (Owner).
+4. WP6 auto-start tanpa login.
+
+Rekomendasi tahap lanjutan sesuai `docs/ROADMAP.md`: jangan menambah fitur. Biarkan observasi Tahap 0 berjalan. Deploy C1 hanya dilakukan bersama perubahan runtime berikutnya dan dengan izin Owner (perilakunya identik, jadi tidak mendesak). Pengembangan Tahap 1–2 boleh berlanjut offline dengan alat yang sudah ada, menunggu data bersih. Perapian dihentikan di sini; tahap berikutnya menunggu keputusan Owner.

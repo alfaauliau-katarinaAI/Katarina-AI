@@ -21,6 +21,22 @@ Dokumen ini adalah **satu-satunya jurnal hasil perbaikan yang terverifikasi**: m
 4. `CHANGELOG.md` tetap mencatat ringkasan perubahan per PR; detail diagnosis dan hasil pemulihan hanya di sini, dengan tautan ke PR. `PROJECT_STATUS.md` hanya menyimpan kondisi saat ini dan merujuk ID perbaikan bila diperlukan.
 5. Pengembangan lewat GitHub dan PR + CI. VPS hanya untuk pengujian yang diizinkan. Tidak ada perubahan yang mengaktifkan LIVE, order, membuka holdout, atau melemahkan Risk Governor tanpa keputusan Owner yang berlaku.
 
+## RH-012 — Perapian codebase menyeluruh (mandat Owner 3 Nov): jalur MT5 lama, DST tunggal, CI flaky, indeks reason code
+
+**Tanggal:** 3–4 November 2026 WIB
+**Status:** **Kode MERGED + CI PASS** (B1 #279, C1 #280, D1 #281, E1 dokumen); **BELUM DEPLOYED** (VPS tetap `fd6cff16`; deploy perlu izin Owner khusus); Tahap 0 **BELUM LULUS**.
+
+| Aspek | Bukti perbaikan |
+|---|---|
+| Sebelum | Repo masih menyimpan observer kedua `run_readonly_decisions.py`, yang memanggil `mt5.initialize()` langsung dan menulis ke `C:\KatarinaDev` yang sudah pensiun. Ada juga EA `KatarinaResearchScalperEA` dengan `CTrade.Buy/Sell` yang tidak dipakai, aturan DST AS/EU yang ditulis ulang di 5 modul, tes Windows `test_unified_owner_surface` yang flaky (1 dari 24 run `main`, juga di #279), dan reason code tanpa peta ke sumber/tes |
+| Akar penyebab | **TERBUKTI:** sisa jalur pra-observer canonical yang tidak dihapus saat perampingan 22 Okt (tercatat di `CLEANUP_PLAN.md`). DST disalin per fitur karena belum ada modul domain. Batas socket tes 5 s lebih pendek dari durasi satu siklus observer sintetis di runner Windows |
+| Perbaikan | B1: 8 berkas dihapus dengan bukti per berkas; path `C:\KatarinaDev` dilarang di `scripts/`/`src/`. C1: `src/katarina/domain/market_calendar.py` menjadi satu sumber DST, dengan tes penjaga terhadap implementasi kedua; batas tes owner surface 30 s; `observer.py` mencatat fail-closed `CLOCK_BROKER_IDENTITY_MISSING`. D1: `scripts/governance/reason_code_index.py` + `docs/maintenance/REASON_CODE_INDEX.md` (540 kode → `file:line` → tes) dan tes literal kode jam live P0. Ledger: `docs/maintenance/CODEBASE_CLEANUP_20261103.md` |
+| Commit | `main` `39fc0859` (B1), `a9dc9a36` (C1), `e186d3cc` (D1) |
+| Bukti tes | Ekuivalensi DST lama vs baru: 107.892 momen 1990–2100 identik. Lokal di `e186d3cc`: unit 1.468, static 80 (4 skip), integration 222 OK; hygiene/dependency PASS; promotion gate PASS; manifest MATCH 312. CI Body/Ubuntu/Windows PASS pada setiap merge (B1 Windows lulus setelah dijalankan ulang satu kali karena flaky yang diperbaiki C1; C1 dan D1 lulus pada percobaan pertama) |
+| Batas hasil | Tidak ada perubahan perilaku runtime yang diharapkan. C1 menyentuh `observation_ledger`/`data_health` (dipakai observer dan health harian) dengan hasil identik; perubahan ini belum berjalan di VPS sampai deploy berikutnya. Berkas promotion lock, Risk Governor, data, ledger dan state VPS tidak disentuh |
+| Rollback | `git revert` per merge commit (#279/#280/#281). VPS tidak perlu rollback |
+| Sisa risiko | 62 kode P0 belum diuji secara literal (mayoritas broker/adapter; daftar di indeks). Worktree/folder lama di VPS dan 10 branch PR tertutup hanya diinventaris (lihat ledger E1); penghapusan branch diblokir proxy dan perlu dilakukan Owner/manager |
+
 ## RH-011 — Deploy WP13 jam live tepercaya ke VPS + perbaikan Stage 0 `clock_shift_stable`
 
 **Tanggal:** 3 November 2026 WIB (deploy 15:15–15:18 UTC)
