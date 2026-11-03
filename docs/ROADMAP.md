@@ -929,12 +929,12 @@ Menunggu Owner · Dikerjakan Claude.
 
 | Paket | Status | PR | Catatan review Claude |
 |---|---|---|---|
-| WP13 | MERGED 31 Okt / NOT DEPLOYED | #233 | NTP/tick, --since tersedia dalam main; Stage0 belum lulus |
+| WP13 | **MERGED + DEPLOYED 3 Nov** (`fd6cff16`) | #233, #275 | Jam live terverifikasi di VPS (RH-011); Stage0 belum lulus |
 | WP8c | **CODE DONE (merge)** — 30 Okt 2026, review Claude | #230 | 24 bar sekitar wajib; segmen VERIFIED hanya dengan sampel di dalamnya (tanpa ±200 hari); sampel wajib di kalender + `bars_sha256`; adapter menghitung ulang timeline/hash. Sisa: isi `us_release_calendar.csv` dari sumber resmi BLS dan buat laporan sampel dari bar nyata (belum ada alat CLI) |
 | WP10b | **Selesai (merge)** — 30 Okt 2026 | #225 | Squash `8cc3d677`; Body/Linux/Windows PASS; hanya alat riset, tidak mengesahkan hasil strategi/VPS |
 | WP10a | **Selesai (merge)** — 30 Okt 2026, review Claude | #231 | Perbaikan review: parser ketat 4 kolom (baris rusak → `TICK_FILE_MALFORMED`, tidak dilewati), hari tanpa `server_shift_hours` (sebelum WP12) dikecualikan dan dilaporkan, quote terakhir per menit menurut timestamp, SQLite URI aman + `query_only`. Uji 2 juta tick < 50 MB lulus. Belum dijalankan di VPS |
-| WP4 | RESEARCH CODE DONE / CI 3/3, belum main | #265 (source #263/#261) | Ledger & replay; observer non-interference diperiksa, 0 order, final Owner gate #251 |
-| WP14 | RESEARCH CODE DONE / CI 3/3, fail-closed | #265 (source #259) | Versi Jules #259 head ce7c4074 tidak aman; gunakan auditor terintegrasi cd3b576d |
+| WP4 | **MERGED + DEPLOYED 3 Nov** | #265 (source #263/#261) | Ledger kandidat tercatat di VPS, 0 order |
+| WP14 | **MERGED** 3 Nov | #265 (#266) | Auditor fail-closed; path tick relatif state-dir. K-04 `clock_shift_stable` DST 1 jam (#276) |
 | WP15 | MERGED 31 Okt / effective None | #244 | Nonretroaktif; aktivitas produksi memerlukan izin lain |
 | WP8d | MERGED 31 Okt; BROKER CLOCK BLOCKED | #248 / #255 | Kalender BLS sudah terintegrasi, belum ada M5 pre-cutoff terverifikasi |
 | WP16 | MERGED 31 Okt / NOT DEPLOYED | #247 | Profil tidak disebarkan oleh kode; pemeriksaan runtime terpisah |
