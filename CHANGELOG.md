@@ -1,5 +1,9 @@
 # Perubahan material Katarina AI
 
+## 2026-11-03 — deploy WP13 + integrasi riset ke VPS (dokumen)
+
+- VPS `C:\Katarina\code` diperbarui dari `64497b5` ke `main` `fd6cff16` dengan izin Owner: backup konsisten, manifest MATCH 317, smoke `LIVE_FEED_CLOCK_VERIFIED`, 0 order. Bukti dan rollback di RH-011; status di PROJECT_STATUS; baris R5 WP13/WP4/WP14 diperbarui. Tanpa perubahan kode; LIVE tetap OFF.
+
 ## 2026-11-03 — K-04: `clock_shift_stable` hanya memaafkan langkah DST satu jam
 
 - `data_health.assess`: perubahan shift dekat transisi DST hanya PASS bila besarnya tepat 1 jam (`dst_plausible`). Data VPS 30 Okt–1 Nov (2 → −1 → −8 → 2, vote quote basi akhir pekan pada kode produksi lama) sebelumnya lolos karena berada dalam ±3 hari dari akhir DST AS. Pemeriksaan menjadi lebih ketat; tidak ada data/ledger yang diubah. LIVE tetap OFF.

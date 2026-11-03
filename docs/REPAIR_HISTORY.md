@@ -21,6 +21,24 @@ Dokumen ini adalah **satu-satunya jurnal hasil perbaikan yang terverifikasi**: m
 4. `CHANGELOG.md` tetap mencatat ringkasan perubahan per PR; detail diagnosis dan hasil pemulihan hanya di sini, dengan tautan ke PR. `PROJECT_STATUS.md` hanya menyimpan kondisi saat ini dan merujuk ID perbaikan bila diperlukan.
 5. Pengembangan lewat GitHub dan PR + CI. VPS hanya untuk pengujian yang diizinkan. Tidak ada perubahan yang mengaktifkan LIVE, order, membuka holdout, atau melemahkan Risk Governor tanpa keputusan Owner yang berlaku.
 
+## RH-011 — Deploy WP13 jam live tepercaya ke VPS + perbaikan Stage 0 `clock_shift_stable`
+
+**Tanggal:** 3 November 2026 WIB (deploy 15:15–15:18 UTC)
+**Status:** **Kode MERGED + CI PASS + DEPLOYED di VPS + smoke test LULUS**; Tahap 0 **BELUM LULUS**. Izin Owner di sesi Claude, 3 Nov 21:50 WIB.
+
+| Aspek | Bukti perbaikan |
+|---|---|
+| Sebelum | VPS menjalankan `64497b5` (sebelum WP13). Jumat 30 Okt 23:55 UTC observer menerima shift **−1** dari quote beku setelah penutupan, lalu **−8** pada 31 Okt 06:57 UTC. Akibatnya kelima hari tick 30 Okt menjadi `GAP BROKER_SHIFT_CHANGED_DURING_DAY`. `clock_shift_stable` tetap **PASS** karena hanya mengecek "dalam ±3 hari dari DST" |
+| Akar penyebab | **TERBUKTI:** `infer_clock_shift` lama memilih offset dari quote tanpa jam host tepercaya dan tanpa penutupan pasar (direproduksi dengan kode `64497b5`). Kriteria Tahap 0 tidak memeriksa besar perubahan shift |
+| Perbaikan | WP13 (jam live = NTP host tepercaya + ≥ 3 tick bergerak, `FX_MARKET_CLOSED` setelah Jumat 20:00 UTC) sudah ada di `main`. Tes insiden [#275](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/275). `data_health.assess`: perubahan shift hanya diterima bila dekat DST **dan** tepat 1 jam (`dst_plausible`) [#276](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/276). Integrasi #265 (WP4/WP8b/WP14/BLS + review #266/#271), guard sesi K-02 #274 → #273 |
+| Commit | `main` `fd6cff16` (#265), kemudian `034f1392` (#273). VPS dideploy pada **`fd6cff16`** |
+| Bukti tes | Lokal: unit 1.446, static 76 (4 skip), integration 222 OK; manifest MATCH 317; promotion gate PASS. CI Body/Ubuntu/Windows PASS pada setiap SHA yang di-merge |
+| Deploy terverifikasi | Prasyarat: RAM bebas 613 MB, NTP `State=2 (Sync)` dengan umur 5.630 s, status WAITING. `continuous.stop` → `STOPPED/OWNER_STOP_REQUEST` 15:15:32 UTC. Backup `sqlite3.backup()` ke `C:\Katarina\backups\20261103-pre-fd6cff16` (`integrity_check=ok`, 9.934 siklus, SHA-256 `eb65edf7…a768`, 44 arsip tick, JSON state). `git merge --ff-only` ke `fd6cff16`; berkas untracked governance utuh; manifest **MATCH 317**. Tes jam di VPS 27 OK; `inspect_host_clock()` = `NTP_SYNCHRONIZED time.windows.com` stratum 5, skew 0,03 s. Task dijalankan ulang 15:18:12 UTC |
+| Smoke | Siklus 15:18:14 dan 15:19:21 UTC `OK`, shift 2,0, 0 order; `time_basis=LIVE_FEED_CLOCK`, `shift_evidence=TRUSTED_HOST_NTP_AND_PROGRESSING_TICKS`, `clock_audit.reason=LIVE_FEED_CLOCK_VERIFIED` (3 simbol bergerak); `research_candidates` 5 baris `RECORDED` |
+| Batas hasil | Jeda observer 15:14:28 → 15:18:14 UTC (±4 menit, di dalam sesi) tercatat sebagai outage; tidak diisi. Dengan kriteria baru, data sejak 28 Okt menjadi `clock_shift_stable NOT_MET` (shift palsu akhir pekan tetap tercatat; tidak dihapus) |
+| Rollback | `git -C C:\Katarina\code checkout 64497b5`, restore DB dari backup dengan `sqlite3.backup()`, jalankan ulang task |
+| Sisa risiko | Task observer masih `LogonTrigger/Interactive` (WP6). Probe sesi MT5 belum dijalankan (perlu GUI terminal). Bukti jam bar historis butuh host riset terpisah (#255) |
+
 ## RH-010 — Audit gabungan WP14 / WP8b / WP4: pengamanan data dan koreksi akuntansi spread
 
 **Tanggal bukti:** 2 November 2026 (WIB) · **Status:** hanya **BRANCH RISET TERINTEGRASI**, CI 3/3 PASS; belum merged ke `main` maupun dideploy.
