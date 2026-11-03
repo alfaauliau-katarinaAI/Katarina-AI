@@ -175,6 +175,11 @@
       "normalized_sha256": "0254ce7b23e3bba6c1dd4b529b2170757bc8b861847ece7e77ea49a83a049f5b",
       "sha256": "0254ce7b23e3bba6c1dd4b529b2170757bc8b861847ece7e77ea49a83a049f5b"
     },
+    "scripts/ai/diagnose_stage0_cutoff.py": {
+      "bytes": 8728,
+      "normalized_sha256": "e43936d5f2cfb15b01659941fdc58a7b2cabed20142fb66faaec44a963525fbd",
+      "sha256": "e43936d5f2cfb15b01659941fdc58a7b2cabed20142fb66faaec44a963525fbd"
+    },
     "scripts/ai/hf_archive_sync.py": {
       "bytes": 32143,
       "normalized_sha256": "731629562db7e695cc6ae2424e24a80f7b8f8a1be030628649fa4657e9754307",
