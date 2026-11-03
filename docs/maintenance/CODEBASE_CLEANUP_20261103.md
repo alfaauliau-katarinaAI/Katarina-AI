@@ -57,3 +57,17 @@ B1 di-merge sebagai `main` `39fc0859` (PR #279). CI: Body, Ubuntu PASS; Windows 
 | C1-04 | `tests/integration/test_unified_owner_surface.py` | Flaky Windows: socket timeout 5 s (run 40969779432, #279) | Konstanta `OWNER_SURFACE_TIMEOUT = 30` dengan alasan tertulis | 9 tes OK lokal; CI Windows |
 
 Triase broad `except` (93 lokasi): tidak ada yang menelan error pada jalur keputusan. Polanya: (a) fail-closed dengan reason code (`ConnectionUnavailable('LOCAL_READ_FAILED')`, `SHADOW_EVALUATION_FAILED_<Type>`, `RETRY_PENDING`, `BOUNDARY_ERROR`, dll.), (b) menutup koneksi lalu `raise` ulang, (c) best-effort tanpa dampak keputusan: shutdown MT5 (`automatic_connection.py:147`, `demo_forward.py:299`, `scripts/mt5/audit_readonly_quotes.py:180`), tampilan dashboard (`mt5_dashboard.py:76`), snapshot berita lama rusak (`scripts/update_hot_news.py:85`, aman karena diganti). Pesan exception mentah sengaja tidak disimpan (hanya nama tipe) agar kredensial tidak bocor. Tidak ada perubahan lebih lanjut.
+C1 di-merge sebagai `main` `a9dc9a36` (PR #280); CI Body/Ubuntu/Windows PASS pada percobaan pertama.
+
+## D1 — penelusuran error lewat reason code
+
+| ID | Lokasi | Perubahan | Tes |
+|---|---|---|---|
+| D1-01 | `scripts/governance/reason_code_index.py` (baru) | Indeks statis: kode → severity (P0/P1/P2 menurut area) → `file:line` sumber → tes yang menyebut kode. Kode keluarga dinamis (`'PREFIX_' + x`, `f'PREFIX_{x}'`) dicatat sebagai `PREFIX_*`. `--find KODE` untuk satu kode (contoh: `--find SHADOW_EVALUATION_FAILED_KeyError` → `observer.py:465`). Kode protokol `protocol/reason_codes_v1.json` hanya ditampilkan; maknanya tidak diubah | `tests/static/test_reason_code_index.py` (5 tes) |
+| D1-02 | `docs/maintenance/REASON_CODE_INDEX.md` (baru, hasil generate) | 540 kode: P0 101, P1 229, P2 210; 176 disebut di tes | Dokumen dibuat ulang setiap perapian, seperti `RUNTIME_MODULE_MAP.md` |
+| D1-03 | `tests/unit/intelligence/test_live_clock_probe.py` | Kode P0 jam live yang dipakai produksi belum diuji secara literal: `LIVE_FEED_CLOCK_VERIFIED` (status sukses VPS) dan `CLOCK_BROKER_IDENTITY_MISSING` (jalur C1-03) | 2 assert + 1 tes baru (None, kosong, spasi → fail-closed, tanpa hash identitas, 0 order) |
+
+Alur penelusuran baku (ditulis di kepala indeks): kode dari log → `--find` → sumber `file:line` + tes → perbaikan wajib menyertakan tes yang menyebut kode itu → dicatat di `docs/REPAIR_HISTORY.md`.
+Format/API lama tidak diubah. Tidak ada kode yang diganti nama: kode yang sudah ada di ledger VPS dan laporan bersifat stabil.
+
+Temuan terbuka (OPEN, bukan blocker codebase): 62 kode P0 belum disebut literal di tes. Sebarannya: `intelligence.broker` 29, `adapters.readonly_cloud` 9, `adapters.automatic_connection` 9, `engines.demo_execution` 8 (DEMO belum aktif), `adapters.dialog_model` 6, `continuous_owner_surface` 1. Banyak di antaranya diuji lewat perilaku (status FAILED/BLOCKED), bukan string kode. Daftar lengkap ada di indeks (kolom Tes = `—`). Disarankan ditambah per paket saat area itu disentuh, terutama sebelum Tahap 3 DEMO.

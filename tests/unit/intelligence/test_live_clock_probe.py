@@ -28,8 +28,21 @@ class LiveClockProbeTests(unittest.TestCase):
         self.assertTrue(finding.suitable_for_readonly_snapshot)
         self.assertEqual(finding.observed_hours_shift, 2)
         self.assertEqual(audit["time_basis"], "LIVE_FEED_CLOCK")
+        self.assertEqual(audit["reason"], "LIVE_FEED_CLOCK_VERIFIED")
+        self.assertEqual(finding.reason, "LIVE_FEED_CLOCK_VERIFIED")
         self.assertFalse(audit["historical_dst_verified"])
         self.assertFalse(audit["live_execution_authorized"])
+
+    def test_missing_broker_identity_fails_closed_before_any_vote(self):
+        """observer.py maps a failing account_info() to broker_server=None (cleanup C1)."""
+        for server in (None, "", "   "):
+            with self.subTest(server=server):
+                finding, audit = self.evaluate(server=server)
+                self.assertFalse(finding.suitable_for_readonly_snapshot)
+                self.assertIsNone(finding.observed_hours_shift)
+                self.assertEqual(audit["reason"], "CLOCK_BROKER_IDENTITY_MISSING")
+                self.assertNotIn("broker_server_sha256", audit)
+                self.assertEqual(audit["orders_submitted"], 0)
 
     def test_three_frozen_ticks_at_wrong_whole_hour_do_not_verify(self):
         finding, audit = self.evaluate(shift=1, frozen=True)
