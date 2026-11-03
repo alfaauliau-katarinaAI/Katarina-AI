@@ -96,5 +96,42 @@ class SessionHypothesisTests(unittest.TestCase):
         self.assertEqual(h.classify_hypothesis("XAUUSD.vx", "2030-11-02T12:00:00Z", p), "UNVERIFIED")
 
 
+    def test_cross_midnight_window_closes_both_sides(self):
+        p = policy()
+        p["candidate_closed_windows_utc"]["XAUUSD.vx"] = [["2030-11-04T23:30:00Z", "2030-11-05T00:30:00Z"]]
+        self.assertEqual(h.classify_hypothesis("XAUUSD.vx", "2030-11-04T23:45:00Z", p), "HYPOTHETICAL_CLOSED")
+        self.assertEqual(h.classify_hypothesis("XAUUSD.vx", "2030-11-05T00:10:00Z", p), "HYPOTHETICAL_CLOSED")
+        self.assertEqual(h.classify_hypothesis("XAUUSD.vx", "2030-11-05T00:30:00Z", p), "UNVERIFIED")
+
+    def test_touching_windows_cannot_chain_past_two_hours(self):
+        p = policy()
+        p["candidate_closed_windows_utc"]["XAUUSD.vx"] = [
+            ["2030-11-04T21:00:00Z", "2030-11-04T23:00:00Z"],
+            ["2030-11-04T23:00:00Z", "2030-11-05T01:00:00Z"],
+        ]
+        with self.assertRaisesRegex(ValueError, "OVERLAPPING_OR_UNSORTED_WINDOWS"):
+            h.validate_hypothesis(p)
+
+    def test_server_offset_window_is_rejected_not_normalized(self):
+        p = policy()
+        # broker server time (+02:00) pasted without conversion to UTC
+        p["candidate_closed_windows_utc"]["XAUUSD.vx"] = [["2030-11-05T00:00:00+02:00", "2030-11-05T01:00:00+02:00"]]
+        with self.assertRaisesRegex(ValueError, "UTC_OFFSET_REQUIRED"):
+            h.validate_hypothesis(p)
+        with self.assertRaisesRegex(ValueError, "UTC_OFFSET_REQUIRED"):
+            h.classify_hypothesis("XAUUSD.vx", "2030-11-05T00:10:00+02:00", policy())
+
+    def test_boolean_schema_version_is_not_version_one(self):
+        p = policy()
+        p["schema_version"] = True
+        with self.assertRaisesRegex(ValueError, "NO_AUTHORIZED_SESSION_POLICY"):
+            h.validate_hypothesis(p)
+
+    def test_holiday_absent_from_weekly_template_stays_unverified(self):
+        # SymbolInfoSession* only returns the weekly template; a holiday closure that
+        # is not an explicit window must keep counting as an unexplained failure.
+        self.assertEqual(h.classify_hypothesis("XAUUSD.vx", "2030-11-07T15:00:00Z", policy()), "UNVERIFIED")
+
+
 if __name__ == "__main__":
     unittest.main()
