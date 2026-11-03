@@ -235,12 +235,16 @@ def assess(db, now: datetime, *, interval_seconds: int = 60, since: datetime | N
 
     # 4. broker clock shift recorded and stable (changes only around DST)
     shifts = [(c[0], c[3]) for c in cycles if c[3] is not None]
-    changes = [{"at_utc": b[0].isoformat(), "from": a[1], "to": b[1], "near_dst": _near_dst(b[0])}
+    # A DST transition moves the broker clock by exactly one hour near a transition
+    # date; a stale-quote vote (e.g. 2 -> -1 -> -8 on 30-31 Oct 2026) is not excused
+    # merely because it happened in the same week as a DST change.
+    changes = [{"at_utc": b[0].isoformat(), "from": a[1], "to": b[1], "near_dst": _near_dst(b[0]),
+                "dst_plausible": _near_dst(b[0]) and abs(b[1] - a[1]) == 1}
                for a, b in zip(shifts, shifts[1:]) if a[1] != b[1]]
     missing_shift = sum(1 for c in cycles if c[1] in ("OK", "PARTIAL") and c[3] is None)
     criteria.append(_criterion(
         "clock_shift_stable", "NO_DATA" if not shifts else
-        "PASS" if missing_shift == 0 and all(x["near_dst"] for x in changes) else "NOT_MET",
+        "PASS" if missing_shift == 0 and all(x["dst_plausible"] for x in changes) else "NOT_MET",
         shifts_seen=sorted({s for _, s in shifts}), changes=changes, cycles_without_shift=missing_shift))
 
     # 5. bid, ask and spread for every observed symbol in every cycle

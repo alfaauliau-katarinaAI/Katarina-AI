@@ -1,5 +1,9 @@
 # Perubahan material Katarina AI
 
+## 2026-11-03 — K-04: `clock_shift_stable` hanya memaafkan langkah DST satu jam
+
+- `data_health.assess`: perubahan shift dekat transisi DST hanya PASS bila besarnya tepat 1 jam (`dst_plausible`). Data VPS 30 Okt–1 Nov (2 → −1 → −8 → 2, vote quote basi akhir pekan pada kode produksi lama) sebelumnya lolos karena berada dalam ±3 hari dari akhir DST AS. Pemeriksaan menjadi lebih ketat; tidak ada data/ledger yang diubah. LIVE tetap OFF.
+
 ## 2026-11-02 — review Claude atas integrasi #265: tiga perbaikan
 
 - WP14: audit menyelesaikan path arsip tick relatif terhadap `--state-dir` (ledger menyimpan `broker-ticks/...`), dan berkas tick tanpa hash tercatat menjadi `BLOCKED` (`TICK_FILE_HASH_NOT_RECORDED`).
