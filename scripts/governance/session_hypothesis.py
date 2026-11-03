@@ -15,6 +15,10 @@ def _utc(value):
         raise ValueError("INVALID_UTC_TIMESTAMP") from exc
     if dt.tzinfo is None or dt.utcoffset() is None:
         raise ValueError("AWARE_UTC_REQUIRED")
+    if dt.utcoffset().total_seconds() != 0:
+        # Policy fields are named *_utc; a broker-server offset here is a likely
+        # unconverted server time, so reject instead of silently normalizing.
+        raise ValueError("UTC_OFFSET_REQUIRED")
     return dt.astimezone(timezone.utc)
 
 
@@ -22,7 +26,8 @@ def validate_hypothesis(policy):
     """Fail closed for ambiguous, retroactive, overlapping, or unbounded windows."""
     if not isinstance(policy, dict):
         raise ValueError("INVALID_POLICY")
-    if policy.get("schema_version") != 1 or policy.get("status") != "HYPOTHESIS_ONLY":
+    if type(policy.get("schema_version")) is not int or policy.get("schema_version") != 1 \
+            or policy.get("status") != "HYPOTHESIS_ONLY":
         raise ValueError("NO_AUTHORIZED_SESSION_POLICY")
     created = _utc(policy.get("proposal_created_utc"))
     start = _utc(policy.get("future_effective_utc"))
@@ -46,7 +51,8 @@ def validate_hypothesis(policy):
             a, b = map(_utc, interval)
             if a < start or b > end or a >= b or (b - a).total_seconds() > 2 * 3600:
                 raise ValueError("UNSAFE_CLOSED_WINDOW")
-            if prev_end is not None and a < prev_end:
+            if prev_end is not None and a <= prev_end:
+                # Touching windows would chain past the 2-hour cap.
                 raise ValueError("OVERLAPPING_OR_UNSORTED_WINDOWS")
             prev_end = b
             checked.append((a, b))
