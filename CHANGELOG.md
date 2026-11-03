@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-11-03 — perapian C1: satu kalender DST, tes owner surface stabil
+
+- Aturan DST AS (Minggu ke-2 Maret 07:00 UTC – Minggu ke-1 Nov 06:00 UTC) dan EU (Minggu terakhir Maret/Okt 01:00 UTC) sebelumnya ditulis ulang di lima modul (`observation_ledger`, `data_health`, `symbol_playbooks`, `bar_clock_evidence`, `validation`). Sekarang satu sumber: `src/katarina/domain/market_calendar.py` (stdlib, sesuai `DEPENDENCY_RULES.md`). Ekuivalensi diperiksa terhadap kode lama pada 107.892 momen 1990–2100 (setiap 30 menit ±2 hari di sekitar transisi + acak); tes penjaga menolak implementasi DST kedua. API lama (`data_health.dst_transitions`, `bar_clock_evidence.is_us_dst/is_eu_dst`, `validation.is_us_dst`) tetap ada.
+- `observer.py`: kegagalan `account_info()` kini eksplisit `broker_server = None` dengan catatan bahwa jam live menolak dengan `CLOCK_BROKER_IDENTITY_MISSING` (tanpa perubahan perilaku).
+- `tests/integration/test_unified_owner_surface.py`: batas socket/antrean 5 s → 30 s. Penyebab flaky Windows (Body CI 40969779432 dan PR #279): surface menjawab di thread otak setelah siklus observer, yang bisa > 5 s di runner Windows. Tanpa berkas terkunci; LIVE tetap OFF.
+
 ## 2026-11-03 — perapian B1: hapus jalur MT5 lama dan path `C:\KatarinaDev`
 
 - Dihapus (terbukti tidak dipakai, rincian bukti di `docs/maintenance/CODEBASE_CLEANUP_20261103.md`): observer kedua `scripts/ai/run_readonly_decisions.py` + `RUN_READONLY_DECISIONS.cmd` + `smoke_closed_market_decision.py` (memanggil MT5 langsung), installer uji `install_hf_archive_test.py`, EA `KatarinaResearchScalperEA.mq5` beserta dua include riset (otak trading kedua di MT5, tidak terpasang di VPS), fixture CSV yatim.

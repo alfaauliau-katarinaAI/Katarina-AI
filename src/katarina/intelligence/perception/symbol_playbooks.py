@@ -9,36 +9,18 @@ from __future__ import annotations
 from datetime import datetime,timezone
 from math import isfinite
 from statistics import mean
+from katarina.domain.market_calendar import is_eu_dst, is_us_dst
 from katarina.intelligence.perception.screening import features
 
 UTC=timezone.utc
 
-def _nth_sunday(year,month,n):
-    first=datetime(year,month,1,tzinfo=UTC)
-    day=1+(6-first.weekday())%7+7*(n-1)
-    return day
-
-def _last_sunday(year,month):
-    from calendar import monthrange
-    last=monthrange(year,month)[1]
-    dt=datetime(year,month,last,tzinfo=UTC)
-    return last-(dt.weekday()+1)%7
-
 def _ny_open_utc_minutes(now,local_hour,local_minute=0):
-    # US DST: second Sunday March 07:00 UTC until first Sunday Nov
-    # 06:00 UTC; no local timezone database dependency on Windows 2012.
-    year=now.year
-    start=datetime(year,3,_nth_sunday(year,3,2),7,tzinfo=UTC)
-    stop=datetime(year,11,_nth_sunday(year,11,1),6,tzinfo=UTC)
-    eastern_offset=4 if start<=now<stop else 5
+    # US DST from katarina.domain.market_calendar (no tz database on Windows 2012).
+    eastern_offset=4 if is_us_dst(now) else 5
     return (local_hour+eastern_offset)*60+local_minute
 
 def _london_start_utc_hour(now):
-    # UK DST: last Sunday March 01:00 UTC to last Sunday Oct 01:00 UTC.
-    year=now.year
-    start=datetime(year,3,_last_sunday(year,3),1,tzinfo=UTC)
-    stop=datetime(year,10,_last_sunday(year,10),1,tzinfo=UTC)
-    return 7 if start<=now<stop else 8
+    return 7 if is_eu_dst(now) else 8
 
 SYMBOLS={
  "XAUUSD.vx":"gold_sweep_shift_confirm_v1",

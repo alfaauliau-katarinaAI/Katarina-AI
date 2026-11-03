@@ -12,6 +12,7 @@ import json
 from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
 
+from katarina.domain.market_calendar import dst_transitions  # re-exported for callers and tests
 from katarina.intelligence.operations.observation_ledger import (
     ROLLOVER_RULE_EFFECTIVE_UTC,
     fx_session_open,
@@ -35,22 +36,6 @@ def _criterion(name, status, **detail):
 
 def _tables(db):
     return {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-
-
-def _nth_sunday(year, month, nth):
-    first = date(year, month, 1)
-    return first + timedelta(days=(6 - first.weekday()) % 7 + 7 * (nth - 1))
-
-
-def _last_sunday(year, month):
-    last = (date(year, month + 1, 1) if month < 12 else date(year + 1, 1, 1)) - timedelta(days=1)
-    return last - timedelta(days=(last.weekday() + 1) % 7)
-
-
-def dst_transitions(year):
-    """EU (last Sunday Mar/Oct) and US (2nd Sunday Mar, 1st Sunday Nov) clock changes."""
-    return sorted({_last_sunday(year, 3), _last_sunday(year, 10),
-                   _nth_sunday(year, 3, 2), _nth_sunday(year, 11, 1)})
 
 
 def _near_dst(moment: datetime) -> bool:

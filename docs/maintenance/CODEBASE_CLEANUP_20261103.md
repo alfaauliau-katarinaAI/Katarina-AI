@@ -44,3 +44,16 @@ Dokumen ikut diperbarui: `docs/architecture/EXPLAINABLE_MARKET_DECISION_V1.md` (
 Rollback: `git revert <SHA merge B1>` mengembalikan semua berkas; tidak ada data/state yang tersentuh.
 
 `UNVERIFIED_KEEP` dari pemindaian B1: `website/deployment-check.json`, `website/PUBLIC_UPDATES_POLICY.md` (disajikan langsung oleh Pages), `SECURITY.md` (kebijakan GitHub), semua `docs/adr` dan `docs/architecture` (PROTECTED), workflow manual (entry point), `docs/validation/2026-10-10-*.json` (bukti historis yang dirujuk), `ops/deployment/katarina-hf-storage.*` (template arsip HF portabel, dirujuk installer dan dokumen redeploy).
+
+B1 di-merge sebagai `main` `39fc0859` (PR #279). CI: Body, Ubuntu PASS; Windows gagal satu kali pada tes flaky `test_unified_owner_surface` (diperbaiki di C1), lalu PASS saat dijalankan ulang.
+
+## C1 — konsolidasi DST dan tes flaky
+
+| ID | Lokasi | Masalah | Perbaikan | Bukti/tes |
+|---|---|---|---|---|
+| C1-01 | `intelligence/operations/observation_ledger.py` (`_nth_sunday`, `_is_us_dst`), `intelligence/operations/data_health.py` (`_nth_sunday`, `_last_sunday`, `dst_transitions`), `intelligence/perception/symbol_playbooks.py` (`_nth_sunday`, `_last_sunday` + 2 aturan inline), `research/bar_clock_evidence.py` (`is_us_dst`, `is_eu_dst`), `research/validation.py` (`is_us_dst`) | Aturan zona waktu/DST ditulis ulang 5 kali; dua modul riset mengimpor helper privat `_nth_sunday` dari `data_health` | Satu modul murni `src/katarina/domain/market_calendar.py` (`nth_sunday`, `last_sunday`, `dst_transitions`, `is_us_dst`, `is_eu_dst`); pemanggil memakai modul ini, API publik lama dipertahankan | Skrip ekuivalensi (kode lama vs baru, 107.892 momen 1990–2100: `_ny_open_utc_minutes`, `_london_start_utc_hour`, `stage0_session_open`, `is_us_dst`/`is_eu_dst`, `dst_transitions`) = identik. `tests/unit/domain/test_market_calendar.py` (6 tes: tanggal, batas half-open, offset non-UTC, naive ditolak, penjaga implementasi kedua) |
+| C1-02 | `config/repository_architecture.json` paket `domain` | Paket kontrak kosong | Diisi logika murni stdlib sesuai `DEPENDENCY_RULES.md` (`domain` → stdlib saja). Kontrak tidak diubah; `entrypoints`/`ports` tetap kosong | Peta modul: D 3 → 2 |
+| C1-03 | `intelligence/cognition/observer.py:330` | `except Exception: pass` tanpa jejak | `broker_server = None` + komentar: ditolak hilir dengan `CLOCK_BROKER_IDENTITY_MISSING` (`live_clock_probe.py:41`) | Perilaku sama; tes jam WP13 tetap OK |
+| C1-04 | `tests/integration/test_unified_owner_surface.py` | Flaky Windows: socket timeout 5 s (run 40969779432, #279) | Konstanta `OWNER_SURFACE_TIMEOUT = 30` dengan alasan tertulis | 9 tes OK lokal; CI Windows |
+
+Triase broad `except` (93 lokasi): tidak ada yang menelan error pada jalur keputusan. Polanya: (a) fail-closed dengan reason code (`ConnectionUnavailable('LOCAL_READ_FAILED')`, `SHADOW_EVALUATION_FAILED_<Type>`, `RETRY_PENDING`, `BOUNDARY_ERROR`, dll.), (b) menutup koneksi lalu `raise` ulang, (c) best-effort tanpa dampak keputusan: shutdown MT5 (`automatic_connection.py:147`, `demo_forward.py:299`, `scripts/mt5/audit_readonly_quotes.py:180`), tampilan dashboard (`mt5_dashboard.py:76`), snapshot berita lama rusak (`scripts/update_hot_news.py:85`, aman karena diganti). Pesan exception mentah sengaja tidak disimpan (hanya nama tipe) agar kredensial tidak bocor. Tidak ada perubahan lebih lanjut.

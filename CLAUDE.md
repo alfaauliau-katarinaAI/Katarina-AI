@@ -104,7 +104,7 @@ CLAUDE.md dan CHANGELOG. Rencana 8 tahap 21 Okt dan perampingan A–E 22 Okt sud
 
 Peta modul dibuat ulang dengan
 `python scripts/governance/runtime_import_map.py --output docs/maintenance/RUNTIME_MODULE_MAP.md`
-(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil WP12: A=186, B=40, C=14, D=3. Sebagian besar B adalah modul tahap 11–40 (engines, governance, perception dasar, research) yang hanya diuji tes — itu identitas body Katarina, **jangan dihapus**. D = paket kosong `domain`, `entrypoints`, `ports` (tercantum di kontrak arsitektur beku `config/repository_architecture.json`).
+(analisis statis; ikut membaca `config/stages` untuk modul body). Hasil perapian C1 (3 Nov): A=192, B=40, C=23, D=2. Sebagian besar B adalah modul tahap 11–40 (engines, governance, perception dasar, research) yang hanya diuji tes — itu identitas body Katarina, **jangan dihapus**. D = paket kosong `entrypoints`, `ports` (tercantum di kontrak arsitektur beku `config/repository_architecture.json`). `domain` kini berisi `market_calendar.py` (aturan DST AS/EU, stdlib saja) — satu-satunya sumber DST; jangan menulis ulang `nth_sunday`/`is_us_dst` di modul lain (dijaga tes).
 Nama baru bekas otak berversi: `brain_observer` → `cognition/observer`, `market_decision_brain_v3` →
 `cognition/market_decision`, `adaptive_brain_v2` → `cognition/adaptive_observation`, `multi_market_brain` →
 `perception/screening`. Modul lain di `intelligence/` mempertahankan nama berkasnya di subpaket barunya.
@@ -127,3 +127,4 @@ Nama baru bekas otak berversi: `brain_observer` → `cognition/observer`, `marke
 - 22 Okt (rampingkan D): transport KAT1/ZMQ (codec, sesi, ZMQ/TCP, port transport, vektor golden, jembatan MT5 Stage07 + multi-symbol extension, workflow `stage07-transport`, tes, ADR/dokumen khusus) dihapus; skema `protocol/` dipertahankan.
 - 22 Okt (rampingkan E): modul riset/shadow-paper yang yatim, 20 skrip `scripts/ai`/`mt5`/lainnya tanpa rujukan, 5 workflow manual yang mengulang Body CI, 15 config tanpa pemuat, dan dependensi `pyzmq`/`tornado` dihapus. Total repo turun dari ~1.211 berkas/174 ribu baris menjadi ~795 berkas/92 ribu baris.
 - 3 Nov (mandat Owner, B1): observer kedua `run_readonly_decisions.py` + launcher/smoke, installer uji HF, EA `KatarinaResearchScalperEA` + 2 include, fixture CSV yatim dihapus; `C:\KatarinaDev` dilarang di `scripts/`/`src/`. Ledger: `docs/maintenance/CODEBASE_CLEANUP_20261103.md`.
+- 3 Nov (C1): empat salinan aturan DST AS/EU (observation_ledger, data_health, symbol_playbooks, bar_clock_evidence, validation) digabung ke `katarina/domain/market_calendar.py` (ekuivalensi 107.892 momen 1990–2100); tes flaky `test_unified_owner_surface` di Windows diberi batas 30 s.
