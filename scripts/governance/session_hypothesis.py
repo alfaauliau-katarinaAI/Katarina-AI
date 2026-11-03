@@ -24,8 +24,11 @@ def validate_hypothesis(policy):
         raise ValueError("INVALID_POLICY")
     if policy.get("schema_version") != 1 or policy.get("status") != "HYPOTHESIS_ONLY":
         raise ValueError("NO_AUTHORIZED_SESSION_POLICY")
+    created = _utc(policy.get("proposal_created_utc"))
     start = _utc(policy.get("future_effective_utc"))
     end = _utc(policy.get("expiry_utc"))
+    if start <= created:
+        raise ValueError("RETROACTIVE_EFFECTIVE_TIME")
     if end <= start or (end - start).total_seconds() > 14 * 86400:
         raise ValueError("UNSAFE_VALIDITY_INTERVAL")
     windows = policy.get("candidate_closed_windows_utc")
