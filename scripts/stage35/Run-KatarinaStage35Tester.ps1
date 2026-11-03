@@ -10,7 +10,7 @@ param(
     [int]$Deposit = 10000,
     [int]$Leverage = 100,
     [int]$TimeoutSeconds = 3600,
-    [string]$OutputRoot = "C:\KatarinaDev\stage35",
+    [string]$OutputRoot = "C:\Katarina\state\stage35",
     [switch]$Portable,
     [string]$ExistingTerminalDataPath = "",
     [string]$ParametersPath = ""

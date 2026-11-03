@@ -31,7 +31,7 @@
 - `architecture/`, `adr/`: kontrak dan keputusan arsitektur.
 - `research/`, `validation/`, `reviews/`: protokol, hasil dan bukti pengujian.
 - `governance/`: gerbang promosi dan governance teknis.
-- `operations/`, `deployment/`: panduan operasional dan rencana deployment, **bukan izin deploy**.
+- `operations/`, `deployment/`: panduan operasional dan rencana deployment, **bukan izin deploy** (pemulihan arsip HF dan redeploy host baru: [`deployment/KATARINA_REDEPLOY.md`](deployment/KATARINA_REDEPLOY.md)).
 - [CLEANUP_PLAN.md](maintenance/CLEANUP_PLAN.md), [RUNTIME_MODULE_MAP.md](maintenance/RUNTIME_MODULE_MAP.md): peta modul dan prosedur perapian.
 
 Jangan memindahkan atau menghapus berkas sebelum memeriksa referensi kode, CI, dan bukti validasi. Jangan menaruh dokumentasi induk di VPS.

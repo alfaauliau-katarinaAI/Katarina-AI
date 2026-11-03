@@ -16,9 +16,9 @@ import tempfile
 import time
 import zlib
 
-BASE = Path(os.environ.get('KATARINA_HF_BASE', r'C:\KatarinaDev\config\hf-storage' if os.name == 'nt'
+BASE = Path(os.environ.get('KATARINA_HF_BASE', r'C:\Katarina\private\hf-storage' if os.name == 'nt'
                            else str(Path.home() / '.local/state/katarina/hf-storage')))
-STATE = Path(os.environ.get('KATARINA_STATE_DIR', r'C:\KatarinaDev\state\owner-broker-readonly\readonly-observer'
+STATE = Path(os.environ.get('KATARINA_STATE_DIR', r'C:\Katarina\state\readonly-observer'
                             if os.name == 'nt' else str(BASE.parent / 'runtime')))
 REPO = os.environ.get('KATARINA_HF_REPO', 'alfaaulia/katarina-research-archive')
 EXPECTED_ACCOUNT = os.environ.get('KATARINA_HF_ACCOUNT', 'alfaaulia')
@@ -590,7 +590,7 @@ def main():
     import sys
     client_dir = config.get('client_dir') or os.environ.get('KATARINA_HF_CLIENT_DIR')
     if client_dir or os.name == 'nt':
-        sys.path.insert(0, client_dir or r'C:\KatarinaDev\runtime\hf-client')
+        sys.path.insert(0, client_dir or r'C:\Katarina\private\hf-client')
     import certifi
     os.environ['SSL_CERT_FILE'] = certifi.where()
     os.environ['HF_HUB_DISABLE_XET'] = '1'

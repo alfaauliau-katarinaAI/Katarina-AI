@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-11-03 — perapian B1: hapus jalur MT5 lama dan path `C:\KatarinaDev`
+
+- Dihapus (terbukti tidak dipakai, rincian bukti di `docs/maintenance/CODEBASE_CLEANUP_20261103.md`): observer kedua `scripts/ai/run_readonly_decisions.py` + `RUN_READONLY_DECISIONS.cmd` + `smoke_closed_market_decision.py` (memanggil MT5 langsung), installer uji `install_hf_archive_test.py`, EA `KatarinaResearchScalperEA.mq5` beserta dua include riset (otak trading kedua di MT5, tidak terpasang di VPS), fixture CSV yatim.
+- Default path Windows `hf_archive_sync.py` dan stage35 tester pindah ke layout `C:\Katarina`; tes statis kini menolak `KatarinaDev` di `scripts/`, `src/`, `katarina_pc.py`. Observer canonical, Risk Governor dan berkas terkunci tidak berubah; LIVE tetap OFF.
+
 ## 2026-11-03 — deploy WP13 + integrasi riset ke VPS (dokumen)
 
 - VPS `C:\Katarina\code` diperbarui dari `64497b5` ke `main` `fd6cff16` dengan izin Owner: backup konsisten, manifest MATCH 317, smoke `LIVE_FEED_CLOCK_VERIFIED`, 0 order. Bukti dan rollback di RH-011; status di PROJECT_STATUS; baris R5 WP13/WP4/WP14 diperbarui. Tanpa perubahan kode; LIVE tetap OFF.
