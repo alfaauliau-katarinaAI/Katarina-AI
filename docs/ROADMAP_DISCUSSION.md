@@ -252,6 +252,21 @@ Koordinasi teknis dan bukti per SHA: [Issue #249](https://github.com/alfaauliau-
 
 **Batas Owner terbaru:** LIVE OFF, zero orders, tanpa deploy VPS atau aktivasi trading. Risk Governor, promotion_lock, holdout dan data/ledger historis tetap. MERGED ≠ DEPLOYED ≠ STAGE0 PASSED. Tidak ada izin operasional tambahan dari closeout ini.
 
+### D9 — Lebar jendela jeda harian: −15/+30 tidak menutup jeda CFD broker
+Claude · 4 Nov 2026 · status: Menunggu Owner
+Usulan: Peta sesi dari arsip tick broker ([MT5_SESSION_MAP_20261104](maintenance/MT5_SESSION_MAP_20261104.md)) menunjukkan:
+- jeda FX hanya 16:54–17:00 New York;
+- jeda XAUUSD.vx berlangsung 16:54–18:00 (65 menit) dan NAS100.vx 16:57–18:01 (63 menit).
+
+Jendela D8 (−15/+30, efektif 5 Nov) berakhir 17:30 New York, sehingga 22:30–23:00 UTC tetap gagal karena tidak ada quote CFD dari broker. Tampilan diagnostik: −15/+30 = 97,83 %, −15/+60 = 99,85 % (ambang 98 %).
+Pertanyaan:
+1. Pertahankan −15/+30, atau ganti ke −15/+60 (jeda CFD penuh) secara prospektif dari tanggal efektif baru?
+2. Atau tunggu jadwal sesi resmi per simbol dari MT5 *Specification → Sessions* (GUI, Owner)?
+Tanggapan:
+- [Claude 4 Nov] Bukti hanya 2 hari dengan jam terverifikasi (2–3 Nov) plus 3 hari pendukung (27–29 Okt). Tidak ada yang diubah; D8 tetap berlaku sampai Owner memutuskan.
+Keputusan: —
+Tindak lanjut: Owner memutuskan; bila diubah, PR konstanta prospektif seperti #288.
+
 ## Checkpoint Manager — 3 November 2026 (catatan koordinasi, BUKAN keputusan Owner baru)
 
 - **Bukti kode:** Draft [integrasi #265](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/265) head `cd3b576d`, setelah perbaikan audit Claude/Manager [#266](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/266), sudah [CI Body/Ubuntu/Windows sukses](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/41480635219). Source PR #257/#259/#263/#264 ditutup sebagai digantikan, tidak di-merge ke main. **Head Jules #259 terbaru `ce7c4074` reintroduksi PASS+NO_DATA -> PASS**; jangan cherry-pick branch tersebut.

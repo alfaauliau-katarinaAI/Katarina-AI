@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — Uji putus-sambung formal #2–#3, peta sesi broker, agenda D9 (dokumen)
+
+- Uji `KILL_TERMINAL_MID_CYCLE` (17 s) dan `KILL_TERMINAL` (55 s) lolos; `reconnect_recoveries` 3/3 uji formal (RH-014).
+- `docs/maintenance/MT5_SESSION_MAP_20261104.md`: jeda quote per simbol dari arsip tick Tahap 0. Jeda XAU/NAS 65/63 menit tidak tertutup jendela D8 −15/+30 → agenda D9 di MEETING. Hanya dokumen; LIVE tetap OFF.
+
 ## 2026-11-04 — RH-014: deploy `main` ke VPS, WP6 task, uji putus-sambung formal #1 (dokumen)
 
 - VPS `fd6cff16` → `ee572571` → `82d93ef2` (backup terverifikasi, manifest MATCH 315, smoke `LIVE_FEED_CLOCK_VERIFIED`, 0 order). Task WP6 diterapkan (autologon masih menunggu Owner). Sidecar Stage 0 memakai checker terkini. Uji `KILL_TERMINAL` formal #1 pulih dalam 46 s. Penyimpangan urutan gate (deploy sebelum CI push `main` selesai, tree identik dengan HEAD yang hijau) dicatat. Hanya dokumen; LIVE tetap OFF.
