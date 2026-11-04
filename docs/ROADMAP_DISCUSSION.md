@@ -426,6 +426,32 @@ Owner telah menyetujui:
 - **Buffer yang telah dipilih:** max(tick size, spread, 0,10 x ATR14), memakai data saat keputusan; swing 2 kiri + 2 kanan, tanpa minimum RR dan TP struktural.
 - Berlaku sebagai **spesifikasi riset**, bukan izin mengubah runtime, menguji holdout, atau menyalakan trading. Parameter time exit masih dibahas; seluruh desain harus dicatat sebelum backtest.
 
+#### KEPUTUSAN D10-K13 — Batas pra-penutupan 15 / 30 / 20 menit sebagai baseline awal (Owner SETUJU, rapat 4 November 2026)
+
+Owner menyetujui **nilai awal untuk 6 hipotesis XAUUSD** sebelum backtest, ditetapkan atas dasar desain dan tidak boleh dipilih ulang dari hasil profit:
+- `B1/S1` Liquidity Sweep: **15 menit** sebelum akhir sesi efektif simbol;
+- `B2/S2` Trend Pullback: **30 menit**;
+- `B3/S3` Breakout/Breakdown Retest: **20 menit**.
+
+Pada masing-masing jendela: **blokir entry baru dan upayakan exit posisi aktif** berdasarkan quote bid/ask yang memang eksekutabel. Kedua tindakan ini disetujui sebagai *desain parameter awal*; **aktivasi bergantung verifikasi** jam quote+trade MT5 pada broker dan simbol yang tepat (termasuk DST, jeda harian, holiday dan daya eksekusi close). Tanpa bukti sesi: `BLOCKED_SESSION_EVIDENCE`, tidak boleh mengarang jadwal atau menyatakan exit terlaksana. Status `EXIT_PENDING_NO_QUOTE` dipertahankan sampai ada quote yang benar-benar memenuhi model fill; risiko gap tetap dilaporkan. Jangan mengubah hasil historis ketika jadwal terverifikasi berbeda.
+
+**AGENDA LANJUTAN D10-K14 — Batas candle + waktu nyata (BELUM DIPUTUSKAN):**
+
+| Kandidat | Proposal batas jumlah candle lengkap setelah entry | Proposal batas waktu nyata sejak fill | Pra-penutupan (SUDAH dipilih) |
+|---|---|---|---|
+| B1/S1 Sweep | 12 bar M5 | 90 menit | 15 menit |
+| B2/S2 Pullback | 12 bar M15 | 240 menit | 30 menit |
+| B3/S3 Breakout | 24 bar M5 | 180 menit | 20 menit |
+
+Metodologi yang perlu dikunci bersamaan dengan angka:
+1. Hitung bar hanya bila candle dari TF entry **benar-benar selesai setelah fill**, termasuk definisi apakah bar parsial saat fill dihitung (usulan: hanya bar yang `bar_open >= fill_at` dan `bar_close > fill_at`). Jangan buat candle akhir pekan atau menganggap data gap sebagai bukti tidak terjadi pergerakan.
+2. Deadline waktu nyata = `fill_at_utc + N*60s`, selalu berjalan saat sesi tutup; event eksekusi ditentukan oleh quote setelah trigger. Waktu menunjukkan **exit intent**, bukan fill yang dijamin.
+3. Tiga batas hybrid bersaing secara temporal. Pada event yang lebih awal antara SL/TP struktural, jumlah candle, deadline waktu, dan pra-penutupan broker, lakukan penilaian sesuai quote nyata dan urutan tick. Tidak ada pemilihan outcome terbaik jika SL/TP bertabrakan dalam OHLC bar.
+4. Tanggal/sesi resmi broker per symbol, server offset, DST dan cutover dari dataset diaudit, bukan tebakan. Jika informasi tidak tersedia, fixture sintetis boleh dipakai menguji logika, tetapi backtest penuh yang memerlukan kebijakan close-session tetap blocked.
+5. Semua nilai yang kelak disetujui menjadi satu set parameter per hipotesis; jika diubah setelah melihat P/L maka hipotesis baru (ID hash, hitungan Bonferroni, batas maksimum 5 per sisi per simbol). Jangan menambahkan variasi hanya untuk mencari profit.
+
+Keputusan D10-K13 adalah **persetujuan nilai pra-penutupan untuk spesifikasi awal, bukan klaim telah memvalidasi sesi/hasil**. `CANDLE_AND_CLOCK_LIMITS_PENDING`, `NO_BACKTEST_AUTHORIZED`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
+
 #### KEPUTUSAN D10-K12 — Kebijakan pra-penutupan berbeda per strategi/simbol (Owner SETUJU, 4 Nov 2026)
 
 Owner memilih **opsi C**: aturan entry block dan upaya penutupan sebelum sesi tutup **boleh berbeda menurut strategi dan simbol**, asalkan dipraregistrasikan dan dikunci sebelum pengujian. Keputusan ini **hanya menetapkan kebijakan desain**, bukan menit final, izin backtest/live, atau aturan sesi broker yang belum dibuktikan.
