@@ -416,6 +416,20 @@ Owner memilih **koefisien k = 0,10** dalam usulan rumus buffer SL, dengan **bata
 - Usulan k=0,15 yang masih tertulis di agenda D10-K8 di bawah adalah **riwayat opsi lama dan telah digantikan oleh keputusan ini**; jangan implementasikan 0,15 sebagai default. Varian 0,15/0,20 hanya boleh dicoba sebagai hipotesis baru dengan persetujuan, preregistration dan koreksi multiple trials.
 - **Fresh zone, masa berlaku 48 H1, metode sentuhan, invalidasi zona, dan time exit MASIH TERBUKA** untuk rapat; jangan menganggap paket D10-K8 telah disetujui otomatis.
 
+#### KEPUTUSAN D10-K9/K10 — Hybrid, first visit, usia zona (Owner SETUJU)
+
+Owner telah menyetujui:
+- **Invalidasi hybrid:** ketika harga valid melewati batas zona plus buffer secara intrabar, entry baru diblokir segera; penutupan H1 menentukan invalidasi struktur. Posisi yang sudah ada tetap mengikuti SL masing-masing.
+- **First visit satu kesempatan:** zona hanya dapat menghasilkan sinyal dalam episode kunjungan pertama; bila keluar tanpa sinyal, status menjadi CONSUMED dan tidak dipakai ulang.
+- **Pernah breach tidak kembali fresh:** jika H1 menutup di luar batas zona, INVALID; jika H1 kembali masuk, CONSUMED. Zona lama tidak kembali FRESH; hanya zona baru yang terbentuk secara independen bisa menjadi fresh.
+- **Usia maksimum:** 48 candle H1 valid dan selesai sejak zona dikonfirmasi; setelah itu EXPIRED. Jam akhir pekan dan candle yang tidak tersedia tidak boleh dihitung sebagai candle valid. Jika ada gap data, tandai dan jangan menebak kontinuitas.
+- **Buffer yang telah dipilih:** max(tick size, spread, 0,10 x ATR14), memakai data saat keputusan; swing 2 kiri + 2 kanan, tanpa minimum RR dan TP struktural.
+- Berlaku sebagai **spesifikasi riset**, bukan izin mengubah runtime, menguji holdout, atau menyalakan trading. Parameter time exit masih dibahas; seluruh desain harus dicatat sebelum backtest.
+
+#### AGENDA D10-K11 — TIME EXIT (USULAN, BELUM DIPUTUSKAN)
+
+Exit waktu menjadi batas maksimum holding bila TP struktural dan SL tidak tersentuh. Opsi: (1) N candle tertutup berdasarkan TF entry, (2) batas jam nyata, atau (3) kombinasi keduanya. Semua membutuhkan definisi praregistrasi, data waktu yang benar, dan model eksekusi bid/ask/biaya. TP/SL yang lebih dahulu tersentuh mengakhiri trade; jangan gunakan informasi setelah waktu kejadian untuk memilih exit yang terbaik. Usulan N awal untuk pembahasan: B1/S1 = 12 M5; B2/S2 = 12 M15; B3/S3 = 24 M5. Angka belum disetujui dan bukan hasil optimasi. Perlu putuskan penghitungan jeda pasar, akhir pekan, ketentuan flat menjelang tutup sesi, dan apakah variasi N dicatat sebagai eksperimen baru.
+
 #### Pembahasan lanjutan D10-K8 — First-touch dan invalidasi (belum diputuskan)
 
 Perlu memisahkan **status zona** dari **stop posisi**: batas H1 yang belum selesai tidak boleh menjadi alasan mengabaikan stop yang tersentuh. Usulan state machine deterministik `FRESH → FIRST_VISIT → CONSUMED/INVALID/EXPIRED`. Proposal "first visit" berarti **satu episode kunjungan** setelah konfirmasi zona (bukan hanya satu tick); deteksi masuk zona dari quote broker yang valid dan penerapan entry dari candle M15 selesai. Setelah harga keluar dari zona, kunjungan berikutnya tidak lagi fresh. Jika tidak ada konfirmasi pada kunjungan pertama, harus diputuskan apakah status menjadi `CONSUMED` (rekomendasi untuk menghindari cherry-picking) atau diizinkan retest berikutnya sebagai hipotesis berbeda.
