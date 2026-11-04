@@ -442,6 +442,19 @@ Owner juga menyetujui **candle M15 searah** yang menyentuh zona lalu close **kel
 
 **Yang belum dikunci untuk preregistration B2/S2:** aturan memilih candle asal bila beberapa bar memenuhi, tie-breaking zona beririsan, deteksi batas episode visit dari tick bid/ask, lebar zona minimal/maksimal dan harga referensi bid/ask, prioritas target, definisi ATR Wilder dan source spread, jam sesi broker resmi, data/split/cost/code hash. Semua ini bukan izin coding/tes atau klaim strategi profitable.
 
+#### KEPUTUSAN D10-K19 — Lima aturan teknis baseline disetujui; draf spesifikasi enam kandidat disusun (Owner SETUJU)
+
+Owner menyetujui lima ketentuan dasar untuk batch XAUUSD B1/S1/B2/S2/B3/S3:
+1. **B1/S1 kedalaman minimal sweep = 1 tick** dari swing M15 terkonfirmasi; pilih **swing M15 terkonfirmasi terbaru** yang masih valid, dengan age/TTL dan interpretasi validitas masih harus didefinisikan sebelum freeze.
+2. **Target TP** = struktur valid terdekat pada sisi profit; bila jarak sama, prioritaskan level **lebih baru terkonfirmasi**. Jenis level, proximal/distal dan validitas umur masih memerlukan penegasan deterministik.
+3. **ATR14 Wilder** memakai hanya candle penuh TF entry yang telah ditutup, untuk buffer SL `max(tick_size,spread,0.10*ATR14)` dan pembulatan konservatif; aturan warm-up/gaps perlu fixture.
+4. **Maksimal satu posisi aktif per kandidat**; perilaku overlap **antar-kandidat** harus diputuskan terpisah sebelum penggunaan dalam simulator/validator.
+5. **Fail-closed**: quote, spread, struktur, timestamp, broker tick size atau urutan fill tak valid → `WAIT` / `BLOCKED` dengan reason, tidak membuat harga/candle/fill sintetis dan tidak menghapus sampel tidak menguntungkan.
+
+Atas instruksi Owner, manager menyusun **[spesifikasi konsolidasi enam kandidat](research/SIX_CANDIDATE_PREREGISTRATION_SPEC_20261104.md)** pada branch draft PR #293. Draf memisahkan semua keputusan yang disetujui dari blocker `G1–G8`: detail validitas swing/target dan tie-break, pembentukan zona H1/touch, event-order dan ATR/stops, riwayat setup, verifikasi dataset/clock/split/cost, bukti sesi MT5 per simbol/server, dan mismatch simulator offline lama (`target_rr`+`min_rr`, M5/H1, exit fixed bars).
+
+**Penilaian gate:** `BASELINE_5_RULES_APPROVED`; `SIX_CANDIDATES_SPEC_DRAFTED`; **`PREREGISTRATION_NOT_READY`** sampai G1–G8 ditutup, code_sha256 dan inputs difreeze, dan fixture mekanisme lulus; `REGISTRY_NOT_WRITTEN`; `NO_BACKTEST`; `HOLDOUT_LOCKED`; `LIVE_OFF`. Keputusan ini **bukan** persetujuan otomatis atas parameter G1–G8 atau izin menjalankan tools ke VPS produksi.
+
 #### KEPUTUSAN D10-K17 — Breakout H1 dan retest satu candle M5 (Owner SETUJU, 4 November 2026)
 
 Owner menyetujui B3 BUY / S3 SELL baseline: breakout/breakdown dikonfirmasi dengan candle **H1 tertutup** melewati swing H1 yang sudah terkonfirmasi sebesar **setidaknya 1 tick** (BUY close >= swing_high + tick; SELL close <= swing_low - tick); sejak H1 close, tunggu **maksimal enam candle M5 yang telah selesai**, dengan **retest dan close konfirmasi pada satu candle M5 yang sama**, bukan dua candle. Interpretasi proposal baseline B3: M5 low menyentuh level lama dan close bullish di atasnya; S3: high menyentuh level dan close bearish di bawahnya. Entry baru dilakukan pada quote berikutnya sesudah konfirmasi. Jika tidak terjadi dalam enam candle, `WAIT:RETEST_TIMEOUT`. Semua level harus sudah confirmed sebelum H1 breakout dimulai, dan M5 yang eligible harus mulai setelah atau tepat di waktu close H1. Syarat kedalaman retest, tie-break level, dan konflik jadwal/data masih perlu keputusan sebelum freeze.
