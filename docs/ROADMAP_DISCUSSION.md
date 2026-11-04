@@ -452,6 +452,23 @@ Owner menyetujui parameter struktur untuk keenam kandidat XAUUSD sebagai **basel
 
 **Klarifikasi status:** klausul angka 96/72 dan invalidasi/TP yang tertulis sebagai *usulan* di bawah pada bagian D10-K20 **sudah disetujui dan digantikan oleh keputusan D10-K21 ini**. `D10-K21_APPROVED`, `ZONE_ORIGIN_PENDING`, `REGISTRY_NOT_WRITTEN`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
 
+#### KEPUTUSAN D10-K22 — Zona Demand/Supply H1 dipilih; agenda G4 eksekusi & G8 simulator (Owner SETUJU, 4 November 2026)
+
+**Diputuskan oleh Owner:** B2 demand dari **candle bearish H1 terakhir** di antara **12 H1 tertutup sebelum BOS H1 bullish** minimal **1 tick melewati confirmed swing high H1**; S2 supply dari **candle bullish H1 terakhir** di antara 12 H1 sebelum BOS H1 bearish minimal 1 tick melewati swing low. Level swing BOS diketahui sebelum candle BOS dimulai; batas zona **full wick high–low candle origin**; zona terkonfirmasi hanya setelah close H1 BOS. Satu episode first touch, **satu candle M15 yang memuat first touch** untuk candle konfirmasi arah serta close di luar zona; bila gagal CONSUMED, tanpa mengulang. TP B2 BUY pada **batas bawah supply H1**, S2 SELL pada **batas atas demand H1** yang valid dan paling dekat dalam arah profit, dibanding swing H1 valid, tie level terbaru. Zona first visit, invalidasi hybrid, umur 48 H1 dan tanpa RR min sesuai keputusan lain.
+
+**Konsolidasi dokumen:** [spesifikasi 6 kandidat](research/SIX_CANDIDATE_PREREGISTRATION_SPEC_20261104.md) diperbarui, dan [kontrak eksekusi/simulator baru](research/SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md) dibuat pada branch dokumen PR #293. Semua file adalah spesifikasi/rencana riset, **bukan** hasil implementasi source code.
+
+**Audit blocker yang dilakukan dalam agenda:**
+- **G3 inti zona disetujui; detail quote overlap belum diputuskan.**
+- **G4 execution masih terbuka:** sumber BID vs ASK pada touch/breach, urutan SL dan TP dalam satu candle bila tanpa tick, time-exit intents tanpa quote, treatment event bersamaan, gap/missing data, overlap posisi antarkandidat, dan data sesi valid. Usulan prefer tick replay kronologis dan fail closed untuk OHLC intrabar ambiguity, dengan fallback SL-first hanya jika disetujui terpisah. Satu posisi per kandidat tetap disetujui.
+- **G8 simulator BLOCKED:** `src/katarina/research/setups/core.py` masih `target_rr/min_rr`; `simulator.py` hanya M5,H1, OHLC stop-first dan fixed `max_hold_bars`; detektor sweep/pullback/breakout belum sesuai 6 hipotesis. Butuh refaktor **offline research only** dan fixture deterministik sebelum freeze `code_sha256`.
+- **G6/G7 di luar penyelesaian agenda ini:** hash data dev/clock/split/costs belum dikonfirmasi; jadwal resmi `SymbolInfoSessionQuote/Trade` broker XAUUSD.vx belum tersedia. **Tidak boleh menyimpulkan preregistration siap** hanya karena G3 disetujui.
+- **Tidak dilakukan:** registrasi hipotesis, test P/L, perubahan `src/` atau `scripts/`, eksekusi script MT5, akses data holdout atau perubahan konfigurasi VPS.
+
+**Pilihan yang diminta pada agenda D10-K23:** (A) tetapkan penelitian **event replay tick kronologis**, chart OHLC dan touch BID, BUY fill ASK/SELL fill BID, bila tick urutan tak diketahui `BLOCKED_INTRABAR_ORDER`, serta **evaluasi 6 kandidat secara independen** (rekomendasi manajemen); (B) izinkan fallback OHLC dengan SL-first sebagai baseline bila tick tak lengkap dengan laporan keterbatasan, sambil tetap mengevaluasi kandidat terpisah; atau (C) bahas satu per satu quote touch, ambiguity, dan kebijakan overlap antarkandidat. **Belum boleh menganggap A/B dipilih**, dan A tidak mengizinkan mengambil tick VPS produksi tanpa prosedur/otorisasi.
+
+`D10-K22_APPROVED`; `EXECUTION_POLICY_PENDING`; `SIMULATOR_CODE_MISMATCH`; `G6_DATA_COST_UNVERIFIED`; `G7_SESSION_EVIDENCE_MISSING`; `NOT_REGISTERED`; `NO_BACKTEST`; `HOLDOUT_LOCKED`; `LIVE_OFF`.
+
 #### AGENDA D10-K22 — Pembentukan demand/supply yang deterministik (BELUM DIPUTUSKAN)
 
 **Proposal baseline Owner untuk dipilih**, tidak dikunci otomatis:
