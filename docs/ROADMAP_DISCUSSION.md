@@ -442,6 +442,19 @@ Owner juga menyetujui **candle M15 searah** yang menyentuh zona lalu close **kel
 
 **Yang belum dikunci untuk preregistration B2/S2:** aturan memilih candle asal bila beberapa bar memenuhi, tie-breaking zona beririsan, deteksi batas episode visit dari tick bid/ask, lebar zona minimal/maksimal dan harga referensi bid/ask, prioritas target, definisi ATR Wilder dan source spread, jam sesi broker resmi, data/split/cost/code hash. Semua ini bukan izin coding/tes atau klaim strategi profitable.
 
+#### KEPUTUSAN D10-K20 — Swing terbaru tetapi dibatasi usia (Owner SETUJU)
+
+Owner memilih hanya swing **terbaru yang masih valid dan belum kedaluwarsa** untuk acuan entry; level target struktur juga harus memenuhi batas validitas dan usia sebelum dipakai. Keputusan ini menetapkan prinsip *age-bounded*, **belum menetapkan angka TTL ataupun aturan pembatalan swing**. Tidak ada backtest/registrasi/aktivasi trading yang disetujui oleh keputusan ini.
+
+**Parameter yang Yura ajukan untuk persetujuan berikutnya, BELUM dikunci:**
+- TTL swing M15 **96 candle M15 selesai** sejak `confirmed_at`; TTL swing H1 **72 candle H1 selesai** sejak `confirmed_at`. Berbeda dari masa hidup zona H1 yang telah diputuskan 48 candle. Ini angka desain, bukan hasil optimasi; untuk menghitung pivot 2+2 harus menyediakan konteks candle yang lebih tua dan melaporkan data GAP sebagai unverifiable.
+- **Pembatalan swing**: swing low support dibatalkan bila candle pada TF asal **close >= 1 tick di bawah level**; swing high resistance bila candle asal **close >= 1 tick di atas level**. Wick saja tidak membatalkan swing, agar sweep-reclaim satu M5 tetap bisa terjadi. Periksa status sebelum setup, tidak retrospektif.
+- **Pengecualian breakout B3/S3:** close H1 melewati level adalah kejadian breakout yang **mengubah status level menjadi `BROKEN_RETEST_ELIGIBLE` untuk satu episode maksimal 6 M5**, bukan menghapus pemicu sebelum retest; level yang sudah broken tidak dipakai lagi sebagai target resistance/support lama.
+- **TP struktural:** B1/S1 pilih swing M15 lawan terdekat di arah profit; B2/S2 pilih di antara swing H1 lawan dan *proximal boundary* zona lawan H1 yang valid; B3/S3 pilih swing H1 lawan terdekat yang belum broken. Di antara level eligible: jarak harga profit terkecil; tie = `confirmed_at` paling baru, lalu ID stabil. BUY: target harus lebih tinggi dari harga fill ask; SELL: lebih rendah dari fill bid. Tidak ada minimum RR; jika tidak ada target valid, WAIT. Kelayakan zona dan definisi harga proximal masih perlu dibekukan.
+- Setiap perubahan angka TTL, pembatalan atau himpunan target setelah melihat P/L = hipotesis baru dan dihitung dalam koreksi percobaan. Data Stage0/holdout tidak dipakai untuk tuning.
+
+**Agenda keputusan berikutnya:** Owner memilih menerima paket angka dan metode pembatalan/TP yang diusulkan atau merevisinya **sebelum freeze**. `BOUNDED_LATEST_SWING_APPROVED`, `TTL_INVALIDATION_TARGET_POLICY_PENDING`, `NOT_REGISTERED`, `NO_BACKTEST`, `LIVE_OFF`.
+
 #### KEPUTUSAN D10-K19 — Lima aturan teknis baseline disetujui; draf spesifikasi enam kandidat disusun (Owner SETUJU)
 
 Owner menyetujui lima ketentuan dasar untuk batch XAUUSD B1/S1/B2/S2/B3/S3:
