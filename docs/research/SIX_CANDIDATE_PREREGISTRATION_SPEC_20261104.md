@@ -76,22 +76,19 @@ Semua waktu pra-tutup dihitung dari **jadwal quote/trade resmi server dan simbol
 - TP terdekat di arah profit setelah fill, tie berdasarkan `confirmed_at` terbaru dan ID deterministik. Untuk B1/S1 target swing lawan M15, B2/S2 target swing H1 lawan atau zona lawan H1 valid, B3/S3 target swing H1 lawan yang belum broken. Harga batas zona proximal dan sumber quote disentuh masih dalam agenda G3 berikut.
 - **Status:** D10-K21 approved sebelum preregistration. Perubahan TTL/validasi pasca melihat hasil menjadi hipotesis baru.
 
-## III-B. Agenda D10-K22 — Pembentukan demand/supply H1 (PROPOSAL, BELUM DISETUJUI)
+## III-B. Keputusan D10-K22 — Pembentukan demand/supply H1 (APPROVED)
 
-| Parameter G3 | Rancangan awal untuk dibahas | Status |
-|---|---|---|
-| Demand origin | Candle H1 bearish terakhir di **12 candle H1 tertutup sebelum bullish BOS H1** di atas confirmed swing high, minimal 1 tick | PROPOSED |
-| Supply origin | Candle H1 bullish terakhir di **12 candle H1 tertutup sebelum bearish BOS H1** di bawah confirmed swing low, minimal 1 tick | PROPOSED |
-| Zona harga | Rentang **full wick low–high** dari candle origin, bukan body saja | PROPOSED |
-| Timestamp | `zone_confirmed_at = BOS H1 close`, `origin_at` candle sebelumnya; swing BOS harus confirmed sebelum BOS H1 dimulai | PROPOSED |
-| Harga rujukan struktur | BID chart OHLC dan BID quote untuk touch/breach; eksekusi BUY ask dan SELL bid dengan spread faktual | PROPOSED |
-| First touch | Satu episode saja; evaluasi candle M15 yang berisi first touch setelah tutup, lalu CONSUMED bila tak valid | PROPOSED DETAIL |
-| Banyak zona | Pilih eligible dengan proximal edge paling dekat pada quote first touch, tie: terbaru confirmed, lalu ID stabil | PROPOSED |
-| Target zona lawan | BUY arah supply: **low supply** (proximal); SELL arah demand: **high demand** (proximal); bandingkan dengan swing H1 eligible | PROPOSED |
+**Owner menyetujui paket pembentukan H1 zona untuk B2/S2 (praregistrasi baseline):**
 
-Fresh first visit, tidak kembali FRESH pascabreach, invalidasi hybrid dan TTL 48 H1 sudah **APPROVED** sebelumnya. Semua detail di tabel yang belum mendapat persetujuan Owner tetap **PROPOSED**; apabila tidak ada candle origin dalam 12 H1 yang valid, status `WAIT:NO_VALID_ZONE_ORIGIN`, bukan memilih candle masa depan. Jika tick/bid-ask untuk touch atau breach tidak dapat diverifikasi, status data `BLOCKED` sesuai D10-K19.
+1. **B2 Demand:** close H1 breakout minimal **1 tick** di atas swing high H1 valid yang sudah terkonfirmasi sebelum H1 breakout dimulai. Cari **candle bearish H1 terakhir dalam 12 candle H1 tertutup tepat sebelum breakout**. High sampai low keseluruhan wick candle tersebut adalah fresh demand.
+2. **S2 Supply:** close H1 breakdown minimal **1 tick** di bawah swing low H1 valid yang sudah terkonfirmasi sebelum H1 breakdown dimulai. Cari **candle bullish H1 terakhir dalam 12 candle H1 tertutup tepat sebelum breakdown**. High–low wick utuh menjadi fresh supply.
+3. Zona hanya berlaku setelah candle BOS H1 ditutup. Origin tidak boleh dipilih dari H1 BOS sendiri atau candle sesudahnya; tanpa origin valid `WAIT:NO_VALID_ZONE_ORIGIN`.
+4. Episode **first touch** hanya punya **satu candle M15 yang memuat sentuhan pertama** untuk konfirmasi setelah candle tertutup. B2 candle searah bullish menyentuh zona dan close di atas batas atas demand; S2 bearish menyentuh zona dan close di bawah batas bawah supply. Gagal → CONSUMED, tidak boleh mencobanya lagi. Hybrid distal breach+buffer dan umur 48 valid closed H1 tetap berlaku.
+5. TP zona lawan yang valid pada sisi profit: B2 BUY di **batas bawah supply (proximal)**; S2 SELL di **batas atas demand (proximal)**. Bandingkan dengan swing H1 eligible; pilih terdekat dalam arah profit, tie lebih baru terkonfirmasi, tanpa minimum RR.
 
-**Blocker tetap untuk registrasi:** G3 belum difinalkan; G4 event-order/ATR dan overlap antar-kandidat; G5 level age/instance tie-break; G6 dataset dev/cost/split/hash; G7 sesi MT5 resmi; G8 simulator yang masih berbeda. Keputusan ini tidak menjalankan riset P/L, tidak mengakses holdout, tidak mengubah runtime, dan tidak mengaktifkan trading.
+**Belum dibekukan meskipun inti G3 telah disetujui:** harga BID/ASK untuk memutuskan sentuh/breach, tie-break zona beririsan, aturan quote tepat pada penutupan M15, tick gap dan kesinambungan data, dan implementasi saat sesi berakhir. Hal-hal ini masuk ke **G4**, bukan dianggap persetujuan diam-diam.
+
+**Kontrak eksekusi & rencana memperbaiki simulator:** [SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md](SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md). Keputusan rapat tidak mengizinkan penggunaan simulator saat ini sebagai uji resmi.
 
 ## IV. Kriteria siap mendaftar
 
