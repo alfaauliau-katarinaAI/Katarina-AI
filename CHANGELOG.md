@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — S0: breakdown kegagalan Tahap 0 (diagnostik, read-only)
+
+- Modul baru `src/katarina/intelligence/operations/stage0_breakdown.py` dan opsi `check_stage0_health.py --breakdown`: kegagalan siklus dipecah menurut hari, jam UTC, simbol yang tanpa quote, dan fase pasar DST-aware (`DAILY_BREAK_NY17` = 17:00 New York −15/+60 menit, `WEEK_EDGE`, `SESSION`). Tampilan aturan sesi alternatif berlabel `diagnostic_only`, dengan `official_verdict_effect` = `NONE`.
+- Data VPS 28 Okt–4 Nov: 192/200 kegagalan berada dalam jeda harian 17:00 NY. Rinciannya di `docs/maintenance/STAGE0_FAILURE_INVESTIGATION_20261104.md` dan keputusan Owner di D8. Kriteria, cutoff, denominator dan data ledger tidak diubah. LIVE tetap OFF.
+- `runtime_import_map.py`: nama modul bertitik yang disimpan sebagai data oleh alat analisis (`runtime_import_map`, `reason_code_index`, `safe_cleanup`, `code_change_gate`) tidak lagi dihitung sebagai edge; path skrip yang dijalankan tetap dihitung. Sebelumnya `katarina.entrypoints`/`ports` tampak terpakai (D=0 setelah G1), dan lima modul persepsi tampak dipakai script. Tes regresi RED pada kode lama, GREEN sesudah perbaikan.
+
 ## 2026-11-04 — G1: coding gate KAT-CG-00..05 dan safe cleanup (mandat Owner #278 §6)
 
 - `scripts/governance/code_change_gate.py`: gate bertahap fail-fast. Isinya baseline/diff/konflik; AST+JSON file:line + `audit_dependency_links` + `audit_repo_hygiene`; suite tes; promotion gate + Constitution Guard + manifest `MATCH`; CI Body/Ubuntu/Windows per SHA; preflight deploy dari receipt tanpa akses VPS. Ledger fingerprint menghentikan error berulang setelah satu upaya perbaikan (`REPEATED_FAILURE_NEEDS_ROOT_CAUSE`, exit 3) sampai akar masalah + tes reproduksi dicatat.

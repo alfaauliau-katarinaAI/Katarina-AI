@@ -156,9 +156,9 @@
       "sha256": "162d8a25b76e1ca42f8d0fd23e59e97b8d77dfcab5faf9acfaf12bfc25a91cdb"
     },
     "scripts/ai/check_stage0_health.py": {
-      "bytes": 3299,
-      "normalized_sha256": "0254ce7b23e3bba6c1dd4b529b2170757bc8b861847ece7e77ea49a83a049f5b",
-      "sha256": "0254ce7b23e3bba6c1dd4b529b2170757bc8b861847ece7e77ea49a83a049f5b"
+      "bytes": 4262,
+      "normalized_sha256": "2e6099f02faee94d980cabdc988e8dfe71640f9dc68b1bf3990a1b20be3f1147",
+      "sha256": "2e6099f02faee94d980cabdc988e8dfe71640f9dc68b1bf3990a1b20be3f1147"
     },
     "scripts/ai/diagnose_stage0_cutoff.py": {
       "bytes": 8728,
@@ -1104,6 +1104,11 @@
       "bytes": 7069,
       "normalized_sha256": "3e0048d13e4f6a03993f6701a658b8e1f7ca08745cd91f7d2c5f765392970502",
       "sha256": "3e0048d13e4f6a03993f6701a658b8e1f7ca08745cd91f7d2c5f765392970502"
+    },
+    "src/katarina/intelligence/operations/stage0_breakdown.py": {
+      "bytes": 6309,
+      "normalized_sha256": "a378741924d514c478559fb09fde6b64570fee8b1e1a030d99b6227cf310b7ff",
+      "sha256": "a378741924d514c478559fb09fde6b64570fee8b1e1a030d99b6227cf310b7ff"
     },
     "src/katarina/intelligence/perception/__init__.py": {
       "bytes": 79,
