@@ -63,10 +63,63 @@ Audit kode empat setup riset yang sudah ada (termasuk pullback/liquidity sweep/F
 5. **Pemisahan gerbang:** CODE PASS ≠ REVIEW APPROVED ≠ DEPLOYED ≠ STAGE0 PASS ≠ STRATEGY PROFITABLE ≠ DEMO/LIVE AUTHORIZED.
 
 ## 4. Pembatas keputusan Owner — jangan dijalankan otomatis
-- **Izin eksekusi:** Owner saat ini meminta dokumen agar dapat **memberi instruksi Claude**. Ini **bukan** persetujuan merge, menjalankan script MT5, mengubah aturan Stage 0, restart/deploy, atau trading.
+- **Izin eksekusi (diperbarui):** Owner memberikan **mandat luas untuk audit, perbaikan, penghapusan, pemindahan, penggabungan, dan perampingan kode/file di repository Katarina AI** menurut Bagian 5 di bawah. Tidak perlu meminta persetujuan untuk setiap file **sepanjang bukti penggunaan dan tes aman dipenuhi**. Ini tetap **bukan** izin mengubah aturan Stage 0 historis, merger melewati gate repo, mengeksekusi script MT5, restart/deploy VPS aktif, menghapus data operasional atau trading.
 - **Sesi broker:** perlu persetujuan khusus untuk menjalankan script yang **sudah terpasang** pada terminal aktif; hasil mentah tetap di VPS privat.
 - **Release:** perlu approval reviewer pada SHA final, backup/rollback tervalidasi, bukti clock independen, dan keputusan go/no-go Owner.
 - **Trading:** level riset read-only tetap default; DEMO/LIVE, risk governor dan holdout tidak boleh diubah.
 - **Bukti waktu/data:** syarat 10 hari, 98%, 3 recovery, 0 order, dan data OOS tidak bisa dipercepat lewat manipulasi konfigurasi atau penghitungan masa lalu.
 
 **Definition of done keseluruhan:** semua K-01 sampai K-07 berstatus **CLOSED_VERIFIED** sesuai scope, atau **BLOCKED_EVIDENCE** dengan bukti eksternal yang nyata dan keputusan pemilik. Claude wajib melaporkan **apa yang belum selesai**, bukan mengklaim Katarina siap live hanya karena semua CI lulus.
+
+## 5. MANDAT TAMBAHAN OWNER — Claude boleh merapikan codebase secara menyeluruh (3 November 2026)
+
+**Mandat ini lebih baru daripada pembatasan tugas administrasi awal pada dokumen ini, khusus untuk pekerjaan _coding dan cleanup repository_.** Owner ingin pekerjaan teknis dibereskan sampai Katarina **rapi, terarah, mudah ditelusuri ketika error, dan siap melanjutkan tahap berikutnya**. Claude **tidak perlu meminta izin satu per satu** untuk perubahan kode/file dalam cakupan di bawah. Perintah ini **tidak otomatis menjalankan sesi Claude**; Owner akan meneruskannya kepada Claude.
+
+### 5.1 Hak tindakan Claude — DIPERBOLEHKAN
+
+1. **Menghapus file** yang terbukti tidak dipakai, duplikat non-kontrak, stale, atau usang; **memindahkan/rename** file ke lokasi yang lebih logis; menggabungkan modul yang memiliki fungsi tumpang-tindih; memecah file/fungsi yang terlalu rumit; dan merapikan dependensi, import, CLI, konfigurasi, dokumentasi, serta tes. Riwayat perubahan wajib dapat di-rollback di Git; jangan membuat folder arsip baru.
+2. **Memperbaiki bug serta masalah coding yang ditemukan sepanjang audit** termasuk error handling, race condition, penanganan timezone/DST, path/portabilitas, integritas data, fail-closed, performa dan keterbacaan. Boleh menambah **tes, tooling audit, lint, dokumentasi, dan adapter kompatibilitas seperlunya** untuk memastikan kualitas — **bukan menambah strategi atau fitur trading baru**.
+3. **Mengubah banyak file terkait dalam satu perbaikan** apabila perubahan itu memang diperlukan untuk menyelesaikan satu masalah lintas modul; pecah ke PR kecil per kelompok tanggung jawab agar akar perubahan dan regresi dapat diperiksa.
+4. **Menyusun standar penelusuran error** yang konsisten di runtime, riset, CLI, logs dan tests dengan memakai **reason code stabil yang sudah ada** (misalnya protokol `protocol/reason_codes_v1.json` tidak boleh diubah artinya). Untuk setiap error, tunjukkan **ID temuan, area, severity, alasan, sumber bukti, timestamp UTC, simbol/cycle jika ada, referensi tes dan commit**. Pertahankan format/API lama bila masih digunakan; hindari kebocoran data privat.
+5. **Menentukan sendiri urutan perbaikan teknis** berdasarkan dampak serta ketergantungan; tidak wajib menunggu instruksi Owner tiap commit, dengan syarat tidak melewati batas keamanan dan gate rilis.
+
+### 5.2 Syarat wajib sebelum menghapus atau memindahkan file
+
+- Awali dengan **inventaris HEAD `main` aktual**, bandingkan VPS dan repo serta status issue/PR yang **sudah merged**. Audit lama pada SHA sebelumnya bukan kebenaran terbaru.
+- Cek pemanggil langsung maupun **dinamis**: import, `__init__`, stage registry, reflection, config `config/stages/stageNN.json`, Windows scheduled tasks, launcher .bat/.ps1, GitHub workflows, scripts, contract/protocol, website, dokumentasi, tests dan release manifest.
+- Untuk masing-masing usulan hapus, catat **file / alasan tidak digunakan / bukti pencarian / dependensi / tes / rollback commit**. Jika tak dapat dibuktikan aman, labeli `UNVERIFIED_KEEP`, **jangan hapus**. File yang hanya dipakai tes **belum otomatis tidak berguna**.
+- **Jaga kontrak arsitektur** `domain`, `entrypoints`, `ports`, tombstone `run_market_brain.py`/`run_decision_brain_v3.py` dan risk controls sesuai `docs/maintenance/CLEANUP_PLAN.md` sampai pengujian membuktikan perubahan kontrak aman dan keputusan Owner yang relevan diberikan. Duplikasi hash saja bukan bukti aman dihapus.
+- Peta awal audit manager: **894 file terlacak** pada snapshot, **575 file Python parse AST tanpa error**, **43 lokasi broad `except Exception` di source/script** yang perlu triase, **9 file dengan rujukan `C:\KatarinaDev`**, **3 paket kontrak** tidak terjangkau secara statis. Ini **kandidat pemeriksaan**, bukan daftar file yang harus dihapus. Pastikan hitungan diulang pada HEAD terakhir.
+- Area `C:\Katarina\state`, SQLite + WAL/SHM, arsip tick, log bukti, backup, private config, secrets, akun MT5, dan file governance lokal **di luar mandat hapus/pindah otomatis**. Worktree/staging VPS lama hanya diinventaris dan diusulkan untuk cleanup terpisah, bukan langsung dihapus.
+
+### 5.3 Guardrail yang tidak dapat dilewati secara implisit
+
+**Mandat luas _coding_ bukan mandat tanpa batas untuk tindakan operasional/finansial.** Tidak boleh mengirim order, menyalakan DEMO/LIVE, mengubah Risk Governor, promotion lock, holdout, memanipulasi data historis, menurunkan gate Stage 0 (10 hari/98%/3 recovery/0 order), menjalankan script MT5 di terminal produksi, menghapus database/bukti, merestart/deploy VPS, atau merombak keputusan tetap Owner tanpa izin Owner khusus.
+
+Untuk codebase: lakukan commit/PR menurut `CLEANUP_PLAN.md`; semua perubahan behavioral harus dijelaskan, dites, dan direview. **Jangan merge otomatis tanpa syarat CI dan review yang berlaku di repository.** Tidak boleh force-push atau memutus history. **Jangan menganggap CI PASS = siap trading.**
+
+### 5.4 Tahapan eksekusi dan bukti yang wajib ditinggalkan
+
+| Gelombang | Pekerjaan | Bukti selesai |
+|---|---|---|
+| A — Baseline dan peta | SHA aktif, status GitHub/VPS, dependency graph, audit error/konfigurasi, daftar KEEP/REFACTOR/DELETE_CONFIRMED/PROTECTED | Inventaris bertanggal dan prioritas P0/P1/P2 |
+| B — Buang yang terbukti tak berguna | Hapus/rename/move file dan dependency yang tidak dipakai, perbarui references, release manifest dan `RUNTIME_MODULE_MAP.md` | PR diff per file + bukti no-regression + kemungkinan rollback |
+| C — Sederhanakan kode | Pecah file/fungsi terlalu kompleks, konsolidasikan implementasi ganda, perbaiki broad exception yang menelan error, path lama, CI flaky bila terbukti | Tes RED/GREEN, code review, kontrak dan perilaku tetap benar |
+| D — Penelusuran error | Selaraskan pesan dan kode alasan yang sudah ada, tabel area/severity/tes, korelasi log → sumber kode → perbaikan | Satu cara efektif untuk menemukan P0/P1/P2 tanpa mengumbar rahasia |
+| E — Gate akhir | Unit + static + integration, Body/Ubuntu/Windows, manifest MATCH, promotion gate, review final; perbarui dokumentasi canonical | Ringkasan sebelum/sesudah, PR/SHA, daftar CLOSED/OPEN/BLOCKED, keputusan `READY_FOR_NEXT_STAGE` atau `NOT_READY` |
+
+**Kriteria selesai audit/perapian:** kode lebih ramping dan mudah dicari, seluruh penghapusan dapat dibuktikan aman, jalur runtime dan tes koheren, tidak ada regressions P0/P1, reason/error terpetakan, CI final dan gate manifest lulus, dokumentasi dan status versi benar. Jika gate terpenuhi, laporkan **`CODEBASE_READY_FOR_NEXT_STAGE`** dan rekomendasi tahap lanjutan sesuai `docs/ROADMAP.md`. Jika masih ada blocker eksternal (bukti jam broker asli, host M5 riset terpisah, 10 hari Stage0, 3 recovery), laporkan **`CODEBASE_CLEAN_BUT_STAGE_GATE_BLOCKED`**, jangan mengklaim Stage0/strategi/live telah lulus.
+
+**Laporan Claude ke [Issue #251](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/251)** dan ringkasan ke [Manager Board #262](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/262): `ID | prioritas | file:line | alasan | aksi delete/move/refactor/fix | bukti referensi | SHA PR | tes | hasil | sisa blocker`. Catat perbaikan yang telah terverifikasi ke `docs/REPAIR_HISTORY.md`; perbarui `CLAUDE.md`, `CHANGELOG.md`, dan `docs/PROJECT_STATUS.md` sesuai peran dokumennya. Setelah itu **hentikan pekerjaan perapian dan minta keputusan Owner untuk memulai tahap berikutnya**, bukan menambah fitur tanpa arah.
+
+## 6. MANDAT OWNER — AUTO-CLEANUP & CODING GATE MILIK KATARINA (4 November 2026)
+
+**Instruksi resmi:** implementasikan [`AUTO_CLEANUP_CODING_GATE.md`](AUTO_CLEANUP_CODING_GATE.md) sebagai **mekanisme di dalam repository Katarina**, bukan jadwal/automation Claude, bukan script background yang diam-diam berjalan pada VPS produksi. Ini bagian wajib dari penyelesaian tugas `S0-DAILY`, `S0-CLOCK`, `WP6-PREFLIGHT`, `ERR-TEST`, dan `STAGE1-PREFLIGHT` ketika kode disentuh.
+
+- **Auto-cleanup:** di worktree development, cek artefak sementara otomatis pada local preflight dan push/PR; hanya cache/build *untracked* allowlisted dapat dihapus dalam mode apply yang disetujui. File source tidak boleh dihapus otomatis tanpa pembuktian referensi dan PR; jangan menyentuh state/data/backup/terminal/rahasia VPS.
+- **Coding gate fail-closed:** cek syntax/JSON, dependencies, tes regresi, promotion/constitution, manifest, CI Body/Ubuntu/Windows dan review final memakai tooling **existing**. Gagal satu kriteria = `FAIL`, jangan terus menambah patch atau merge. Beri label error/fingerprint, file:line dan root cause.
+- **Anti-error-loop:** bila fingerprint masalah yang sama kembali setelah satu percobaan perbaikan, hentikan retry otomatis dan lakukan analisis penyebab dengan tes reproduksi; jangan mengakali tes, menghapus error, atau merendahkan ambang keamanan demi hijau.
+- **Trigger:** local developer command + event GitHub push/PR/workflow_dispatch yang sudah ada. **DILARANG** membuat scheduled task/automation Claude untuk coding gate atau proses cleanup ini.
+- **Definition of done:** script repo + tes negatif/safety + wiring CI terverifikasi pada SHA akhir + manifest/promotion PASS + dokumentasi error/recovery. Laporkan status secara jujur `GATE_SPECIFIED_NOT_ACTIVE` sampai sistem itu **benar-benar terpasang**, lalu `GATE_ACTIVE_VERIFIED` hanya setelah CI/test PASS.
+
+**Ini bukan perintah mengubah perilaku trading.** Risk Governor, holdout, Stage 0 historis, LIVE OFF, zero orders, dan izin operasi VPS tetap dilindungi.
