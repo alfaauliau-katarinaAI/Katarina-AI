@@ -452,6 +452,18 @@ Owner menyetujui parameter struktur untuk keenam kandidat XAUUSD sebagai **basel
 
 **Klarifikasi status:** klausul angka 96/72 dan invalidasi/TP yang tertulis sebagai *usulan* di bawah pada bagian D10-K20 **sudah disetujui dan digantikan oleh keputusan D10-K21 ini**. `D10-K21_APPROVED`, `ZONE_ORIGIN_PENDING`, `REGISTRY_NOT_WRITTEN`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
 
+#### KEPUTUSAN D10-K25 — Zona overlap simultaneous first-touch hanya satu prioritas, semua touched dikonsumsi (Owner SETUJU, 5 November 2026 WIB)
+
+Owner secara eksplisit memilih opsi A: pada satu BID tick yang pertama kali menyentuh beberapa zona H1 fresh/eligible, seluruh zona yang baru tersentuh **menghabiskan first visit**. Pilih hanya satu zona sinyal berdasar urutan D10-K24 (proximal BID terdekat; newer confirmed_at; stable zone_id). Semua zona lainnya yang ikut touched → **`CONSUMED` seketika**, reason `CONSUMED_OVERLAP_NOT_SELECTED`. Zona prioritas menjalani satu candle M15 tempat first touch; setelah evaluasi/invalidasi statusnya `CONSUMED` atau `INVALID`, dan tidak boleh berpindah ke zona yang tadi kalah. **Zona yang tidak tersentuh tetap FRESH** sampai syarat lain membatalkannya. Jangan memperlakukan tick ambigu sebagai bukti first touch (D10-K23/K24).
+
+**Penutupan dokumen:** [kontrak simulator](research/SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md) bagian 2C dan [spesifikasi enam kandidat](research/SIX_CANDIDATE_PREREGISTRATION_SPEC_20261104.md) bagian III-E disesuaikan. D10-K25 menetapkan desain lifecycle, bukan lulusnya implementasi. Tambah fixture T03/T10 untuk zone overlap, sumber BID dan state transitions yang dapat direproduksi.
+
+**Audit kesiapan simulator OFFLINE:** registry/validator dan loader M5/M15/H1 dev berskema hash sudah ada, tetapi simulator `src/katarina/research/setups/simulator.py` masih OHLC M5/H1, fixed `max_hold_bars`; `core.py` masih `target_rr/min_rr`; belum ada tick replay auditable, source detector enam kandidat yang setara, order broker model dan fixture lulus. `export_dev_bars.py` secara eksplisit melarang menjalankan ekspor pada VPS observer produksi. Bukti tick development historis dan sesi resmi MT5 quote/trade XAUUSD.vx belum terverifikasi.
+
+**Status gap:** G3 design approved; G4 core approved dengan edge broker/tick evidence pending; G6 data/costs/split/hash blocked; G7 official session missing; G8 simulator code not implemented. **Tahap persiapan implementasi synthetic-only dapat direncanakan pada branch riset terisolasi**, tanpa menjalankan tes profit, membaca holdout atau mengubah runtime produksi. Tahap lanjutan perlu izin Owner terpisah untuk memulai coding/akses lingkungan riset jika belum secara eksplisit diminta.
+
+`D10-K25_APPROVED` · `CORE_SPEC_CLOSED` · `OFFLINE_IMPLEMENTATION_NOT_STARTED` · `REGISTRY_NOT_WRITTEN` · `NO_BACKTEST` · `HOLDOUT_LOCKED` · `LIVE_OFF`.
+
 #### KEPUTUSAN D10-K24 — Boundary M15, zone overlap dan tick-order fail closed (Owner SETUJU, 5 November 2026 WIB)
 
 Owner menyetujui tiga aturan kontrak eksekusi Katarina untuk riset enam kandidat XAUUSD:
