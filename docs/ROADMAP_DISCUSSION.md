@@ -315,6 +315,33 @@ Owner memilih **seluruh tiga pasangan kandidat** untuk diteliti secara terpisah,
 
 **Pelaksana:** Claude menyiapkan preregistration template dan tes mekanisme di branch riset, Yura memeriksa dataset/provenance/split/costs/gate, Owner menyetujui parameter final dan host riset terpisah sebelum backtest historis broker. Tidak ada eksekusi MT5 di VPS observer, deploy, LIVE, demo order, atau aktivasi risk. **Status: `SIX_CANDIDATES_SELECTED_FOR_DESIGN`, `HYPOTHESES_NOT_REGISTERED`, `EDGE_UNPROVEN`.**
 
+#### KEPUTUSAN D10-K4 — Timeframe fleksibel per strategi, wajib dikunci sebelum backtest (Owner SETUJU, rapat 4 November 2026)
+
+Owner menyetujui **kombinasi timeframe berbeda antar strategi**, sepanjang setiap kombinasi terdaftar dan dikunci sebelum ada hasil P/L. Keputusan ini **belum** menetapkan kombinasi final atau entry/SL/TP. Rancangan di bawah merupakan opsi awal untuk disepakati, tanpa klaim win rate atau profitability.
+
+**Proposal desain (belum difreeze):**
+
+| Kandidat | Timeframe konteks → sinyal | Entry (semua kondisi memakai candle selesai dan data yang telah diketahui) | SL / invalidasi awal | Exit proposal |
+|---|---|---|---|---|
+| B1 BUY sweep bawah | M15 struktur → M5 konfirmasi | Harga sapu low M15 sebelumnya, close M5 kembali di atas level, next bar entry BUY jika spread valid | Di bawah ekstrem sweep + buffer spread/volatilitas yang ditetapkan dulu | TP dasar 2R; time exit jika tak mencapai dalam N candle |
+| S1 SELL sweep atas | M15 struktur → M5 konfirmasi | Harga sapu high M15 sebelumnya, close M5 kembali di bawah level dan penolakan bearish, next bar entry SELL | Di atas ekstrem sweep + buffer terdaftar | TP dasar 2R; time exit N candle |
+| B2 BUY pullback demand | H1 konteks tren → M15 konfirmasi | Trend H1 bullish terdefinisi pada candle H1 tertutup, koreksi ke area demand terdaftar, konfirmasi bullish M15 tertutup, next bar BUY | Di bawah swing/demand invalidation | TP dasar 2R; time exit N candle M15 |
+| S2 SELL pullback supply | H1 konteks tren → M15 konfirmasi | Trend H1 bearish terdefinisi, koreksi ke supply, M15 close rejection bearish, next bar SELL | Di atas swing/supply invalidation | TP dasar 2R; time exit N candle M15 |
+| B3 BUY breakout/retest | H1 breakout → M5 retest | Close H1 valid di atas resistance yang dikenal sebelum breakout, M5 retest bertahan lalu close bullish, next bar BUY | Di bawah low retest/level terdaftar | TP dasar 2R; time exit N candle M5 |
+| S3 SELL breakdown/retest | H1 breakdown → M5 retest | Close H1 valid di bawah support yang dikenal sebelum breakdown, M5 gagal reclaim dan close bearish, next bar SELL | Di atas high retest/level terdaftar | TP dasar 2R; time exit N candle M5 |
+
+**Alasan desain:** penggunaan TF yang sama di dalam pasangan *untuk baseline perbandingan* tidak menghapus pemisahan BUY/SELL. Jika kelak ada alasan teoritis berbeda pada SELL dibanding BUY, definisikan hipotesis tambahan **sebelum tes**, hitung sebagai percobaan baru. Jangan mengganti timeframe setelah melihat strategi mana yang paling profitable.
+
+**Parameter yang WAJIB disepakati dan dibekukan pada `registry.jsonl` sebelum backtest:**
+1. Panjang lookback swing M15/H1, definisi level dan zona supply/demand, syarat sweep (penetrasi minimal) dan reclaim, syarat tren (misal H1 EMA50/200 jika dipilih Owner), ukuran candle/konfirmasi, batas umur level dan maksimum tunggu retest.
+2. Cara entry next-bar dengan bid/ask yang benar, struktur SL serta buffer, target TP **2R masih proposal**, batas waktu `N` per TF, no overlapping trades, dan aturan penolakan sinyal jika stop tidak valid.
+3. Filter sesi broker sah per simbol, batas spread maksimum yang didefinisikan *tanpa melihat hasil*, komisí/swap/slippage konservatif, batas gap, dan perilaku market closed/rollover. D9 untuk Stage 0 masih keputusan berbeda dan belum boleh dicampurkan ke optimisasi.
+4. Semua indikator dan level dihitung hanya dari **bar yang selesai sebelum sinyal**; masuk pada tick/bar setelah konfirmasi, bukan memakai high/low masa depan atau fill ideal di harga close yang tak dapat dieksekusi.
+5. Dataset development, asal UTC/dst, split/gaps dan hash sebelum hasil; semua 6 kandidat diregistrasikan dulu. Laporan dua lapis: uji mekanisme sintetis (boleh sekarang) dan backtest development historis (setelah dataset sah & parameter final). Jangan mengakses holdout atau menjadikan data Stage 0 forward sebagai data tuning.
+6. Evaluasi semua 6 dengan walk-forward 28 hari, 3 baseline, model biaya penuh, sensitivitas 1,5x/2x, deterministic repeat, scoreboard BUY/SELL dan seluruh percobaan (gagal atau belum ada data tetap dilaporkan). Jika rumus 2R atau timeframe diganti setelah hasil, **ID baru** dan hitung lagi di koreksi multiple trials.
+
+**Status keputusan:** `TIMEFRAME_FLEXIBLE_APPROVED`; `SIX_STRATEGY_DESIGNS_PROPOSED`; `TF_ENTRY_EXIT_PARAMETERS_NOT_FROZEN`; `NO_BACKTEST_AUTHORIZED_BY_THIS_MEETING`; `HOLDOUT_LOCKED`; `LIVE_OFF`. Diskusikan daftar angka/lookback dan definisi supply/demand, sweep, breakout, target serta time exit sebelum freeze dan instruksi coding.
+
 #### A. Bukti yang disepakati untuk tiap hari
 
 Sumber fakta tetap ledger SQLite observer read-only dan arsip tick broker, bukan ringkasan chat. Gunakan satu ID dan cutoff yang direkam (saat ini `2026-11-03T15:18:14Z` pasca-WP13; pengecualian DST-aware D8 baru efektif `2026-11-05T00:00:00Z`). Simpan kedua tanggal secara terpisah dan hindari retroaktif.
