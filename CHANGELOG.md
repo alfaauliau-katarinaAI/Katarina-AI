@@ -1,5 +1,16 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — D8: rollover WP15 aktif prospektif, hitungan Tahap 0 dari deploy WP13 (keputusan Owner)
+
+- `observation_ledger.py`:
+  - `ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-05T00:00:00+00:00"`. Mulai saat itu jendela 17:00 New York −15/+30 menit (DST-aware) dikecualikan; sebelum itu perilaku identik dengan aturan lama;
+  - `ROLLOVER_RULE_DECIDED_UTC` dicatat;
+  - `STAGE0_COUNT_SINCE_UTC = "2026-11-03T15:18:14+00:00"` ditambahkan.
+- `check_stage0_health.py --since official` membaca konstanta itu.
+- Tiga tes yang sebelumnya mengunci status "nonaktif" kini mengunci keputusan Owner dan sifat prospektifnya (efektif > waktu keputusan; riwayat sebelum efektif identik).
+- Sidecar harian `ops/windows/run-stage0-health-since-wp12.ps1` kini memakai checker `C:\Katarina\code`, `--since official`, dan breakdown harian; sebelumnya memakai checkout lama `b3fd2e6`.
+- Ambang, denominator, dan data ledger tidak diubah. LIVE tetap OFF.
+
 ## 2026-11-04 — E2: dokumentasi penutup gate, Stage 0 dan WP6
 
 - RH-013 (`docs/REPAIR_HISTORY.md`): gate KAT-CG aktif, bukti CI negatif, bukti cleanup, tiga bug yang ditemukan. `CODING_GATE.md` mencatat status `GATE_ACTIVE_VERIFIED` / `AUTO_CLEANUP_SAFE_VERIFIED`. `PROJECT_STATUS.md`: banner, baris codebase/reboot, blocker P1/P2. Tanpa perubahan kode; LIVE tetap OFF.

@@ -44,10 +44,10 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina` | runtime, ops, workflow, research, scripts, tests | 157 | 248 |
-| `katarina.adapters` | runtime, ops, workflow, scripts, tests | 17 | 27 |
+| `katarina` | runtime, ops, workflow, research, scripts, tests | 157 | 250 |
+| `katarina.adapters` | runtime, ops, workflow, scripts, tests | 17 | 28 |
 | `katarina.adapters.agent_dashboard_page` | runtime, ops, workflow, scripts, tests | 2 | 1 |
-| `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 15 |
+| `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 16 |
 | `katarina.adapters.brain_feedback` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.adapters.continuous_owner_surface` | runtime, ops, workflow, scripts, tests | 0 | 3 |
 | `katarina.adapters.demo_permissions` | runtime, ops, workflow, scripts, tests | 7 | 1 |
@@ -126,18 +126,18 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.health` | runtime, ops, workflow, scripts, tests | 2 | 4 |
 | `katarina.health.engine` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.host` | runtime, ops, workflow, scripts, tests | 2 | 7 |
-| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 56 | 139 |
-| `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 13 | 27 |
+| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 56 | 140 |
+| `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 13 | 28 |
 | `katarina.intelligence.broker.auto_calibration` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_account_monitor` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.intelligence.broker.broker_clock_alignment` | runtime, ops, workflow, scripts, tests | 2 | 11 |
 | `katarina.intelligence.broker.broker_history_coverage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_scan_universe` | runtime, ops, workflow, research, scripts, tests | 3 | 2 |
-| `katarina.intelligence.broker.causal_broker_quotes` | runtime, ops, workflow, scripts, tests | 4 | 4 |
+| `katarina.intelligence.broker.causal_broker_quotes` | runtime, ops, workflow, scripts, tests | 4 | 5 |
 | `katarina.intelligence.broker.data_recovery` | runtime, ops, workflow, scripts, tests | 4 | 1 |
 | `katarina.intelligence.broker.host_clock_probe` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.live_clock_probe` | runtime, ops, workflow, scripts, tests | 1 | 5 |
-| `katarina.intelligence.broker.observer_universe` | runtime, ops, workflow, research, scripts, tests | 4 | 4 |
+| `katarina.intelligence.broker.observer_universe` | runtime, ops, workflow, research, scripts, tests | 4 | 5 |
 | `katarina.intelligence.cognition` | runtime, ops, workflow, research, scripts, tests | 22 | 49 |
 | `katarina.intelligence.cognition.adaptive_observation` | runtime, ops, workflow, research, scripts, tests | 3 | 6 |
 | `katarina.intelligence.cognition.assistant_cycle` | runtime, ops, workflow, scripts, tests | 1 | 0 |
@@ -183,7 +183,7 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.operations.file_housekeeping` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.foundation_readiness` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.network_doctor` | runtime, ops, workflow, scripts, tests | 1 | 2 |
-| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, scripts, tests | 4 | 15 |
+| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, scripts, tests | 4 | 16 |
 | `katarina.intelligence.operations.parallel_storage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.runtime_evidence` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.operations.stage0_breakdown` | ops, scripts, tests | 0 | 2 |
@@ -235,7 +235,7 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.policies` | workflow, scripts, tests | 1 | 4 |
 | `katarina.policies.risk` | workflow, scripts, tests | 1 | 1 |
 | `katarina.policies.strategy` | workflow, scripts, tests | 1 | 3 |
-| `katarina.research` | workflow, research, tests | 13 | 31 |
+| `katarina.research` | workflow, research, tests | 13 | 32 |
 | `katarina.research.alpha_survival` | workflow, research, tests | 0 | 3 |
 | `katarina.validation` | runtime, ops, workflow, research, scripts, tests | 4 | 10 |
 | `katarina.validation.engine` | runtime, ops, workflow, research, scripts, tests | 5 | 10 |
@@ -311,7 +311,7 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.research.setups.pullback` | research, tests | 1 | 1 |
 | `katarina.research.setups.simulator` | research, tests | 0 | 4 |
 | `katarina.research.spread_profile` | research, tests | 0 | 2 |
-| `katarina.research.validation` | research, tests | 8 | 23 |
+| `katarina.research.validation` | research, tests | 8 | 24 |
 
 ## D — tidak terjangkau dari root mana pun (2)
 

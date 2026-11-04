@@ -232,12 +232,20 @@ class ObservationLedgerTest(unittest.TestCase):
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 23, 20, 30, tzinfo=UTC)))
         self.assertFalse(ledger.fx_session_open(datetime(2026, 10, 24, 12, 0, tzinfo=UTC)))
 
-    def test_stage0_default_disabled_preserves_all_legacy_history(self):
-        self.assertIsNone(ledger.ROLLOVER_RULE_EFFECTIVE_UTC)
+    def test_stage0_rule_is_prospective_and_preserves_all_history_before_it(self):
+        effective = datetime.fromisoformat(ledger.ROLLOVER_RULE_EFFECTIVE_UTC)
+        decided = datetime.fromisoformat(ledger.ROLLOVER_RULE_DECIDED_UTC)
+        self.assertEqual(ledger.ROLLOVER_RULE_EFFECTIVE_UTC, "2026-11-05T00:00:00+00:00")  # Owner D8
+        self.assertGreater(effective, decided)  # never retroactive
         for when in (datetime(2026, 10, 28, 21, 0, tzinfo=UTC),
                      datetime(2026, 11, 2, 22, 5, tzinfo=UTC),
-                     datetime(2027, 6, 14, 21, 20, tzinfo=UTC)):
+                     datetime(2026, 11, 4, 22, 10, tzinfo=UTC),
+                     effective - timedelta(microseconds=1)):
             self.assertEqual(ledger.stage0_session_open(when), ledger.fx_session_open(when))
+        # From the effective instant the winter window is 21:45-22:30 UTC, not the legacy 20:45-21:15.
+        self.assertTrue(ledger.stage0_session_open(datetime(2026, 11, 5, 21, 0, tzinfo=UTC)))
+        self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 5, 22, 10, tzinfo=UTC)))
+        self.assertTrue(ledger.stage0_session_open(datetime(2026, 11, 5, 22, 30, tzinfo=UTC)))
 
     def test_stage0_new_rollover_edges_on_both_sides_of_us_dst_2026(self):
         # Explicitly opt into the new rule in a test only; default remains disabled.

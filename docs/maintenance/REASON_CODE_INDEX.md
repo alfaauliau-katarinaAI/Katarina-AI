@@ -136,7 +136,7 @@ Ringkasan: 573 kode — P0 101, P1 244, P2 228; 219 disebut di tes, 354 belum.
 | `BRAIN_FEEDBACK_ACK_REJECTED` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/unified_brain.py:221` | — |
 | `BROKER_CATALOG_NOT_FOUND` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/observer.py:301` | — |
 | `BROKER_NOT_CONNECTED` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/unified_brain.py:117`<br>`src/katarina/intelligence/cognition/unified_brain.py:283` | — |
-| `BROKER_SHIFT_CHANGED_DURING_DAY` | P1 | intelligence.operations | `src/katarina/intelligence/operations/observation_ledger.py:619` | `tests/unit/intelligence/test_clock_evidence_wp13.py`<br>`tests/unit/intelligence/test_observation_ledger.py`<br>`tests/unit/operations/test_stage0_cutoff_triage.py` |
+| `BROKER_SHIFT_CHANGED_DURING_DAY` | P1 | intelligence.operations | `src/katarina/intelligence/operations/observation_ledger.py:625` | `tests/unit/intelligence/test_clock_evidence_wp13.py`<br>`tests/unit/intelligence/test_observation_ledger.py`<br>`tests/unit/operations/test_stage0_cutoff_triage.py` |
 | `BROKER_TICK_DAYS_TABLE_MISSING` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:720` | — |
 | `BROKER_TICK_RECONCILED` | P1 | intelligence.shadow | `src/katarina/intelligence/shadow/contextual_observation_journal.py:116` | `tests/unit/intelligence/test_contextual_observer_news.py` |
 | `CANDIDATE_BAR_TIMES_INVALID` | P1 | intelligence.operations | `src/katarina/intelligence/operations/candidate_ledger.py:92` | — |
@@ -225,7 +225,7 @@ Ringkasan: 573 kode — P0 101, P1 244, P2 228; 219 disebut di tes, 354 belum.
 | `INVALID_CLOCK_EVIDENCE_IN_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:897`<br>`src/katarina/intelligence/operations/data_health.py:897` | — |
 | `INVALID_DECISION_INPUTS_CONFIG` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/decision_inputs.py:69`<br>`src/katarina/intelligence/cognition/decision_inputs.py:78` | — |
 | `INVALID_DECISION_INPUTS_MODE` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/decision_inputs.py:26` | — |
-| `INVALID_DECISION_SHADOW` | P1 | intelligence.operations | `src/katarina/intelligence/operations/observation_ledger.py:253` | — |
+| `INVALID_DECISION_SHADOW` | P1 | intelligence.operations | `src/katarina/intelligence/operations/observation_ledger.py:259` | — |
 | `INVALID_DEMO_BARS` | P1 | intelligence.demo | `src/katarina/intelligence/demo/demo_strategy.py:55`<br>`src/katarina/intelligence/demo/demo_strategy.py:63` | — |
 | `INVALID_DEMO_COST_CHECKS` | P1 | intelligence.demo | `src/katarina/intelligence/demo/demo_strategy.py:19` | — |
 | `INVALID_DEMO_SPREAD` | P1 | intelligence.demo | `src/katarina/intelligence/demo/demo_strategy.py:70` | — |
@@ -235,7 +235,7 @@ Ringkasan: 573 kode — P0 101, P1 244, P2 228; 219 disebut di tes, 354 belum.
 | `INVALID_HF_CREDENTIAL` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:54` | — |
 | `INVALID_LOGICAL_SOURCE` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:324` | — |
 | `INVALID_MARGIN_VALUE` | P1 | validation.engine | `src/katarina/validation/engine.py:650` | — |
-| `INVALID_NEWS_DIAGNOSTICS` | P1 | intelligence.operations | `src/katarina/intelligence/operations/observation_ledger.py:184`<br>`src/katarina/intelligence/operations/observation_ledger.py:189`<br>`src/katarina/intelligence/operations/observation_ledger.py:200` | — |
+| `INVALID_NEWS_DIAGNOSTICS` | P1 | intelligence.operations | `src/katarina/intelligence/operations/observation_ledger.py:190`<br>`src/katarina/intelligence/operations/observation_ledger.py:195`<br>`src/katarina/intelligence/operations/observation_ledger.py:206` | — |
 | `INVALID_OHLC_ORDER` | P1 | validation.engine | `src/katarina/validation/engine.py:581` | `tests/unit/validation/test_stage08_validation.py` |
 | `INVALID_ORDER_IDENTITY` | P1 | validation.engine | `src/katarina/validation/engine.py:862` | — |
 | `INVALID_ORDER_TIME` | P1 | validation.engine | `src/katarina/validation/engine.py:890` | — |
@@ -559,7 +559,7 @@ Ringkasan: 573 kode — P0 101, P1 244, P2 228; 219 disebut di tes, 354 belum.
 | `ROOT_CAUSE_IDENTIFIED` | P2 | scripts/governance | `scripts/governance/code_change_gate.py:407`<br>`scripts/governance/code_change_gate.py:419` | — |
 | `SIDE_NOT_REGISTERED` | P2 | research.validation | `src/katarina/research/validation.py:295` | `tests/unit/research/test_validation.py` |
 | `SOURCE_UNAVAILABLE` | P2 | intelligence.news | `src/katarina/intelligence/news/official_cache_provenance.py:21` | `tests/unit/intelligence/test_official_cache_provenance.py` |
-| `STAGE_*` | P2 | scripts/governance | `scripts/governance/audit_constitution_guard.py:46` | `tests/static/test_stage06_mt5_bridge.py`<br>`tests/static/test_stage35_runner_behavior.py`<br>`tests/unit/body/test_end_to_end_body.py` (+7) |
+| `STAGE_*` | P2 | scripts/governance | `scripts/governance/audit_constitution_guard.py:46` | `tests/static/test_stage06_mt5_bridge.py`<br>`tests/static/test_stage35_runner_behavior.py`<br>`tests/unit/body/test_end_to_end_body.py` (+8) |
 | `STALE_CACHE_RECEIPT` | P2 | intelligence.news | `src/katarina/intelligence/news/official_cache_provenance.py:38` | `tests/unit/intelligence/test_official_cache_provenance.py` |
 | `SYMLINK_OR_JUNCTION` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:98`<br>`scripts/governance/safe_cleanup.py:109` | `tests/static/test_safe_cleanup.py` |
 | `SYNC_INTERVAL_MUST_BE_10_TO_1440_MINUTES` | P2 | scripts/deployment | `scripts/deployment/install_hf_storage.py:35` | — |

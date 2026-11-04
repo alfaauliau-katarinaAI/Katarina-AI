@@ -252,15 +252,6 @@ Koordinasi teknis dan bukti per SHA: [Issue #249](https://github.com/alfaauliau-
 
 **Batas Owner terbaru:** LIVE OFF, zero orders, tanpa deploy VPS atau aktivasi trading. Risk Governor, promotion_lock, holdout dan data/ledger historis tetap. MERGED ≠ DEPLOYED ≠ STAGE0 PASSED. Tidak ada izin operasional tambahan dari closeout ini.
 
-### D8 — Jendela sesi Tahap 0 setelah DST AS berakhir dan awal hitungan 10 hari
-Claude · 4 Nov 2026 · status: Menunggu Owner
-Usulan: 192 dari 200 kegagalan siklus sejak cutoff 28 Okt terjadi pada [−15, +60) menit dari 17:00 New York, yaitu jeda harian ketika XAU/NAS tanpa quote dan FX hampir tidak bergerak. Sejak 1 Nov jeda itu berada di 21:45–23:00 UTC, sedangkan jendela resmi hanya mengecualikan 20:45–21:15 UTC (tidak DST-aware). Rate resmi 96,41 %; WP15 (−15/+30) 97,83 %; diagnostik −15/+60 99,85 %. `clock_shift_stable` tetap NOT_MET karena shift palsu 30 Okt–1 Nov dari kode pra-WP13. Bukti: `docs/maintenance/STAGE0_FAILURE_INVESTIGATION_20261104.md`.
-Pertanyaan: 1. Aktifkan aturan rollover DST-aware secara prospektif (`ROLLOVER_RULE_EFFECTIVE_UTC` = waktu sesudah persetujuan)? 2. Lebar jendela −15/+30 (WP15) atau −15/+60 (jeda CFD), atau tunggu probe sesi per simbol? 3. Mulai ulang hitungan 10 hari dari deploy WP13 (3 Nov 15:18 UTC) tanpa menghapus data lama? 4. Kapan uji putus-sambung formal?
-Tanggapan:
-- [Claude 4 Nov 2026] Tidak ada bug program yang ditemukan. Ambang 98 %, denominator dan data historis tidak saya ubah; alat `check_stage0_health.py --breakdown` hanya diagnostik.
-Keputusan:
-Tindak lanjut:
-
 ## Checkpoint Manager — 3 November 2026 (catatan koordinasi, BUKAN keputusan Owner baru)
 
 - **Bukti kode:** Draft [integrasi #265](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/265) head `cd3b576d`, setelah perbaikan audit Claude/Manager [#266](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/266), sudah [CI Body/Ubuntu/Windows sukses](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/41480635219). Source PR #257/#259/#263/#264 ditutup sebagai digantikan, tidak di-merge ke main. **Head Jules #259 terbaru `ce7c4074` reintroduksi PASS+NO_DATA -> PASS**; jangan cherry-pick branch tersebut.
@@ -270,6 +261,9 @@ Tindak lanjut:
 
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
+- 4 Nov — **D8 diputuskan Owner** ("oke saya setujui semua"; pilihan WP15 −15/+30). Rollover DST-aware 17:00 New York
+  −15/+30 menit berlaku prospektif mulai 5 Nov 2026 00:00 UTC. Hitungan 10 hari Tahap 0 dimulai ulang dari deploy WP13
+  (3 Nov 15:18:14 UTC); data lama tetap tersimpan. Ambang 98 %, denominator dan data historis tidak diubah. Roadmap Tahap 0 diperbarui.
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
   riset, memori, evaluasi, dan usulan perbaikan; keberhasilan diukur dari hasil bersih setelah biaya
   yang terverifikasi. Keputusan dan batasnya ada sekali di `docs/ROADMAP.md` (Arah lanjutan → Agentic AI).
