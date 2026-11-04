@@ -405,6 +405,27 @@ Owner menolak **filter minimum risk-to-reward** untuk keenam kandidat. Setiap si
 
 Owner memilih definisi **swing high/low dengan 2 candle tertutup di kiri dan 2 candle tertutup di kanan** untuk rancangan keenam kandidat BUY/SELL. Pivot valid **baru setelah candle kedua di kanan ditutup**; `confirmed_at` tidak boleh diberi timestamp candle pivot, dan level tidak boleh dipakai pada candle sebelum konfirmasi. Untuk tie/equal highs/lows, usulan awal **strict comparison** (nilai sama bukan swing) agar deterministik. Definisi swing ini sudah disetujui sebagai desain; implementasi, tes, registrasi hipotesis dan backtest **belum dilakukan**.
 
+#### KEPUTUSAN D10-K8a — Buffer SL 0,10 × ATR14 dipilih Owner (rapat 4 Nov 2026)
+
+Owner memilih **koefisien k = 0,10** dalam usulan rumus buffer SL, dengan **batas minimum tick size dan spread saat keputusan**, untuk seluruh kandidat yang menggunakan SL struktural:
+
+`buffer_price = ceil_to_tick_size(max(tick_size, spread_at_decision, 0.10 * ATR14_closed_entry_TF))`.
+
+- ATR14 menggunakan hanya candle timeframe entry yang **telah tutup** saat keputusan; spread menggunakan bid/ask faktual dan tick size terverifikasi. Rincian ATR (Wilder), kesalahan data, spread yang hilang, rounding, dan batas minimum stop broker wajib diuji fail-closed. Harga stop BUY dibulatkan ke bawah dan SELL ke atas pada grid tick yang benar.
+- Ini **pilihan desain sebelum pengujian**, **bukan bukti k=0,10 optimal**, tidak mengesahkan backtest, perubahan kode, order, atau membuka holdout. Tidak ada minimum RR sesuai D10-K6.
+- Usulan k=0,15 yang masih tertulis di agenda D10-K8 di bawah adalah **riwayat opsi lama dan telah digantikan oleh keputusan ini**; jangan implementasikan 0,15 sebagai default. Varian 0,15/0,20 hanya boleh dicoba sebagai hipotesis baru dengan persetujuan, preregistration dan koreksi multiple trials.
+- **Fresh zone, masa berlaku 48 H1, metode sentuhan, invalidasi zona, dan time exit MASIH TERBUKA** untuk rapat; jangan menganggap paket D10-K8 telah disetujui otomatis.
+
+#### Pembahasan lanjutan D10-K8 — First-touch dan invalidasi (belum diputuskan)
+
+Perlu memisahkan **status zona** dari **stop posisi**: batas H1 yang belum selesai tidak boleh menjadi alasan mengabaikan stop yang tersentuh. Usulan state machine deterministik `FRESH → FIRST_VISIT → CONSUMED/INVALID/EXPIRED`. Proposal "first visit" berarti **satu episode kunjungan** setelah konfirmasi zona (bukan hanya satu tick); deteksi masuk zona dari quote broker yang valid dan penerapan entry dari candle M15 selesai. Setelah harga keluar dari zona, kunjungan berikutnya tidak lagi fresh. Jika tidak ada konfirmasi pada kunjungan pertama, harus diputuskan apakah status menjadi `CONSUMED` (rekomendasi untuk menghindari cherry-picking) atau diizinkan retest berikutnya sebagai hipotesis berbeda.
+
+Opsi invalidasi sebelum entry:
+- **I1 — Close H1 di luar distal**: cocok sebagai konfirmasi struktur, tetapi selama candle H1 terbentuk, harga dapat menembus jauh ke sisi salah dan kembali; state butuh `PROVISIONAL_BREACH` serta kebijakan risiko yang jelas.
+- **I2 — Intrabar breach distal + buffer dengan quote broker**: membatalkan zona segera sebelum entry, lebih ketat dan menghindari penggunaan zona yang tertembus jauh sebelum candle H1 close; namun sensitif spike/spread dan perlu aturan feed/tick serta sumber bid/ask yang sah.
+- **I3 — Hybrid**: invalidasi struktur H1 ketika close distal, **larang entry baru segera** begitu quote melewati distal + buffer sampai keadaan diklarifikasi; untuk posisi terbuka tetap SL dieksekusi berdasarkan quote stop, tidak menunggu H1 close. Harus dirumuskan tanpa lookahead.
+Semua perlu uji data gap, event order, dan perbedaan bid/ask. Belum ada yang disetujui.
+
 #### Agenda D10-K8 — Fresh demand/supply, invalidasi, dan buffer SL (USULAN; BELUM DIPUTUSKAN)
 
 **Rancangan mekanisme zona yang dapat diuji** untuk B2/S2 pada H1:
