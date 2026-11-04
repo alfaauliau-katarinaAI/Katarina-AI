@@ -104,6 +104,17 @@ Owner telah memilih dan mengunci:
 
 **Remaining blockers:** G3 origin/TTL/first-touch core telah disetujui tetapi overlapping-zone tie belum; G4 edge-case teknis belum; G6 historical development dataset/hash/cost/split belum terverifikasi; G7 sesi resmi MT5 belum tersedia; G8 kode riset belum kompatibel dan belum diimplementasikan. `PREREGISTRATION_BLOCKED`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
 
+## III-D. Keputusan D10-K24 — finalisasi event boundary dan overlap zone (APPROVED)
+
+Owner menyetujui:
+- **Candle M15 interval `[open_utc,close_utc)`**; tick pada `close_utc` milik candle berikutnya. Evaluasi candle yang memuat first touch baru saat fully closed; entry hanya pada quote sesudah sinyal diketahui, tidak memperlakukan tick boundary dua kali.
+- Bila beberapa zona eligible overlap **dan tersentuh pada tick BID yang sama**, prioritaskan `abs(bid_at_first_touch - proximal_edge)` terkecil; tie: zona paling baru `zone_confirmed_at`, lalu `zone_id` stabil. Jangan melihat harga masa depan.
+- Bila urutan tick pada timestamp yang sama tidak dapat dibuktikan **dan dapat mengubah hasil atau signal**, `BLOCKED_INTRABAR_ORDER`; tanpa OHLC fill fallback. Replay feed yang urutannya dapat diaudit tetap boleh diproses.
+
+**Keputusan belum mencakup** apakah zona beririsan yang tidak terpilih pada first touch yang sama otomatis dikonsumsi; hal ini perlu aturan eksplisit sebelum freeze, bersama detail stop/freeze broker, tick gaps, sesi quote/trade resmi XAUUSD.vx, dan data/hash. Enam kandidat tetap **terpisah** dalam riset, tanpa portofolio gabungan.
+
+**Implementasi:** `docs/research/SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md` menetapkan input, event audit, dan 12 kriteria pengujian synthetic-only. Tidak ada engine tick replay yang sesuai di `main`; source belum diubah. Semua keputusan rapat hanya kontrak desain, **bukan `registry.jsonl` entry atau persetujuan backtest**.
+
 ## IV. Kriteria siap mendaftar
 
 1. **Spec lengkap:** semua G1–G5 ditetapkan sebagai nilai/aturan yang sama untuk dua sisi hanya jika disengaja; tiap `B1/S1/B2/S2/B3/S3` memiliki `name,symbol,side,regime,playbook,rules,parameters`, `code_sha256`, `spec_version`, alasan WAIT, serta daftar level `discovered_at/confirmed_at`.
