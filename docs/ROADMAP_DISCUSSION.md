@@ -342,6 +342,38 @@ Owner menyetujui **kombinasi timeframe berbeda antar strategi**, sepanjang setia
 
 **Status keputusan:** `TIMEFRAME_FLEXIBLE_APPROVED`; `SIX_STRATEGY_DESIGNS_PROPOSED`; `TF_ENTRY_EXIT_PARAMETERS_NOT_FROZEN`; `NO_BACKTEST_AUTHORIZED_BY_THIS_MEETING`; `HOLDOUT_LOCKED`; `LIVE_OFF`. Diskusikan daftar angka/lookback dan definisi supply/demand, sweep, breakout, target serta time exit sebelum freeze dan instruksi coding.
 
+#### KEPUTUSAN D10-K5 — SL struktural + TP dinamis berbasis struktur (Owner SETUJU, rapat 4 Nov 2026)
+
+Owner memilih **SL berdasarkan invalidasi struktur** dan **TP dinamis menuju sasaran struktur pasar** untuk seluruh enam kandidat B1/S1/B2/S2/B3/S3. **Ini keputusan arah desain, bukan persetujuan parameter numerik ataupun perintah trading/backtest.** Setiap kandidat mempunyai aturan pemilihan target dan invalidasi sendiri, tidak boleh dipilih atau direvisi berdasarkan hasil P/L yang sudah dilihat. Rujukan: `docs/research/VALIDATION_PROTOCOL.md` (preregistration, biaya, no-lookahead, baseline, walk-forward).
+
+**Aturan kausal yang wajib dipakai sebelum pengujian:**
+1. Saat *bar konfirmasi selesai*, ambil hanya **bar dan zona yang sudah selesai/terdaftar saat itu**. Bekukan snapshot `entry_decision_at_utc`, `level_discovered_at_utc`, `target_origin_bars`, `entry_reference`, `stop_reference`, `target_reference`, `code_sha256`, `dataset_sha256`. Untuk H1/M15/M5 multi-TF, hanya gunakan bar TF tinggi yang telah tutup. Target tidak boleh dibuat dari swing/level *setelah* entry atau dari MFE trade.
+2. Entry pada quote eksekusi realistis *setelah* sinyal: BUY di ask, exit/SL BUY di bid; SELL di bid, exit/SL SELL di ask. Asumsikan stop-market bisa mengalami slippage dan gap, TP limit bisa tak terisi bila hanya sekilas menyentuh. Tick data dan prioritas event harus dinyatakan; jika hanya OHLC dan SL+TP berada dalam bar yang sama, penilaian konservatif (SL terlebih dahulu) atau `BLOCKED_UNRESOLVED_INTRABAR`, **jangan otomatis pilih TP**.
+3. Bentuk SL = level invalidasi struktural dari bar yang diketahui + buffer volatilitas/spread *yang telah ditetapkan*. Stop tidak boleh berada di sisi salah, jarak nol, atau disesuaikan setelah melihat harga masa depan.
+4. Target harus berada di sisi profit relatif terhadap **harga eksekusi**, tidak di antara entry dan SL; pilih **target eligible terdekat** menurut aturan pra-daftar. Penggunaan target lebih jauh hanya jika kategori/urutan struktur telah dipraregistrasikan—dilarang melompati target dekat sekadar menaikkan RR uji.
+5. Snapshot menghitung jarak risiko `R = |entry_price - stop_price|` (setelah memeriksa spesifikasi simbol), potensi reward hingga target, RR *bersih setelah biaya* dari spread/komisi/slippage/swap yang dibekukan sebelum backtest; minimum RR belum diputuskan Owner. Jika tidak ada target eligible, reward tidak menutupi biaya, RR kurang dari threshold yang kelak diputuskan, spread tidak valid, pasar tutup, atau data kurang: **WAIT/NO_TRADE dengan reason**, bukan target 2R fiktif atau menghapus sinyal dari denominator penelitian.
+6. TP/SL dibekukan saat posisi dibuka untuk uji awal. Pergerakan TP, trailing, partial close, BE atau recovery adalah **varian hipotesis terpisah** yang harus didaftarkan sebelum hasil; tidak dimasukkan diam-diam ke baseline ini. Jika perlu `time exit`, N dan TF-nya wajib ditentukan sebelumnya; exit dengan quote realistis.
+7. Uji fixture *causality*: geser harga setelah `entry_decision_at_utc` atau append bar masa depan tanpa mengubah data hingga sinyal → target dan stop awal **harus identik**; uji data gap/revision, konflik SL+TP, bid/ask, level invalid dan pelanggaran timestamp, determinisme lintas OS. Dua kali run sama `code/data/split/seed` = laporan dan hash identik.
+8. Semua enam kandidat dinilai dengan biaya broker lengkap, sensitivitas 1,5x/2x, walk-forward 28 hari, tiga baseline, registrasi seluruh percobaan, BUY/SELL terpisah dan penguncian holdout. Belum ada bukti profit; LIVE OFF, 0 order, Stage 0 terpisah.
+
+**Sasaran struktur yang diajukan untuk dibahas dan dibekukan (belum dianggap fakta trading):**
+
+| Kartu | Kandidat TP utama yang diketahui saat entry | SL struktur |
+|---|---|---|
+| B1 BUY sweep bawah | Resistance/swing high M15 terakhir yang *sudah tervalidasi* dan di atas entry; opsi berikutnya buy-side liquidity bila pra-daftar | Low sweep minus buffer |
+| S1 SELL sweep atas | Support/swing low M15 terakhir yang diketahui dan di bawah entry; opsi berikutnya sell-side liquidity bila pra-daftar | High sweep plus buffer |
+| B2 BUY trend pullback | Supply/H1 resistance atau previous H1 swing high terdekat yang sudah terbentuk | Di bawah demand/swing low yang menyebabkan entry |
+| S2 SELL trend pullback | Demand/H1 support atau previous H1 swing low terdekat yang sudah terbentuk | Di atas supply/swing high |
+| B3 BUY breakout+retest | Resistance/swing high H1 berikutnya yang diketahui sebelum breakout; bukan level yang baru dibentuk setelahnya | Di bawah level retest/low yang sudah terbentuk |
+| S3 SELL breakdown+retest | Support/swing low H1 berikutnya yang diketahui sebelum breakdown | Di atas level retest/high yang sudah terbentuk |
+
+**Pertanyaan rapat terbuka:**
+- `D10-K5-A`: batas minimal RR *bersih* untuk menerima entry? Proposal diskusi 1,5R atau 2R, **bukan angka teruji**.
+- `D10-K5-B`: bila tidak ada level target terverifikasi dalam arah profit, **WAIT** (rekomendasi untuk baseline bersih) atau aturan fallback yang dipraregistrasikan?
+- `D10-K5-C`: time exit dinamis vs fixed bar count per strategi; definisi panjang lookback/konfirmasi zona dan buffer. Tidak boleh memilih setelah melihat hasil uji.
+
+**Status:** `DYNAMIC_STRUCTURAL_TP_APPROVED_AS_DESIGN` / `EXECUTION_PARAMETERS_NOT_FROZEN` / `NO_BACKTEST_YET` / `EDGE_UNPROVEN`. Catatan ini tidak mengubah produk trading, konfigurasi risiko, data historis, atau gate Stage 0.
+
 #### A. Bukti yang disepakati untuk tiap hari
 
 Sumber fakta tetap ledger SQLite observer read-only dan arsip tick broker, bukan ringkasan chat. Gunakan satu ID dan cutoff yang direkam (saat ini `2026-11-03T15:18:14Z` pasca-WP13; pengecualian DST-aware D8 baru efektif `2026-11-05T00:00:00Z`). Simpan kedua tanggal secara terpisah dan hindari retroaktif.
