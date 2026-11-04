@@ -21,6 +21,23 @@ Dokumen ini adalah **satu-satunya jurnal hasil perbaikan yang terverifikasi**: m
 4. `CHANGELOG.md` tetap mencatat ringkasan perubahan per PR; detail diagnosis dan hasil pemulihan hanya di sini, dengan tautan ke PR. `PROJECT_STATUS.md` hanya menyimpan kondisi saat ini dan merujuk ID perbaikan bila diperlukan.
 5. Pengembangan lewat GitHub dan PR + CI. VPS hanya untuk pengujian yang diizinkan. Tidak ada perubahan yang mengaktifkan LIVE, order, membuka holdout, atau melemahkan Risk Governor tanpa keputusan Owner yang berlaku.
 
+## RH-014 — Deploy `main` ke VPS, WP6 task diterapkan, sidecar Stage 0, uji putus-sambung formal #1
+
+**Tanggal:** 4 November 2026 WIB (izin Owner di chat 19:26 WIB: "oke saya setujui semua"; D8 = WP15 −15/+30)
+**Status:** **DEPLOYED + SMOKE PASS** (`ee572571`, lalu fast-forward `82d93ef2`). WP6 task **DITERAPKAN**, tetapi **belum `READY_AFTER_REBOOT`** karena autologon belum aktif (aksi Owner). Uji reboot **BELUM DIJALANKAN**. Tahap 0 **BELUM LULUS**.
+
+| Aspek | Bukti |
+|---|---|
+| Sebelum | VPS `fd6cff16`. Launcher tanpa penanganan `AbandonedMutexException`. Sidecar Stage 0 memakai checkout lama `b3fd2e6` dan menulis `clock_shift_stable PASS` yang keliru. Task `LogonTrigger` tanpa delay. 0 uji putus-sambung formal sejak cutoff |
+| Deploy `ee572571` | Precheck: RAM ±590 MB bebas, NTP sinkron. Stop graceful (`continuous.stop`) 12:54:44 UTC. Backup `C:\Katarina\backups\20261104-pre-ee572571`, dibuat dengan `sqlite3.backup()`, `integrity_check=ok` (`context.sqlite3` sha256 `6709fe48…`, `cognitive-memory.sqlite3` `955f0cb4…`, 49 arsip tick). `git merge --ff-only`, manifest **MATCH 315**. Launcher dan sidecar dipasang (versi lama `.prev`). Start 12:55:30 UTC: `LIVE_FEED_CLOCK_VERIFIED`, 4 simbol bergerak, 0 order. Celah 97 s, di bawah ambang outage |
+| Penyimpangan urutan gate (dicatat jujur) | `ee572571` dideploy sebelum CI push `main` selesai. Tree-nya identik dengan HEAD PR yang sudah CI-hijau `35a67c8` (tree `b276ea8a…`), dan KAT-CG-05 dijalankan ulang sesudahnya: PASS. Mulai sekarang deploy hanya setelah CI `main` hijau |
+| Bug PS4 (TERBUKTI) | `wp6_apply_observer_startup.ps1 -Apply` gagal di PowerShell 4.0 (`[IO.MemoryStream]::new`, `Get-FileHash -InputStream`) dan berhenti sebelum mengubah task (fail-closed). Diperbaiki di #289 `82d93ef2` dengan tes `PowerShell4CompatibilityTests` (RED → GREEN). VPS di-fast-forward ke `82d93ef2` (hanya ops/tes), manifest MATCH 315 |
+| WP6 apply | `-Apply` sukses. Backup task `C:\Katarina\backups\wp6-task-20261104T131438Z\Katarina-Readonly-Observer.xml` (sha `1E61FE8B…`). Task kini Delay PT1M, `DisallowStartIfOnBatteries=false`, `IgnoreNew`. Observer PID 6436 tetap berjalan. Preflight live: **NOT_READY**, satu-satunya alasan `WP6_NO_AUTOLOGON` |
+| Uji putus-sambung formal #1 | `record_reconnect_test.py` id 4 `KILL_TERMINAL` 13:15:52 UTC. terminal64 pid 5320 dihentikan, lalu hidup kembali sendiri (pid 5480, sesi 2). Siklus OK berikutnya 13:16:38 UTC: **pulih 46 s**, 0 siklus gagal, tanpa duplikat. Checker `--since official`: `reconnect_recoveries` **PASS** (`passed_tests` 1, 3 recovery termasuk 2 spontan) |
+| Tahap 0 sesudahnya (`--since official`, 4 Nov 13:18 UTC) | `IN_PROGRESS`: streak 0/10 (hari pertama penuh dari cutoff = 4 Nov, belum selesai), sukses 94,60 % (1.122/1.186, termasuk jeda harian 3 Nov karena aturan WP15 baru efektif 5 Nov 00:00 UTC), `clock_shift_stable` PASS, quote 99,42 %, duplikat 0, **0 order** |
+| Rollback | `continuous.stop` → `git checkout fd6cff16` → pulihkan `.prev` launcher/sidecar → impor XML task dari backup WP6 (`-Rollback`) → restore DB bila perlu → `schtasks /run` |
+| Sisa risiko | Autologon (Owner) dan uji reboot. Uji formal #2–#3 (kriteria hitung 3 recovery sudah terpenuhi, tetapi rencana meminta 3 uji formal). Probe sesi MT5 (GUI). Host riset #255 |
+
 ## RH-013 — Coding gate KAT-CG aktif, safe cleanup, dan tiga bug yang ditemukan gate
 
 **Tanggal:** 4 November 2026 WIB

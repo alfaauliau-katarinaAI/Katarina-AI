@@ -1,5 +1,9 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — RH-014: deploy `main` ke VPS, WP6 task, uji putus-sambung formal #1 (dokumen)
+
+- VPS `fd6cff16` → `ee572571` → `82d93ef2` (backup terverifikasi, manifest MATCH 315, smoke `LIVE_FEED_CLOCK_VERIFIED`, 0 order). Task WP6 diterapkan (autologon masih menunggu Owner). Sidecar Stage 0 memakai checker terkini. Uji `KILL_TERMINAL` formal #1 pulih dalam 46 s. Penyimpangan urutan gate (deploy sebelum CI push `main` selesai, tree identik dengan HEAD yang hijau) dicatat. Hanya dokumen; LIVE tetap OFF.
+
 ## 2026-11-04 — WP6: skrip apply kompatibel PowerShell 4 (ditemukan saat deploy)
 
 - Saat deploy `ee572571`, `wp6_apply_observer_startup.ps1 -Apply` gagal di VPS (Windows Server 2012 R2, PowerShell 4.0) karena `[IO.MemoryStream]::new()` dan `Get-FileHash -InputStream` hanya ada di PowerShell 5. Skrip berhenti sebelum mengubah task (fail-closed). Hash kini dihitung dengan `SHA256.Create().ComputeHash`.
