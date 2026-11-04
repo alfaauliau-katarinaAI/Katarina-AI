@@ -452,6 +452,26 @@ Owner menyetujui parameter struktur untuk keenam kandidat XAUUSD sebagai **basel
 
 **Klarifikasi status:** klausul angka 96/72 dan invalidasi/TP yang tertulis sebagai *usulan* di bawah pada bagian D10-K20 **sudah disetujui dan digantikan oleh keputusan D10-K21 ini**. `D10-K21_APPROVED`, `ZONE_ORIGIN_PENDING`, `REGISTRY_NOT_WRITTEN`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
 
+#### KEPUTUSAN D10-K23 — Replay tick kronologis + BID touch + quote execution per sisi + 6 independen (Owner SETUJU, 5 November 2026 WIB)
+
+Owner memilih **opsi A** dan secara eksplisit menyetujui:
+1. **Replay tick broker kronologis** dengan urutan beralasan/terbukti untuk semua kejadian intrabar; tidak ada jalan pintas menebak dari OHLC.
+2. **BID** untuk sentuhan dan pelanggaran zona / struktur candle; **BUY entry ASK, SELL entry BID**, dan likuidasi BUY pada BID, SELL pada ASK dalam simulasi broker berbiaya. Quote dan sesi benar-benar harus memenuhi persyaratan eksekusi.
+3. Bila tidak dapat menentukan mana yang lebih dahulu karena tick tidak lengkap/urutan tidak dapat diverifikasi, **`BLOCKED_INTRABAR_ORDER`**, bukan mencatat TP, SL, maupun fallback SL-first OHLC. Blocked tetap tertera pada report.
+4. **Enam hipotesis dievaluasi terisolasi**, satu posisi aktif per kandidat; penilaian portofolio dan exposure/netting antarkandidat merupakan pekerjaan berbeda yang belum disetujui.
+
+Keputusan dicatat ke [kontrak simulator lengkap](research/SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md) bagian 2A dan 4 dan [spesifikasi 6 kandidat](research/SIX_CANDIDATE_PREREGISTRATION_SPEC_20261104.md) bagian III-C, di branch draft PR #293. Kontrak memuat alur input dan keluaran event `candidate_spec, symbol_contract, dataset_manifest/clock_evidence, tick_stream, closed_bars, session_evidence, costs.json, split.json` → `SIGNAL, ENTRY_INTENT, ENTRY_FILLED, EXIT_INTENT, EXIT_FILLED, WAIT, BLOCKED, EXIT_PENDING_NO_QUOTE`, dengan hash dan timestamp sumber untuk audit. Terdapat **12 daftar fixture deterministik T01–T12** untuk menguji mekanisme tanpa melihat P/L.
+
+**Penilaian gate sesudah D10-K23:**
+- `G4_CORE_DESIGN_APPROVED`; **rincian teknis masih pending**: first-touch tepat batas waktu M15, duplicate timestamp/urutan, overlap zona, sumber stop/fill dan gap tick, kontrak broker stop/freeze, metadata kalender sesi.
+- `G8_SOURCE_CODE_MISMATCH`: kode `src/katarina/research/setups/` belum diubah; `core.py` masih `target_rr/min_rr`, `simulator.py` M5+H1/fixed bars/OHLC; belum sesuai kontrak tick replay dan struktur.
+- `G6_DATA_COST_CLOCK_NOT_VERIFIED`: hash dataset development-only serta costs/split belum diperiksa.
+- `G7_OFFICIAL_SESSION_EVIDENCE_BLOCKED`: belum ada bukti per-simbol `SymbolInfoSessionQuote/Trade` dan jadwal khusus broker. Tidak ada izin menangkap log MT5 produksi secara otomatis.
+
+**Agenda keputusan berikutnya D10-K24 (BELUM diputuskan):** (A) terima boundary candle `[open_utc,close_utc)` untuk first touch, prioritas zona beririsan berdasarkan proximal edge terdekat terhadap BID touch dan tie `confirmed_at` paling baru lalu stable id, serta fail closed jika duplicate timestamp tidak memberi urutan valid; atau (B) audit setiap aturan tersebut satu per satu. Ini keputusan desain, tidak membuka backtest/registrasi/kode produksi.
+
+Tidak ada file source trading, MT5, VPS, registry, holdout atau simulator produksi yang diubah; hanya dokumen pada draft PR. `D10-K23_APPROVED`; `CONTRACT_CORE_FINALIZED`; `TECHNICAL_BOUNDARIES_PENDING`; `REGISTRY_NOT_WRITTEN`; `NO_BACKTEST`; `HOLDOUT_LOCKED`; `LIVE_OFF`.
+
 #### KEPUTUSAN D10-K22 — Zona Demand/Supply H1 dipilih; agenda G4 eksekusi & G8 simulator (Owner SETUJU, 4 November 2026)
 
 **Diputuskan oleh Owner:** B2 demand dari **candle bearish H1 terakhir** di antara **12 H1 tertutup sebelum BOS H1 bullish** minimal **1 tick melewati confirmed swing high H1**; S2 supply dari **candle bullish H1 terakhir** di antara 12 H1 sebelum BOS H1 bearish minimal 1 tick melewati swing low. Level swing BOS diketahui sebelum candle BOS dimulai; batas zona **full wick high–low candle origin**; zona terkonfirmasi hanya setelah close H1 BOS. Satu episode first touch, **satu candle M15 yang memuat first touch** untuk candle konfirmasi arah serta close di luar zona; bila gagal CONSUMED, tanpa mengulang. TP B2 BUY pada **batas bawah supply H1**, S2 SELL pada **batas atas demand H1** yang valid dan paling dekat dalam arah profit, dibanding swing H1 valid, tie level terbaru. Zona first visit, invalidasi hybrid, umur 48 H1 dan tanpa RR min sesuai keputusan lain.
