@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — S0: breakdown kegagalan Tahap 0 (diagnostik, read-only)
+
+- Modul baru `src/katarina/intelligence/operations/stage0_breakdown.py` dan opsi `check_stage0_health.py --breakdown`: kegagalan siklus dipecah menurut hari, jam UTC, simbol yang tanpa quote, dan fase pasar DST-aware (`DAILY_BREAK_NY17` = 17:00 New York −15/+60 menit, `WEEK_EDGE`, `SESSION`). Tampilan aturan sesi alternatif berlabel `diagnostic_only`, dengan `official_verdict_effect` = `NONE`.
+- Data VPS 28 Okt–4 Nov: 192/200 kegagalan berada dalam jeda harian 17:00 NY. Rinciannya di `docs/maintenance/STAGE0_FAILURE_INVESTIGATION_20261104.md` dan keputusan Owner di D8. Kriteria, cutoff, denominator dan data ledger tidak diubah. LIVE tetap OFF.
+
 ## 2026-11-04 — perapian E1: gate akhir dan status codebase
 
 - Dokumen canonical diperbarui: RH-012 (`docs/REPAIR_HISTORY.md`), baris codebase/PR/blocker di `docs/PROJECT_STATUS.md`, ledger E1 (gate, inventaris VPS/branch, keputusan `CODEBASE_CLEAN_BUT_STAGE_GATE_BLOCKED`), peta modul dibuat ulang. Tanpa perubahan kode; LIVE tetap OFF.

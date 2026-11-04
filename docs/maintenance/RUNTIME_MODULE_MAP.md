@@ -17,12 +17,12 @@ kategori D adalah kandidat untuk dicek manual, bukan bukti tidak terpakai.
 
 | Kategori | Arti | Jumlah |
 |---|---|---|
-| A | dipakai runtime/operasional atau workflow | 193 |
+| A | dipakai runtime/operasional atau workflow | 194 |
 | B | hanya dipakai tests | 40 |
 | C | hanya dipakai script non-operasional (riset dll.) | 23 |
 | D | tidak terjangkau dari root mana pun | 2 |
 
-Total modul: 258. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
+Total modul: 259. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
 
 ## Root yang dipakai
 
@@ -40,11 +40,11 @@ Total modul: 258. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.perception.screening` | C | scripts, tests | `katarina.intelligence.perception.market_regime_intelligence`, `katarina.intelligence.perception.symbol_playbooks` |
 | `katarina.intelligence.cognition.observer` | A | runtime, ops, workflow, scripts, tests | `katarina.governance.unified_verification`, `katarina.intelligence.cognition.continuous_observation`, `katarina.intelligence.cognition.unified_brain` |
 
-## A — dipakai runtime/operasional atau workflow (193)
+## A — dipakai runtime/operasional atau workflow (194)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina` | runtime, ops, workflow, research, scripts, tests | 156 | 245 |
+| `katarina` | runtime, ops, workflow, research, scripts, tests | 157 | 246 |
 | `katarina.adapters` | runtime, ops, workflow, scripts, tests | 17 | 27 |
 | `katarina.adapters.agent_dashboard_page` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 15 |
@@ -105,8 +105,8 @@ Total modul: 258. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.core.queue` | runtime, ops, workflow, research, scripts, tests | 1 | 2 |
 | `katarina.core.readiness` | runtime, ops, workflow, research, scripts, tests | 5 | 5 |
 | `katarina.core.state` | runtime, ops, workflow, research, scripts, tests | 1 | 0 |
-| `katarina.domain` | runtime, ops, workflow, research, scripts, tests | 5 | 1 |
-| `katarina.domain.market_calendar` | runtime, ops, workflow, research, scripts, tests | 5 | 1 |
+| `katarina.domain` | runtime, ops, workflow, research, scripts, tests | 6 | 1 |
+| `katarina.domain.market_calendar` | runtime, ops, workflow, research, scripts, tests | 6 | 1 |
 | `katarina.engines` | runtime, ops, workflow, research, scripts, tests | 19 | 39 |
 | `katarina.engines.adaptive_risk` | runtime, ops, workflow, research, scripts, tests | 2 | 1 |
 | `katarina.engines.adaptive_scalper` | runtime, ops, workflow, research, scripts, tests | 2 | 6 |
@@ -126,7 +126,7 @@ Total modul: 258. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.health` | runtime, ops, workflow, scripts, tests | 2 | 4 |
 | `katarina.health.engine` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.host` | runtime, ops, workflow, scripts, tests | 2 | 7 |
-| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 55 | 136 |
+| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 56 | 137 |
 | `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 13 | 27 |
 | `katarina.intelligence.broker.auto_calibration` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_account_monitor` | runtime, ops, workflow, scripts, tests | 3 | 4 |
@@ -177,15 +177,16 @@ Total modul: 258. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.news.research_agenda` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.news.research_news_collection` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.news.verified_policy_context` | runtime, ops, workflow, scripts, tests | 3 | 2 |
-| `katarina.intelligence.operations` | runtime, ops, workflow, scripts, tests | 7 | 21 |
+| `katarina.intelligence.operations` | runtime, ops, workflow, scripts, tests | 8 | 22 |
 | `katarina.intelligence.operations.candidate_ledger` | runtime, ops, workflow, scripts, tests | 1 | 3 |
-| `katarina.intelligence.operations.data_health` | ops, scripts, tests | 0 | 7 |
+| `katarina.intelligence.operations.data_health` | ops, scripts, tests | 0 | 8 |
 | `katarina.intelligence.operations.file_housekeeping` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.foundation_readiness` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.network_doctor` | runtime, ops, workflow, scripts, tests | 1 | 2 |
-| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, scripts, tests | 3 | 13 |
+| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, scripts, tests | 4 | 14 |
 | `katarina.intelligence.operations.parallel_storage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.runtime_evidence` | runtime, ops, workflow, scripts, tests | 2 | 1 |
+| `katarina.intelligence.operations.stage0_breakdown` | ops, scripts, tests | 0 | 2 |
 | `katarina.intelligence.perception` | runtime, ops, workflow, research, scripts, tests | 20 | 32 |
 | `katarina.intelligence.perception.adaptive_regime` | runtime, ops, workflow, research, scripts, tests | 5 | 8 |
 | `katarina.intelligence.perception.causal_seasonality` | runtime, ops, workflow, research, scripts, tests | 1 | 1 |

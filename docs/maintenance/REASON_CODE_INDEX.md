@@ -84,7 +84,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `INVALID_PRICE_GRID` | P0 | intelligence.broker | `src/katarina/intelligence/broker/auto_calibration.py:24` | — |
 | `LIVE_FEED_CLOCK_VERIFIED` | P0 | intelligence.broker | `src/katarina/intelligence/broker/live_clock_probe.py:118`<br>`src/katarina/intelligence/broker/live_clock_probe.py:119` | `tests/unit/intelligence/test_live_clock_probe.py` |
 | `LOCAL_BINDING_UNAVAILABLE` | P0 | adapters.automatic_connection | `src/katarina/adapters/automatic_connection.py:141` | — |
-| `LOCAL_CONNECT_FAILED` | P0 | adapters.automatic_connection, intelligence.cognition | `src/katarina/adapters/automatic_connection.py:129`<br>`src/katarina/intelligence/cognition/continuous_observation.py:245` | `tests/integration/test_continuous_observation.py`<br>`tests/unit/intelligence/test_data_health.py`<br>`tests/unit/intelligence/test_observation_ledger.py` |
+| `LOCAL_CONNECT_FAILED` | P0 | adapters.automatic_connection, intelligence.cognition | `src/katarina/adapters/automatic_connection.py:129`<br>`src/katarina/intelligence/cognition/continuous_observation.py:245` | `tests/integration/test_continuous_observation.py`<br>`tests/unit/intelligence/test_data_health.py`<br>`tests/unit/intelligence/test_observation_ledger.py` (+1) |
 | `LOCAL_FEEDBACK_REJECTED` | P0 | adapters.automatic_connection | `src/katarina/adapters/automatic_connection.py:163` | — |
 | `LOCAL_NOT_CONNECTED` | P0 | adapters.automatic_connection | `src/katarina/adapters/automatic_connection.py:152`<br>`src/katarina/adapters/automatic_connection.py:175` | — |
 | `LOCAL_READ_FAILED` | P0 | adapters.automatic_connection | `src/katarina/adapters/automatic_connection.py:189` | — |
@@ -110,7 +110,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `RISK_GOVERNOR_*` | P0 | engines.demo_execution | `src/katarina/engines/demo_execution.py:169` | `tests/unit/engines/test_demo_execution.py` |
 | `SENSOR_READ_FAILED` | P0 | intelligence.broker | `src/katarina/intelligence/broker/data_recovery.py:87` | — |
 | `STALE_CLOSED_BARS` | P0 | intelligence.broker | `src/katarina/intelligence/broker/data_recovery.py:114` | `tests/unit/intelligence/test_data_recovery.py` |
-| `STALE_QUOTES` | P0 | intelligence.broker | `src/katarina/intelligence/broker/live_clock_probe.py:97`<br>`src/katarina/intelligence/broker/live_clock_probe.py:100` | `tests/unit/intelligence/test_data_health.py`<br>`tests/unit/intelligence/test_live_clock_probe.py` |
+| `STALE_QUOTES` | P0 | intelligence.broker | `src/katarina/intelligence/broker/live_clock_probe.py:97`<br>`src/katarina/intelligence/broker/live_clock_probe.py:100` | `tests/unit/intelligence/test_data_health.py`<br>`tests/unit/intelligence/test_live_clock_probe.py`<br>`tests/unit/intelligence/test_stage0_breakdown.py` |
 | `SYMBOL_CLOSE_ONLY` | P0 | intelligence.broker | `src/katarina/intelligence/broker/data_recovery.py:95` | `tests/unit/intelligence/test_data_recovery.py` |
 | `SYMBOL_DISABLED` | P0 | intelligence.broker | `src/katarina/intelligence/broker/data_recovery.py:94` | `tests/unit/intelligence/test_data_recovery.py` |
 | `TICK_COVERAGE_UNAVAILABLE` | P0 | intelligence.broker | `src/katarina/intelligence/broker/auto_calibration.py:14` | — |
@@ -320,7 +320,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `SOURCE_CHANGED_BEFORE_EVICTION` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:300`<br>`scripts/ai/hf_archive_sync.py:398` | — |
 | `SOURCE_TIME_IN_FUTURE` | P1 | validation.engine | `src/katarina/validation/engine.py:332` | `tests/unit/validation/test_stage08_validation.py` |
 | `SQLITE_*` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:93` | `tests/integration/test_unified_katarina_stack.py` |
-| `STALE_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/network_doctor.py:105` | `tests/unit/engines/test_demo_execution.py`<br>`tests/unit/intelligence/test_data_health.py`<br>`tests/unit/intelligence/test_data_recovery.py` (+7) |
+| `STALE_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/network_doctor.py:105` | `tests/unit/engines/test_demo_execution.py`<br>`tests/unit/intelligence/test_data_health.py`<br>`tests/unit/intelligence/test_data_recovery.py` (+8) |
 | `STALE_DATA` | P1 | validation.engine | `src/katarina/validation/engine.py:346` | `tests/unit/validation/test_stage08_validation.py` |
 | `STALE_QUOTE_AGE_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:590`<br>`src/katarina/intelligence/operations/data_health.py:590` | — |
 | `STALE_SYMBOL_SPEC` | P1 | validation.engine | `src/katarina/validation/engine.py:1005` | `tests/unit/validation/test_stage08_state_semantics.py`<br>`tests/unit/validation/test_stage08_validation.py` |
