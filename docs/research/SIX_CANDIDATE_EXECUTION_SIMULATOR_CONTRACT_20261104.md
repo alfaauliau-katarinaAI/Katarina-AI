@@ -1,6 +1,6 @@
 # Katarina AI — Kontrak eksekusi & spesifikasi simulator keenam kandidat
 
-**Status:** **KONTRAK DESAIN EKSEKUSI D10-K23 DISETUJUI**; rincian implementasi dan seluruh gerbang preregistration **BELUM LULUS**. D10-K22 menetapkan zona; D10-K23 (5 November 2026 WIB) menetapkan replay tick kronologis, touch BID, BUY ASK/SELL BID, block bila urutan tak terbukti, dan 6 hipotesis terisolasi. **Bukan perubahan kode eksekusi, bukan approval backtest/holdout atau izin order.**
+**Status:** **KONTRAK DASAR D10-K23 + BATAS EVENT D10-K24 DISETUJUI**; rincian model broker/data dan seluruh gerbang preregistration **BELUM LULUS**. D10-K22 menetapkan zona; D10-K23 (5 November 2026 WIB) menetapkan replay tick kronologis, touch BID, BUY ASK/SELL BID, block bila urutan tak terbukti, dan 6 hipotesis terisolasi. **Bukan perubahan kode eksekusi, bukan approval backtest/holdout atau izin order.**
 Rujukan [spesifikasi enam kandidat](SIX_CANDIDATE_PREREGISTRATION_SPEC_20261104.md) dan [protokol validasi](VALIDATION_PROTOCOL.md).
 
 ## 1. G3 — Zona H1 yang disetujui Owner (D10-K22)
@@ -58,18 +58,38 @@ Keputusan ini mengunci **kebijakan logika**, bukan mengesahkan bahwa data tick, 
 
 **Audit trail event minimum:** `candidate_id`, `hypothesis_spec_hash`, `source_file_sha256`, `source_tick_id`/`timestamp_utc`, `source_bar_tf`, `bar_closed_at_utc`, `signal_known_at_utc`, `session_evidence_hash`, `bid`, `ask`, `event_type`, `event_status`, `reason_code`, `position_id`, `intended_exit_reason`, `fill_price` (hanya jika benar-benar filled) dan `cost_snapshot_hash`. Audit trail tidak boleh memalsukan identitas tick.
 
-### 2A.2 Bagian implementasi yang MASIH PENDING sebelum final code/spec freeze
+## 2B. Keputusan D10-K24 — boundary candle, zona beririsan, urutan tick (APPROVED)
 
-| Detail | Proposal desain untuk keputusan berikutnya | Status |
+Owner secara eksplisit menyetujui semua aturan ini pada 5 Nov 2026 WIB, **sebelum** melihat P/L keenam kandidat:
+
+1. **Candle M15 memakai interval setengah terbuka `[open_utc,close_utc)`.** Tick dengan timestamp tepat sama dengan `close_utc` termasuk candle M15 **berikutnya**, bukan candle yang baru tutup. Satu candle M15 tempat BID tick first touch terjadi digunakan **satu kali** untuk konfirmasi B2/S2 **setelah candle itu selesai**, sepanjang status fresh/invalidasi masih memenuhi aturan. Urutan close-bar signal vs tick pada boundary harus kausal: sinyal dari candle yang baru tutup baru boleh dievaluasi setelah close diketahui, dan fill pada tick eligible setelah keputusan, bukan memakai tick boundary berulang untuk mengisi sinyal yang baru dihitung. Fixture harus menguji hal ini.
+2. **Zona demand/supply H1 beririsan:** pada BID tick first touch, buat himpunan zona eligible dan benar-benar disentuh pada tick tersebut; pilih nilai absolut `abs(bid_tick - proximal_edge)` **paling kecil**. Tie: `zone_confirmed_at` lebih baru, lalu `zone_id` stabil untuk hasil deterministik. Pilihan terjadi pada event first touch **tanpa melihat price path masa depan**. Jangan membuka beberapa entry dengan menggandakan satu event; status zona tak terpilih saat sentuhan simultan **masih perlu aturan lifecycle** agar tidak mengubah jumlah kesempatan diam-diam.
+3. **Tick timestamp sama:** pakai urutan asli dari bukti feed yang dapat diverifikasi bila ada. Bila beberapa urutan masih sama-sama mungkin dan dapat mengubah signal/SL/TP/fill/first touch, status **`BLOCKED_INTRABAR_ORDER`**. Tidak memaksakan urutan berdasarkan harga atau ID buatan dan **tidak** memakai OHLC SL-first/TP-first. Bila semua urutan yang masih mungkin memiliki konsekuensi identik, catat bahwa urutan tidak memengaruhi outcome dan lanjut hanya jika bukti/algoritme kesetaraan tersebut benar-benar teruji (tidak melakukan guess atas urutan).
+4. Aturan **D10-K23 tetap**: struktur & touch BID, BUY entry ASK/SELL entry BID, BUY exit BID/SELL exit ASK, enam hipotesis independen, fail-closed ketika bukti event tidak lengkap.
+
+### 2B.1 Remaining technical details — BELUM disetujui / belum terverifikasi
+
+| Item | Yang harus ditetapkan sebelum code/spec freeze | Owner status |
 |---|---|---|
-| Quote duplicate timestamp | Wajib ada urutan event terpercaya dari sumber; jika tidak bisa dibuktikan dan memengaruhi fill/outcome, **BLOCKED** | Konsisten kebijakan Owner, namun tie-break teknis pending |
-| First touch tepat batas M15 | Definisikan candle interval `[open_utc, close_utc)`; tick tepat `close_utc` termasuk candle berikutnya; confirmation candle harus memuat first touch, bukan bar sebelumnya | PROPOSED |
-| Zona beririsan dan urutan beberapa sumber level | Prioritas zona eligible **proximal distance terdekat** dari BID first touch, tie confirmed_at terbaru, lalu zone_id stabil; bila tak lengkap → WAIT | PROPOSED |
-| Timestamp tick gap, late/out-of-order quote | Tetapkan ambang/laporan kualitas dari bukti broker **sebelum** pengujian; no synthetic interpolation dan no silent resampling | PENDING threshold |
-| SL/TP trigger versus broker fill/stop constraints | Gunakan tick actual BID/ASK, nilai order semantics kontrak broker; jika harga trigger pasti tapi fill belum terverifikasi, jangan buat fill harga target palsu | PENDING modelling |
-| Candidate overlap | Setiap hipotesis terisolasi tanpa netting atau hedging bersama. Simulasi portofolio gabungan adalah pekerjaan/otorisasi terpisah | APPROVED independence; portfolio policy not approved |
+| Zona beririsan yang tidak terpilih | Apakah semua zona tersentuh menjadi `CONSUMED` atau statusnya mengikuti episode terpisah, dengan jaminan satu event tidak menggandakan entry | **PENDING** |
+| Prioritas event tepat boundary H1/M15/M5 | Secara eksplisit tetapkan ordering causal close-bar update, FIRST_TOUCH, SIGNAL_KNOWN, ENTRY_INTENT, dan tick execution sehingga tidak double-fill | **PENDING fixture** |
+| Tick data quality | Cara memvalidasi quote duplicate, hole/gap, late/out-of-order, ketepatan timestamp dan sumber broker terhadap hasil; tidak memilih threshold dengan melihat profit | **PENDING dataset evidence** |
+| Model order broker | Laporan stop-level/freeze, mekanisme trigger SL/TP vs harga fill dan slippage waktu gap, swap, trade halt; tidak mengarang fill | **PENDING contract evidence** |
+| Sesi resmi | Quote session dan trade session XAUUSD.vx serta DST/holiday per hari, `effective_at_utc` | **BLOCKED real evidence** |
+| Input frozen | `code_sha256`, tick bar hash, UTC clock evidence, manifest, `costs.json`, `split.json` | **PENDING** |
 
-**Jangan menyamakan `BLOCKED_INTRABAR_ORDER` dengan transaksi rugi, untung, ataupun 0R**. Hitung juga cakupan data blocked, distribusi waktu/data gaps, dan alasannya; bila event penting tidak dapat dipastikan, penelitian tersebut tidak boleh mengklaim PASS.
+### 2B.2 Pemeriksaan kesiapan implementasi offline (read-only GitHub audit)
+
+| Komponen | Bukti repo di `main` | Penilaian |
+|---|---|---|
+| Protokol registrasi dan validator | `docs/research/VALIDATION_PROTOCOL.md`, `src/katarina/research/validation.py`; registry hash, split/gap, biaya, Bonferroni dan holdout firewall | **Tersedia**, tidak berarti kandidat siap didaftarkan |
+| Dataset bar historis | `src/katarina/research/dev_dataset.py` punya `M5/M15/H1` dan cutoff `2026-10-13T00:00:00Z`, hash manifest | **Tersedia untuk bars saja**, bukan replay tick yang diperlukan keputusan D10-K23 |
+| Loader/CLI riset | `scripts/research/simulate_setups.py` hanya membaca verified dev bars; `scripts/research/export_dev_bars.py` melarang pemakaian VPS observer produksi, butuh mesin riset terisolasi | **Belum memiliki jalur tick replay auditable** |
+| Detektor & engine setup | `src/katarina/research/setups/{liquidity_sweep,pullback,market_structure,core,simulator}.py` masih sinyal lama dengan `target_rr`, `min_rr`, M5/H1, `max_hold_bars` dan OHLC exit | **Mismatch; implementasi offline belum dimulai** |
+| Suite fixture | Rencana pengujian T01–T12 tersedia di bagian 4 dokumen ini | **Hanya spesifikasi tes**; belum dieksekusi/lulus |
+| Data asli dan sesi broker | Bukti sesi resmi `SymbolInfoSessionQuote`/`SymbolInfoSessionTrade` belum tersedia; tick stream historis development yang dapat diaudit dan costs hash belum ditunjukkan | **Blocked for verified full research** |
+
+**Gate implementation readiness:** `CONTRACT_CORE_DEFINED` dan `ACCEPTANCE_CRITERIA_DRAFTED`, tetapi `IMPLEMENTATION_NOT_STARTED`, `REAL_DATA_NOT_VERIFIED`, `SESSION_EVIDENCE_MISSING`. Tahap yang mungkin selanjutnya adalah membuat **branch riset terisolasi dan fixture synthetic-only** setelah rencana kerja/otorisasi yang jelas; ini tidak sama dengan pengujian profitabilitas. **Tidak ada izin untuk menyentuh source produksi, VPS observer, MT5 trading, registry, atau holdout**.
 
 ## 3. G8 — Gap kode simulator nyata di `main` (audit read-only)
 
@@ -111,4 +131,4 @@ Keputusan ini mengunci **kebijakan logika**, bukan mengesahkan bahwa data tick, 
 
 ## 5. Status
 
-`D10-K22_ZONE_BASELINE_APPROVED` · `D10-K23_TICK_REPLAY_APPROVED` · `G3_CORE_APPROVED` · `G4_CORE_APPROVED_TECHNICAL_DETAILS_PENDING` · `G6_DATA_COST_UNVERIFIED` · `G7_OFFICIAL_BROKER_SESSIONS_MISSING` · `G8_SIMULATOR_NOT_IMPLEMENTED` · `NO_BACKTEST` · `REGISTRY_NOT_WRITTEN` · `HOLDOUT_LOCKED` · `LIVE_OFF`.
+`D10-K22_ZONE_BASELINE_APPROVED` · `D10-K23_TICK_REPLAY_APPROVED` · `D10-K24_EVENT_BOUNDARIES_APPROVED` · `G3_CORE_APPROVED` · `G4_CORE_APPROVED_TECHNICAL_DETAILS_PENDING` · `G6_DATA_COST_UNVERIFIED` · `G7_OFFICIAL_BROKER_SESSIONS_MISSING` · `G8_SIMULATOR_NOT_IMPLEMENTED` · `NO_BACKTEST` · `REGISTRY_NOT_WRITTEN` · `HOLDOUT_LOCKED` · `LIVE_OFF`.
