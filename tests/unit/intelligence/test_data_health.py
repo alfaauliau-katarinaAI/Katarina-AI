@@ -179,7 +179,7 @@ class DataHealthTest(unittest.TestCase):
         criteria = by_name(data_health.assess(self.db, when + timedelta(hours=1)))
         self.assertEqual(criteria["zero_orders"]["status"], "NOT_MET")
 
-    def test_data_health_exposes_both_rules_with_activation_disabled(self):
+    def test_data_health_exposes_both_rules_and_the_owner_effective_instant(self):
         when = datetime(2026, 11, 10, 9, tzinfo=UTC)
         cycle = ledger.record_snapshot(self.db, observed_utc=when, clock_shift_hours=2,
                                        cards={"EURUSD": {}}, quotes={"EURUSD": (1.1, 1.1001, when.timestamp())})
@@ -187,7 +187,7 @@ class DataHealthTest(unittest.TestCase):
         report = data_health.assess(self.db, when + timedelta(hours=1))
         self.assertIn("20:45-21:15 UTC", report["session_rule"])
         self.assertIn("17:00 America/New_York", report["session_rule"])
-        self.assertIsNone(report["rollover_rule_effective_utc"])
+        self.assertEqual(report["rollover_rule_effective_utc"], "2026-11-05T00:00:00+00:00")  # Owner D8
         self.assertFalse(report["live_execution_authorized"])
 
     def test_post_dst_rollover_failure_excluded_only_after_approved_cutoff(self):

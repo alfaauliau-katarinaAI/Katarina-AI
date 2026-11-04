@@ -1,5 +1,64 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — D8: rollover WP15 aktif prospektif, hitungan Tahap 0 dari deploy WP13 (keputusan Owner)
+
+- `observation_ledger.py`:
+  - `ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-05T00:00:00+00:00"`. Mulai saat itu jendela 17:00 New York −15/+30 menit (DST-aware) dikecualikan; sebelum itu perilaku identik dengan aturan lama;
+  - `ROLLOVER_RULE_DECIDED_UTC` dicatat;
+  - `STAGE0_COUNT_SINCE_UTC = "2026-11-03T15:18:14+00:00"` ditambahkan.
+- `check_stage0_health.py --since official` membaca konstanta itu.
+- Tiga tes yang sebelumnya mengunci status "nonaktif" kini mengunci keputusan Owner dan sifat prospektifnya (efektif > waktu keputusan; riwayat sebelum efektif identik).
+- Sidecar harian `ops/windows/run-stage0-health-since-wp12.ps1` kini memakai checker `C:\Katarina\code`, `--since official`, dan breakdown harian; sebelumnya memakai checkout lama `b3fd2e6`.
+- Ambang, denominator, dan data ledger tidak diubah. LIVE tetap OFF.
+
+## 2026-11-04 — E2: dokumentasi penutup gate, Stage 0 dan WP6
+
+- RH-013 (`docs/REPAIR_HISTORY.md`): gate KAT-CG aktif, bukti CI negatif, bukti cleanup, tiga bug yang ditemukan. `CODING_GATE.md` mencatat status `GATE_ACTIVE_VERIFIED` / `AUTO_CLEANUP_SAFE_VERIFIED`. `PROJECT_STATUS.md`: banner, baris codebase/reboot, blocker P1/P2. Tanpa perubahan kode; LIVE tetap OFF.
+
+## 2026-11-04 — ERR-TEST / STAGE1-PREFLIGHT: tes kode P0 dan leakage guard
+
+- `tests/unit/adapters/test_p0_reason_codes_production_path.py`: 15 kode P0 pada jalur observer canonical kini diuji secara literal, yaitu jam broker, universe, identitas dengan pesan rahasia dibuang, read lokal, cloud tanpa URL, dan fallback offline dengan retry terbatas serta 0 order.
+- `tests/unit/research/test_validation_guard_codes.py`: alasan leakage guard Tahap 1 `DUPLICATE_OR_EMPTY_ID`, `INVALID_PRICES` dan `OVERLAPPING_POSITION`, yang sebelumnya tanpa tes, ditambah `CROSSES_PERIOD_END` di batas dev/holdout. Tanpa perubahan source; LIVE tetap OFF.
+
+## 2026-11-04 — WP6-PREFLIGHT: kesiapan observer setelah reboot (belum diterapkan)
+
+- Launcher produksi `run-observer.ps1` kini diversikan di `ops/windows/` (commit baseline byte-identik dengan VPS). Commit berikutnya menangani `AbandonedMutexException` supaya launcher yang mati saat reboot tidak membuat start pertama gagal.
+- `src/katarina/intelligence/operations/startup_task.py` + `scripts/ai/wp6_startup_preflight.py` (baca-saja; `--live` di Windows): menilai task XML, launcher dan status autologon dengan reason code `WP6_*` dan verdict `READY_AFTER_REBOOT`/`NOT_READY`/`BLOCKED_EVIDENCE`. Produksi hari ini: NOT_READY (`WP6_NO_AUTOLOGON`).
+- Usulan definisi task `ops/windows/observer-task.autologon.xml` dan `ops/windows/wp6_apply_observer_startup.ps1`: dry-run default; dengan `-Apply` melakukan backup + hash, mendaftarkan task, memverifikasi, dan memulihkan bila gagal; tersedia `-Rollback`. Panduan: `docs/operations/WP6_OBSERVER_STARTUP.md`. Task aktif dan VPS tidak diubah; LIVE tetap OFF.
+
+## 2026-11-04 — S0: breakdown kegagalan Tahap 0 (diagnostik, read-only)
+
+- Modul baru `src/katarina/intelligence/operations/stage0_breakdown.py` dan opsi `check_stage0_health.py --breakdown`: kegagalan siklus dipecah menurut hari, jam UTC, simbol yang tanpa quote, dan fase pasar DST-aware (`DAILY_BREAK_NY17` = 17:00 New York −15/+60 menit, `WEEK_EDGE`, `SESSION`). Tampilan aturan sesi alternatif berlabel `diagnostic_only`, dengan `official_verdict_effect` = `NONE`.
+- Data VPS 28 Okt–4 Nov: 192/200 kegagalan berada dalam jeda harian 17:00 NY. Rinciannya di `docs/maintenance/STAGE0_FAILURE_INVESTIGATION_20261104.md` dan keputusan Owner di D8. Kriteria, cutoff, denominator dan data ledger tidak diubah. LIVE tetap OFF.
+- `runtime_import_map.py`: nama modul bertitik yang disimpan sebagai data oleh alat analisis (`runtime_import_map`, `reason_code_index`, `safe_cleanup`, `code_change_gate`) tidak lagi dihitung sebagai edge; path skrip yang dijalankan tetap dihitung. Sebelumnya `katarina.entrypoints`/`ports` tampak terpakai (D=0 setelah G1), dan lima modul persepsi tampak dipakai script. Tes regresi RED pada kode lama, GREEN sesudah perbaikan.
+
+## 2026-11-04 — G1: coding gate KAT-CG-00..05 dan safe cleanup (mandat Owner #278 §6)
+
+- `scripts/governance/code_change_gate.py`: gate bertahap fail-fast. Isinya baseline/diff/konflik; AST+JSON file:line + `audit_dependency_links` + `audit_repo_hygiene`; suite tes; promotion gate + Constitution Guard + manifest `MATCH`; CI Body/Ubuntu/Windows per SHA; preflight deploy dari receipt tanpa akses VPS. Ledger fingerprint menghentikan error berulang setelah satu upaya perbaikan (`REPEATED_FAILURE_NEEDS_ROOT_CAUSE`, exit 3) sampai akar masalah + tes reproduksi dicatat.
+- `scripts/governance/safe_cleanup.py`: `--check`/`--dry-run` (default) dan `--apply-safe`, yang hanya menghapus cache/laporan build tak terlacak dari allowlist. Ditolak: symlink/junction, path escape, state/backups/private/logs/docs/governance, SQLite/WAL, `main`, checkout produksi, worktree yang berubah. Source terlacak hanya dilaporkan (`DELETE_CANDIDATE`/`PROTECTED_KEEP`).
+- `katarina-body-ci.yml`: langkah KAT-CG-00/01 (menggantikan compileall + dependency step), cleanup `--check`, KAT-CG-02 = langkah regression yang ada, KAT-CG-03 (menggantikan Constitution/promotion step; **manifest `MATCH` kini diwajibkan CI**), job agregat `KAT-CG-04 CI gate`. Tanpa `schedule:`. Hook opsional `ops/git-hooks/pre-commit`.
+- Bug ditemukan saat tes negatif: `safe_cleanup` crash di folder non-root worktree, kini fail-closed `NOT_A_GIT_WORKTREE_ROOT`. Panduan: `docs/maintenance/CODING_GATE.md`. Tanpa perubahan logika trading; LIVE tetap OFF.
+
+## 2026-11-04 — perapian E1: gate akhir dan status codebase
+
+- Dokumen canonical diperbarui: RH-012 (`docs/REPAIR_HISTORY.md`), baris codebase/PR/blocker di `docs/PROJECT_STATUS.md`, ledger E1 (gate, inventaris VPS/branch, keputusan `CODEBASE_CLEAN_BUT_STAGE_GATE_BLOCKED`), peta modul dibuat ulang. Tanpa perubahan kode; LIVE tetap OFF.
+
+## 2026-11-03 — perapian D1: indeks reason code untuk penelusuran error
+
+- Alat baru `scripts/governance/reason_code_index.py` + hasil `docs/maintenance/REASON_CODE_INDEX.md`: setiap reason code (540; P0 101/P1 229/P2 210) dipetakan ke `file:line` sumber dan tes yang menyebutnya; `--find KODE` untuk satu kode, termasuk keluarga dinamis `PREFIX_*`. Kode protokol beku hanya ditampilkan.
+- Tes jam live: `LIVE_FEED_CLOCK_VERIFIED` dan `CLOCK_BROKER_IDENTITY_MISSING` kini diuji secara literal. Tanpa perubahan kode runtime; LIVE tetap OFF.
+
+## 2026-11-03 — perapian C1: satu kalender DST, tes owner surface stabil
+
+- Aturan DST AS (Minggu ke-2 Maret 07:00 UTC – Minggu ke-1 Nov 06:00 UTC) dan EU (Minggu terakhir Maret/Okt 01:00 UTC) sebelumnya ditulis ulang di lima modul (`observation_ledger`, `data_health`, `symbol_playbooks`, `bar_clock_evidence`, `validation`). Sekarang satu sumber: `src/katarina/domain/market_calendar.py` (stdlib, sesuai `DEPENDENCY_RULES.md`). Ekuivalensi diperiksa terhadap kode lama pada 107.892 momen 1990–2100 (setiap 30 menit ±2 hari di sekitar transisi + acak); tes penjaga menolak implementasi DST kedua. API lama (`data_health.dst_transitions`, `bar_clock_evidence.is_us_dst/is_eu_dst`, `validation.is_us_dst`) tetap ada.
+- `observer.py`: kegagalan `account_info()` kini eksplisit `broker_server = None` dengan catatan bahwa jam live menolak dengan `CLOCK_BROKER_IDENTITY_MISSING` (tanpa perubahan perilaku).
+- `tests/integration/test_unified_owner_surface.py`: batas socket/antrean 5 s → 30 s. Penyebab flaky Windows (Body CI 40969779432 dan PR #279): surface menjawab di thread otak setelah siklus observer, yang bisa > 5 s di runner Windows. Tanpa berkas terkunci; LIVE tetap OFF.
+
+## 2026-11-03 — perapian B1: hapus jalur MT5 lama dan path `C:\KatarinaDev`
+
+- Dihapus (terbukti tidak dipakai, rincian bukti di `docs/maintenance/CODEBASE_CLEANUP_20261103.md`): observer kedua `scripts/ai/run_readonly_decisions.py` + `RUN_READONLY_DECISIONS.cmd` + `smoke_closed_market_decision.py` (memanggil MT5 langsung), installer uji `install_hf_archive_test.py`, EA `KatarinaResearchScalperEA.mq5` beserta dua include riset (otak trading kedua di MT5, tidak terpasang di VPS), fixture CSV yatim.
+- Default path Windows `hf_archive_sync.py` dan stage35 tester pindah ke layout `C:\Katarina`; tes statis kini menolak `KatarinaDev` di `scripts/`, `src/`, `katarina_pc.py`. Observer canonical, Risk Governor dan berkas terkunci tidak berubah; LIVE tetap OFF.
+
 ## 2026-11-03 — deploy WP13 + integrasi riset ke VPS (dokumen)
 
 - VPS `C:\Katarina\code` diperbarui dari `64497b5` ke `main` `fd6cff16` dengan izin Owner: backup konsisten, manifest MATCH 317, smoke `LIVE_FEED_CLOCK_VERIFIED`, 0 order. Bukti dan rollback di RH-011; status di PROJECT_STATUS; baris R5 WP13/WP4/WP14 diperbarui. Tanpa perubahan kode; LIVE tetap OFF.

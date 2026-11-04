@@ -29,7 +29,7 @@ Unit tests: PYTHONPATH=src python -m unittest tests.unit.intelligence.test_expla
 
 Full tests: PYTHONPATH=src python -m unittest discover -s tests/unit -p test_*.py -q
 
-On the authorized Windows VPS, run scripts/ai/run_readonly_decisions.py with the existing MT5 Python environment, read-only. Output is C:\KatarinaDev\artifacts\decision-observer\latest.json when Windows permits atomic replacement, or latest-explainable.json if the original filename is protected by an ACL. Do not weaken ACL to force overwriting it.
+The standalone VPS launcher `scripts/ai/run_readonly_decisions.py` (output under the retired `C:\KatarinaDev` layout) was removed in cleanup B1, 3 Nov 2026. The explainable decision model is exercised only through the canonical observer (`scripts/ai/run_contextual_market_observer.py`) and the unit tests above; no second MT5 acquisition path exists.
 
 Weekend / unverified-news snapshots correctly yield WAIT, but still include the last closed price context, date, stale-data blocker and candidate scenarios.
 

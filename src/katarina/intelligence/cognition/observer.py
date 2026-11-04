@@ -328,7 +328,9 @@ class BrainObserver:
         try:
             broker_server = getattr(mt5.account_info(), 'server', None)
         except Exception:
-            pass
+            # Fail closed downstream: verify_live_feed_clock rejects a missing identity
+            # with CLOCK_BROKER_IDENTITY_MISSING (audited in live_feed_clock_audit_v1).
+            broker_server = None
         if not hasattr(brain, '_live_clock_state'):
             brain._live_clock_state = {}
         clock, clock_audit = verify_live_feed_clock(

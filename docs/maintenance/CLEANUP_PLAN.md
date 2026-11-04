@@ -34,7 +34,7 @@ Baca CLAUDE.md dulu. Aturan perapian:
 - Modul tahap 11–40 (`body/`, `engines/`, `governance/`, perception dasar, `research/`), walau sebagian
   hanya dipakai tes.
 - Skema pesan `protocol/` (kontrak validation dan health engine), dokumen `architecture/` dan `adr/`.
-- Paket kosong `domain`, `entrypoints`, `ports` (kontrak `config/repository_architecture.json`).
+- Paket `domain`, `entrypoints`, `ports` (kontrak `config/repository_architecture.json`). `entrypoints`/`ports` masih kosong; `domain` berisi logika murni stdlib (`market_calendar.py`, sejak perapian C1).
 - Website publik, EA MT5 status dashboard dan bridge Stage 06.
 - Tombstone `scripts/ai/run_market_brain.py` dan `run_decision_brain_v3.py`.
 
@@ -55,7 +55,7 @@ Baca CLAUDE.md dulu. Aturan perapian:
 ## Sisa yang diketahui
 
 - 20 tag `archive/2026-10-11/…` di GitHub (arsip lama, bertentangan dengan aturan hapus-langsung).
-- `scripts/ai/run_readonly_decisions.py` masih menulis ke path VPS lama `C:\KatarinaDev\artifacts\decision-observer`.
+- ~~`scripts/ai/run_readonly_decisions.py` menulis ke `C:\KatarinaDev`~~ — dihapus di perapian B1 (3 Nov 2026); semua rujukan `C:\KatarinaDev` di `scripts/`/`src/` dilarang tes. Ledger perapian 3 Nov: `docs/maintenance/CODEBASE_CLEANUP_20261103.md`.
 - VPS: 15 folder lama terkunci di `C:\`, installer dan Python 3.8/3.13 yang tidak dipakai.
 
 ## Setelah perapian

@@ -28,6 +28,12 @@ def policy(path, *, analyst_enabled=True):
     ])), encoding='utf-8')
 
 
+# The owner surface answers on the foreground brain thread between observer cycles; a full
+# synthetic cycle can exceed 5 s on Windows CI runners (Body CI run 40969779432, 29 Oct 2026:
+# socket TimeoutError). Generous bound keeps the single-thread contract under test.
+OWNER_SURFACE_TIMEOUT = 30
+
+
 class UnifiedOwnerSurfaceTests(unittest.TestCase):
     def test_status_only_runs_on_same_brain_without_model_or_dialog_memory(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -43,12 +49,12 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
                 return result
             def client():
                 try:
-                    port = ready.get(timeout=5)
+                    port = ready.get(timeout=OWNER_SURFACE_TIMEOUT)
                     rows = []
                     for route, token, body in [('/status', 'wrong', {}),
                             ('/status', OWNER, {}), ('/status', OWNER, {'grant':'shell'}),
                             ('/turn', OWNER, dict(text='Hello',session_id='owner',mode='auto'))]:
-                        conn = http.client.HTTPConnection('127.0.0.1',port,timeout=5)
+                        conn = http.client.HTTPConnection('127.0.0.1',port,timeout=OWNER_SURFACE_TIMEOUT)
                         conn.request('POST',route,json.dumps(body),headers={'Authorization':'Bearer '+token})
                         response = conn.getresponse()
                         rows.append((response.status,json.loads(response.read())))
@@ -64,7 +70,7 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
                     result = run_continuous(root, config=config(priority=('local',),attempts=1),
                         factories={'local':lambda c:BoundLocalBroker(AccountBroker(),c)},brain_type=Brain,
                         surface_factory=owner_surface(state_dir=root,port=0,access_config=access))
-                rows = replies.get(timeout=5)
+                rows = replies.get(timeout=OWNER_SURFACE_TIMEOUT)
                 self.assertIsInstance(rows,list,rows)
                 self.assertEqual([row[0] for row in rows],[403,200,400,200])
                 self.assertEqual(rows[1][1]['surface_mode'],'STATUS_ONLY')
@@ -76,7 +82,7 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
                 with MemoryStore(root/'cognitive-memory.sqlite3') as memory:
                     self.assertIsNone(memory.load_latest_operational_event('single_brain_dialog_v1'))
             finally:
-                thread.join(timeout=5)
+                thread.join(timeout=OWNER_SURFACE_TIMEOUT)
             self.assertFalse(thread.is_alive())
 
     def test_http_dialog_sensor_and_memory_share_one_foreground_brain(self):
@@ -101,7 +107,7 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
                 return result
             def client():
                 try:
-                    conn = http.client.HTTPConnection('127.0.0.1', ready.get(timeout=5), timeout=5)
+                    conn = http.client.HTTPConnection('127.0.0.1', ready.get(timeout=OWNER_SURFACE_TIMEOUT), timeout=OWNER_SURFACE_TIMEOUT)
                     conn.request('POST', '/turn', json.dumps(dict(text='status',session_id='owner',mode='auto')),
                                  headers={'Authorization':'Bearer '+OWNER})
                     response = conn.getresponse()
@@ -117,7 +123,7 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
                     result = run_continuous(root, config=config(priority=('local',), attempts=1),
                         factories={'local':lambda c:BoundLocalBroker(native,c)}, brain_type=Brain,
                         surface_factory=owner_surface(Model(),port=0,access_config=access))
-                reply = replies.get(timeout=5)
+                reply = replies.get(timeout=OWNER_SURFACE_TIMEOUT)
                 self.assertIsInstance(reply, tuple, reply)
                 self.assertEqual(reply[0], 200)
                 self.assertEqual(reply[1]['answer'], 'LIVE OFF.')
@@ -130,7 +136,7 @@ class UnifiedOwnerSurfaceTests(unittest.TestCase):
                     self.assertIsNotNone(memory.load_latest_operational_event('single_brain_dialog_v1'))
                     self.assertIsNotNone(memory.load_latest_operational_event('brain_hands_feedback_v1'))
             finally:
-                thread.join(timeout=5)
+                thread.join(timeout=OWNER_SURFACE_TIMEOUT)
             self.assertFalse(thread.is_alive())
 
     def test_revocation_and_session_isolation_are_server_bound(self):

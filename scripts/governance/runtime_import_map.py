@@ -45,6 +45,14 @@ BRAIN_CAPABILITIES = (  # former versioned "brain" modules, renamed in cleanup s
     "katarina.intelligence.perception.screening",
     "katarina.intelligence.cognition.observer",
 )
+# Static analysis tools hold dotted module names as data (allowlists, protected-contract lists); those
+# strings are not loaders. Their script paths ("scripts/x.py", run as subprocesses) still count.
+ANALYSIS_ONLY = frozenset((
+    "scripts/governance/runtime_import_map.py",
+    "scripts/governance/reason_code_index.py",
+    "scripts/governance/safe_cleanup.py",
+    "scripts/governance/code_change_gate.py",
+))
 CATEGORY_TITLES = {
     "A": "dipakai runtime/operasional atau workflow",
     "B": "hanya dipakai tests",
@@ -135,7 +143,8 @@ class Graph:
                     dynamic = True
             elif isinstance(node, ast.Constant) and isinstance(node.value, str):
                 value = node.value
-                names += _MODULE_RE.findall(value)
+                if path not in ANALYSIS_ONLY:
+                    names += _MODULE_RE.findall(value)
                 for ref in re.findall(r"[A-Za-z0-9_./\\-]+\.py\b", value):
                     ref = ref.replace("\\", "/").lstrip("./")
                     if ref in self.by_module.values() or ref.startswith("src/"):

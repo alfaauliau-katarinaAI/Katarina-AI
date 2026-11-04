@@ -261,6 +261,9 @@ Koordinasi teknis dan bukti per SHA: [Issue #249](https://github.com/alfaauliau-
 
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
+- 4 Nov — **D8 diputuskan Owner** ("oke saya setujui semua"; pilihan WP15 −15/+30). Rollover DST-aware 17:00 New York
+  −15/+30 menit berlaku prospektif mulai 5 Nov 2026 00:00 UTC. Hitungan 10 hari Tahap 0 dimulai ulang dari deploy WP13
+  (3 Nov 15:18:14 UTC); data lama tetap tersimpan. Ambang 98 %, denominator dan data historis tidak diubah. Roadmap Tahap 0 diperbarui.
 - 29 Okt — Owner mengukuhkan visi Katarina sebagai agentic AI mandiri untuk informasi, penalaran,
   riset, memori, evaluasi, dan usulan perbaikan; keberhasilan diukur dari hasil bersih setelah biaya
   yang terverifikasi. Keputusan dan batasnya ada sekali di `docs/ROADMAP.md` (Arah lanjutan → Agentic AI).
