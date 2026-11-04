@@ -1,5 +1,9 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — E2: dokumentasi penutup gate, Stage 0 dan WP6
+
+- RH-013 (`docs/REPAIR_HISTORY.md`): gate KAT-CG aktif, bukti CI negatif, bukti cleanup, tiga bug yang ditemukan. `CODING_GATE.md` mencatat status `GATE_ACTIVE_VERIFIED` / `AUTO_CLEANUP_SAFE_VERIFIED`. `PROJECT_STATUS.md`: banner, baris codebase/reboot, blocker P1/P2. Tanpa perubahan kode; LIVE tetap OFF.
+
 ## 2026-11-04 — ERR-TEST / STAGE1-PREFLIGHT: tes kode P0 dan leakage guard
 
 - `tests/unit/adapters/test_p0_reason_codes_production_path.py`: 15 kode P0 pada jalur observer canonical kini diuji secara literal, yaitu jam broker, universe, identitas dengan pesan rahasia dibuang, read lokal, cloud tanpa URL, dan fallback offline dengan retry terbatas serta 0 order.

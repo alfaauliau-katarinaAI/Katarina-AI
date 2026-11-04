@@ -5,6 +5,12 @@ Implementasi dari spesifikasi Owner `docs/maintenance/AUTO_CLEANUP_CODING_GATE.m
 memanggilnya atau saat push/PR. **Bukan** jadwal/automation Claude, tidak menyentuh VPS, broker, atau MT5.
 Coding gate **bukan** gerbang promosi strategi dan bukan bukti Tahap 0. LIVE tetap OFF.
 
+**Status 4 Nov 2026: `GATE_ACTIVE_VERIFIED` dan `AUTO_CLEANUP_SAFE_VERIFIED`** (bukti di RH-013 `docs/REPAIR_HISTORY.md`):
+- Gate aktif di Body CI sejak PR #283 (`main` `59cb42d5`).
+- Commit negatif sengaja `ab548622` membuat CI merah di `KAT-CG-01` (`KAT-ERR-90d3601c JSON_INVALID config/ci_negative_proof.json:4`), suite tidak dijalankan, dan job `KAT-CG-04` ikut merah. Setelah revert, CI hijau di Body/Ubuntu/Windows.
+- PR #284, #285, #286 juga melewati gate ini.
+- Branch protection tidak mewajibkan approval review (0). Gate tidak mengklaim review manusia.
+
 ## Gate
 
 | Gate | Isi (alat existing yang dipakai) | Status gagal |
