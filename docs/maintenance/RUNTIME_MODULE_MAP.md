@@ -18,9 +18,9 @@ kategori D adalah kandidat untuk dicek manual, bukan bukti tidak terpakai.
 | Kategori | Arti | Jumlah |
 |---|---|---|
 | A | dipakai runtime/operasional atau workflow | 194 |
-| B | hanya dipakai tests | 46 |
+| B | hanya dipakai tests | 45 |
 | C | hanya dipakai script non-operasional (riset dll.) | 18 |
-| D | tidak terjangkau dari root mana pun | 1 |
+| D | tidak terjangkau dari root mana pun | 2 |
 
 Total modul: 259. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
 
@@ -239,7 +239,7 @@ Total modul: 259. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.validation` | runtime, ops, workflow, research, scripts, tests | 4 | 10 |
 | `katarina.validation.engine` | runtime, ops, workflow, research, scripts, tests | 5 | 10 |
 
-## B — hanya dipakai tests (46)
+## B — hanya dipakai tests (45)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
@@ -283,7 +283,6 @@ Total modul: 259. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.monitoring.dashboard` | tests | 0 | 1 |
 | `katarina.monitoring.operational_dashboard` | tests | 0 | 2 |
 | `katarina.monitoring.performance` | tests | 0 | 1 |
-| `katarina.ports` | tests | 0 | 1 |
 | `katarina.research.backtest` | tests | 0 | 1 |
 | `katarina.research.research` | tests | 0 | 1 |
 | `katarina.research.robustness` | tests | 0 | 1 |
@@ -313,8 +312,9 @@ Total modul: 259. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.research.spread_profile` | research, tests | 0 | 2 |
 | `katarina.research.validation` | research, tests | 8 | 23 |
 
-## D — tidak terjangkau dari root mana pun (1)
+## D — tidak terjangkau dari root mana pun (2)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
 | `katarina.entrypoints` | — | 0 | 0 |
+| `katarina.ports` | — | 0 | 0 |

@@ -56,7 +56,7 @@ class RuntimeImportMapTest(unittest.TestCase):
         BRAIN_CAPABILITIES list) once made unused modules look used; their script paths still count."""
         modules = self.build({
             "src/katarina/__init__.py": "",
-            "src/katarina/ports/__init__.py": "",
+            "src/katarina/" + "ports/__init__" + ".py": "",
             "src/katarina/lab.py": "",
             # Names are split so this test file itself does not mention the real contract package.
             "scripts/governance/safe_cleanup.py": 'KEEP = {"katarina.' + 'ports", "katarina.' + 'lab"}\n',
