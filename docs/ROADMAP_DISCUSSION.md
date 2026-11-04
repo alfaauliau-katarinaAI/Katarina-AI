@@ -442,6 +442,28 @@ Owner juga menyetujui **candle M15 searah** yang menyentuh zona lalu close **kel
 
 **Yang belum dikunci untuk preregistration B2/S2:** aturan memilih candle asal bila beberapa bar memenuhi, tie-breaking zona beririsan, deteksi batas episode visit dari tick bid/ask, lebar zona minimal/maksimal dan harga referensi bid/ask, prioritas target, definisi ATR Wilder dan source spread, jam sesi broker resmi, data/split/cost/code hash. Semua ini bukan izin coding/tes atau klaim strategi profitable.
 
+#### KEPUTUSAN D10-K21 — TTL swing, invalidasi close dan TP level terdekat (Owner SETUJU, 4 November 2026)
+
+Owner menyetujui parameter struktur untuk keenam kandidat XAUUSD sebagai **baseline sebelum preregistration**:
+- TTL confirmed swing **M15 = 96 candle M15 tertutup**, **H1 = 72 candle H1 tertutup**, terhitung dari `confirmed_at`, bukan `pivot_at`. Zona H1 punya usia terpisah **48 candle H1** yang sudah disetujui; candle gap/market closed tidak dibuat fiktif dan gap yang merusak penilaian ditandai `BLOCKED_DATA_GAP`.
+- **Support swing low dibatalkan** jika candle **timeframe asal** yang sudah selesai memiliki `close <= swing_low - 1*tick_size`; **resistance swing high dibatalkan** jika `close >= swing_high + 1*tick_size`. Penetrasi wick saja bukan pembatalan swing. Tidak memakai masa depan untuk mengetahui validitas.
+- **Pengecualian B3/S3:** close H1 breakout/breakdown yang secara sah mematahkan swing tidak menghapus setup tersebut; level ditandai `BROKEN_RETEST_ELIGIBLE` untuk maksimal satu episode retest **6 candle M5** sesuai D10-K17, kemudian tidak dapat dipakai ulang sebagai support/resistance lama maupun TP belum ditembus.
+- **TP struktur valid terdekat di sisi keuntungan dari harga fill**, tanpa minimum RR. Untuk kandidat B1/S1 prioritas swing lawan M15; B2/S2 swing H1 atau zona lawan H1 yang eligible; B3/S3 swing lawan H1 yang belum broken. Jika jarak sama, **lebih baru `confirmed_at` menang**, kemudian ID stabil sebagai tie-break teknis. Jika tidak ada target eligible: `WAIT:NO_VALID_STRUCTURAL_TARGET`. Perlu keputusan lanjutan mengenai harga *proximal* zona target, tipe/overlap zona, dan referensi bid/ask; jangan ubah himpunan level diam-diam pasca-hasil.
+
+**Klarifikasi status:** klausul angka 96/72 dan invalidasi/TP yang tertulis sebagai *usulan* di bawah pada bagian D10-K20 **sudah disetujui dan digantikan oleh keputusan D10-K21 ini**. `D10-K21_APPROVED`, `ZONE_ORIGIN_PENDING`, `REGISTRY_NOT_WRITTEN`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
+
+#### AGENDA D10-K22 — Pembentukan demand/supply yang deterministik (BELUM DIPUTUSKAN)
+
+**Proposal baseline Owner untuk dipilih**, tidak dikunci otomatis:
+1. Demand B2: pada H1 candle BOS yang selesai `close >= confirmed_swing_high + tick_size`, cari **candle bearish H1 terakhir** di antara **12 candle H1 tertutup sebelumnya**, urut paling baru; itu `zone_origin`. Supply S2: BOS bearish `close <= confirmed_swing_low - tick_size`, cari **candle bullish H1 terakhir** dengan jendela serupa. Swing BOS wajib confirmed **sebelum candle BOS dimulai**. Bila tak ada origin, `WAIT:NO_VALID_ZONE_ORIGIN`. Tidak menyeleksi zona berdasarkan profit berikutnya.
+2. Area zona **full wick high-low candle origin**, dalam unit harga terkuantisasi tick; definisi harga chart (proposal: BID OHLC dan BID quote untuk mendeteksi sentuhan) wajib seragam, sementara eksekusi BUY ask/SELL bid. `origin_at`, `bos_confirmed_at`, `zone_confirmed_at`, `zone_id`, `first_touch_at` dicatat; zona baru berlaku setelah close BOS.
+3. First visit satu kesempatan sudah disetujui; **proposal definisi episode** agar M15 bisa konfirmasi: saat quote valid pertama memasuki interval zona, mulai episode `FIRST_VISIT`. Evaluasi **satu candle M15 penuh yang mengandung first touch** setelah candle M15 tersebut selesai; jika candle memenuhi aturan B2/S2 dan tak ada hybrid breach, entry pada quote berikut. Jika gagal, `CONSUMED` dan tak boleh mengulang. Detail bagaimana first-touch persis pada perbatasan 15 menit ditangani harus di-fixture.
+4. Hybrid: intrabar breach distal+buffer kapan pun sebelum entry → `BREACH_LOCKED`, entry diblokir; H1 close di luar distal → `INVALID`, H1 close kembali di dalam → `CONSUMED`; tidak `FRESH` lagi. Zona belum tersentuh kedaluwarsa setelah 48 **valid closed H1** sejak confirm, bukan setelah 48 jam kalender.
+5. Jika **beberapa zona valid beririsan**, proposal pilih yang batas proximal-nya paling dekat dengan quote saat first touch; tie pilih `zone_confirmed_at` terbaru lalu `zone_id` stabil. Jangan mengubah pemilihan saat hasil P/L terlihat.
+6. Target zona lawan untuk B2/S2: harga proximal boundary yang terdekat pada arah profit dan sudah diketahui pada saat entry (BUY: batas **bawah supply**; SELL: batas **atas demand**); bila sudah ditembus dan expired, tidak eligible. Bandingkan semua target swing H1 dan zona lawan pada daftar valid, ambil yang terdekat di arah profit sesuai D10-K21.
+
+**Hal yang tetap blocked walau Owner menyetujui proposal G3:** bukti sesi quote/trade MT5 resmi, dataset development hash/split, model costs, simulator offline yang belum sesuai, definisi level overlap dan event intrabar, fixture. Tidak ada registrasi atau backtest sampai seluruh syarat siap.
+
 #### KEPUTUSAN D10-K20 — Swing terbaru tetapi dibatasi usia (Owner SETUJU)
 
 Owner memilih hanya swing **terbaru yang masih valid dan belum kedaluwarsa** untuk acuan entry; level target struktur juga harus memenuhi batas validitas dan usia sebelum dipakai. Keputusan ini menetapkan prinsip *age-bounded*, **belum menetapkan angka TTL ataupun aturan pembatalan swing**. Tidak ada backtest/registrasi/aktivasi trading yang disetujui oleh keputusan ini.
