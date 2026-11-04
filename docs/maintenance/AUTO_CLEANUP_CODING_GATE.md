@@ -6,6 +6,8 @@ Owner meminta **mekanisme permanen di dalam proyek Katarina**, bukan tugas terja
 
 **Status saat dokumen dibuat: SPESIFIKASI DAN PERINTAH IMPLEMENTASI, bukan klaim skrip gate baru telah terpasang/aktif.** Claude wajib mengimplementasikan, menguji, dan mengintegrasikannya dalam PR kode terpisah sebelum menyebut `ACTIVE`. CI lama sudah memiliki sebagian pemeriksaan (hygiene, dependencies, unit/static/integration, promotion gate), jangan menggandakannya secara boros.
 
+**Status implementasi (4 Nov 2026, Claude): `GATE_ACTIVE_VERIFIED` dan `AUTO_CLEANUP_SAFE_VERIFIED`.** Diimplementasikan di #283 dan diverifikasi dengan CI negatif `ab548622` dan tes fixture. Panduan operasional: `docs/maintenance/CODING_GATE.md`; bukti: RH-013 di `docs/REPAIR_HISTORY.md`.
+
 ## A. Mekanisme coding gate wajib di Katarina
 
 Buat satu entry point CLI **di repository** (usulan `scripts/governance/code_change_gate.py`) yang dapat dijalankan secara lokal dan dipakai kembali oleh workflow `.github/workflows/katarina-body-ci.yml`. Tidak ada ketergantungan dengan sesi Claude atau koneksi VPS. Integrasikan dengan alat existing, jangan membuat implementasi ganda:
