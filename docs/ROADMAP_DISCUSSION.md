@@ -426,6 +426,26 @@ Owner telah menyetujui:
 - **Buffer yang telah dipilih:** max(tick size, spread, 0,10 x ATR14), memakai data saat keputusan; swing 2 kiri + 2 kanan, tanpa minimum RR dan TP struktural.
 - Berlaku sebagai **spesifikasi riset**, bukan izin mengubah runtime, menguji holdout, atau menyalakan trading. Parameter time exit masih dibahas; seluruh desain harus dicatat sebelum backtest.
 
+#### KEPUTUSAN D10-K12 — Kebijakan pra-penutupan berbeda per strategi/simbol (Owner SETUJU, 4 Nov 2026)
+
+Owner memilih **opsi C**: aturan entry block dan upaya penutupan sebelum sesi tutup **boleh berbeda menurut strategi dan simbol**, asalkan dipraregistrasikan dan dikunci sebelum pengujian. Keputusan ini **hanya menetapkan kebijakan desain**, bukan menit final, izin backtest/live, atau aturan sesi broker yang belum dibuktikan.
+
+**Usulan baseline untuk dibahas (BELUM DISETUJUI):** seluruh 6 kandidat pertama memakai XAUUSD.vx; referensi adalah penutupan sesi quote/trade server yang terverifikasi, bukan jam kalender universal.
+
+| Kelompok | Blokir entry + upayakan exit sebelum sesi berakhir | Status |
+|---|---|---|
+| B1/S1 Liquidity Sweep | 15 menit | Proposal |
+| B2/S2 Trend Pullback | 30 menit | Proposal |
+| B3/S3 Breakout/Breakdown Retest | 20 menit | Proposal |
+
+Jika instrumen kedua ditambahkan, sesi dan parameter harus didefinisikan **per simbol** dalam hipotesis tersendiri, bukan menerapkan parameter XAUUSD diam-diam. Verifikasi sesi MT5 per simbol/server (trade **dan** quote), DST, break, kalender libur, serta kecukupan quote sebelum/bagi exit wajib sebelum pemeriksaan ini dapat dianggap berlaku.
+
+**Aturan fail-closed:** jika bukti sesi broker hilang, status `BLOCKED_SESSION_EVIDENCE` dan tidak boleh menebak jam; jika sudah masuk jendela pra-penutupan, tidak ada entry baru dan exit diajukan; exit hanya diakui bila quote fill realistis, jika tidak tersedia catat `EXIT_PENDING_NO_QUOTE` beserta risiko posisi. SL, TP, batas candle dan batas waktu UTC diputuskan berdasarkan event aktual yang terjadi paling awal; tidak ada P/L buatan pada data gap.
+
+**Pengendalian overfitting / jumlah percobaan:** keenam `B1/S1/B2/S2/B3/S3` = 6 hipotesis awal (`3 per sisi XAUUSD` dari maksimum 5 per instrumen per sisi di roadmap), **bukan** 6 percobaan gratis per varian. Semua konfigurasi berbeda pada `symbol × side × entry/exit/timeframe/preclose` yang ditetapkan sebagai hipotesis dihitung sebagai eksperimen sendiri; jika nilai 15/30/20 diubah setelah melihat hasil, buat ID baru dan jumlahnya tetap masuk registry. Total `N` untuk koreksi Bonferroni dihitung dari seluruh percobaan registry, tidak hanya yang lolos. Batas maksimal 5 per simbol/sisi tidak boleh dilampaui tanpa keputusan governance baru. Jangan menguji beberapa preclose lalu mengambil yang paling profitable secara tersembunyi.
+
+**Masih terbuka:** angka 15/30/20 menit, parameter 12 M5/90m, 12 M15/240m, 24 M5/180m, cara membaca sesi quote/trade resmi, instrumen pembanding, serta prasyarat dataset pengembangan. `PRE_CLOSE_PER_STRATEGY_SYMBOL_APPROVED`; `NUMERIC_PRE_CLOSE_NOT_FROZEN`; `NO_BACKTEST`; `HOLDOUT_LOCKED`; `LIVE_OFF`.
+
 #### KEPUTUSAN D10-K11 — Hybrid Time Exit dipilih Owner (rapat 4 Nov 2026)
 
 Owner menyetujui **pendekatan hybrid**: penutupan posisi simulasi dipicu oleh kejadian paling awal dari (a) jumlah candle entry-TF sah yang ditentukan, (b) deadline waktu nyata UTC yang ditentukan, atau (c) batas pra-penutupan sesi quote broker resmi yang terverifikasi. **Nilai dan tata cara masih agenda, bukan parameter final.** Tidak mengaktifkan trading, tidak melakukan backtest, tidak membuka holdout. SL/TP struktur tetap independen dan tidak boleh dikalahkan oleh exit waktu yang datang belakangan.
