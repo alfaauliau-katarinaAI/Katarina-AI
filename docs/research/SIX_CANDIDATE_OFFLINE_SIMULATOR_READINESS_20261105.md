@@ -43,6 +43,12 @@
 
 **Independent verification track (parallel but does not automatically authorize backtest):** development tick archive and independent clock, actual XAUUSD.vx quote/trade sessions, symbol point/tick/stops specification, `costs.json`, `split.json`, evidence hashes. Broker probe on production terminal requires distinct explicit Owner permission and safe procedure.
 
+## 3A. D10-K26 — evidence-first gate replaces immediate synthetic coding
+
+**Owner memilih bukti broker/data/host terlebih dahulu**. Lihat [audit EV26-TICK-01 sampai EV26-ENGINE-08](D10_K26_EVIDENCE_FIRST_AUDIT_20261105.md). Paket P0-E1–E5 adalah prasyarat untuk meminta izin implementasi offline: verified pre-cutoff historical BID/ASK ticks+sequence/clock; `symbol_info` contract and dated costs; `SymbolInfoSessionQuote` & `SymbolInfoSessionTrade` evidence+holiday/DST; independent isolated research machine; hashed split/costs/manifests.
+
+**Scope hold:** pekerjaan WP-R1–R5 yang tertulis di atas adalah **rencana**, **belum** mendapat izin coding. Compiler MQL5 staging berhasil tidak berarti probe boleh dijalankan pada VPS. Arsip observer Okt–Nov 2026 tidak boleh dipindahkan ke development sebelum 13 Okt 2026. Tidak ada otorisasi menggunakan VPS production observer, meluncurkan terminal baru, mengimpor data holdout, menulis registry atau menguji P/L.
+
 ## 4. Outstanding nonoptional choices and limits
 
 - **Not an optimization parameter:** no new threshold based on observed P/L or forward/holdout; all outcomes must be predeclared before real trade evaluation.
