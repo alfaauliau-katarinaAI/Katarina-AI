@@ -257,6 +257,16 @@ Koordinasi teknis dan bukti per SHA: [Issue #249](https://github.com/alfaauliau-
 **Status: DISKUSI TERBUKA; TIDAK ADA perubahan kode, cutoff, atau kelulusan yang disahkan oleh catatan ini.**
 Owner meminta menyelesaikan blocker Stage 0, WP6, sesi broker D9 dan 49 tes error P0, lalu membahas arti bukti 10 hari bursa secara ilmiah. **Tidak boleh menyatakan 10 hari terpenuhi tanpa 10 hari riil**, memalsukan data, atau mengecualikan kegagalan di jam pasar yang benar-benar buka.
 
+#### KEPUTUSAN D10-K1 — Dua jalur paralel (Owner SETUJU, 4 November 2026)
+
+Owner memilih **Stage 0 dan riset kemampuan trading dijalankan paralel**, dengan **kelulusan yang wajib terpisah**. Ini keputusan manajemen jadwal kerja, **bukan** perubahan ambang Stage 0, izin mengaktifkan order, membuka holdout, deploy, atau promosi tahap.
+
+- **Jalur A — Keandalan sistem:** observasi Stage 0 tetap mengikuti ≥10 hari bursa berturut-turut, ≥98% siklus, 9 kriteria kesehatan, validasi sesi D9, serta 0 order. Ledger Stage 0 tidak dipakai untuk mencari/menyetel parameter trading.
+- **Jalur B — Validasi trading offline:** gunakan alat `katarina.research.validation` dan `scripts/research/validate_strategy.py` yang sudah ada. Validasi *awal* dapat menggunakan data historis development yang sah dan alat sintetis untuk menguji determinisme, biaya, baseline, no-lookahead, dan walk-forward. Riset strategi BUY dan SELL didaftarkan sebagai hipotesis terpisah per simbol dan regime, sesuai `docs/research/VALIDATION_PROTOCOL.md`; tidak membaca holdout atau data forward Stage 0 sebagai data pengembangan.
+- **Gerbang trading berbeda:** expectancy bersih development positif dan mengalahkan 3 baseline; holdout hanya setelah prasyarat dan izin, minimal 100 trade, PF ≥1,2, lower 95% corrected CI >0, risiko DEMO memenuhi batas; sebelum LIVE masih mensyaratkan DEMO forward ≥3 bulan/200 trade dan otorisasi Owner (roadmap).
+- **Penanggung jawab:** Yura memeriksa integritas bukti dan scorecard terpisah; Claude mempersiapkan riset offline, test & PR yang aman; Owner memutuskan instrumen pembanding, prioritas kandidat, host riset terpisah, dan izin penilaian/promotion yang relevan.
+- **Status:** `PARALLEL_WORK_APPROVED` / `STAGE0_IN_PROGRESS` / `TRADING_EDGE_UNPROVEN`. PR rapat tidak mengubah produksi atau kriteria.
+
 #### A. Bukti yang disepakati untuk tiap hari
 
 Sumber fakta tetap ledger SQLite observer read-only dan arsip tick broker, bukan ringkasan chat. Gunakan satu ID dan cutoff yang direkam (saat ini `2026-11-03T15:18:14Z` pasca-WP13; pengecualian DST-aware D8 baru efektif `2026-11-05T00:00:00Z`). Simpan kedua tanggal secara terpisah dan hindari retroaktif.
