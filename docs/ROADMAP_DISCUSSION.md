@@ -374,6 +374,33 @@ Owner memilih **SL berdasarkan invalidasi struktur** dan **TP dinamis menuju sas
 
 **Status:** `DYNAMIC_STRUCTURAL_TP_APPROVED_AS_DESIGN` / `EXECUTION_PARAMETERS_NOT_FROZEN` / `NO_BACKTEST_YET` / `EDGE_UNPROVEN`. Catatan ini tidak mengubah produk trading, konfigurasi risiko, data historis, atau gate Stage 0.
 
+#### KEPUTUSAN D10-K6 — Tidak ada batas RR minimum; TP hanya ke level struktur sah (Owner SETUJU, rapat 4 November 2026)
+
+Owner menolak **filter minimum risk-to-reward** untuk keenam kandidat. Setiap sinyal yang memenuhi aturan struktural dasar tetap dipertimbangkan meskipun reward kecil relatif terhadap risiko; angka RR **dicatat untuk analisis, bukan dipakai menyaring entry**. TP harus menunjuk **level struktur kausal yang telah ada saat keputusan entry**, bukan TP RR tetap atau target yang dibuat setelah melihat profit. Ini **tidak menghapus** pemeriksaan invalid stop, harga eksekusi bid/ask, asal data, biaya penuh, Risk Governor, dan sinyal `WAIT` ketika tidak ada target struktur yang valid. Perbedaan penting: jangan menyelundupkan filter baru seperti `net RR > 0` atau `TP > biaya` dalam implementasi tanpa keputusan Owner; jika kerugian neto mungkin akibat biaya tinggi, **tetap dilaporkan apa adanya** pada uji development, bukan dikeluarkan berdasarkan hasil.
+
+**Proposal definisi objektif untuk pembahasan, belum di-freeze:**
+
+| Aspek | Definisi yang diusulkan | Batas kausal |
+|---|---|---|
+| Swing high/low | Fractal pivot `L=2` candle tertutup sebelah kiri dan `R=2` candle tertutup sebelah kanan; high lebih tinggi / low lebih rendah *secara ketat* dari tetangga (equal high/low tidak otomatis menjadi pivot) | Pivot baru **diketahui 2 candle setelah candle ekstrem**, bukan pada timestamp ekstrem; jangan menggunakannya sebelum tanggal `confirmed_at` |
+| Demand H1 untuk B2 | Candle bearish H1 terakhir yang sudah selesai, tepat sebelum dorongan bullish **H1 close di atas swing high H1 yang sudah confirmed**; zona harga **low→high candle asal** (full wick), tidak memakai candle belum tertutup | `origin_at`, `confirmed_at`, swing ref semuanya sudah ≤ waktu keputusan; definisi dorongan/masa berlaku masih perlu diputuskan |
+| Supply H1 untuk S2 | Simetris: candle bullish H1 terakhir sebelum dorongan bearish H1 close di bawah swing low H1 confirmed; zona full wick asal | Sama, memakai bar tertutup; tidak ada zona yang muncul retroaktif |
+| Resistansi/support untuk TP | Level swing confirmed dan/atau zona sisi lawan yang eligible, dipilih **yang paling dekat di arah profit dari harga eksekusi**; aturan tie/overlap harus tetap & deterministik | Level yang belum confirmed pada `entry_decision_at` tidak eligible; `target_id`, `confirmed_at` disimpan |
+| SL struktur | BUY di bawah low sweep/demand/swing retest terkonfirmasi, SELL di atas high sweep/supply/swing retest terkonfirmasi, ditambah buffer yang dihitung dari data saat keputusan | Dilarang SL berpindah setelah entry dalam baseline; invalidasi dan eksekusi dicek bid/ask & tick size |
+| Buffer SL | Opsi diskusi pertama `max(1 tick broker, spread pada keputusan, k × ATR(14) TF entry)` dengan `k` ditetapkan Owner sebelum uji; alternatif buffer tick tetap; semuanya dari bar/quote kausal | Nilai `k` / opsi belum diputuskan; ATR(14) memakai candle tertutup saja; sesuaikan pembulatan tick size ke luar risiko |
+| Target tak ada/invalid | `WAIT:NO_VALID_STRUCTURAL_TARGET`; jangan mengganti TP 2R atau memakai level masa depan | Tidak ada minimum RR tetapi target harus secara geometris berada di arah profit dari entry |
+| Prioritas event | Entry pada quote setelah konfirmasi; jika data OHLC tidak mengurutkan SL/TP dalam bar sama, pilih aturan konservatif atau minta tick, bukan TP-first | Catat semua sinyal tersaring dan gap secara eksplisit; hasil harus deterministik |
+
+**Batas penelitian tetap:** hipotesis B1/S1/B2/S2/B3/S3 terpisah, `registry.jsonl` sebelum melihat P/L, dataset development sah dan split/gaps/hash, biaya penuh serta sensitivitas 1,5x/2x, baseline dan 28-day walk-forward; holdout tetap terkunci; Stage 0 dan data forward tidak digunakan untuk tuning. Hasil yang tampak jelek **tidak boleh dihapus**. RR dilaporkan distribusinya (gross dan net) tetapi bukan filter yang mengubah denominator sinyal.
+
+**Keputusan yang masih terbuka dalam rapat:**
+1. Pivot swing: `2 kiri + 2 kanan` atau `3 kiri + 3 kanan` (keduanya kausal setelah konfirmasi).
+2. Demand/supply: `full wick high-low` asal atau body-only, serta usia maksimum zona dan aturan zona batal.
+3. Buffer: `max(tick, spread, k×ATR14)` dan nilai `k` versus fixed ticks; time exit masih belum diputuskan.
+4. Jika satu bar dan dua struktur cocok sebagai TP, aturan prioritas target terdekat dan level stale harus ditetapkan sebelum pengujian.
+
+**Status:** `NO_MIN_RR_APPROVED` / `STRUCTURAL_TARGET_ONLY_APPROVED` / `SWING_ZONE_BUFFER_UNDECIDED` / `NO_BACKTEST_AUTHORIZED_YET` / `LIVE_OFF`.
+
 #### A. Bukti yang disepakati untuk tiap hari
 
 Sumber fakta tetap ledger SQLite observer read-only dan arsip tick broker, bukan ringkasan chat. Gunakan satu ID dan cutoff yang direkam (saat ini `2026-11-03T15:18:14Z` pasca-WP13; pengecualian DST-aware D8 baru efektif `2026-11-05T00:00:00Z`). Simpan kedua tanggal secara terpisah dan hindari retroaktif.
