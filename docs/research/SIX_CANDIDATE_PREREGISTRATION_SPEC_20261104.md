@@ -68,23 +68,30 @@ Semua waktu pra-tutup dihitung dari **jadwal quote/trade resmi server dan simbol
 | **G7 Sesi broker resmi** | `SymbolInfoSessionQuote` **dan** `SymbolInfoSessionTrade` untuk XAUUSD.vx, DST, hari libur, akhir sesi efektif dan timestamp sumber | Tick gap empiris bukan bukti jadwal resmi; preclose masih BLOCKED |
 | **G8 Simulator tidak setara** | Port *offline only* seluruh 6 metode, M15, structural TP, no minRR, zona state machine, H1 breakout→M5 retest, ATR adaptif, Hybrid Time Exit dan event-based bid/ask; fixture | Simulator saat ini memakai `target_rr`, `min_rr`, M5+H1 dan fixed `max_hold_bars` — tidak boleh dilabel validasi desain ini |
 
-## III-A. Keputusan D10-K20 dan desain level TTL (menunggu persetujuan angka)
+## III-A. Keputusan D10-K21 — TTL dan validitas swing (APPROVED)
 
-**Owner-approved:** entry memakai confirmed swing terbaru yang masih valid **dengan batas usia**. Angka, pembatalan serta jenis target di bawah **hanya proposal**, bukan aturan terdaftar:
+- **M15 confirmed swing berlaku maksimum 96 candle M15 tertutup sejak `confirmed_at`**; **H1 maksimum 72 candle H1 tertutup**. Jika bukti candle kurang/gap, FAIL CLOSED, tidak mengasumsikan swing masih valid. Zona demand/supply **48 candle H1**, dihitung terpisah.
+- Support swing low dibatalkan jika **close timeframe asal <= low - 1 tick**; resistance swing high dibatalkan jika **close timeframe asal >= high + 1 tick**. Hanya candle tutup; wick saja tidak membatalkan level. Penilaian selalu pada timestamp sinyal, tidak retroaktif.
+- **Khusus B3/S3**, H1 BOS memindahkan sumber level ke status `BROKEN_RETEST_ELIGIBLE` untuk satu upaya dalam maksimal 6 M5, bukan langsung membuang referensi level yang dipatahkan. Level broken tidak lagi menjadi TP resistance/support normal.
+- TP terdekat di arah profit setelah fill, tie berdasarkan `confirmed_at` terbaru dan ID deterministik. Untuk B1/S1 target swing lawan M15, B2/S2 target swing H1 lawan atau zona lawan H1 valid, B3/S3 target swing H1 lawan yang belum broken. Harga batas zona proximal dan sumber quote disentuh masih dalam agenda G3 berikut.
+- **Status:** D10-K21 approved sebelum preregistration. Perubahan TTL/validasi pasca melihat hasil menjadi hipotesis baru.
 
-| Parameter | Proposal untuk dibahas | Status |
+## III-B. Agenda D10-K22 — Pembentukan demand/supply H1 (PROPOSAL, BELUM DISETUJUI)
+
+| Parameter G3 | Rancangan awal untuk dibahas | Status |
 |---|---|---|
-| TTL swing M15 | 96 M15 candle penuh sejak `confirmed_at` | PENDING |
-| TTL swing H1 | 72 H1 candle penuh sejak `confirmed_at` | PENDING |
-| Swing low batal | Candle TF asal close >=1 tick di bawah level | PENDING |
-| Swing high batal | Candle TF asal close >=1 tick di atas level | PENDING |
-| Retest B3/S3 | Level H1 yang baru broken tetap eligible 1 retest dalam 6 M5, tidak jadi TP lama | PENDING detail |
-| TP B1/S1 | Swing lawan M15 terdekat sah pada arah profit | PENDING |
-| TP B2/S2 | Swing H1 lawan atau proximal zone lawan valid yang terdekat | PENDING |
-| TP B3/S3 | Swing H1 lawan terdekat yang belum broken | PENDING |
-| Tie-break | Level terbaru `confirmed_at`, lalu stable ID | PENDING detail |
+| Demand origin | Candle H1 bearish terakhir di **12 candle H1 tertutup sebelum bullish BOS H1** di atas confirmed swing high, minimal 1 tick | PROPOSED |
+| Supply origin | Candle H1 bullish terakhir di **12 candle H1 tertutup sebelum bearish BOS H1** di bawah confirmed swing low, minimal 1 tick | PROPOSED |
+| Zona harga | Rentang **full wick low–high** dari candle origin, bukan body saja | PROPOSED |
+| Timestamp | `zone_confirmed_at = BOS H1 close`, `origin_at` candle sebelumnya; swing BOS harus confirmed sebelum BOS H1 dimulai | PROPOSED |
+| Harga rujukan struktur | BID chart OHLC dan BID quote untuk touch/breach; eksekusi BUY ask dan SELL bid dengan spread faktual | PROPOSED |
+| First touch | Satu episode saja; evaluasi candle M15 yang berisi first touch setelah tutup, lalu CONSUMED bila tak valid | PROPOSED DETAIL |
+| Banyak zona | Pilih eligible dengan proximal edge paling dekat pada quote first touch, tie: terbaru confirmed, lalu ID stabil | PROPOSED |
+| Target zona lawan | BUY arah supply: **low supply** (proximal); SELL arah demand: **high demand** (proximal); bandingkan dengan swing H1 eligible | PROPOSED |
 
-Usia dihitung dari **bar TF asal yang selesai dan valid**, bukan jam kalender; bila data hilang, status UNVERIFIED, jangan menyimpulkan belum kedaluwarsa. Swing fractal 2 kiri/2 kanan perlu konteks ekstra di luar window TTL. Zona H1 **tetap 48 candle** sesuai keputusan berbeda. Validitas dinilai saat keputusan entry dari data sampai waktu tersebut; wick penembusan tanpa close yang sah tidak otomatis membatalkan swing, sedangkan H1 breakout yang terkonfirmasi mengubah level menjadi setup retest satu episode. Target berada pada arah profit relatif terhadap fill, tanpa minimum RR. Semua pilihan tetap harus pra-daftar sebelum riset P/L.
+Fresh first visit, tidak kembali FRESH pascabreach, invalidasi hybrid dan TTL 48 H1 sudah **APPROVED** sebelumnya. Semua detail di tabel yang belum mendapat persetujuan Owner tetap **PROPOSED**; apabila tidak ada candle origin dalam 12 H1 yang valid, status `WAIT:NO_VALID_ZONE_ORIGIN`, bukan memilih candle masa depan. Jika tick/bid-ask untuk touch atau breach tidak dapat diverifikasi, status data `BLOCKED` sesuai D10-K19.
+
+**Blocker tetap untuk registrasi:** G3 belum difinalkan; G4 event-order/ATR dan overlap antar-kandidat; G5 level age/instance tie-break; G6 dataset dev/cost/split/hash; G7 sesi MT5 resmi; G8 simulator yang masih berbeda. Keputusan ini tidak menjalankan riset P/L, tidak mengakses holdout, tidak mengubah runtime, dan tidak mengaktifkan trading.
 
 ## IV. Kriteria siap mendaftar
 
