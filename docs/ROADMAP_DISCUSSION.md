@@ -442,6 +442,30 @@ Owner juga menyetujui **candle M15 searah** yang menyentuh zona lalu close **kel
 
 **Yang belum dikunci untuk preregistration B2/S2:** aturan memilih candle asal bila beberapa bar memenuhi, tie-breaking zona beririsan, deteksi batas episode visit dari tick bid/ask, lebar zona minimal/maksimal dan harga referensi bid/ask, prioritas target, definisi ATR Wilder dan source spread, jam sesi broker resmi, data/split/cost/code hash. Semua ini bukan izin coding/tes atau klaim strategi profitable.
 
+#### KEPUTUSAN D10-K17 — Breakout H1 dan retest satu candle M5 (Owner SETUJU, 4 November 2026)
+
+Owner menyetujui B3 BUY / S3 SELL baseline: breakout/breakdown dikonfirmasi dengan candle **H1 tertutup** melewati swing H1 yang sudah terkonfirmasi sebesar **setidaknya 1 tick** (BUY close >= swing_high + tick; SELL close <= swing_low - tick); sejak H1 close, tunggu **maksimal enam candle M5 yang telah selesai**, dengan **retest dan close konfirmasi pada satu candle M5 yang sama**, bukan dua candle. Interpretasi proposal baseline B3: M5 low menyentuh level lama dan close bullish di atasnya; S3: high menyentuh level dan close bearish di bawahnya. Entry baru dilakukan pada quote berikutnya sesudah konfirmasi. Jika tidak terjadi dalam enam candle, `WAIT:RETEST_TIMEOUT`. Semua level harus sudah confirmed sebelum H1 breakout dimulai, dan M5 yang eligible harus mulai setelah atau tepat di waktu close H1. Syarat kedalaman retest, tie-break level, dan konflik jadwal/data masih perlu keputusan sebelum freeze.
+
+#### Audit preregistration D10-K18 — enam kandidat (AUDIT; bukan persetujuan parameter baru)
+
+**Disetujui dalam agenda sebelumnya:** B1/S1 sweep+reclaim dalam candle M5 yang sama terhadap confirmed swing M15 2+2; B2/S2 HH+HL atau LH+LL H1 confirmed 2+2 dan satu M15 candle searah menyentuh lalu close melewati batas fresh zone H1; B3/S3 retest satu candle M5 <=6 bars dan H1 breakout >=1 tick; TP struktur valid terdekat yang diketahui di entry tanpa minimum RR; SL buffer max(tick, spread, 0.10×ATR14) dan struktural; first-visit saja, hybrid breach terminal non-fresh, 48 closed H1; time-exit B1/S1 12 M5/90min/preclose15min, B2/S2 12 M15/240min/preclose30min, B3/S3 24 M5/180min/preclose20min.
+
+**Belum selesai sebagai input spesifikasi (jangan menebak dan jangan auto-freeze):**
+1. B1/S1 minimum kedalaman sweep (opsi 1 tick masih proposal), pemilihan swing pemicu dan kondisi pembatalan yang tepat;
+2. level umur/validitas swing dan retest; bila beberapa zona/swing eligible atau target sama dekat, urutan terdaftar dan tie-break tetap; kriteria breakout false/overlap, target TP terdekat;
+3. prioritas pembentukan zona jika terdapat beberapa candle asal; harga sentuh zona berbasis bid/ask dan episode first-visit, cara memperlakukan tick hilang;
+4. rumus ATR14 (misal Wilder), rounding tick/stops level server, definisi quote tepat entry/exit dan order event ketika SL/TP/time exit bersamaan, jumlah posisi simultan, spread invalid/no quote;
+5. event counter 6 M5 dan 12/24 M5 atau 12 M15 setelah entry (hanya bar lengkap), penutupan sesi/simbol yang **belum diverifikasi**, dan pencatatan exit pending saat quote tidak tersedia;
+6. `name,symbol,side,regime,playbook,rules,parameters,code_sha256` untuk **setiap** B1/S1/B2/S2/B3/S3, ditambah dataset/manifest hash, `split.json` dengan gaps, `costs.json` spesifikasi broker, jam server→UTC independen; penelitian development hanya sebelum **13 Okt 2026 UTC**, terpisah dari forward Stage0/holdout.
+
+**Mismatch kode nyata (audit read-only `main`):**
+- `src/katarina/research/setups/core.py::signal` masih menghitung target sebagai RR tetap (`target_rr`) dengan filter `min_rr>=0.01`, bertentangan dengan keputusan Owner tanpa RR minimum dan TP struktur.
+- `src/katarina/research/setups/simulator.py` hanya mengolah M5+H1 dan `max_hold_bars`, belum M15 pullback / hybrid clock & preclose / zona first visit / ATR adaptif.
+- `src/katarina/research/setups/liquidity_sweep.py` berbasis range M5, belum swing terkonfirmasi M15; `pullback.py` mean M5 bukan demand/supply M15; `market_structure.py` close-break M5 bukan H1 breakout dengan M5 retest.
+- Registrasi tersedia melalui `scripts/research/register_setup_hypothesis.py` dan protokol `docs/research/VALIDATION_PROTOCOL.md`, batas maksimal 5/symbol/side dan Bonferroni; adanya tooling tidak berarti enam hipotesis sudah bisa didaftarkan. `docs/maintenance/MT5_SESSION_MAP_20261104.md` hanya peta empiris tick, **bukan** bukti resmi `SymbolInfoSessionQuote/Trade`.
+
+**Gate yang disimpulkan:** `D10-K17_DESIGN_APPROVED`, `REGISTRATION_BLOCKED_SPEC_INCOMPLETE`, `SIMULATOR_MISMATCH`, `BLOCKED_SESSION_EVIDENCE`, `DATA_COST_NOT_VERIFIED`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`. Tidak mengubah kode, runtime, data, sesi Stage0 ataupun izin trading. Setelah Owner menyetujui rincian residual dan kode offline telah sesuai, uji fixture tanpa P/L → freeze code/data/split/costs → registrasi keenam sebelum evaluasi profit.
+
 #### AGENDA D10-K17 — B3/S3 Breakout/Breakdown & Retest H1→M5 (USULAN; OWNER BELUM MEMUTUSKAN)
 
 **Proposal sinyal baseline yang dapat diaudit kausal:**
