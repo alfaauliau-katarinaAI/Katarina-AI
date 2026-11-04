@@ -452,6 +452,21 @@ Owner menyetujui parameter struktur untuk keenam kandidat XAUUSD sebagai **basel
 
 **Klarifikasi status:** klausul angka 96/72 dan invalidasi/TP yang tertulis sebagai *usulan* di bawah pada bagian D10-K20 **sudah disetujui dan digantikan oleh keputusan D10-K21 ini**. `D10-K21_APPROVED`, `ZONE_ORIGIN_PENDING`, `REGISTRY_NOT_WRITTEN`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
 
+#### KEPUTUSAN D10-K24 — Boundary M15, zone overlap dan tick-order fail closed (Owner SETUJU, 5 November 2026 WIB)
+
+Owner menyetujui tiga aturan kontrak eksekusi Katarina untuk riset enam kandidat XAUUSD:
+1. **Bar M15 `[open_utc,close_utc)`**: tick tepat di timestamp `close_utc` termasuk candle berikutnya. Konfirmasi first-touch hanya pada **M15 yang memuat tick first touch**, setelah candle penuh selesai dan tanpa memakai tick boundary berulang untuk sinyal lalu fill.
+2. **Jika beberapa zona eligible beririsan dan BID first touch menyentuhnya serentak**, pilih zona dengan `abs(bid_at_touch-proximal_edge)` terkecil; tie dengan `zone_confirmed_at` paling baru, kemudian `zone_id` stabil; tidak boleh memilih berdasarkan hasil P/L.
+3. **Tick ber-timestamp sama tanpa urutan asli yang bisa dibuktikan**: bila perbedaan urutan berpotensi mengubah entry, touch, breach, SL, TP, atau fill, status `BLOCKED_INTRABAR_ORDER`, bukan tebakan atau fallback OHLC. Kalau urutan original yang dapat diaudit tersedia, tetap replay kronologis sebagaimana D10-K23.
+
+**Kontrak dan audit:** [kontrak eksekusi/simulator](research/SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md) bagian **2B** ditetapkan dan memuat current-code readiness; [spesifikasi keenam hipotesis](research/SIX_CANDIDATE_PREREGISTRATION_SPEC_20261104.md) bagian **III-D** diperbarui. Audit `main`: validator hash-ledger dan loader candle M5/M15/H1 development-only sudah tersedia, tetapi **tick replay auditable belum tersedia**, simulator masih OHLC M5/H1, target RR tetap dan minRR, belum ada engine struktural+first visit+H1 BOS retest+Hybrid Time Exit. Tidak ada perubahan source.
+
+**Remaining blockers setelah keputusan ini:** (i) bagaimana lifecycle **zona tak terpilih yang turut tersentuh** saat overlap (jangan otomatis menganggap FRESH tanpa keputusan), (ii) bukti gap/urutan tick & eksekusi stop/freeze/slippage broker, (iii) hash data development dan costs/split, (iv) sesi quote/trade MT5 resmi, (v) pengembangan dan pengujian synthetic-only simulator offline dengan approval scope/host yang jelas. Tidak ada preregistration atau backtest saat blocker ini terbuka.
+
+**Agenda D10-K25 (PROPOSAL, BELUM DIPUTUSKAN):** bila dua+ zona pertama kali tersentuh bersamaan pada tick BID, kandidat tunggal yang diprioritaskan menurut D10-K24 menjadi satu-satunya zona eligible untuk sinyal pada episode tersebut, sedangkan semua zona lain yang sama-sama telah first-touched juga menjalani episode dan **menjadi CONSUMED** jika konfirmasi pada kesempatan M15 tunggal tidak diambil (`CONSUMED_OVERLAP_NOT_SELECTED`); zona yang **tidak** tersentuh tetap FRESH. Alternatif Owner: mempertahankan episode independen tiap zona dan hanya memblokir entry ganda pada level kandidat, namun harus mengunci prioritas dan status tiap zona sebelum testing. Saat ini status **pending**; belum boleh dipaksakan ke kode.
+
+`D10-K24_APPROVED`; `CONTRACT_CORE_FINALIZED`; `OVERLAP_UNSELECTED_LIFECYCLE_PENDING`; `IMPLEMENTATION_NOT_STARTED`; `PREREGISTRATION_BLOCKED`; `HOLDOUT_LOCKED`; `NO_BACKTEST`; `LIVE_OFF`. Draft PR #293 tetap terbuka, tidak di-merge.
+
 #### KEPUTUSAN D10-K23 — Replay tick kronologis + BID touch + quote execution per sisi + 6 independen (Owner SETUJU, 5 November 2026 WIB)
 
 Owner memilih **opsi A** dan secara eksplisit menyetujui:
