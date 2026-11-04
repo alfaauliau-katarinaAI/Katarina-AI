@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — WP6-PREFLIGHT: kesiapan observer setelah reboot (belum diterapkan)
+
+- Launcher produksi `run-observer.ps1` kini diversikan di `ops/windows/` (commit baseline byte-identik dengan VPS). Commit berikutnya menangani `AbandonedMutexException` supaya launcher yang mati saat reboot tidak membuat start pertama gagal.
+- `src/katarina/intelligence/operations/startup_task.py` + `scripts/ai/wp6_startup_preflight.py` (baca-saja; `--live` di Windows): menilai task XML, launcher dan status autologon dengan reason code `WP6_*` dan verdict `READY_AFTER_REBOOT`/`NOT_READY`/`BLOCKED_EVIDENCE`. Produksi hari ini: NOT_READY (`WP6_NO_AUTOLOGON`).
+- Usulan definisi task `ops/windows/observer-task.autologon.xml` dan `ops/windows/wp6_apply_observer_startup.ps1`: dry-run default; dengan `-Apply` melakukan backup + hash, mendaftarkan task, memverifikasi, dan memulihkan bila gagal; tersedia `-Rollback`. Panduan: `docs/operations/WP6_OBSERVER_STARTUP.md`. Task aktif dan VPS tidak diubah; LIVE tetap OFF.
+
 ## 2026-11-04 — S0: breakdown kegagalan Tahap 0 (diagnostik, read-only)
 
 - Modul baru `src/katarina/intelligence/operations/stage0_breakdown.py` dan opsi `check_stage0_health.py --breakdown`: kegagalan siklus dipecah menurut hari, jam UTC, simbol yang tanpa quote, dan fase pasar DST-aware (`DAILY_BREAK_NY17` = 17:00 New York −15/+60 menit, `WEEK_EDGE`, `SESSION`). Tampilan aturan sesi alternatif berlabel `diagnostic_only`, dengan `official_verdict_effect` = `NONE`.
