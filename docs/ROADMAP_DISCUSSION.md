@@ -291,6 +291,30 @@ Owner menyetujui **BUY dan SELL diuji sebagai hipotesis terpisah**; aturan masuk
 
 **Agenda yang masih terbuka:** Owner memilih daftar kandidat awal dan instrumen pembanding; Claude kemudian menyusun pre-registration, prasyarat dataset dan tes mekanisme pada branch/PR review, bukan mengeksekusi trading. **Status: `BUY_SELL_SEPARATE_APPROVED` / `CANDIDATES_UNDECIDED` / `EDGE_UNPROVEN`.**
 
+#### KEPUTUSAN D10-K3 — Uji tiga pasangan sebagai enam hipotesis terpisah (Owner SETUJU, 4 Nov 2026)
+
+Owner memilih **seluruh tiga pasangan kandidat** untuk diteliti secara terpisah, bukan otomatis menggabungkan entry BUY/SELL. Keputusan ini menetapkan *cakupan dan urutan evaluasi*, **belum** menetapkan aturan angka, parameter, timeframe, data yang sah, pelaksanaan backtest, atau mengesahkan profit.
+
+**Kandidat terpilih untuk dirancang (XAUUSD):** `B1` BUY liquidity sweep bawah, `S1` SELL liquidity sweep atas; `B2` BUY trend pullback demand, `S2` SELL trend pullback supply; `B3` BUY breakout+retest, `S3` SELL breakdown+retest. Semua enam memiliki ID hipotesis dan kartu hasil sendiri. Tidak ada asumsi bahwa pasangan sisi simetris. Batas roadmap maksimal 5 hipotesis per instrumen per sisi tetap.
+
+**Aturan registrasi sebelum pengujian (mengikuti `docs/research/VALIDATION_PROTOCOL.md`):**
+1. **Audit data dahulu.** Pastikan dataset *development* historis yang diizinkan, catat `dataset_sha256`, metadata broker `.vx`, server-to-UTC, zona DST, harga bid/ask dan gap; `split.json` dan `split_sha256` ditetapkan sebelum hasil terlihat. **Data Stage 0 forward dan holdout tidak boleh dipakai untuk menyetel.**
+2. Untuk **setiap** `B1/S1/B2/S2/B3/S3`, definisikan tepat satu sisi `BUY` atau `SELL`, `symbol`, `regime`, `playbook`, `rules`, `parameters`, serta `code_sha256`: lookback, timeframe, konfirmasi candle (hanya candle tertutup), kondisi entry, invalidasi, stop/exit, maksimum holding, syarat WAIT, biaya. Jangan meniru harga hasil masa depan. Nilai parameter **belum diputuskan pada rapat ini**.
+3. **Freeze batch enam hipotesis sebelum melihat P/L kandidat pertama** menggunakan registry hash berantai `registry.jsonl`; ID = SHA-256 definisi kanonik. Catat seluruh percobaan di registry yang sama. Perubahan parameter/logika setelah melihat hasil = **ID dan percobaan baru**, bukan overwrite atau membuang kegagalan. Batas maksimum 5/instrumen/sisi berlaku pada kandidat yang diterima untuk riset; setiap varian tambahan harus dipertimbangkan menurut batas dan aturan governance.
+4. **Freeze biaya** dalam `costs.json` (spread aktual dari sumber sah, komisi, slippage konservatif, swap long/short) dan jalankan sensitivitas 1,5x/2x. Jika sumber biaya belum valid = `BLOCKED_EVIDENCE`, bukan angka nol atau asumsi harga ask=bid.
+5. **Uji mekanisme terlebih dahulu dengan fixture sintetis** untuk membuktikan kausalitas/no-lookahead, determinisme, invalidasi yang benar, gap handling, alasan WAIT. Ini **bukan** bukti strategi profit.
+
+**Urutan eksekusi sesudah registry dan data valid (semua enam sudah terkunci sebelumnya):**
+- **Gelombang 1 — B1 dan S1:** liquidity sweep, **dua laporan independen**.
+- **Gelombang 2 — B2 dan S2:** trend pullback, **dua laporan independen**.
+- **Gelombang 3 — B3 dan S3:** breakout/breakdown-retest, **dua laporan independen**.
+- Urutan ini hanyalah urutan komputasi untuk menghemat sumber daya, **bukan seleksi kandidat pemenang setelah melihat hasil**. Semua enam tetap dievaluasi pada split, periode, pengaturan biaya, baseline dan anggaran komputasi yang sebanding; setiap gagal/NO_TRADE/NO_DATA dilaporkan.
+- Pengembangan: walk-forward 28 hari, tiga baseline wajib (tidak trade, random same timing+exit, simple trend); laporan per sisi mencakup trade count, expectancy **net**, PF net, max DD, winrate, CI, spread, biaya, sensitivitas, variasi sesi/regime, alasan WAIT, jumlah attempts. Pengembangan lolos hanya jika expectancy net >0, mengalahkan baseline, tak ada penolakan data.
+- **Tidak membuka holdout pada gelombang ini.** Sesudah Stage 0 dan prasyarat validasi terpenuhi, hanya kandidat yang didaftarkan dan sah yang dapat diusulkan kepada Owner untuk holdout sekali; syarat Tahap 4: ≥100 trade, PF net ≥1,2, batas bawah CI 95% >0 terkoreksi atas **semua** percobaan yang terdaftar (Bonferroni `alpha=0.05/N_total`), dan risiko sesuai profil DEMO. Tidak mengoptimalkan kandidat pada holdout.
+- Jika pada saat registrasi ada 6 percobaan keseluruhan, ilustrasi `alpha=0.05/6≈0.00833`; nilai nyata berdasarkan seluruh percobaan di registry, bukan menganggap enam percobaan bebas koreksi.
+
+**Pelaksana:** Claude menyiapkan preregistration template dan tes mekanisme di branch riset, Yura memeriksa dataset/provenance/split/costs/gate, Owner menyetujui parameter final dan host riset terpisah sebelum backtest historis broker. Tidak ada eksekusi MT5 di VPS observer, deploy, LIVE, demo order, atau aktivasi risk. **Status: `SIX_CANDIDATES_SELECTED_FOR_DESIGN`, `HYPOTHESES_NOT_REGISTERED`, `EDGE_UNPROVEN`.**
+
 #### A. Bukti yang disepakati untuk tiap hari
 
 Sumber fakta tetap ledger SQLite observer read-only dan arsip tick broker, bukan ringkasan chat. Gunakan satu ID dan cutoff yang direkam (saat ini `2026-11-03T15:18:14Z` pasca-WP13; pengecualian DST-aware D8 baru efektif `2026-11-05T00:00:00Z`). Simpan kedua tanggal secara terpisah dan hindari retroaktif.
