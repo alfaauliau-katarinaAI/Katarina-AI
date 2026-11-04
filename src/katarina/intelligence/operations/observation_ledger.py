@@ -32,7 +32,13 @@ from katarina.domain.market_calendar import is_us_dst
 SCHEMA_VERSION = 1
 ROLLOVER_BEFORE_MINUTES = 15
 ROLLOVER_AFTER_MINUTES = 30
-ROLLOVER_RULE_EFFECTIVE_UTC = None  # Manager sets an approved future UTC instant at merge.
+# Owner decision D8 (4 Nov 2026 12:26 UTC, "oke saya setujui semua" + choice WP15 -15/+30): the DST-aware
+# 17:00 New York rollover window applies prospectively from the next UTC midnight. Never move it backwards.
+ROLLOVER_RULE_DECIDED_UTC = "2026-11-04T12:26:00+00:00"
+ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-05T00:00:00+00:00"
+# Owner decision D8: the 10-trading-day count restarts at the WP13 deploy (first cycle of fd6cff16 on the
+# VPS). Older ledger rows stay stored and reportable with an explicit --since; they are not deleted.
+STAGE0_COUNT_SINCE_UTC = "2026-11-03T15:18:14+00:00"
 TICK_DIR = "broker-ticks"
 # A day is collected only after it is safely over on the broker server as well.
 DAY_SETTLE_SECONDS = 2 * 3600

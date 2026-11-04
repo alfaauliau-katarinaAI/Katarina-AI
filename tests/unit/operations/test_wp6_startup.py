@@ -128,12 +128,25 @@ class ApplyScriptSafetyTests(unittest.TestCase):
         shell = shutil.which("pwsh") or shutil.which("powershell")
         if not shell:
             self.skipTest("PowerShell not installed")
-        for path in ("ops/windows/wp6_apply_observer_startup.ps1", "ops/windows/run-observer.ps1"):
+        for path in ("ops/windows/wp6_apply_observer_startup.ps1", "ops/windows/run-observer.ps1",
+                     "ops/windows/run-stage0-health-since-wp12.ps1"):
             check = ("$e=$null;[void][System.Management.Automation.Language.Parser]::ParseFile("
                      f"'{ROOT / path}',[ref]$null,[ref]$e);if($e){{$e;exit 1}}")
             result = subprocess.run([shell, "-NoProfile", "-Command", check], capture_output=True, text=True,
                                     timeout=60)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class Stage0SidecarTests(unittest.TestCase):
+    def test_sidecar_uses_deployed_checker_and_official_count_start(self):
+        text = (ROOT / "ops/windows/run-stage0-health-since-wp12.ps1").read_text(encoding="utf-8")
+        self.assertIn("$code  = 'C:\\Katarina\\code'", text)
+        self.assertIn("--since official", text)
+        self.assertNotIn("_audit_20261103_main", text)  # the stale pinned pre-K-04 checkout
+        self.assertNotIn("b3fd2e6063695358bf50f2e316388ac945079fd7", text)
+        code = "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#"))
+        for forbidden in ("Remove-Item", "Stop-", "Restart-", "order"):
+            self.assertNotIn(forbidden, code)
 
 
 class RestartBehaviourTests(unittest.TestCase):

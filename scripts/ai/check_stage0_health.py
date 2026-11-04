@@ -20,7 +20,8 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--state-dir", required=True, help="Observer state directory (holds context.sqlite3)")
     parser.add_argument("--interval-seconds", type=int, default=60)
-    parser.add_argument("--since", help="Inclusive ISO-8601 UTC boundary with explicit timezone")
+    parser.add_argument("--since", help="Inclusive ISO-8601 UTC boundary with explicit timezone, or 'official' "
+                                        "for the Owner-approved Stage 0 count start (STAGE0_COUNT_SINCE_UTC)")
     parser.add_argument("--output", help="Write the JSON report here")
     parser.add_argument("--require-pass", action="store_true", help="Exit 1 unless every criterion passes")
     parser.add_argument("--audit", action="store_true", help="Run WP14 read-only data evidence audit")
@@ -30,6 +31,9 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     since = None
+    if args.since == "official":
+        from katarina.intelligence.operations.observation_ledger import STAGE0_COUNT_SINCE_UTC
+        args.since = STAGE0_COUNT_SINCE_UTC
     if args.since is not None:
         try:
             since = datetime.fromisoformat(args.since)

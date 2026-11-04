@@ -43,7 +43,7 @@ dan melaporkan hasil, risiko teknis, dan bukti; keberatan teknis disampaikan di 
 
 | # | Paket / alur | Prioritas dan keluaran yang harus terbukti | Pelaksana dan status |
 |---|---|---|---|
-| 0 | **Tahap 0 — observasi 10 hari bursa** | Jaga satu observer resmi read-only; audit per hari/simbol sejak 28 Okt 16:57 UTC (cutoff WP12), target streak 10 hari, sukses siklus ≥98%, rekonsiliasi tick/snapshot, cakupan dan gap, restart otomatis dan **0 order**. Jangan menghitung backfill sebagai forward atau mengklaim lulus sebelum bukti. | **P0 / berjalan** — Yura pantau, Claude verifikasi bukti VPS; **belum lulus** |
+| 0 | **Tahap 0 — observasi 10 hari bursa** | Jaga satu observer resmi read-only; audit per hari/simbol sejak 3 Nov 15:18:14 UTC (deploy WP13, keputusan D8; cutoff WP12 28 Okt 16:57 UTC tetap tersimpan), target streak 10 hari, sukses siklus ≥98%, rekonsiliasi tick/snapshot, cakupan dan gap, restart otomatis dan **0 order**. Jangan menghitung backfill sebagai forward atau mengklaim lulus sebelum bukti. | **P0 / berjalan** — Yura pantau, Claude verifikasi bukti VPS; **belum lulus** |
 | 1 | **WP13 — jam broker MT5 dan `--since`** | [PR #233](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/233): jam live = NTP host tepercaya + ≥ 3 tick bergerak (D6/D7), siklus gagal tercatat `FAILED` + alasan, `--since` untuk Tahap 0. Spesifikasi terbaru di R4 WP13. | **MERGED #233 / NOT DEPLOYED** — kode NTP, tick, dan `--since` pada GitHub; tidak menyatakan Stage0 lulus |
 | 1b | **WP15 — rollover Tahap 0 ikut 17:00 New York** | Jendela pengecualian rollover di statistik Tahap 0 mengikuti 17:00 `America/New_York` (DST AS berakhir 1 Nov 2026), tanpa mengubah ledger, arsip tick, atau penilaian sebelum tanggal berlaku. | **MERGED #244 / RULE INACTIVE** — rollover mengikuti New York, tanggal efektif `None`, tanpa deploy |
 | 2 | **WP8c — asal waktu bar historis** | Bukti UTC bar memakai rilis NFP yang terverifikasi dan tes deterministik; jangan ekspor data development tanpa bukti jam atau sentuh holdout. | **KODE MERGED #230** — kalender BLS 33 rilis di integrasi riset #265; bukti UTC bar broker M5 belum ada |
@@ -232,8 +232,11 @@ bawah (PASS / NOT_MET / NO_DATA) secara read-only. Simbol inti dipilih dengan `-
 setiap siklus dengan XAUUSD pertama; simbol inti yang tidak tersedia menjadi WAIT dan baris ledger `FAILED` beralasan
 `CORE_SYMBOL_UNAVAILABLE`, tidak pernah diganti diam-diam; tanpa opsi, perilaku lama tetap.
 Diagnostik berita per sumber dan per siklus ada di tabel `observer_news` (WP3); keputusan mode alternatif di `decision_shadow` (WP9b).
-Statistik siklus memakai jendela konservatif Senin 00:00 – Jumat
-20:00 UTC tanpa rollover 20:45–21:15 UTC. Status tahap: **belum lulus**; hitungan 10 hari dimulai saat WP12 diterapkan (28 Okt 2026 16:57 UTC).
+Statistik siklus memakai jendela Senin 00:00 – Jumat 20:00 UTC. Rollover yang dikecualikan adalah 20:45–21:15 UTC sampai
+4 Nov 2026, lalu mulai **5 Nov 2026 00:00 UTC** rollover DST-aware 17:00 New York −15/+30 menit (WP15,
+`ROLLOVER_RULE_EFFECTIVE_UTC`; musim dingin 21:45–22:30 UTC). Status tahap: **belum lulus**. Keputusan Owner D8 (4 Nov 2026):
+hitungan 10 hari **dimulai ulang** saat WP13 dideploy (**3 Nov 2026 15:18:14 UTC**, `STAGE0_COUNT_SINCE_UTC`;
+`check_stage0_health.py --since official`). Data sejak 28 Okt 16:57 UTC (cutoff WP12) tetap disimpan dan bisa dilaporkan dengan `--since` eksplisit.
 
 Kriteria kelulusan:
 - Observer berjalan **≥ 10 hari bursa berturut-turut**.
