@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — G1: coding gate KAT-CG-00..05 dan safe cleanup (mandat Owner #278 §6)
+
+- `scripts/governance/code_change_gate.py`: gate bertahap fail-fast. Isinya baseline/diff/konflik; AST+JSON file:line + `audit_dependency_links` + `audit_repo_hygiene`; suite tes; promotion gate + Constitution Guard + manifest `MATCH`; CI Body/Ubuntu/Windows per SHA; preflight deploy dari receipt tanpa akses VPS. Ledger fingerprint menghentikan error berulang setelah satu upaya perbaikan (`REPEATED_FAILURE_NEEDS_ROOT_CAUSE`, exit 3) sampai akar masalah + tes reproduksi dicatat.
+- `scripts/governance/safe_cleanup.py`: `--check`/`--dry-run` (default) dan `--apply-safe`, yang hanya menghapus cache/laporan build tak terlacak dari allowlist. Ditolak: symlink/junction, path escape, state/backups/private/logs/docs/governance, SQLite/WAL, `main`, checkout produksi, worktree yang berubah. Source terlacak hanya dilaporkan (`DELETE_CANDIDATE`/`PROTECTED_KEEP`).
+- `katarina-body-ci.yml`: langkah KAT-CG-00/01 (menggantikan compileall + dependency step), cleanup `--check`, KAT-CG-02 = langkah regression yang ada, KAT-CG-03 (menggantikan Constitution/promotion step; **manifest `MATCH` kini diwajibkan CI**), job agregat `KAT-CG-04 CI gate`. Tanpa `schedule:`. Hook opsional `ops/git-hooks/pre-commit`.
+- Bug ditemukan saat tes negatif: `safe_cleanup` crash di folder non-root worktree, kini fail-closed `NOT_A_GIT_WORKTREE_ROOT`. Panduan: `docs/maintenance/CODING_GATE.md`. Tanpa perubahan logika trading; LIVE tetap OFF.
+
 ## 2026-11-04 — perapian E1: gate akhir dan status codebase
 
 - Dokumen canonical diperbarui: RH-012 (`docs/REPAIR_HISTORY.md`), baris codebase/PR/blocker di `docs/PROJECT_STATUS.md`, ledger E1 (gate, inventaris VPS/branch, keputusan `CODEBASE_CLEAN_BUT_STAGE_GATE_BLOCKED`), peta modul dibuat ulang. Tanpa perubahan kode; LIVE tetap OFF.
