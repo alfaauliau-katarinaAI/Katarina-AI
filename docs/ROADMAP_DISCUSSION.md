@@ -426,6 +426,27 @@ Owner telah menyetujui:
 - **Buffer yang telah dipilih:** max(tick size, spread, 0,10 x ATR14), memakai data saat keputusan; swing 2 kiri + 2 kanan, tanpa minimum RR dan TP struktural.
 - Berlaku sebagai **spesifikasi riset**, bukan izin mengubah runtime, menguji holdout, atau menyalakan trading. Parameter time exit masih dibahas; seluruh desain harus dicatat sebelum backtest.
 
+#### KEPUTUSAN D10-K11 — Hybrid Time Exit dipilih Owner (rapat 4 Nov 2026)
+
+Owner menyetujui **pendekatan hybrid**: penutupan posisi simulasi dipicu oleh kejadian paling awal dari (a) jumlah candle entry-TF sah yang ditentukan, (b) deadline waktu nyata UTC yang ditentukan, atau (c) batas pra-penutupan sesi quote broker resmi yang terverifikasi. **Nilai dan tata cara masih agenda, bukan parameter final.** Tidak mengaktifkan trading, tidak melakukan backtest, tidak membuka holdout. SL/TP struktur tetap independen dan tidak boleh dikalahkan oleh exit waktu yang datang belakangan.
+
+**Pilihan angka untuk dibahas, bukan keputusan:** B1/S1 sweep = 12 bar M5 / 90 menit; B2/S2 pullback = 12 bar M15 / 240 menit; B3/S3 breakout = 24 bar M5 / 180 menit. Batas clock sedikit lebih lama daripada durasi nominal bar agar berfungsi sebagai pengaman ketika bar tidak tersedia. Bandingkan dengan usulan lama 12 M5/60 menit, 12 M15/180 menit, dan 24 M5/120 menit: itu hampir identik pada data kontinu dan bukan hybrid yang bermakna. Jangan memilih angka berdasarkan P/L. Semua enam kandidat dan angkanya harus didaftarkan sebelum tes historis.
+
+**Kausalitas & mekanisme penutupan (proposal):**
+- Catat `entry_utc`, `exit_deadline_utc`, `eligible_closed_bars_since_entry`, `broker_quote_session_close_utc`, `exit_trigger` dan `first_executable_quote_utc`. Candle dihitung hanya bila candle telah benar-benar tutup; hari libur/akhir pekan tidak membuat bar fiktif. Batas waktu UTC tetap berjalan ketika pasar tutup.
+- Trigger timeout adalah *niat untuk keluar*, bukan bukti fill. Jika deadline bertepatan dengan pasar tutup, tanpa quote valid, atau data GAP, catat `EXIT_PENDING_NO_QUOTE`/status data yang valid; jangan menciptakan harga penutupan atau profit. Eksekusi simulasi hanya bila bid/ask eksekutabel berikutnya benar-benar tersedia; gap dan slippage harus tercermin dalam hasil.
+- Broker `quote/trade sessions` harus dibuktikan per simbol/server, termasuk DST dan hari libur. Opsi *pra-tutup* (misal 15 menit sebelum akhir quote session) belum disetujui. Jika evidence sesi belum tersedia, uji jadwal dengan fixture tetapi jangan mengklaim perlindungan sesi siap di trading nyata. Jangan menggunakan jeda D9 buatan untuk memperbaiki angka hasil.
+- Jika stop, TP, atau exit waktu bertabrakan, penentu adalah urutan event tick terverifikasi; ketika OHLC tidak menjelaskan kejadian dalam bar yang sama, gunakan asumsi konservatif yang dibekukan atau `BLOCKED_UNRESOLVED_INTRABAR`. Tidak boleh memilih outcome terbaik pasca-fakta. Wajib uji reverse replay, gap, dan event tie.
+- Semua variasi batas candle, menit, pre-close, dan perlakuan weekend menjadi ID hipotesis baru jika berubah setelah baseline. Tidak ada revisi berdasarkan hasil holdout; data Stage 0 forward tidak dijadikan data tuning.
+- Sesi pasar harus aman: bila posisi tidak bisa keluar sebelum quote berhenti, status risiko terbuka tidak dipalsukan menjadi flat. Risk Governor, LIVE OFF dan zero orders tidak berubah.
+
+**Masih perlu keputusan Owner:**
+1. Apakah angka 12 M5/90 menit (sweep), 12 M15/240 menit (pullback), 24 M5/180 menit (breakout) diterima sebagai *parameter awal*, atau diubah sebelum freeze?
+2. Apakah *pra-penutupan* diterapkan 15 menit sebelum sesi quote resmi per simbol, dan apakah melarang entry baru pada jendela itu?
+3. Jika sesi broker resmi belum terbukti, apakah pengujian baseline sementara ditandai `BLOCKED_SESSION_EVIDENCE` (rekomendasi), alih-alih menebak jadwal?
+
+**Status:** `HYBRID_TIME_EXIT_APPROVED`, `TIME_CAPS_NOT_FROZEN`, `SESSION_CLOSE_NOT_VERIFIED`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
+
 #### AGENDA D10-K11 — TIME EXIT (USULAN, BELUM DIPUTUSKAN)
 
 Exit waktu menjadi batas maksimum holding bila TP struktural dan SL tidak tersentuh. Opsi: (1) N candle tertutup berdasarkan TF entry, (2) batas jam nyata, atau (3) kombinasi keduanya. Semua membutuhkan definisi praregistrasi, data waktu yang benar, dan model eksekusi bid/ask/biaya. TP/SL yang lebih dahulu tersentuh mengakhiri trade; jangan gunakan informasi setelah waktu kejadian untuk memilih exit yang terbaik. Usulan N awal untuk pembahasan: B1/S1 = 12 M5; B2/S2 = 12 M15; B3/S3 = 24 M5. Angka belum disetujui dan bukan hasil optimasi. Perlu putuskan penghitungan jeda pasar, akhir pekan, ketentuan flat menjelang tutup sesi, dan apakah variasi N dicatat sebagai eksperimen baru.
