@@ -71,7 +71,7 @@ Owner secara eksplisit menyetujui semua aturan ini pada 5 Nov 2026 WIB, **sebelu
 
 | Item | Yang harus ditetapkan sebelum code/spec freeze | Owner status |
 |---|---|---|
-| Zona beririsan yang tidak terpilih | Apakah semua zona tersentuh menjadi `CONSUMED` atau statusnya mengikuti episode terpisah, dengan jaminan satu event tidak menggandakan entry | **PENDING** |
+| Zona beririsan yang tidak terpilih | Semua zona lain yang sama-sama first-touched → `CONSUMED_OVERLAP_NOT_SELECTED`, hanya terpilih menjalani satu konfirmasi M15 | **APPROVED D10-K25** |
 | Prioritas event tepat boundary H1/M15/M5 | Secara eksplisit tetapkan ordering causal close-bar update, FIRST_TOUCH, SIGNAL_KNOWN, ENTRY_INTENT, dan tick execution sehingga tidak double-fill | **PENDING fixture** |
 | Tick data quality | Cara memvalidasi quote duplicate, hole/gap, late/out-of-order, ketepatan timestamp dan sumber broker terhadap hasil; tidak memilih threshold dengan melihat profit | **PENDING dataset evidence** |
 | Model order broker | Laporan stop-level/freeze, mekanisme trigger SL/TP vs harga fill dan slippage waktu gap, swap, trade halt; tidak mengarang fill | **PENDING contract evidence** |
@@ -90,6 +90,31 @@ Owner secara eksplisit menyetujui semua aturan ini pada 5 Nov 2026 WIB, **sebelu
 | Data asli dan sesi broker | Bukti sesi resmi `SymbolInfoSessionQuote`/`SymbolInfoSessionTrade` belum tersedia; tick stream historis development yang dapat diaudit dan costs hash belum ditunjukkan | **Blocked for verified full research** |
 
 **Gate implementation readiness:** `CONTRACT_CORE_DEFINED` dan `ACCEPTANCE_CRITERIA_DRAFTED`, tetapi `IMPLEMENTATION_NOT_STARTED`, `REAL_DATA_NOT_VERIFIED`, `SESSION_EVIDENCE_MISSING`. Tahap yang mungkin selanjutnya adalah membuat **branch riset terisolasi dan fixture synthetic-only** setelah rencana kerja/otorisasi yang jelas; ini tidak sama dengan pengujian profitabilitas. **Tidak ada izin untuk menyentuh source produksi, VPS observer, MT5 trading, registry, atau holdout**.
+
+## 2C. Keputusan D10-K25 — first visit zona beririsan (OWNER APPROVED, 5 Nov 2026 WIB)
+
+**Keputusan Owner:** bila satu tick BID pertama secara bersamaan menyentuh beberapa zona H1 yang masih eligible dan FRESH, **semua zona yang tersentuh menghabiskan kesempatan first visit**. Zona prioritas dipilih menurut D10-K24: jarak BID ke proximal edge paling dekat; tie `zone_confirmed_at` terbaru, lalu stable `zone_id`.
+
+**Transisi deterministik yang wajib diwujudkan di simulator offline:**
+1. Tick first-touch terverifikasi menghasilkan satu `touch_event_id`, satu `selected_zone_id` dan daftar `all_touched_zone_ids` dari kumpulan zona eligible **pada tick itu**, tanpa informasi masa depan.
+2. Zona terpilih → `FIRST_VISIT_PENDING_M15`. **Semua zona lain yang sama-sama baru tersentuh → `CONSUMED` seketika**, reason `CONSUMED_OVERLAP_NOT_SELECTED`. Zona yang tidak tersentuh tetap `FRESH` jika valid.
+3. **Hanya zona prioritas** yang boleh menghasilkan `ENTRY_INTENT`, setelah satu candle M15 yang memuat first touch (interval `[open_utc,close_utc)`) ditutup dan memenuhi konfirmasi. Pada akhir episode, zona terpilih juga → `CONSUMED`, baik terjadi entry maupun sinyal gagal. Tidak boleh mencoba zona overlap lain sebagai fallback.
+4. Bila terjadi intrabar breach distal+buffer sebelum konfirmasi, blokir entry langsung, catat breach; setelah H1 close tentukan status `INVALID` atau `CONSUMED` sesuai D10-K9/K10; tidak kembali `FRESH`.
+5. Jika tick/urutannya tidak dapat membuktikan event bersama, `BLOCKED_INTRABAR_ORDER` atau `BLOCKED_DATA_EVIDENCE`; **jangan** menciptakan first touch atau memutasi lifecycle atas event yang belum pasti. Catat `source_tick_id,touch_event_id,all_touched_zone_ids,selected_zone_id,consumed_zone_ids,bid,event_at_utc,reason_code`.
+6. Zona yang disentuh pada **tick berbeda** dievaluasi mengikuti episode masing-masing; satu posisi aktif per kandidat tetap berlaku dan keenam kandidat dinilai terpisah.
+
+### 2C.1 Status kontrak dan implementasi
+
+| Lingkup | Status |
+|---|---|
+| D10-K1–D10-K25: aturan inti sinyal, swing TTL, SL/TP, zona, time-exit, BID/ASK dan event ordering | **DESAIN INTI DISETUJUI** |
+| Perilaku zona overlap yang tak dipilih | **DITETAPKAN D10-K25**; tambah fixture overlap ke T03 dan T10 |
+| Algoritme/prasyarat order broker, stop/freeze, slippage gap, replay tick out-of-order, timestamp dan DST | **PENDING VERIFIKASI INPUT & UNIT TEST**; tidak boleh mengarang fill |
+| Dev dataset pre-13 Okt 2026, manifest/hashes/clock, `costs.json`, `split.json`, official MT5 sessions | **BELUM TERBUKTI** |
+| Source simulator tick replay sesuai semua enam hipotesis | **BELUM DIIMPLEMENTASIKAN**; kode `main` masih OHLC+target RR |
+| Preregistration, backtest development, akses holdout, demo/live | **BELUM DIOTORISASI** |
+
+**Kesimpulan:** `SPEC_CORE_FINALIZED` / `OFFLINE_SYNTHETIC_ENGINE_REQUIREMENTS_READY` / `G6_DATA_UNVERIFIED` / `G7_SESSION_BLOCKED` / `G8_ENGINE_NOT_IMPLEMENTED` / `REGISTRY_NOT_WRITTEN` / `NO_BACKTEST` / `LIVE_OFF`.
 
 ## 3. G8 — Gap kode simulator nyata di `main` (audit read-only)
 
@@ -131,4 +156,4 @@ Owner secara eksplisit menyetujui semua aturan ini pada 5 Nov 2026 WIB, **sebelu
 
 ## 5. Status
 
-`D10-K22_ZONE_BASELINE_APPROVED` · `D10-K23_TICK_REPLAY_APPROVED` · `D10-K24_EVENT_BOUNDARIES_APPROVED` · `G3_CORE_APPROVED` · `G4_CORE_APPROVED_TECHNICAL_DETAILS_PENDING` · `G6_DATA_COST_UNVERIFIED` · `G7_OFFICIAL_BROKER_SESSIONS_MISSING` · `G8_SIMULATOR_NOT_IMPLEMENTED` · `NO_BACKTEST` · `REGISTRY_NOT_WRITTEN` · `HOLDOUT_LOCKED` · `LIVE_OFF`.
+`D10-K22_ZONE_BASELINE_APPROVED` · `D10-K23_TICK_REPLAY_APPROVED` · `D10-K24_EVENT_BOUNDARIES_APPROVED` · `D10-K25_OVERLAP_CONSUMED_APPROVED` · `G3_CORE_APPROVED` · `G4_CORE_APPROVED_TECHNICAL_DETAILS_PENDING` · `G6_DATA_COST_UNVERIFIED` · `G7_OFFICIAL_BROKER_SESSIONS_MISSING` · `G8_SIMULATOR_NOT_IMPLEMENTED` · `NO_BACKTEST` · `REGISTRY_NOT_WRITTEN` · `HOLDOUT_LOCKED` · `LIVE_OFF`.
