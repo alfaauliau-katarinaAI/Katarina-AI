@@ -51,6 +51,23 @@ class RuntimeImportMapTest(unittest.TestCase):
         self.assertEqual(modules["katarina.stage11"]["category"], "A")
         self.assertIn("ops", modules["katarina.stage11"]["via"])
 
+    def test_analysis_tools_naming_modules_as_data_do_not_make_them_reachable(self):
+        """Regression: module names held as data by analysis tools (allowlists, the map's own
+        BRAIN_CAPABILITIES list) once made unused modules look used; their script paths still count."""
+        modules = self.build({
+            "src/katarina/__init__.py": "",
+            "src/katarina/" + "ports/__init__" + ".py": "",
+            "src/katarina/lab.py": "",
+            # Names are split so this test file itself does not mention the real contract package.
+            "scripts/governance/safe_cleanup.py": 'KEEP = {"katarina.' + 'ports", "katarina.' + 'lab"}\n',
+            "scripts/governance/code_change_gate.py": 'RUN = ["scripts/governance/audit_x.py"]\n',
+            "scripts/governance/audit_x.py": "import katarina.lab\n",
+            ".github/workflows/ci.yml": "run: python scripts/governance/safe_cleanup.py && "
+                                        "python scripts/governance/code_change_gate.py\n",
+        })
+        self.assertEqual(modules["katarina." + "ports"]["category"], "D")
+        self.assertEqual(modules["katarina.lab"]["category"], "A")  # reached through the real subprocess path
+
 
 if __name__ == "__main__":
     unittest.main()
