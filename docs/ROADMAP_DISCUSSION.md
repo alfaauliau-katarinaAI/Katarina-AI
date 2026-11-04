@@ -452,6 +452,22 @@ Owner menyetujui parameter struktur untuk keenam kandidat XAUUSD sebagai **basel
 
 **Klarifikasi status:** klausul angka 96/72 dan invalidasi/TP yang tertulis sebagai *usulan* di bawah pada bagian D10-K20 **sudah disetujui dan digantikan oleh keputusan D10-K21 ini**. `D10-K21_APPROVED`, `ZONE_ORIGIN_PENDING`, `REGISTRY_NOT_WRITTEN`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
 
+#### KEPUTUSAN D10-K26 — Verifikasi bukti broker/data/host SEBELUM coding simulator offline (Owner SETUJU, 5 Nov 2026 WIB)
+
+Owner **memilih opsi B**: lakukan verifikasi **tick historis, biaya dan spesifikasi broker, sesi MT5 quote/trade, dan isolasi lingkungan penelitian** sebelum memberikan izin membuat simulator offline. Keputusan ini tidak memberi izin otomatis menjalankan script MT5, mengambil arsip production observer, mengakses VPS, coding emulator/simulator, membuka holdout, atau melakukan backtest P/L.
+
+**Audit read-only repo telah dilakukan dan hasilnya disimpan ke:** [D10_K26_EVIDENCE_FIRST_AUDIT_20261105.md](research/D10_K26_EVIDENCE_FIRST_AUDIT_20261105.md).
+- **Tick**: `docs/maintenance/MT5_SESSION_MAP_20261104.md` mencatat arsip tick observer produksi dengan rentang audit akhir Okt–awal Nov 2026; **bukan** dataset development terbukti, dan contoh tanggal tersebut **sesudah dev cutoff 13 Okt 2026 UTC**. Belum ada manifest/hash/source tick BID+ASK dan clock proof valid untuk rentang sebelum cutoff.
+- **Tooling data**: `src/katarina/research/dev_dataset.py` memiliki loader/export bar M5/M15/H1/H4 dan hash/cutoff; **tidak membuktikan pipeline tick replay** yang diputuskan D10-K23.
+- **Costs & contract**: `docs/research/VALIDATION_PROTOCOL.md` memuat rumus spread/komisi/slippage/swap, sensitivitas 1.5/2x, dan `costs.json`, namun **nilai broker nyata belum diverifikasi**. `symbol_info` untuk `point`, `trade_tick_size`, `trade_contract_size` ada dalam kode bar metadata; bukti aktual `stops_level`, `freeze`, `swap`, `volume` untuk XAUUSD.vx tidak diterima/diaudit.
+- **Sessions**: `KatarinaBrokerSessionProbe.mq5` selesai syntax/compile staging, tetapi **belum dijalankan** untuk `SymbolInfoSessionQuote` dan `SymbolInfoSessionTrade` di terminal produksi. Gap tick empiris **bukan** bukti sesi resmi, dan perlu verifikasi DST/holiday.
+- **Host**: `scripts/research/export_dev_bars.py` hanya mengizinkan **research terminal terisolasi** dengan marker `ISOLATED_RESEARCH_ONLY`, AutoTrading OFF, tanpa EA/observer, dan melarang VPS produksi; bukti bahwa host seperti itu telah disiapkan **belum tersedia**. Tidak ada akses remote untuk audit ini.
+- **Pemisahan**: `split.json`, `costs.json`, manifest hash, clock evidence, dan izin host yang konkret belum diobservasi. Holdout program tetap terkunci.
+
+**P0 evidence gates** (lihat audit rinci): E1 tick historis dev dengan source hash+clock+sequence; E2 symbol & fees snapshot broker + `costs.json`; E3 official session Quote/Trade+holiday/DST; E4 isolated research host; E5 split/manifest cost & data lineage. Hasil audit sampai ini adalah **VERIFIED_TOOLING, MISSING/UNVERIFIED_REAL_EVIDENCE**, bukan "sudah selesai verifikasi broker".
+
+**Keputusan manajemen:** tahan `G8_SIMULATOR_CODING` sampai bukti E1–E5 ditinjau dan ada **otorisasi Owner terpisah** untuk coding. Pengumpulan official session pada MT5 produksi memerlukan **izin eksplisit terpisah**, dan raw log akun/broker tidak diunggah ke repo. `NO_CODING`, `NO_BACKTEST`, `REGISTRY_NOT_WRITTEN`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
+
 #### KEPUTUSAN D10-K25 — Zona overlap simultaneous first-touch hanya satu prioritas, semua touched dikonsumsi (Owner SETUJU, 5 November 2026 WIB)
 
 Owner secara eksplisit memilih opsi A: pada satu BID tick yang pertama kali menyentuh beberapa zona H1 fresh/eligible, seluruh zona yang baru tersentuh **menghabiskan first visit**. Pilih hanya satu zona sinyal berdasar urutan D10-K24 (proximal BID terdekat; newer confirmed_at; stable zone_id). Semua zona lainnya yang ikut touched → **`CONSUMED` seketika**, reason `CONSUMED_OVERLAP_NOT_SELECTED`. Zona prioritas menjalani satu candle M15 tempat first touch; setelah evaluasi/invalidasi statusnya `CONSUMED` atau `INVALID`, dan tidak boleh berpindah ke zona yang tadi kalah. **Zona yang tidak tersentuh tetap FRESH** sampai syarat lain membatalkannya. Jangan memperlakukan tick ambigu sebagai bukti first touch (D10-K23/K24).
