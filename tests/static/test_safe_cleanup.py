@@ -33,9 +33,9 @@ def snapshot(root: Path) -> dict:
         for name in filenames:
             path = Path(dirpath) / name
             if path.is_symlink():
-                out[str(path.relative_to(root))] = "LINK"
+                out[path.relative_to(root).as_posix()] = "LINK"
             else:
-                out[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
+                out[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
     return out
 
 
