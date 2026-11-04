@@ -401,6 +401,28 @@ Owner menolak **filter minimum risk-to-reward** untuk keenam kandidat. Setiap si
 
 **Status:** `NO_MIN_RR_APPROVED` / `STRUCTURAL_TARGET_ONLY_APPROVED` / `SWING_ZONE_BUFFER_UNDECIDED` / `NO_BACKTEST_AUTHORIZED_YET` / `LIVE_OFF`.
 
+#### KEPUTUSAN D10-K7 — Swing fractal 2 kiri + 2 kanan (Owner SETUJU, rapat 4 November 2026)
+
+Owner memilih definisi **swing high/low dengan 2 candle tertutup di kiri dan 2 candle tertutup di kanan** untuk rancangan keenam kandidat BUY/SELL. Pivot valid **baru setelah candle kedua di kanan ditutup**; `confirmed_at` tidak boleh diberi timestamp candle pivot, dan level tidak boleh dipakai pada candle sebelum konfirmasi. Untuk tie/equal highs/lows, usulan awal **strict comparison** (nilai sama bukan swing) agar deterministik. Definisi swing ini sudah disetujui sebagai desain; implementasi, tes, registrasi hipotesis dan backtest **belum dilakukan**.
+
+#### Agenda D10-K8 — Fresh demand/supply, invalidasi, dan buffer SL (USULAN; BELUM DIPUTUSKAN)
+
+**Rancangan mekanisme zona yang dapat diuji** untuk B2/S2 pada H1:
+1. `demand`: candle bearish terakhir yang telah selesai sebelum dorongan bullish dengan **close H1 di atas swing high H1 yang sudah confirmed**. `supply`: candle bullish terakhir sebelum dorongan bearish dengan **close H1 di bawah confirmed swing low**. Candle asal harus sudah selesai; zona **full wick high-to-low** dari candle asal untuk baseline; timestamp `zone_origin_at`, `zone_confirmed_at` (break of structure), `swing_confirmed_at` dicatat.
+2. **Fresh**: sejak `zone_confirmed_at` hingga pertama kali harga kembali memasuki zona, belum ada bar/tick **setelah konfirmasi** yang menyentuh batas zona. Sentuhan pertama membuat status `FIRST_TOUCH`; konfirmasi entry dalam episode kunjungan pertama ini boleh, dan saat entry selesai status `CONSUMED`. Kunjungan berikutnya tidak fresh, tidak memunculkan sinyal kandidat yang sama. Riwayat sebelum confirmation tidak boleh digunakan retroaktif untuk membuat zona tampak lebih fresh.
+3. **Kedaluwarsa**: batas maksimum usia zona H1 yang diputuskan sebelum tes, usulan **48 candle H1 tertutup** sejak konfirmasi; setelahnya `EXPIRED`. Bila banyak zona, pilih eligible yang paling dekat terhadap harga, dengan tie-break `zone_confirmed_at` lalu `zone_id`, keduanya konsisten. Ini usulan bukan angka terbukti.
+4. **Invalidasi pra-entry**: usulan `close` H1 yang sudah selesai **di luar distal boundary** (demand: close di bawah `zone_low`; supply: close di atas `zone_high`), atau bukti tick menembus batas SL struktural yang telah dihitung pada saat sinyal. Satu close di luar distal boundary membuat `INVALID`, tidak bisa dipakai ulang. Jangan menunggu bar H1 yang belum tertutup untuk memutuskan; bila ada harga bergerak menembus stop pada bar belum tertutup, perlakukan dengan manajemen risiko fail-safe, bukan menyatakan zona belum invalid.
+5. Untuk sinyal `B1/S1` sweep dan `B3/S3` breakout-retest, invalidasi tetap memakai **ekstrem sweep atau ekstrem retest yang sudah diketahui**. Fresh zone supply/demand H1 **tidak otomatis menjadi syarat** keenam strategi: hanya digunakan jika tercatat dalam definisi hipotesis tertentu.
+
+**Proposal buffer SL** (belum diputuskan, jangan dianggap nilai optimal):
+- `ATR14` memakai candle TF entry **yang sudah ditutup sebelum keputusan** (M5 atau M15). `spread_at_decision` dari bid/ask broker, `tick_size` dari spesifikasi symbol yang diverifikasi.
+- `buffer = ceil_to_tick(max(1*tick_size, spread_at_decision, 0.15 * ATR14))` untuk eksperimen baseline **jika Owner menyetujui k=0.15**, dengan pembulatan menjauh dari entry (BUY SL ke bawah, SELL SL ke atas). Definisi ATR dan pembulatan harus diuji dengan fixture deterministik; buffer mengubah SL/risiko, bukan target struktural. Jangan mengganti `k` setelah melihat hasil; bila mengganti => hipotesis baru, hitung semua attempts.
+- Usulan perbandingan: `k=0.10` (lebih rapat) atau `k=0.20` (lebih longgar) adalah **alternatif pilihan sebelum backtest**, bukan sweep parameter saat memilih hasil; masing-masing jika diuji harus diregistrasikan sebagai hipotesis tambahan.
+- Stop invalid, nol/negatif, atau tidak dapat diletakkan karena batas broker => `WAIT` dengan reason, bukan SL fiktif atau memindahkan stop diam-diam.
+- **Tanpa minimum RR**, sesuai D10-K6; jangan memasukkan filter RR lewat kriteria lain. TP harus valid secara geometri dan kausal; hasil net setelah biaya dilaporkan meskipun negatif.
+
+**Keputusan terbuka untuk Owner:** (A) fresh=kunjungan pertama saja + full-wick zone + kadaluarsa 48 H1, (B) invalidasi zona dengan close H1 di luar distal boundary, dan (C) buffer `max(tick, spread, 0.15×ATR14)`, atau minta revisi angka/definisi sebelum freeze. **Saat ini baru definisi swing 2+2 yang disetujui**, tiga komponen lain masih usulan. `NO_BACKTEST_YET`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
+
 #### A. Bukti yang disepakati untuk tiap hari
 
 Sumber fakta tetap ledger SQLite observer read-only dan arsip tick broker, bukan ringkasan chat. Gunakan satu ID dan cutoff yang direkam (saat ini `2026-11-03T15:18:14Z` pasca-WP13; pengecualian DST-aware D8 baru efektif `2026-11-05T00:00:00Z`). Simpan kedua tanggal secara terpisah dan hindari retroaktif.
