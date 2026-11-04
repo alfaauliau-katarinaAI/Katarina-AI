@@ -426,6 +426,25 @@ Owner telah menyetujui:
 - **Buffer yang telah dipilih:** max(tick size, spread, 0,10 x ATR14), memakai data saat keputusan; swing 2 kiri + 2 kanan, tanpa minimum RR dan TP struktural.
 - Berlaku sebagai **spesifikasi riset**, bukan izin mengubah runtime, menguji holdout, atau menyalakan trading. Parameter time exit masih dibahas; seluruh desain harus dicatat sebelum backtest.
 
+#### KEPUTUSAN D10-K15 — Sweep/reclaim satu candle M5 B1/S1 (Owner SETUJU)
+
+Owner secara eksplisit memilih **sweep dan reclaim harus terjadi dalam candle M5 yang sama** untuk B1 BUY / S1 SELL. Sumber swing menggunakan **M15 pivot 2 kiri + 2 kanan**, dan pivot harus terkonfirmasi sebelum candle M5 yang menjadi sinyal dimulai; tidak boleh menentukan swing dari bar kanan yang belum tertutup.
+
+- **B1 BUY:** M5 low < confirmed M15 swing low; M5 close > swing low dan M5 close > M5 open. **S1 SELL:** M5 high > confirmed M15 swing high; M5 close < swing high dan M5 close < M5 open. Sweep dan close harus terjadi dalam satu candle M5 yang telah selesai. Entry disimulasikan memakai quote eksekutabel berikutnya, SL ekstrem sweep + buffer D10-K8a, TP struktur berlawanan yang telah confirmed sebelum entry.
+- **Batas minimum penetrasi sweep 1 tick masih PROPOSAL, bukan keputusan Owner.** Sama halnya dengan umur swing, urutan memilih beberapa swing, konflik candle dan posisi bertumpuk; seluruhnya harus ditentukan sebelum preregistration.
+- Time exit B1/S1: 12 M5/90m/pra-tutup 15m telah dipilih D10-K14; tanpa minimum RR, TP struktural dan persetujuan terpisah bagi eksekusi nyata tetap.
+
+#### AGENDA D10-K16 — Tren H1 dan konfirmasi M15 B2/S2 (BELUM DIPUTUSKAN)
+
+Rekomendasi desain yang dapat dibuat deterministik tanpa mengoptimalkan hasil:
+1. **Tren H1 berbasis struktur:** B2 BUY hanya jika **dua swing high terkonfirmasi terakhir** dan **dua swing low terkonfirmasi terakhir** meningkat secara ketat (HH+HL); S2 SELL jika keduanya menurun (LH+LL). Masing-masing swing H1 memakai pivot 2 kiri/2 kanan dan *confirmed_at* dua bar H1 setelah pivot. Selain itu WAIT:TREND_UNCONFIRMED. Ini opsi A rekomendasi; EMA50/200 atau kombinasi EMA hanya alternatif yang harus ditetapkan sebelum uji.
+2. **Zona H1:** pakai first-visit full-wick 48 valid H1 dan hybrid breach D10-K9/K10; `zone_confirmed_at` harus mendahului kunjungan; jika quote intrabar melewati distal+buffer saat mencari entry, blokir; jika H1 close di luar distal INVALID, jika kembali ke dalam CONSUMED. Satu episode kunjungan, bukan jumlah sentuh tick. Pilih satu zona eligible dengan aturan prioritas deterministik sebelum tes.
+3. **Konfirmasi M15 proposed baseline:** pada episode sentuhan pertama, satu candle M15 tertutup berwarna searah yang **berawal/menyentuh zona dan close melewati proximal edge keluar di arah tren** (BUY close > zone_high; SELL close < zone_low); tidak memerlukan engulfing atau indikator masa depan. Candle harus benar-benar ditutup ketika zona masih eligible dan belum breach; entry pada quote berikut. Alternatif: engulfing M15 atau break high/low sebelumnya—masing-masing hipotesis berbeda jika dibandingkan.
+4. **Risk & exit:** SL BUY di bawah zone_low atau low pembentuk struktur yang sudah ditentukan, SL SELL di atas zone_high (buffer min tick/spread, 0.10×ATR14 M15); TP struktur H1 valid terdekat pada sisi profit, tanpa minimum RR; Time Exit 12 M15 / 240m / pra-tutup 30m sesuai keputusan.
+5. **Bukan keputusan final:** aturan terakhir ini merupakan proposal untuk Owner. Belum di-freeze, belum didaftarkan, belum digunakan untuk backtest. Parameter zone origin tie-break, jam entry/quote sesi sah, ATR history/gaps, level TTL lain, dan harga tick vs OHLC perlu fixture.
+
+Kandidat B3/S3 akan dibahas setelah pilihan aturan B2/S2. `B1_S1_ONE_BAR_RECLAIM_APPROVED`, `B2_S2_TREND_CONFIRM_PENDING`, `PREREGISTRATION_NOT_READY`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
+
 #### KEPUTUSAN D10-K14 — Hybrid Time Exit batas candle dan UTC disetujui; audit preregistration (Owner, rapat 4 Nov 2026)
 
 Owner menyetujui **baseline awal** untuk enam hipotesis XAUUSD:
