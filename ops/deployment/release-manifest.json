@@ -240,6 +240,11 @@
       "normalized_sha256": "dc744cf5e5439fe8c826607d9e057af5fa26db8a74ca4fac7942b899e66c4845",
       "sha256": "dc744cf5e5439fe8c826607d9e057af5fa26db8a74ca4fac7942b899e66c4845"
     },
+    "scripts/ai/wp6_startup_preflight.py": {
+      "bytes": 3276,
+      "normalized_sha256": "b42b19bd74c1a864cbf3c9972a2130f6ac62f4d2b3ada9b49686955f5dbe71e9",
+      "sha256": "b42b19bd74c1a864cbf3c9972a2130f6ac62f4d2b3ada9b49686955f5dbe71e9"
+    },
     "scripts/deployment/export_website_repo.py": {
       "bytes": 3728,
       "normalized_sha256": "f2a8484106699e08e764cf93cb4eceedbd7bb61377da9a04b9dc7d61ed2648a5",
@@ -1104,6 +1109,11 @@
       "bytes": 7069,
       "normalized_sha256": "3e0048d13e4f6a03993f6701a658b8e1f7ca08745cd91f7d2c5f765392970502",
       "sha256": "3e0048d13e4f6a03993f6701a658b8e1f7ca08745cd91f7d2c5f765392970502"
+    },
+    "src/katarina/intelligence/operations/startup_task.py": {
+      "bytes": 6912,
+      "normalized_sha256": "ffd070318e59c0ca7fc9305753657760760c558b6b34a7ec3cce28c39a43f2d8",
+      "sha256": "ffd070318e59c0ca7fc9305753657760760c558b6b34a7ec3cce28c39a43f2d8"
     },
     "src/katarina/intelligence/perception/__init__.py": {
       "bytes": 79,

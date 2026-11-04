@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — WP6-PREFLIGHT: kesiapan observer setelah reboot (belum diterapkan)
+
+- Launcher produksi `run-observer.ps1` kini diversikan di `ops/windows/` (commit baseline byte-identik dengan VPS). Commit berikutnya menangani `AbandonedMutexException` supaya launcher yang mati saat reboot tidak membuat start pertama gagal.
+- `src/katarina/intelligence/operations/startup_task.py` + `scripts/ai/wp6_startup_preflight.py` (baca-saja; `--live` di Windows): menilai task XML, launcher dan status autologon dengan reason code `WP6_*` dan verdict `READY_AFTER_REBOOT`/`NOT_READY`/`BLOCKED_EVIDENCE`. Produksi hari ini: NOT_READY (`WP6_NO_AUTOLOGON`).
+- Usulan definisi task `ops/windows/observer-task.autologon.xml` dan `ops/windows/wp6_apply_observer_startup.ps1`: dry-run default; dengan `-Apply` melakukan backup + hash, mendaftarkan task, memverifikasi, dan memulihkan bila gagal; tersedia `-Rollback`. Panduan: `docs/operations/WP6_OBSERVER_STARTUP.md`. Task aktif dan VPS tidak diubah; LIVE tetap OFF.
+
 ## 2026-11-04 — perapian E1: gate akhir dan status codebase
 
 - Dokumen canonical diperbarui: RH-012 (`docs/REPAIR_HISTORY.md`), baris codebase/PR/blocker di `docs/PROJECT_STATUS.md`, ledger E1 (gate, inventaris VPS/branch, keputusan `CODEBASE_CLEAN_BUT_STAGE_GATE_BLOCKED`), peta modul dibuat ulang. Tanpa perubahan kode; LIVE tetap OFF.

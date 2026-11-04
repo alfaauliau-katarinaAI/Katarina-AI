@@ -3,6 +3,7 @@
 # Refuses to start until MT5 is installed/logged in and the private connection config exists.
 # WP6: when C:\Katarina\private\observer_universe.json exists, the observer watches exactly its core symbols
 # every cycle (--universe); delete or rename that file to return to the previous 3-symbol default.
+# Versioned copy: ops/windows/run-observer.ps1 (deploy only with Owner approval; see docs/operations/WP6_OBSERVER_STARTUP.md).
 $ErrorActionPreference = 'Stop'
 $code     = 'C:\Katarina\code'
 $state    = 'C:\Katarina\state\readonly-observer'
@@ -28,7 +29,12 @@ $extra = @()
 if (Test-Path $universe) { $extra = @('--universe', $universe) }
 
 $mutex = New-Object System.Threading.Mutex($false, 'Global\KatarinaReadonlyObserver')
-if (-not $mutex.WaitOne(0)) { Write-Log 'already running; exit'; exit 0 }
+# WP6: a launcher killed by a reboot/crash leaves the mutex abandoned. WaitOne then throws
+# AbandonedMutexException although this process now owns it; without this catch the start fails
+# (ErrorActionPreference=Stop) and the observer stays down until RestartOnFailure retries.
+try { $owned = $mutex.WaitOne(0) }
+catch [System.Threading.AbandonedMutexException] { $owned = $true; Write-Log 'previous launcher ended without releasing the mutex; recovered' }
+if (-not $owned) { Write-Log 'already running; exit'; exit 0 }
 try {
     $env:PYTHONPATH = Join-Path $code 'src'
     $env:KATARINA_STATE_DIR = $state

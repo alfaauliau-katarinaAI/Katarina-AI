@@ -14,7 +14,7 @@ Severity mengikuti area sumber: **P0** = risk, eksekusi, broker/jam/identitas, a
 **P1** = observer/kognisi, operasi Tahap 0, persistence/memory, demo/shadow, script runtime; **P2** = riset, lab, berita, monitoring, tooling.
 Pesan exception mentah tidak dicatat (hanya kode/tipe) agar kredensial tidak bocor.
 
-Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
+Ringkasan: 555 kode — P0 101, P1 244, P2 210; 190 disebut di tes, 365 belum.
 
 | Kode | Sev | Area | Sumber | Tes |
 |---|---|---|---|---|
@@ -155,7 +155,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `CLOCK_EVIDENCE_MISSING_FOR_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:878`<br>`src/katarina/intelligence/operations/data_health.py:878` | — |
 | `CLOUD_RATE_LIMITED` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:152`<br>`scripts/ai/hf_archive_sync.py:164` | `tests/unit/test_hf_archive_sync.py` |
 | `CONFIG_MUST_LIVE_IN_PRIVATE_BASE` | P1 | scripts/ai | `scripts/ai/run_hf_archive_sync.py:18` | — |
-| `CONTEXTUAL_OBSERVER_ALREADY_RUNNING` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/observer.py:70` | — |
+| `CONTEXTUAL_OBSERVER_ALREADY_RUNNING` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/observer.py:70` | `tests/unit/operations/test_wp6_startup.py` |
 | `CONTEXT_DB_NOT_FOUND` | P1 | scripts/ai | `scripts/ai/diagnose_stage0_cutoff.py:166` | — |
 | `CORE_SYMBOL_UNAVAILABLE` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/observer.py:374` | `tests/integration/test_wp1_observer_universe.py` |
 | `CREDENTIAL_PERMISSIONS_REQUIRED` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:51` | `tests/unit/test_hf_portable_deployment.py` |
@@ -347,6 +347,21 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `VOLUME_OUT_OF_RANGE` | P1 | validation.engine | `src/katarina/validation/engine.py:953` | `tests/unit/validation/test_stage08_state_semantics.py` |
 | `VPS_PUBLIC_KEY_MISMATCH` | P1 | scripts/ai | `scripts/ai/seal_hf_secret.py:11` | — |
 | `WAITING_CLOUD_RATE_LIMIT` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:83` | `tests/unit/test_hf_archive_sync.py` |
+| `WP6_ACTION_NOT_CANONICAL_LAUNCHER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:69` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_AUTOLOGON_STATE_UNKNOWN` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:103` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_AUTOLOGON_USER_MISMATCH` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:107` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_BATTERY_POLICY_CAN_STOP` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:83` | — |
+| `WP6_EXECUTION_TIME_LIMIT` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:75` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_LAUNCHER_ABANDONED_MUTEX_NOT_HANDLED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:91` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_LAUNCHER_NO_SINGLE_INSTANCE_MUTEX` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:87` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_LAUNCHER_NO_STOP_MARKER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:85` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_MULTIPLE_INSTANCES_ALLOWED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:71` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_NO_AUTOLOGON` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:105` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_NO_REBOOT_TRIGGER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:109` | — |
+| `WP6_NO_RESTART_ON_FAILURE` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:80` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_SESSION0_MT5_UNVERIFIED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:97` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_TASK_DISABLED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:65` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_TASK_XML_INVALID` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:53` | `tests/unit/operations/test_wp6_startup.py` |
 | `WRONG_REPOSITORY` | P1 | scripts/ai, scripts/deployment | `scripts/ai/hf_archive_sync.py:408`<br>`scripts/deployment/recover_hf_catalog.py:22` | — |
 | `ABSTAIN_DATA_WITHIN_HISTORICAL_TRAINING` | P2 | scripts/research | `scripts/research/probe_current_market_analogs.py:49` | — |
 | `ABSTAIN_INVALID_OR_MISSING_REGIME` | P2 | scripts/research | `scripts/research/probe_current_market_analogs.py:42` | `tests/unit/intelligence/test_historical_analog_memory.py` |
@@ -363,7 +378,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `BAR_VOLUME_INVALID` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:76`<br>`src/katarina/research/bar_clock_evidence.py:434` | — |
 | `BAR_VOLUME_MISSING` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:412` | — |
 | `BATCH_CROSSES_SEGMENTS_OR_UNVERIFIED` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:299` | — |
-| `BLOCKED_*` | P2 | research.alpha_survival, scripts/research | `scripts/research/audit_private_alpha_holdout.py:36`<br>`src/katarina/research/alpha_survival.py:67`<br>`src/katarina/research/alpha_survival.py:67` | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_brain_owned_workflow.py`<br>`tests/integration/test_continuous_observation.py` (+21) |
+| `BLOCKED_*` | P2 | research.alpha_survival, scripts/research | `scripts/research/audit_private_alpha_holdout.py:36`<br>`src/katarina/research/alpha_survival.py:67`<br>`src/katarina/research/alpha_survival.py:67` | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_brain_owned_workflow.py`<br>`tests/integration/test_continuous_observation.py` (+22) |
 | `BLOCKED_TIMEOUT_OR_RUNTIME` | P2 | scripts/pc | `scripts/pc/run_system_acceptance.py:83` | — |
 | `BROKER_BARS_UNAVAILABLE` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:532` | `tests/unit/research/test_bar_clock_evidence.py` |
 | `BROKER_BAR_CLOCK_NOT_VERIFIED` | P2 | research.dev_dataset | `src/katarina/research/dev_dataset.py:103`<br>`src/katarina/research/dev_dataset.py:106`<br>`src/katarina/research/dev_dataset.py:114`<br>`src/katarina/research/dev_dataset.py:251` | `tests/integration/test_legacy_clock_wp12.py`<br>`tests/static/test_reason_code_index.py`<br>`tests/unit/research/test_dev_dataset_wp8a.py` (+1) |

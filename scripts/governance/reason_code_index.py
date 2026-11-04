@@ -107,7 +107,7 @@ def scan_file(path: str) -> list[tuple[str, int, str]]:
                 if kw.arg in REASON_KEYS or kw.arg in REASON_LIST_KEYS:
                     found += [(c, line, kw.arg) for c, line in _codes(kw.value)]
             name = getattr(node.func, "id", getattr(node.func, "attr", ""))
-            if name in {"rejected", "_reject", "reject", "block", "_block", "fail", "_fail"}:
+            if name in {"rejected", "_reject", "reject", "block", "_block", "fail", "_fail", "_finding", "Finding"}:
                 for arg in node.args[:1]:
                     found += [(c, line, name) for c, line in _codes(arg)]
         elif isinstance(node, ast.Dict):
