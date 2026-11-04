@@ -267,6 +267,30 @@ Owner memilih **Stage 0 dan riset kemampuan trading dijalankan paralel**, dengan
 - **Penanggung jawab:** Yura memeriksa integritas bukti dan scorecard terpisah; Claude mempersiapkan riset offline, test & PR yang aman; Owner memutuskan instrumen pembanding, prioritas kandidat, host riset terpisah, dan izin penilaian/promotion yang relevan.
 - **Status:** `PARALLEL_WORK_APPROVED` / `STAGE0_IN_PROGRESS` / `TRADING_EDGE_UNPROVEN`. PR rapat tidak mengubah produksi atau kriteria.
 
+#### KEPUTUSAN D10-K2 — BUY/SELL dipisah, logika boleh berbeda (Owner SETUJU, rapat 4 Nov 2026)
+
+Owner menyetujui **BUY dan SELL diuji sebagai hipotesis terpisah**; aturan masuk, kondisi pasar, pengelolaan keluar, serta kriteria pembatalan dapat berbeda sesuai bukti. Tidak boleh memaksakan simetri BUY=SELL. Ini keputusan desain riset, **bukan** penerimaan strategi, parameter, kandidat tertentu, atau izin trading.
+
+**Kandidat pembahasan (BELUM disetujui untuk uji final):** mulai dari XAUUSD pada data development historis yang sah, dengan maksimal 5 hipotesis per instrumen per sisi sebagaimana roadmap. Disarankan paket awal 3 BUY dan 3 SELL (semuanya independen dan belum teruji):
+- BUY B1: sweep likuiditas sisi bawah lalu reclaim/rejection yang terkonfirmasi secara kausal, invalidasi di bawah sweep.
+- BUY B2: pullback trend naik menuju area demand/support yang terdefinisi, konfirmasi pembalikan, invalidasi di bawah struktur.
+- BUY B3: breakout resistansi terkonfirmasi body lalu retest bertahan, invalidasi bila kembali ke bawah breakout.
+- SELL S1: sweep likuiditas sisi atas lalu rejection/reclaim ke bawah, invalidasi di atas sweep.
+- SELL S2: pullback trend turun menuju supply/resistance, konfirmasi pelemahan, invalidasi di atas struktur.
+- SELL S3: breakdown support terkonfirmasi body lalu retest gagal, invalidasi bila kembali di atas support.
+
+**Belum menentukan** timeframe, lookback, ambang sweep, ukuran candle/volume, stop/TP, universe pembanding, strategi kandidat yang benar-benar dipilih, ataupun prioritas eksekusi; semuanya harus ditetapkan dan didaftarkan **sebelum mengukur hasil**. Tidak menguji semua variasi parameter gratis: setiap variasi yang berubah = hipotesis baru dan menambah jumlah percobaan.
+
+**Batas validasi yang tidak berubah:**
+1. Hipotesis registry terpisah per `symbol/side/regime/playbook/rules/parameters/code_sha256`; data training/development sebelum cutoff riset; **jangan baca holdout atau gunakan observasi forward Stage 0 untuk optimasi**.
+2. Evaluasi kausal di waktu entry; stop/exit dan biaya broker spread, slippage, komisi, swap ditentukan sebelum pengujian; sensitivity biaya 1,5x/2x.
+3. Walk-forward pengembangan lipatan 28 hari, tiga baseline, expectancy **bersih** > 0 dan mengalahkan baseline; tes determinisme, data gap/no-lookahead dan laporan semua kegagalan.
+4. Gerbang holdout/DEMO kelak: minimal 100 trade holdout, PF net ≥1,2, batas bawah CI 95% >0 setelah koreksi jumlah percobaan, drawdown dalam profil DEMO; pembukaan holdout sekali sesuai governance, **bukan sekarang**.
+5. Tiap sisi melaporkan jumlah trade, expectancy net, PF net, drawdown, winrate, CI, jam/regime, spread/slippage, dan failure reasons terpisah; evaluasi juga risiko korelasi jika suatu saat kedua sisi digabung.
+6. Sampai semua gate dan izin Owner terpenuhi: **Level 0, LIVE OFF, 0 order**. Penelitian offline pada host terpisah jika membutuhkan MT5/data M5 broker; dilarang mengganggu VPS Stage 0.
+
+**Agenda yang masih terbuka:** Owner memilih daftar kandidat awal dan instrumen pembanding; Claude kemudian menyusun pre-registration, prasyarat dataset dan tes mekanisme pada branch/PR review, bukan mengeksekusi trading. **Status: `BUY_SELL_SEPARATE_APPROVED` / `CANDIDATES_UNDECIDED` / `EDGE_UNPROVEN`.**
+
 #### A. Bukti yang disepakati untuk tiap hari
 
 Sumber fakta tetap ledger SQLite observer read-only dan arsip tick broker, bukan ringkasan chat. Gunakan satu ID dan cutoff yang direkam (saat ini `2026-11-03T15:18:14Z` pasca-WP13; pengecualian DST-aware D8 baru efektif `2026-11-05T00:00:00Z`). Simpan kedua tanggal secara terpisah dan hindari retroaktif.
