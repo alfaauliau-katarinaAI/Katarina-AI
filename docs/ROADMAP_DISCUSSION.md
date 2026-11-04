@@ -252,6 +252,58 @@ Koordinasi teknis dan bukti per SHA: [Issue #249](https://github.com/alfaauliau-
 
 **Batas Owner terbaru:** LIVE OFF, zero orders, tanpa deploy VPS atau aktivasi trading. Risk Governor, promotion_lock, holdout dan data/ledger historis tetap. MERGED ≠ DEPLOYED ≠ STAGE0 PASSED. Tidak ada izin operasional tambahan dari closeout ini.
 
+### D10 — RAPAT OWNER: bukti observasi 10 hari bursa (dibuka 4 Nov 2026, Yura)
+
+**Status: DISKUSI TERBUKA; TIDAK ADA perubahan kode, cutoff, atau kelulusan yang disahkan oleh catatan ini.**
+Owner meminta menyelesaikan blocker Stage 0, WP6, sesi broker D9 dan 49 tes error P0, lalu membahas arti bukti 10 hari bursa secara ilmiah. **Tidak boleh menyatakan 10 hari terpenuhi tanpa 10 hari riil**, memalsukan data, atau mengecualikan kegagalan di jam pasar yang benar-benar buka.
+
+#### A. Bukti yang disepakati untuk tiap hari
+
+Sumber fakta tetap ledger SQLite observer read-only dan arsip tick broker, bukan ringkasan chat. Gunakan satu ID dan cutoff yang direkam (saat ini `2026-11-03T15:18:14Z` pasca-WP13; pengecualian DST-aware D8 baru efektif `2026-11-05T00:00:00Z`). Simpan kedua tanggal secara terpisah dan hindari retroaktif.
+
+Kondisi kelulusan **yang sudah ada, tidak diubah**:
+1. Minimal 10 **hari bursa berturut-turut** yang benar-benar selesai; tiap hari dilihat dari **≥90% coverage menit sesi** berdasarkan jam broker/simbol sah, dengan hari parsial dan Sabtu/Minggu tidak dihitung sebagai hari lulus.
+2. **≥98% siklus OK saat sesi sah** di keseluruhan jendela; alasan untuk setiap non-OK, dengan denominator dan status RAW tidak diubah.
+3. Nol duplikat dan timestamp monoton; clock broker stabil & kredibel; bid/ask/spread tercatat & coverage quote ≥98%; **≥3 pemulihan terverifikasi dalam 10 menit**; tick setiap hari disimpan atau GAP diberi alasan dan direkonsiliasi; **0 order** dan LIVE OFF.
+4. Pisahkan status `CODE/CI PASS`, `DEPLOYED`, `STAGE0 PASS`, dan `TRADING EDGE PROVEN`. Tidak satu pun menggantikan yang lain.
+
+**Snapshot langsung VPS 4 Nov 2026 sekitar 21:27 WIB**, checker sejak cutoff resmi: `IN_PROGRESS`, 0/10 hari lengkap; 1.183/1.247 OK = **94,8677%**; 47 STALE_QUOTES dan 17 SOME_SYMBOLS_WITHOUT_QUOTE; clock `PASS` (+2 h), recovery 3 tes formal PASS (+2 spontan), quote 99,45%, duplikat 0, orders 0; tick & reconciliation `NO_DATA` pada jendela baru karena hari jatuh tempo belum ada. Dataset historis WP12 tetap utuh (tidak dihapus). Diagnostik tanpa memengaruhi laporan resmi: dari 64 gagal, 61 terjadi dalam jendela jeda NY 17:00, 3 di luar jendela.
+
+#### B. Agenda D9 — cara memperlakukan jeda CFD secara adil
+
+Peta tick empiris `docs/maintenance/MT5_SESSION_MAP_20261104.md` membuktikan **gap quote**, bukan jadwal resmi broker. Selama musim dingin AS 2026, FX terhenti ~21:54–22:00 UTC, XAUUSD.vx ~21:54–23:00, NAS100.vx ~21:57–23:01. Situs Valetax hanya menampilkan simbol/spesifikasi kontrak; **jam quote/trade per server `.vx` tetap harus dibaca dari terminal MT5 (Specification → Sessions atau diagnostik `SymbolInfoSessionQuote`)**. Jangan pakai jam broker lain.
+
+**Pilihan untuk Owner, belum ada yang disetujui:**
+- **A: Pertahankan D8 −15/+30**. Kelebihan: kriteria lama tetap jelas. Risiko: penilaian akan terus menghitung sebagian jeda ketika XAU/NAS benar-benar tidak punya quote; kegagalan hampir pasti walau koneksi normal.
+- **B: Perpanjang semua simbol secara global menjadi −15/+60**. Kelebihan: sederhana, selaras dengan gap CFD; diagnostik menghasilkan ~99,75% pada snapshot terbaru. Risiko: FX yang sudah buka pada 17:00–18:00 NY ikut dikecualikan; **berisiko mempermudah metrik tanpa justifikasi per simbol**, sehingga tidak dianjurkan sebelum bukti resmi.
+- **C (rekomendasi Yura untuk dibahas): pakai jadwal quote/trade broker PER SIMBOL** dari MT5, validasi terhadap tick, tanggal efektif prospektif setelah keputusan. Sesi saat FX buka tetap dinilai, simbol yang secara resmi tutup diberi reason `SESSION_CLOSED`/non-countable sesuai kontrak yang diuji; tidak membuat quote palsu. **Butuh kajian denominator, 3 simbol bergerak pada clock probe, dan tes DST/special holidays** sebelum aktivasi. Tidak otomatis dinilai PASS.
+
+Bukti minimum sebelum D9 diputuskan: 5 simbol dari terminal aktif, tanggal/waktu broker, `server_shift_hours` terverifikasi, jadwal `quote` dan `trade` harian termasuk jeda, asal data, cross-check tick/gap, lalu regression test fail-closed untuk pasar tutup vs broker outage. Bukti per akun/server disimpan privat; report yang dipublikasikan bersih dari akun/password.
+
+#### C. Agenda kredibilitas 10 hari
+
+- **Opsi hitungan**: tetap cutoff WP13 3 Nov 15:18:14Z menurut keputusan D8; atau mulai seri prospektif baru sesudah perubahan aturan D9 bila dianggap perubahan material pada definisi sesi. Jangan mengubah tanggal diam-diam. Data lama boleh dibandingkan sebagai baseline dengan label `LEGACY`, bukan bukti forward untuk aturan baru.
+- **Dua scorecard terpisah:** `historical/legacy` untuk analisis akar kegagalan; `official/forward` untuk status tahapan. Tiap hari tampilkan tanggal UTC, coverage menit sesi per simbol, OK/total/success %, reason counts, clock shift/source, jumlah tick/gap dan matching, reconnect evidence, duplicate, 0 order dan SHA laporan.
+- **Hari bursa pertama:** 4 Nov adalah hari penuh pertama *yang berpotensi dinilai* karena cutoff WP13 ada pada 3 Nov sore UTC, belum selesai pada rapat. Jika Owner mensyaratkan hanya hari pasca-D8, 5 Nov menjadi kandidat pertama. Keduanya bukan jaminan; satu hari dengan coverage rendah memutus streak. Jangan menyatakan tanggal akhir pasti.
+- **Sistem mengukur** `best_streak` dan `current_streak`; laporan "10 hari" tidak boleh menutupi bahwa keberhasilan siklus agregat, data broker, dan clock adalah gate terpisah.
+
+#### D. Pekerjaan paralel dan batas izin
+
+- **Yura sekarang:** audit ledger read-only, cek broker document public vs bukti MT5, breakdown 49 kode P0, catat hasil/risiko dan validasi antarkode. Tidak mengubah task/observer/DB.
+- **Claude sekarang:** lanjutkan 49 tes jalur kegagalan nyata (**bukan hanya menulis literal kode untuk mempercantik indeks**), dibagi: broker 22, demo execution 8, cloud 9, automatic connection 3, dialog model 6, owner surface 1. Setiap batch PR dengan tes negatif, code gate, CI Body/Ubuntu/Windows, tanpa mengubah risk/promotion/historical gate.
+- **WP6:** checker langsung mengeluarkan `P0 WP6_NO_AUTOLOGON` dan `NOT_READY AUTOLOGON_INTERACTIVE`. Owner harus menimbang autologon Windows dan risikonya atau menyediakan lingkungan MT5 alternatif yang benar-benar terbukti dapat berjalan tanpa sesi interaktif. Jangan menulis password ke GitHub/ChatGPT/log. Setelah persetujuan window, tes reboot sesungguhnya dan rollback.
+- **Bukti sesi broker:** eksekusi probe MT5 read-only hanya dengan persetujuan operasional Owner; tidak ada order, tidak ada terminal MT5 kedua pada VPS produksi.
+- **Host riset #255:** perlu Windows PC/VM terpisah dari VPS produksi. Tidak boleh mengaku backtest M5 resmi selesai sebelum provenance UTC broker dan hash diverifikasi.
+
+**Keputusan rapat yang belum dibuat**:
+1. Tetap 10 hari bursa penuh + seluruh sembilan gate apa adanya? (rekomendasi: YA)
+2. D9: A / B / C? (rekomendasi: C setelah bukti sesi MT5 nyata)
+3. Jika D9 disetujui setelah sebagian hari teramati, kapan cutoff resmi *baru* dan bagaimana baseline lama dipertahankan?
+4. WP6: Owner memilih autologon terproteksi atau host/arsitektur lain, dan kapan maintenance window reboot?
+5. Bukti per simbol FX/XAU/NAS dan akses host riset siapa yang menyiapkan?
+
+**Status tetap: `MEETING_OPEN_OWNER_DECISION_REQUIRED`.** Tidak ada promosi stage, trading, atau deployment karena dokumen ini.
+
 ### D9 — Lebar jendela jeda harian: −15/+30 tidak menutup jeda CFD broker
 Claude · 4 Nov 2026 · status: Menunggu Owner
 Usulan: Peta sesi dari arsip tick broker ([MT5_SESSION_MAP_20261104](maintenance/MT5_SESSION_MAP_20261104.md)) menunjukkan:
