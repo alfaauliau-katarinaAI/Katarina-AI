@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — WP6: skrip apply kompatibel PowerShell 4 (ditemukan saat deploy)
+
+- Saat deploy `ee572571`, `wp6_apply_observer_startup.ps1 -Apply` gagal di VPS (Windows Server 2012 R2, PowerShell 4.0) karena `[IO.MemoryStream]::new()` dan `Get-FileHash -InputStream` hanya ada di PowerShell 5. Skrip berhenti sebelum mengubah task (fail-closed). Hash kini dihitung dengan `SHA256.Create().ComputeHash`.
+- Tes `PowerShell4CompatibilityTests` (RED sebelum perbaikan) melarang sintaks khusus PS5 di `ops/windows/*.ps1`; tes parse CI Windows (PS5) tidak menangkapnya. LIVE tetap OFF.
+
 ## 2026-11-04 — D8: rollover WP15 aktif prospektif, hitungan Tahap 0 dari deploy WP13 (keputusan Owner)
 
 - `observation_ledger.py`:
