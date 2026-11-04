@@ -68,6 +68,24 @@ Semua waktu pra-tutup dihitung dari **jadwal quote/trade resmi server dan simbol
 | **G7 Sesi broker resmi** | `SymbolInfoSessionQuote` **dan** `SymbolInfoSessionTrade` untuk XAUUSD.vx, DST, hari libur, akhir sesi efektif dan timestamp sumber | Tick gap empiris bukan bukti jadwal resmi; preclose masih BLOCKED |
 | **G8 Simulator tidak setara** | Port *offline only* seluruh 6 metode, M15, structural TP, no minRR, zona state machine, H1 breakout→M5 retest, ATR adaptif, Hybrid Time Exit dan event-based bid/ask; fixture | Simulator saat ini memakai `target_rr`, `min_rr`, M5+H1 dan fixed `max_hold_bars` — tidak boleh dilabel validasi desain ini |
 
+## III-A. Keputusan D10-K20 dan desain level TTL (menunggu persetujuan angka)
+
+**Owner-approved:** entry memakai confirmed swing terbaru yang masih valid **dengan batas usia**. Angka, pembatalan serta jenis target di bawah **hanya proposal**, bukan aturan terdaftar:
+
+| Parameter | Proposal untuk dibahas | Status |
+|---|---|---|
+| TTL swing M15 | 96 M15 candle penuh sejak `confirmed_at` | PENDING |
+| TTL swing H1 | 72 H1 candle penuh sejak `confirmed_at` | PENDING |
+| Swing low batal | Candle TF asal close >=1 tick di bawah level | PENDING |
+| Swing high batal | Candle TF asal close >=1 tick di atas level | PENDING |
+| Retest B3/S3 | Level H1 yang baru broken tetap eligible 1 retest dalam 6 M5, tidak jadi TP lama | PENDING detail |
+| TP B1/S1 | Swing lawan M15 terdekat sah pada arah profit | PENDING |
+| TP B2/S2 | Swing H1 lawan atau proximal zone lawan valid yang terdekat | PENDING |
+| TP B3/S3 | Swing H1 lawan terdekat yang belum broken | PENDING |
+| Tie-break | Level terbaru `confirmed_at`, lalu stable ID | PENDING detail |
+
+Usia dihitung dari **bar TF asal yang selesai dan valid**, bukan jam kalender; bila data hilang, status UNVERIFIED, jangan menyimpulkan belum kedaluwarsa. Swing fractal 2 kiri/2 kanan perlu konteks ekstra di luar window TTL. Zona H1 **tetap 48 candle** sesuai keputusan berbeda. Validitas dinilai saat keputusan entry dari data sampai waktu tersebut; wick penembusan tanpa close yang sah tidak otomatis membatalkan swing, sedangkan H1 breakout yang terkonfirmasi mengubah level menjadi setup retest satu episode. Target berada pada arah profit relatif terhadap fill, tanpa minimum RR. Semua pilihan tetap harus pra-daftar sebelum riset P/L.
+
 ## IV. Kriteria siap mendaftar
 
 1. **Spec lengkap:** semua G1–G5 ditetapkan sebagai nilai/aturan yang sama untuk dua sisi hanya jika disengaja; tiap `B1/S1/B2/S2/B3/S3` memiliki `name,symbol,side,regime,playbook,rules,parameters`, `code_sha256`, `spec_version`, alasan WAIT, serta daftar level `discovered_at/confirmed_at`.
