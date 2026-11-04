@@ -27,6 +27,23 @@
 | Keputusan trading | Snapshot audit sebelumnya mencatat kartu **100% WAIT** dengan pemblokir fail-closed; WP9a/WP9b sudah menyediakan alat diagnosis bayangan | Menunggu ≥3 hari bursa `decision_shadow` dan hasil peta blocker; perubahan mode aktif hanya setelah keputusan Owner pada agenda D2 |
 | Risiko | Risk Governor independen, batas drawdown harian 35% sesuai keputusan Owner; repo masih publik | Batas 35% bukan klaim aman untuk live; tidak boleh dilonggarkan. Repo private/pemisahan website tetap keputusan Owner |
 
+## Pekerjaan belum selesai — menunggu diskusi Owner (dicatat 4 Nov 2026 20:49 WIB)
+
+Daftar ini **bukan** izin baru. Setiap butir dikerjakan hanya setelah Owner memutuskan.
+
+| # | Pekerjaan | Status | Yang dibutuhkan | Rujukan |
+|---|---|---|---|---|
+| 1 | **D9** — lebar jendela jeda harian. D8 (−15/+30) tidak menutup jeda XAU/NAS 22:30–23:00 UTC; diagnostik 97,83 % < 98 % | Menunggu Owner | Pilih: tetap −15/+30, ganti −15/+60 (prospektif), atau tunggu jadwal resmi MT5 | [MEETING D9](ROADMAP_DISCUSSION.md), [peta sesi](maintenance/MT5_SESSION_MAP_20261104.md) |
+| 2 | Jadwal sesi **resmi** broker per simbol | Belum dibaca (peta empiris sudah ada) | Owner: MT5 → Market Watch → klik kanan simbol → *Specification* → screenshot *Sessions* | MT5_SESSION_MAP |
+| 3 | **WP6** — observer otomatis jalan setelah reboot | Task diterapkan; preflight `NOT_READY` (`WP6_NO_AUTOLOGON`) | Owner aktifkan autologon Windows (Claude tidak memasukkan sandi), lalu izin uji reboot di luar jam pasar | [WP6](operations/WP6_OBSERVER_STARTUP.md), RH-014 |
+| 4 | **#255** — host riset MT5 terpisah (bar M5 historis, bukti UTC, dataset beku, backtest) | BLOCKED: hanya satu perangkat Desktop Commander (VPS produksi) | Owner sambungkan PC/VM Windows kedua dan login broker sendiri | [#255](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/255) |
+| 5 | Hapus 10 branch milik PR tertutup | BLOCKED: proxy Claude 403 | Owner hapus lewat halaman *Branches* GitHub (daftar SHA/PR di ledger E1, `maintenance/CODEBASE_CLEANUP_20261103.md`). Jangan hapus `main`, `claude-vps-bridge`, `claude-openai-mcp` | D5 |
+| 6 | 49 reason code P0 belum diuji secara literal | Terbuka (bisa dikerjakan Claude tanpa VPS) | Persetujuan prioritas | [indeks](maintenance/REASON_CODE_INDEX.md) |
+| 7 | Cleanup worktree/folder lama di VPS | Terbuka | Izin Owner (menyentuh VPS produksi) | ledger E1 |
+| 8 | Tahap 0 lulus (10 hari bursa, sukses ≥ 98 %) | Berjalan sejak 3 Nov 15:18 UTC; recovery 3/3 dan 0 order sudah PASS | Waktu observasi + hasil D9 | ROADMAP Tahap 0 |
+
+Selesai 4 Nov (bukti RH-014): deploy `82d93ef2`, D8 aktif prospektif, sidecar diperbaiki, uji putus-sambung formal 3/3, PR #278.
+
 ## Blocker yang belum selesai
 
 **P0:** Tahap 0 **belum lulus**: hitungan 10 hari bursa resmi dimulai 3 Nov 15:18 UTC (D8), aturan WP15 efektif 5 Nov 00:00 UTC. Ini gate data/waktu, bukan bug codebase.
