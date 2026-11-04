@@ -137,6 +137,19 @@ class ApplyScriptSafetyTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
+class PowerShell4CompatibilityTests(unittest.TestCase):
+    """The VPS is Windows Server 2012 R2 with PowerShell 4.0 (deploy 4 Nov 2026: `::new()` failed there)."""
+
+    PS5_ONLY = ("::new(", "using namespace", "class ", "enum ", "Get-FileHash -InputStream", "-AsHashtable")
+
+    def test_ops_windows_scripts_avoid_powershell5_only_syntax(self):
+        for path in sorted((ROOT / "ops/windows").glob("*.ps1")):
+            code = "\n".join(l for l in path.read_text(encoding="utf-8").splitlines() if not l.lstrip().startswith("#"))
+            for token in self.PS5_ONLY:
+                with self.subTest(script=path.name, token=token):
+                    self.assertNotIn(token, code)
+
+
 class Stage0SidecarTests(unittest.TestCase):
     def test_sidecar_uses_deployed_checker_and_official_count_start(self):
         text = (ROOT / "ops/windows/run-stage0-health-since-wp12.ps1").read_text(encoding="utf-8")

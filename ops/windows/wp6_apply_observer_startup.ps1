@@ -33,7 +33,10 @@ if ($Rollback) {
 
 if (-not (Test-Path $Proposed)) { throw "WP6_PROPOSED_DEFINITION_MISSING $Proposed" }
 $proposedXml = Get-Content $Proposed -Raw
-Write-Output "CURRENT_SHA256 $((Get-FileHash -InputStream ([IO.MemoryStream]::new([Text.Encoding]::Unicode.GetBytes($current))) -Algorithm SHA256).Hash)"
+# PowerShell 4.0 compatible (Windows Server 2012 R2): no ::new() and no Get-FileHash -InputStream.
+$sha = [Security.Cryptography.SHA256]::Create()
+$currentHash = -join ($sha.ComputeHash([Text.Encoding]::Unicode.GetBytes($current)) | ForEach-Object { $_.ToString('x2') })
+Write-Output "CURRENT_SHA256 $currentHash"
 Write-Output "PROPOSED $Proposed"
 if (-not $Apply) {
     Write-Output 'DRY_RUN no change made. Re-run with -Apply after Owner approval and autologon setup.'
