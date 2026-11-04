@@ -14,7 +14,7 @@ Severity mengikuti area sumber: **P0** = risk, eksekusi, broker/jam/identitas, a
 **P1** = observer/kognisi, operasi Tahap 0, persistence/memory, demo/shadow, script runtime; **P2** = riset, lab, berita, monitoring, tooling.
 Pesan exception mentah tidak dicatat (hanya kode/tipe) agar kredensial tidak bocor.
 
-Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
+Ringkasan: 558 kode — P0 101, P1 229, P2 228; 189 disebut di tes, 369 belum.
 
 | Kode | Sev | Area | Sumber | Tes |
 |---|---|---|---|---|
@@ -260,7 +260,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `MANIFEST_HASH_MISMATCH_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:831`<br>`src/katarina/intelligence/operations/data_health.py:831` | — |
 | `MANIFEST_READ_ERROR_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:911`<br>`src/katarina/intelligence/operations/data_health.py:911` | — |
 | `MEMORY_ARCHIVE_LIMIT` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:191`<br>`scripts/ai/hf_archive_sync.py:274`<br>`scripts/ai/hf_archive_sync.py:277` | — |
-| `MISSING_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/network_doctor.py:104` | `tests/integration/test_dialog_readiness_kit.py`<br>`tests/integration/test_unified_katarina_stack.py`<br>`tests/static/test_reason_code_index.py` (+16) |
+| `MISSING_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/network_doctor.py:104` | `tests/integration/test_dialog_readiness_kit.py`<br>`tests/integration/test_unified_katarina_stack.py`<br>`tests/static/test_code_change_gate.py` (+17) |
 | `MISSING_QUOTE_PATH_BIAS` | P1 | intelligence.cognition | `src/katarina/intelligence/cognition/unified_cognitive_cycle.py:183` | — |
 | `MISSING_REQUIRED_FIELD` | P1 | validation.engine | `src/katarina/validation/engine.py:1043` | — |
 | `MISSING_SERVER_SHIFT_HOURS` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:640` | — |
@@ -327,7 +327,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `STATE_AND_CREDENTIAL_DIRECTORIES_MUST_DIFFER` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:38` | — |
 | `SYMBOL_SPEC_REVISION_ROLLBACK` | P1 | validation.engine | `src/katarina/validation/engine.py:470` | `tests/unit/validation/test_stage08_validation.py` |
 | `SYMLINK_SOURCE_FORBIDDEN` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:312` | — |
-| `TEST_*` | P1 | intelligence.operations, monitoring.activity_trace, monitoring.pair_activity, monitoring.public_research, monitoring.worker_runtime | `src/katarina/intelligence/operations/runtime_evidence.py:43`<br>`src/katarina/monitoring/activity_trace.py:10`<br>`src/katarina/monitoring/pair_activity.py:8`<br>`src/katarina/monitoring/public_research.py:91` (+1) | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_continuous_observation.py`<br>`tests/integration/test_demo_forward_runtime.py` (+50) |
+| `TEST_*` | P1 | intelligence.operations, monitoring.activity_trace, monitoring.pair_activity, monitoring.public_research, monitoring.worker_runtime, scripts/governance | `scripts/governance/code_change_gate.py:252`<br>`src/katarina/intelligence/operations/runtime_evidence.py:43`<br>`src/katarina/monitoring/activity_trace.py:10`<br>`src/katarina/monitoring/pair_activity.py:8` (+2) | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_continuous_observation.py`<br>`tests/integration/test_demo_forward_runtime.py` (+51) |
 | `TICK_DAY_STATUS_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:623`<br>`src/katarina/intelligence/operations/data_health.py:623` | — |
 | `TICK_FILE_HASH_MISMATCH_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:673`<br>`src/katarina/intelligence/operations/data_health.py:673` | `tests/unit/operations/test_data_audit_wp14.py`<br>`tests/unit/research/test_context_export.py`<br>`tests/unit/research/test_spread_profile.py` |
 | `TICK_FILE_HASH_NOT_RECORDED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:662` | `tests/unit/operations/test_data_audit_wp14.py` |
@@ -353,6 +353,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `ABSTAIN_NO_RESOLVED_ANALOGS` | P2 | intelligence.perception | `src/katarina/intelligence/perception/historical_analog_memory.py:86` | `tests/unit/intelligence/test_historical_analog_memory.py` |
 | `ABSTAIN_STALE_REGIME` | P2 | scripts/research | `scripts/research/probe_current_market_analogs.py:46` | — |
 | `ABSTAIN_UNKNOWN` | P2 | intelligence.perception | `src/katarina/intelligence/perception/historical_analog_memory.py:81` | `tests/unit/intelligence/test_historical_analog_memory.py` |
+| `ALLOWLISTED_UNTRACKED_GENERATED_ARTIFACT` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:195` | — |
 | `ARCHIVE_CLOCK_REQUIRED` | P2 | scripts/deployment | `scripts/deployment/recover_hf_catalog.py:25` | — |
 | `AWARE_UTC_REQUIRED` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:17` | `tests/unit/operations/test_session_hypothesis.py` |
 | `BAR_FIELD_INVALID` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:428` | — |
@@ -363,7 +364,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `BAR_VOLUME_INVALID` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:76`<br>`src/katarina/research/bar_clock_evidence.py:434` | — |
 | `BAR_VOLUME_MISSING` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:412` | — |
 | `BATCH_CROSSES_SEGMENTS_OR_UNVERIFIED` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:299` | — |
-| `BLOCKED_*` | P2 | research.alpha_survival, scripts/research | `scripts/research/audit_private_alpha_holdout.py:36`<br>`src/katarina/research/alpha_survival.py:67`<br>`src/katarina/research/alpha_survival.py:67` | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_brain_owned_workflow.py`<br>`tests/integration/test_continuous_observation.py` (+21) |
+| `BLOCKED_*` | P2 | research.alpha_survival, scripts/research | `scripts/research/audit_private_alpha_holdout.py:36`<br>`src/katarina/research/alpha_survival.py:67`<br>`src/katarina/research/alpha_survival.py:67` | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_brain_owned_workflow.py`<br>`tests/integration/test_continuous_observation.py` (+22) |
 | `BLOCKED_TIMEOUT_OR_RUNTIME` | P2 | scripts/pc | `scripts/pc/run_system_acceptance.py:83` | — |
 | `BROKER_BARS_UNAVAILABLE` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:532` | `tests/unit/research/test_bar_clock_evidence.py` |
 | `BROKER_BAR_CLOCK_NOT_VERIFIED` | P2 | research.dev_dataset | `src/katarina/research/dev_dataset.py:103`<br>`src/katarina/research/dev_dataset.py:106`<br>`src/katarina/research/dev_dataset.py:114`<br>`src/katarina/research/dev_dataset.py:251` | `tests/integration/test_legacy_clock_wp12.py`<br>`tests/static/test_reason_code_index.py`<br>`tests/unit/research/test_dev_dataset_wp8a.py` (+1) |
@@ -403,6 +404,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `DATASET_INTEGRITY_FAILED` | P2 | intelligence.lab | `src/katarina/intelligence/lab/autonomous_research.py:29`<br>`src/katarina/intelligence/lab/autonomous_research.py:39` | `tests/unit/test_research_failure_diagnostics.py` |
 | `DATASET_OUTPUT_MUST_BE_OUTSIDE_REPO` | P2 | scripts/research | `scripts/research/export_dev_bars.py:45` | — |
 | `DATASET_SHAPE_FAILED` | P2 | intelligence.lab | `src/katarina/intelligence/lab/autonomous_research.py:41` | — |
+| `DEPENDENCY_*` | P2 | scripts/governance | `scripts/governance/code_change_gate.py:197` | `tests/integration/test_environment_recovery.py`<br>`tests/static/test_code_change_gate.py`<br>`tests/unit/operations/test_dependency_links.py` |
 | `DESCRIPTIVE_PROFILE_GENERATED` | P2 | scripts/research | `scripts/research/spread_profile.py:47` | — |
 | `DEVELOPMENT_BARS_NOT_MONOTONIC` | P2 | research.dev_dataset | `src/katarina/research/dev_dataset.py:152`<br>`src/katarina/research/dev_dataset.py:273` | — |
 | `DEVELOPMENT_CHUNK_OVER_LIMIT` | P2 | research.dev_dataset | `src/katarina/research/dev_dataset.py:133` | — |
@@ -442,6 +444,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `HTTP_*` | P2 | intelligence.news | `src/katarina/intelligence/news/research_news_collection.py:160`<br>`src/katarina/intelligence/news/research_news_collection.py:160` | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_automatic_connection.py`<br>`tests/integration/test_unified_owner_surface.py` (+3) |
 | `HYPOTHESES_ONLY` | P2 | intelligence.lab | `src/katarina/intelligence/lab/autonomous_research.py:294` | — |
 | `HYPOTHESES_SAVED` | P2 | intelligence.lab | `src/katarina/intelligence/lab/autonomous_research.py:297` | — |
+| `IDENTICAL_CONTENT` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:153` | `tests/static/test_safe_cleanup.py` |
 | `INSUFFICIENT_COMPLETE_BARS` | P2 | research.context_export | `src/katarina/research/context_export.py:161` | — |
 | `INSUFFICIENT_SAMPLES` | P2 | intelligence.perception | `src/katarina/intelligence/perception/observational_associations.py:9` | `tests/unit/intelligence/test_continuous_research_lab.py`<br>`tests/unit/intelligence/test_observational_associations.py`<br>`tests/unit/test_research_memory_export.py` (+1) |
 | `INVALID_BROKER_SYMBOL_MAPPING` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:473` | `tests/unit/research/test_bar_clock_evidence.py` |
@@ -471,14 +474,17 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `LOCAL_CONTINUATION_*` | P2 | intelligence.perception | `src/katarina/intelligence/perception/market_regime_intelligence.py:178` | `tests/unit/intelligence/test_market_regime_intelligence.py` |
 | `LOGICAL_SOURCE_NOT_FOUND` | P2 | scripts/deployment | `scripts/deployment/recover_hf_catalog.py:53` | — |
 | `LOOKAHEAD_DATA_AFTER_ENTRY` | P2 | research.validation | `src/katarina/research/validation.py:299` | `tests/unit/research/test_validation.py` |
+| `MAIN_BRANCH` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:214` | `tests/static/test_safe_cleanup.py` |
 | `MALFORMED_BROKER_BARS` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:529` | `tests/unit/research/test_bar_clock_evidence.py` |
 | `MALFORMED_CACHE_PAYLOAD` | P2 | intelligence.news | `src/katarina/intelligence/news/official_cache_provenance.py:47` | — |
+| `MANIFEST_*` | P2 | scripts/governance | `scripts/governance/code_change_gate.py:289` | `tests/integration/test_master_design_traceability.py`<br>`tests/static/test_code_change_gate.py`<br>`tests/unit/engines/test_daily_drawdown_sync.py` (+1) |
 | `MANIFEST_OUTPUT_REQUIRED` | P2 | scripts/deployment | `scripts/deployment/recover_hf_catalog.py:51` | — |
 | `MISSING_INVALID_OR_STALE_OBSERVER_SNAPSHOT` | P2 | scripts/pc | `scripts/pc/run_system_acceptance.py:51` | — |
 | `MISSING_RELEASE_UTC` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:485` | — |
 | `MISSING_SYMBOL_WINDOWS` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:41` | — |
 | `MODEL_REVIEW_UNAVAILABLE` | P2 | intelligence.news | `src/katarina/intelligence/news/public_language_research.py:110` | `tests/unit/test_public_language_research.py` |
 | `NATIVE_MT5_REQUIRES_WINDOWS_64BIT` | P2 | scripts/pc | `scripts/pc/environment_recovery.py:150` | — |
+| `NOT_A_GIT_WORKTREE_ROOT` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:183` | `tests/static/test_safe_cleanup.py` |
 | `NOT_TESTED` | P2 | scripts/pc | `scripts/pc/run_system_acceptance.py:85` | — |
 | `NO_ARCHIVED_EVENTS` | P2 | intelligence.lab | `src/katarina/intelligence/lab/adaptive_walkforward.py:226` | `tests/unit/intelligence/test_adaptive_walkforward.py` |
 | `NO_AUTHORIZED_SESSION_POLICY` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:31` | `tests/unit/operations/test_session_hypothesis.py` |
@@ -495,6 +501,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `OUTCOME_KNOWN_BEFORE_EXIT` | P2 | research.validation | `src/katarina/research/validation.py:301` | `tests/unit/research/test_validation.py` |
 | `OUTCOME_NOT_YET_KNOWN` | P2 | research.validation | `src/katarina/research/validation.py:303` | `tests/unit/research/test_validation.py` |
 | `OUTSIDE_PERIOD` | P2 | research.validation | `src/katarina/research/validation.py:307` | `tests/unit/research/test_market_intelligence.py` |
+| `OUTSIDE_WORKTREE` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:101` | — |
 | `OVERLAPPING_OR_UNSORTED_WINDOWS` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:56` | `tests/unit/operations/test_session_hypothesis.py` |
 | `OVERLAPPING_POSITION` | P2 | research.validation | `src/katarina/research/validation.py:313` | — |
 | `PASS_READONLY_OBSERVATION_ONLY` | P2 | scripts/pc | `scripts/pc/run_pc_acceptance.py:90` | `tests/integration/test_pc_acceptance.py` |
@@ -502,12 +509,16 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `PASS_STRATEGY_EVIDENCE_FAIL_CLOSED` | P2 | scripts/governance | `scripts/governance/audit_stage14_15_research.py:48` | `tests/unit/research/test_stage14_15_evidence.py` |
 | `PASS_SYNTHETIC_PC_ONLY` | P2 | scripts/pc | `scripts/pc/run_pc_acceptance.py:67` | `tests/integration/test_pc_acceptance.py` |
 | `PASS_SYNTHETIC_PRETRIAL_ONLY` | P2 | scripts/pc | `scripts/pc/run_pretrial_acceptance.py:116` | — |
+| `PATH_ESCAPE` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:86` | `tests/static/test_safe_cleanup.py` |
 | `PERSISTED_RESEARCH_COUNTS` | P2 | monitoring.research_growth | `src/katarina/monitoring/research_growth.py:28` | `tests/unit/test_terminal_network_client.py` |
 | `PINNED_CATALOG_REVISION_REQUIRED` | P2 | scripts/deployment | `scripts/deployment/recover_hf_catalog.py:16` | — |
 | `PINNED_SOURCE_COMMIT_REQUIRED` | P2 | scripts/deployment | `scripts/deployment/install_hf_storage.py:33` | — |
 | `POSITION_CROSSES_GAP` | P2 | research.validation | `src/katarina/research/validation.py:311` | `tests/unit/research/test_validation.py` |
 | `PRIVATE_BASE_SYMLINK_FORBIDDEN` | P2 | scripts/deployment | `scripts/deployment/install_hf_storage.py:27`<br>`scripts/deployment/install_hf_storage.py:37` | — |
 | `PRIVATE_RUNTIME_MUST_BE_OUTSIDE_CHECKOUT` | P2 | scripts/deployment | `scripts/deployment/install_hf_storage.py:31` | — |
+| `PRODUCTION_CHECKOUT` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:211` | `tests/static/test_safe_cleanup.py` |
+| `PROTECTED_CONTENT` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:111`<br>`scripts/governance/safe_cleanup.py:113` | `tests/static/test_safe_cleanup.py` |
+| `PROTECTED_LOCATION` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:89`<br>`scripts/governance/safe_cleanup.py:92` | `tests/static/test_safe_cleanup.py` |
 | `PUBLIC_HYPOTHESIS_RECORDED_NOT_IMPLEMENTED` | P2 | scripts/memory | `scripts/memory/export_research_memory.py:64` | — |
 | `PUBLIC_MODEL_DAILY_BUDGET_REACHED` | P2 | intelligence.news | `src/katarina/intelligence/news/public_language_research.py:67` | `tests/unit/test_public_language_research.py` |
 | `PUBLISH_FAILED` | P2 | monitoring.monitor_publisher | `src/katarina/monitoring/monitor_publisher.py:92` | — |
@@ -529,10 +540,13 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `RETRY_AFTER_COOLDOWN` | P2 | intelligence.lab | `src/katarina/intelligence/lab/autonomous_research.py:300`<br>`src/katarina/intelligence/lab/autonomous_research.py:301`<br>`src/katarina/intelligence/lab/autonomous_research.py:308` | `tests/unit/intelligence/test_autonomous_research.py` |
 | `REVERSAL_*` | P2 | intelligence.perception | `src/katarina/intelligence/perception/market_regime_intelligence.py:151` | `tests/unit/intelligence/test_adaptive_regime_v2.py`<br>`tests/unit/intelligence/test_directional_consensus.py`<br>`tests/unit/intelligence/test_market_regime_intelligence.py` (+2) |
 | `REVIEW_COMPLETED` | P2 | intelligence.lab | `src/katarina/intelligence/lab/autonomous_research.py:240` | — |
+| `ROOT_CAUSE_AND_REPRODUCTION_TEST_REQUIRED` | P2 | scripts/governance | `scripts/governance/code_change_gate.py:418` | — |
+| `ROOT_CAUSE_IDENTIFIED` | P2 | scripts/governance | `scripts/governance/code_change_gate.py:407`<br>`scripts/governance/code_change_gate.py:419` | — |
 | `SIDE_NOT_REGISTERED` | P2 | research.validation | `src/katarina/research/validation.py:295` | `tests/unit/research/test_validation.py` |
 | `SOURCE_UNAVAILABLE` | P2 | intelligence.news | `src/katarina/intelligence/news/official_cache_provenance.py:21` | `tests/unit/intelligence/test_official_cache_provenance.py` |
 | `STAGE_*` | P2 | scripts/governance | `scripts/governance/audit_constitution_guard.py:46` | `tests/static/test_stage06_mt5_bridge.py`<br>`tests/static/test_stage35_runner_behavior.py`<br>`tests/unit/body/test_end_to_end_body.py` (+6) |
 | `STALE_CACHE_RECEIPT` | P2 | intelligence.news | `src/katarina/intelligence/news/official_cache_provenance.py:38` | `tests/unit/intelligence/test_official_cache_provenance.py` |
+| `SYMLINK_OR_JUNCTION` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:98`<br>`scripts/governance/safe_cleanup.py:109` | `tests/static/test_safe_cleanup.py` |
 | `SYNC_INTERVAL_MUST_BE_10_TO_1440_MINUTES` | P2 | scripts/deployment | `scripts/deployment/install_hf_storage.py:35` | — |
 | `SYNTHETIC_OBSERVER_CHECK_FAILED` | P2 | scripts/pc | `scripts/pc/run_pc_acceptance.py:61` | — |
 | `TAMPERED_OR_MISSING_RAW_DIGEST` | P2 | intelligence.news | `src/katarina/intelligence/news/official_cache_provenance.py:42` | `tests/unit/intelligence/test_official_cache_provenance.py` |
@@ -542,11 +556,14 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `TICK_FILE_MALFORMED` | P2 | research.context_export | `src/katarina/research/context_export.py:60` | — |
 | `TIMEFRAME_*` | P2 | research.bar_clock_evidence, research.dev_dataset | `src/katarina/research/bar_clock_evidence.py:467`<br>`src/katarina/research/dev_dataset.py:92` | `tests/integration/test_auto_calibration.py`<br>`tests/integration/test_brain_owned_workflow.py`<br>`tests/integration/test_demo_forward_runtime.py` (+7) |
 | `TOO_FEW_TICKS` | P2 | research.context_export | `src/katarina/research/context_export.py:159` | — |
-| `UNAVAILABLE_*` | P2 | intelligence.news | `src/katarina/intelligence/news/research_news_collection.py:162`<br>`src/katarina/intelligence/news/research_news_collection.py:162` | `tests/integration/test_automatic_connection.py`<br>`tests/integration/test_pc_acceptance.py`<br>`tests/integration/test_wp1_observer_universe.py` (+10) |
+| `TRACKED_BY_GIT` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:103` | `tests/static/test_safe_cleanup.py` |
+| `UNAVAILABLE_*` | P2 | intelligence.news | `src/katarina/intelligence/news/research_news_collection.py:162`<br>`src/katarina/intelligence/news/research_news_collection.py:162` | `tests/integration/test_automatic_connection.py`<br>`tests/integration/test_pc_acceptance.py`<br>`tests/integration/test_wp1_observer_universe.py` (+11) |
+| `UNREACHABLE_MODULE` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:165` | — |
 | `UNSAFE_CLOSED_WINDOW` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:53` | `tests/unit/operations/test_session_hypothesis.py` |
 | `UNSAFE_MANIFEST_PATH` | P2 | scripts/deployment | `scripts/deployment/release_manifest.py:36` | — |
 | `UNSAFE_VALIDITY_INTERVAL` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:38` | — |
 | `UNVERIFIABLE_SOURCE_RECEIPT` | P2 | intelligence.news | `src/katarina/intelligence/news/official_cache_provenance.py:67` | — |
+| `UPSTREAM_*` | P2 | scripts/governance | `scripts/governance/code_change_gate.py:361` | `tests/static/test_code_change_gate.py` |
 | `USE_DOCUMENTED_SYSTEMD_TIMER_ON_LINUX` | P2 | scripts/deployment | `scripts/deployment/install_hf_storage.py:89` | — |
 | `UTC_ISO_STRING_REQUIRED` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:11` | — |
 | `UTC_OFFSET_REQUIRED` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:21` | `tests/unit/operations/test_session_hypothesis.py` |
@@ -557,6 +574,7 @@ Ringkasan: 540 kode — P0 101, P1 229, P2 210; 176 disebut di tes, 364 belum.
 | `WAITING_PUBLIC_MODEL_INTERVAL` | P2 | intelligence.news | `src/katarina/intelligence/news/public_language_research.py:64` | `tests/unit/test_public_language_research.py` |
 | `WAIT_UNVERIFIED_HYPOTHESIS` | P2 | scripts/governance | `scripts/governance/audit_alpha_regime_program.py:54` | — |
 | `WINDOW_OUTSIDE_DEVELOPMENT_OR_IN_GAP` | P2 | research.context_export | `src/katarina/research/context_export.py:128` | `tests/unit/research/test_context_export.py` |
+| `WORKTREE_CHANGED_DURING_CLEANUP` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:220` | `tests/static/test_safe_cleanup.py` |
 | `ZERO_RANGE` | P2 | research.context_export | `src/katarina/research/context_export.py:163` | — |
 
 ## Kode protokol (beku)

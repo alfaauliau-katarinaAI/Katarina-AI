@@ -1,0 +1,11 @@
+#!/bin/sh
+# Katarina local coding gate (opt-in): git config core.hooksPath ops/git-hooks
+# Runs KAT-CG-00 + KAT-CG-01 + safe_cleanup --check before every commit. No network, no VPS, no auto-fix.
+# Exit 3 = REPEATED_FAILURE_NEEDS_ROOT_CAUSE: stop and analyse; do not retry blindly.
+root=$(git rev-parse --show-toplevel) || exit 1
+python "$root/scripts/governance/code_change_gate.py" --quick --repo-root "$root"
+status=$?
+if [ "$status" -ne 0 ]; then
+  echo "KAT coding gate refused the commit (exit $status). Report: build/code-gate/code-change-gate.json" >&2
+fi
+exit $status
