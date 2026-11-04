@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-11-04 — ERR-TEST / STAGE1-PREFLIGHT: tes kode P0 dan leakage guard
+
+- `tests/unit/adapters/test_p0_reason_codes_production_path.py`: 15 kode P0 pada jalur observer canonical kini diuji secara literal, yaitu jam broker, universe, identitas dengan pesan rahasia dibuang, read lokal, cloud tanpa URL, dan fallback offline dengan retry terbatas serta 0 order.
+- `tests/unit/research/test_validation_guard_codes.py`: alasan leakage guard Tahap 1 `DUPLICATE_OR_EMPTY_ID`, `INVALID_PRICES` dan `OVERLAPPING_POSITION`, yang sebelumnya tanpa tes, ditambah `CROSSES_PERIOD_END` di batas dev/holdout. Tanpa perubahan source; LIVE tetap OFF.
+
 ## 2026-11-04 — WP6-PREFLIGHT: kesiapan observer setelah reboot (belum diterapkan)
 
 - Launcher produksi `run-observer.ps1` kini diversikan di `ops/windows/` (commit baseline byte-identik dengan VPS). Commit berikutnya menangani `AbandonedMutexException` supaya launcher yang mati saat reboot tidak membuat start pertama gagal.
