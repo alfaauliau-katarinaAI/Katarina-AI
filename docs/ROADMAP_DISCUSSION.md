@@ -452,6 +452,19 @@ Owner menyetujui parameter struktur untuk keenam kandidat XAUUSD sebagai **basel
 
 **Klarifikasi status:** klausul angka 96/72 dan invalidasi/TP yang tertulis sebagai *usulan* di bawah pada bagian D10-K20 **sudah disetujui dan digantikan oleh keputusan D10-K21 ini**. `D10-K21_APPROVED`, `ZONE_ORIGIN_PENDING`, `REGISTRY_NOT_WRITTEN`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
 
+#### KEPUTUSAN D10-K27 — Owner izinkan pembacaan data asli dari MT5 yang sama; bukti harga broker terkumpul (5 Nov 2026 WIB)
+
+**Arahan eksplisit Owner:** `"lakukan riset dengan data asli, kamu bisa menggunakan mt5 yang sama"`. Scope izin kini mencakup **inspeksi read-only pada terminal MT5 aktif yang sama** untuk data broker XAUUSD.vx, **tanpa** izin implisit memasang EA/MQL5 script, mengubah terminal, mengirim order, melakukan coding simulator, mengakses holdout atau menjalankan P/L backtest tanpa preregistration.
+
+**Bukti eksekusi langsung di VPS (Remote Desktop Commander, tanpa menyalakan MT5 kedua):**
+- Terminal `terminal64.exe` terhubung; `terminal_info.trade_allowed=False`; mode akun `DEMO`. Script singkat memanggil Python API MT5 `initialize(existing_path)` → `symbol_info/copy_ticks_from/copy_rates_range` → `shutdown()`. Tak ada order.
+- `XAUUSD.vx` snapshot broker: `digits=2`, `point=0.01`, `trade_tick_size=0.01`, `trade_contract_size=100`, `trade_stops_level=31 point`, `freeze_level=0`, `volume_min=volume_step=0.01`, `spread=29 point` saat snapshot; `swap_long=-23.7`, `swap_short=0.0`, `swap_mode=1` (belum terverifikasi sebagai satuan USD biaya historis).
+- **Empat sampel asli BID/ASK pre-cutoff**: `2026-09-15`, `2026-09-30`, `2026-10-08`, `2026-10-12`, masing-masing **1.200 tick** dimulai 12:00 UTC menurut MT5; **total 4.800 tick**. Di seluruh sampel median spread `0.29` price / 29 points, rentang `0.29–0.33`; tidak ada `ASK<=BID` atau duplicate `time_msc` dalam masing-masing jendela. **Tidak** membuktikan spread keseluruhan hari atau kualitas seluruh data.
+- Permintaan tick dari Januari dan April 2026 tidak menghasilkan tick pada tanggal tersebut; terminal mengembalikan mulai `2026-06-04T01:00:01.873Z`. Namun query M5 1 jam pada 15 Jan/15 Apr/15 Jul/8 Okt mengembalikan bar broker. **Data OHLC lama bukan substitusi tick** untuk simulasi D10-K23.
+- Perincian window UTC, hash SHA-256 in-memory, metadata simbol dan status gate tersimpan di **[D10-K27 REAL MT5 evidence](research/D10_K27_REAL_MT5_XAU_TICK_INSPECTION_20261105.md)**. Hash baru bukan manifest dataset final sebab raw sample belum dipersistenkan.
+
+**Hasil audit:** `REAL_BROKER_QUOTES_OBSERVED`, `SYMBOL_METADATA_OBSERVED`; **belum** `FULL_DEV_TICK_DATASET_VERIFIED` (Jan–Apr unavailable in queried tick history, gap/clock/sequence full-range not validated), **belum** `COSTS_VERIFIED` (commission/slippage/historical swap/rollover), **belum** `OFFICIAL_SESSION_VERIFIED` (MT5 MQL5 session probe belum dijalankan), dan **belum** `G8_SIMULATOR_IMPLEMENTED`. Cutoff dev 13 Oct 2026 UTC tetap; observer ticks Oct-Nov bukan data dev. `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`, `NO_ORDERS`.
+
 #### KEPUTUSAN D10-K26 — Verifikasi bukti broker/data/host SEBELUM coding simulator offline (Owner SETUJU, 5 Nov 2026 WIB)
 
 Owner **memilih opsi B**: lakukan verifikasi **tick historis, biaya dan spesifikasi broker, sesi MT5 quote/trade, dan isolasi lingkungan penelitian** sebelum memberikan izin membuat simulator offline. Keputusan ini tidak memberi izin otomatis menjalankan script MT5, mengambil arsip production observer, mengakses VPS, coding emulator/simulator, membuka holdout, atau melakukan backtest P/L.
