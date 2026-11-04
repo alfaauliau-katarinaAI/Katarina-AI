@@ -434,6 +434,26 @@ Owner secara eksplisit memilih **sweep dan reclaim harus terjadi dalam candle M5
 - **Batas minimum penetrasi sweep 1 tick masih PROPOSAL, bukan keputusan Owner.** Sama halnya dengan umur swing, urutan memilih beberapa swing, konflik candle dan posisi bertumpuk; seluruhnya harus ditentukan sebelum preregistration.
 - Time exit B1/S1: 12 M5/90m/pra-tutup 15m telah dipilih D10-K14; tanpa minimum RR, TP struktural dan persetujuan terpisah bagi eksekusi nyata tetap.
 
+#### KEPUTUSAN D10-K16 — B2/S2 H1 structure trend + M15 confirmation (Owner SETUJU)
+
+Owner menyetujui baseline **B2 BUY** memakai **HH + HL H1** dan **S2 SELL** memakai **LH + LL H1**, dengan swing fractal 2 kiri / 2 kanan yang sudah fully confirmed. Proposal definisi deterministik untuk implementasi: dua confirmed swing high dan dua confirmed swing low H1 terakhir sama-sama meningkat secara ketat (BUY) atau menurun secara ketat (SELL), semuanya sudah confirmed pada waktu keputusan entry. Bila tak lengkap, `WAIT:TREND_UNCONFIRMED`; tanpa EMA tambahan dalam baseline ini.
+
+Owner juga menyetujui **candle M15 searah** yang menyentuh zona lalu close **keluar zona**: B2 M15 low mencapai demand dan close bullish **di atas batas atas** demand; S2 M15 high mencapai supply dan close bearish **di bawah batas bawah** supply, dengan candle sudah selesai sebelum entry. Sinyal hanya dari episode *first-visit* H1 zona valid 48 bar dan tidak pernah breach (Hybrid). Entry pada quote berikut setelah close M15. SL struktural + max(tick size, spread, 0.10*ATR14 M15) dan TP struktur terdekat valid, tanpa RR minimum; time-exit B2/S2 12 M15 / 240 menit / 30 menit pra-tutup sudah disepakati.
+
+**Yang belum dikunci untuk preregistration B2/S2:** aturan memilih candle asal bila beberapa bar memenuhi, tie-breaking zona beririsan, deteksi batas episode visit dari tick bid/ask, lebar zona minimal/maksimal dan harga referensi bid/ask, prioritas target, definisi ATR Wilder dan source spread, jam sesi broker resmi, data/split/cost/code hash. Semua ini bukan izin coding/tes atau klaim strategi profitable.
+
+#### AGENDA D10-K17 — B3/S3 Breakout/Breakdown & Retest H1→M5 (USULAN; OWNER BELUM MEMUTUSKAN)
+
+**Proposal sinyal baseline yang dapat diaudit kausal:**
+- Level referensi B3 adalah **confirmed swing high H1**; untuk S3 **confirmed swing low H1**, memakai 2 kiri + 2 kanan. Level harus sudah confirmed **sebelum bar H1 breakout dimulai**. Abaikan level masa depan atau hasil high/low H1 breakout yang baru terbentuk.
+- **B3 BUY breakout:** H1 candle sudah selesai dan **close > resistance + 1 tick**; **S3 SELL breakdown:** H1 candle sudah selesai dan **close < support - 1 tick**. Break perlu body close, bukan wick-only. Min breakout 1 tick adalah **usulan**, bukan putusan.
+- Setelah H1 breakout close, hanya candle M5 **yang mulai pada/ setelah waktu konfirmasi H1** boleh mencari retest. **Usulan maksimum 6 candle M5 tertutup (30 menit)**; satu episode retest pertama untuk sinyal B3/S3; bila tidak ada yang memenuhi, `WAIT:RETEST_TIMEOUT`, dan breakout itu dianggap selesai, tidak memancing setup berulang.
+- **Konfirmasi satu candle M5 (usulan baseline):** B3 retest candle M5 `low <= broken_level`, `close > broken_level`, `close > open`. S3 `high >= broken_level`, `close < broken_level`, `close < open`. Level yang ditembus ditahan kembali saat close; jika sesi close/quote hilang, no trade. Memastikan harga benar-benar dapat bergerak di sekitar level dengan toleransi tick/spread masih perlu aturan terdaftar. Retest yang lebih dalam tidak otomatis berhak entry bila data invalid.
+- Entry pada quote eksekutabel berikut setelah M5 konfirmasi; SL B3 di bawah low retest, S3 di atas high retest, dengan max(tick_size, spread, 0.10*ATR14 M5) dibulatkan benar. TP **struktur H1 valid terdekat di sisi profit** yang telah diketahui pada waktu entry; bila tidak ada level geometris valid, `WAIT:NO_VALID_STRUCTURAL_TARGET`, bukan menambahkan TP RR tetap. Tanpa minimum RR. Time exit 24 M5 / 180 menit / 20 menit pra-tutup sesuai D10-K14.
+- Jika H1 sudah ditutup kembali di sisi lama breakout **sebelum M5 retest/entry**, blokir sinyal dan tandai `BREAKOUT_INVALIDATED`; tidak memakai H1 yang belum ditutup untuk pembatalan struktur retrospektif, dan stop yang sudah tersentuh tetap dihitung. Urutan event M5/H1 dan gap wajib deterministik.
+
+**Keputusan diminta Owner:** (A) satu candle M5 retest & close kembali di sisi breakout, maksimal 6 candle M5 sejak H1 confirm (rekomendasi baseline); atau (B) dua tahap touch dahulu, baru close konfirmasi pada candle M5 berikutnya, dengan maksimum 6 candle M5; atau (C) bahas lookback/penetrasi dan durasi secara terpisah. Angka 1 tick, 6 M5 dan toleransi sentuh masih proposal sampai Owner memilih. Semua enam kandidat tetap belum diregistrasi/test, `HOLDOUT_LOCKED`, `LIVE_OFF`.
+
 #### AGENDA D10-K16 — Tren H1 dan konfirmasi M15 B2/S2 (BELUM DIPUTUSKAN)
 
 Rekomendasi desain yang dapat dibuat deterministik tanpa mengoptimalkan hasil:
