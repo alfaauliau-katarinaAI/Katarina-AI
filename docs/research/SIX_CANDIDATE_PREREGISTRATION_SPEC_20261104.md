@@ -90,6 +90,20 @@ Semua waktu pra-tutup dihitung dari **jadwal quote/trade resmi server dan simbol
 
 **Kontrak eksekusi & rencana memperbaiki simulator:** [SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md](SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md). Keputusan rapat tidak mengizinkan penggunaan simulator saat ini sebagai uji resmi.
 
+## III-C. Keputusan D10-K23 — Simulasi tick kronologis dan enam hipotesis independen (APPROVED)
+
+Owner telah memilih dan mengunci:
+- **Replay tick broker sesuai urutan kronologis yang dapat dibuktikan** untuk perubahan status intrabar dan urutan SL/TP/fill; tidak boleh membuat lintasan harga dari OHLC atau memilih hasil yang lebih baik.
+- **Referensi sentuhan dan breach zona H1 = BID** sesuai sumber candle broker BID.
+- **Entry BUY = ASK, entry SELL = BID; exit BUY = BID, exit SELL = ASK** hanya pada quote yang valid/eksekutabel. Spread aktual dilacak bersama komisi, slippage, swap pada model biaya yang disiapkan sebelum pengujian.
+- Bila ketidakpastian tick/urutannya dapat mengubah event transaksi, tandai **`BLOCKED_INTRABAR_ORDER`**; **tidak mengaktifkan fallback OHLC SL-first** ataupun menyimpulkan transaksi ditutup tanpa quote. Blocked harus dilaporkan, bukan disaring diam-diam.
+- **Evaluasi keenam kandidat secara terisolasi**, satu posisi aktif per kandidat (D10-K19), tanpa kebijakan netting/hedging portofolio gabungan yang belum disetujui.
+- Semua urutan, data dan quote harus dapat diaudit; tidak ada registry/backtest tanpa input sah, code hash serta sesi quote/trade broker terverifikasi. Core G4 disetujui, tetapi detail timestamp boundary, tick-gap/data quality, sumber harga stop/fill, zona overlap, dan stops/freeze broker masih harus ditentukan dan diuji.
+
+**Kontrak rinci dan fixture yang perlu dikembangkan:** [SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md](SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md) (bagian 2A dan 4).
+
+**Remaining blockers:** G3 origin/TTL/first-touch core telah disetujui tetapi overlapping-zone tie belum; G4 edge-case teknis belum; G6 historical development dataset/hash/cost/split belum terverifikasi; G7 sesi resmi MT5 belum tersedia; G8 kode riset belum kompatibel dan belum diimplementasikan. `PREREGISTRATION_BLOCKED`, `NO_BACKTEST`, `HOLDOUT_LOCKED`, `LIVE_OFF`.
+
 ## IV. Kriteria siap mendaftar
 
 1. **Spec lengkap:** semua G1–G5 ditetapkan sebagai nilai/aturan yang sama untuk dua sisi hanya jika disengaja; tiap `B1/S1/B2/S2/B3/S3` memiliki `name,symbol,side,regime,playbook,rules,parameters`, `code_sha256`, `spec_version`, alasan WAIT, serta daftar level `discovered_at/confirmed_at`.
