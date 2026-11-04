@@ -115,6 +115,14 @@ Owner menyetujui:
 
 **Implementasi:** `docs/research/SIX_CANDIDATE_EXECUTION_SIMULATOR_CONTRACT_20261104.md` menetapkan input, event audit, dan 12 kriteria pengujian synthetic-only. Tidak ada engine tick replay yang sesuai di `main`; source belum diubah. Semua keputusan rapat hanya kontrak desain, **bukan `registry.jsonl` entry atau persetujuan backtest**.
 
+## III-E. Keputusan D10-K25 — Semua zona tersentuh bersama menghabiskan first visit (APPROVED)
+
+**Owner setuju:** satu BID tick yang first-touch dua atau lebih zona H1 eligible memilih **tepat satu zona prioritas** menggunakan D10-K24 (proximal terdekat dari BID; tie confirmed_at terbaru lalu zone_id). Zona terpilih boleh menjalani **satu M15 konfirmasi** sesuai B2/S2, lalu menjadi `CONSUMED`; semua zona **lain yang ikut disentuh pada tick tersebut** langsung berstatus `CONSUMED`, reason `CONSUMED_OVERLAP_NOT_SELECTED`. Zona yang **tidak tersentuh** tetap `FRESH` selama sah. Jika zona prioritas gagal konfirmasi, timeout, atau invalidasi, **tidak ada fallback** ke zona overlap yang ikut tersentuh. Peristiwa first touch yang tidak dapat diverifikasi harus fail-closed tanpa mencatat fill atau memalsukan status. Setiap event mendapat ID unik dan sumber tick asli.
+
+Implementasi fixture: dua demand overlap pada tick sama, dua supply overlap, zona tak tersentuh tetap FRESH, tie by confirmed_at/zone_id, M15 first-touch boundary tepat `close_utc`, invalidasi sebelum close, kegagalan konfirmasi tidak mengaktifkan zona lain, satu ENTRY_INTENT maksimal, serta tick missing/duplicate menjadi BLOCKED.
+
+**Kesimpulan:** desain inti G3+G4 overlap sudah memiliki keputusan; **belum** berarti seluruh implementasi G4/G6/G7/G8, source code, data broker dan hash siap. `REGISTRY_NOT_WRITTEN`, `NO_BACKTEST`, `LIVE_OFF`.
+
 ## IV. Kriteria siap mendaftar
 
 1. **Spec lengkap:** semua G1–G5 ditetapkan sebagai nilai/aturan yang sama untuk dua sisi hanya jika disengaja; tiap `B1/S1/B2/S2/B3/S3` memiliki `name,symbol,side,regime,playbook,rules,parameters`, `code_sha256`, `spec_version`, alasan WAIT, serta daftar level `discovered_at/confirmed_at`.
