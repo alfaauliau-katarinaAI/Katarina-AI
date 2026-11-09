@@ -176,9 +176,9 @@
       "sha256": "3366adcfdb5f15e97aec8c72836b20316295cfaa3eae1718eb29d63a09938137"
     },
     "scripts/ai/preview_broker_sessions.py": {
-      "bytes": 4593,
-      "sha256": "69a4db3bd5193def843559b64524dda88ed1daf23b0cfb0d121e0b92437258d1",
-      "normalized_sha256": "69a4db3bd5193def843559b64524dda88ed1daf23b0cfb0d121e0b92437258d1"
+      "bytes": 5517,
+      "sha256": "92ed101029da6a74b936e481cb35c9080cf97906fff05c34ca6856f6ae5a2781",
+      "normalized_sha256": "92ed101029da6a74b936e481cb35c9080cf97906fff05c34ca6856f6ae5a2781"
     },
     "scripts/ai/publish_runtime_monitor.py": {
       "bytes": 688,
@@ -1076,9 +1076,9 @@
       "sha256": "d6955aba47b1ebd2b13a0951e16ebbeb1d2aebc74d7e73db4e7784951768606e"
     },
     "src/katarina/intelligence/operations/broker_sessions.py": {
-      "bytes": 12169,
-      "normalized_sha256": "59321ee1a543b3ba2aef250d4d8a1269d9b1d41211ab1e7ecc06b60db5782c87",
-      "sha256": "59321ee1a543b3ba2aef250d4d8a1269d9b1d41211ab1e7ecc06b60db5782c87"
+      "bytes": 12472,
+      "sha256": "a3d63432e3d5a5c4ddf8c7fa73e802e0863f9e5a5bcb958429cb0c284c2f08f6",
+      "normalized_sha256": "a3d63432e3d5a5c4ddf8c7fa73e802e0863f9e5a5bcb958429cb0c284c2f08f6"
     },
     "src/katarina/intelligence/operations/candidate_ledger.py": {
       "bytes": 5281,
