@@ -82,6 +82,8 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
         self.assertEqual(result, 0)
         report = json.loads(out.read_text())
         self.assertEqual(report["cycle_categories"], {"MISSING_OPEN_QUOTES": 1, "QUOTE_READY_ONLY": 1})
+        self.assertIs(report["ledger_broker_identity_verified"], False)
+        self.assertEqual(report["ledger_broker_identity_reason"], "D9_LEDGER_CYCLE_BROKER_IDENTITY_UNBOUND")
         self.assertEqual(report["since_utc"], observation_ledger.STAGE0_COUNT_SINCE_UTC)
         self.assertEqual(report["schedule_file_sha256"], before["schedule.json"])
         self.assertIn("DIAGNOSTIC_ONLY", text)
@@ -114,6 +116,43 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
         self.assertIn("D9_SESSION_PREVIEW BLOCKED D9_OUTPUT_WRITE_FAILED", message)
         self.assertNotIn("private path detail", message)
         self.assertFalse(out.exists())
+
+    def test_partial_write_failure_cannot_publish_json_or_leave_temp_file(self):
+        output = self.root / "partial-failure.json"
+        before = self.digest()
+
+        def fail_after_partial_write(target, payload):
+            target.write(payload[:80])
+            target.flush()
+            raise OSError("sensitive disk path")
+
+        with patch.object(preview_broker_sessions, "_write_staged_report",
+                          side_effect=fail_after_partial_write):
+            result, message = self.run_cli("--output", str(output))
+        self.assertEqual(result, 2)
+        self.assertIn("D9_OUTPUT_WRITE_FAILED", message)
+        self.assertNotIn("sensitive disk path", message)
+        self.assertFalse(output.exists())
+        self.assertEqual(list(self.root.glob(".d9-preview-*.tmp")), [])
+        self.assertEqual(self.digest(), before)
+
+    def test_output_created_by_other_writer_is_not_replaced_during_publish(self):
+        output = self.root / "race-report.json"
+        before = self.digest()
+        original_link = os.link
+
+        def concurrent_publish(src, dst):
+            Path(dst).write_text("other writer", encoding="utf-8")
+            return original_link(src, dst)
+
+        with patch.object(preview_broker_sessions.os, "link",
+                          side_effect=concurrent_publish):
+            result, message = self.run_cli("--output", str(output))
+        self.assertEqual(result, 2)
+        self.assertIn("D9_OUTPUT_WRITE_FAILED", message)
+        self.assertEqual(output.read_text(encoding="utf-8"), "other writer")
+        self.assertEqual(list(self.root.glob(".d9-preview-*.tmp")), [])
+        self.assertEqual(self.digest(), before)
 
     def test_missing_clock_validity_and_holiday_scope_stay_unverified(self):
         self.schedule["valid_until_utc"] = None
