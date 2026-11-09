@@ -16,6 +16,7 @@ from katarina.intelligence.operations.broker_sessions import BrokerSessions, pre
 from katarina.intelligence.operations.observation_ledger import STAGE0_COUNT_SINCE_UTC  # noqa: E402
 
 UNIVERSE_PATH = Path(__file__).resolve().parents[2] / "config" / "observer_universe.json"
+OUTPUT_ROOT = Path(__file__).resolve().parents[2] / "build" / "validation"
 
 
 def main(argv=None):
@@ -40,13 +41,23 @@ def main(argv=None):
         if not db_path.is_file():
             raise ValueError("D9_LEDGER_MISSING")
         if args.output:
-            output = Path(args.output).resolve()
+            requested = Path(args.output)
+            if requested.is_symlink():
+                raise ValueError("D9_OUTPUT_SYMLINK_FORBIDDEN")
+            output = requested.resolve()
             protected = {db_path.resolve(), Path(args.schedule).resolve(), Path(args.clock_proof).resolve(),
                          UNIVERSE_PATH.resolve()}
             protected.update(Path(str(db_path.resolve()) + suffix) for suffix in ("-wal", "-shm", "-journal"))
             if output in protected or (output.exists() and any(
                     p.exists() and output.samefile(p) for p in protected)):
                 raise ValueError("D9_OUTPUT_OVERWRITES_INPUT")
+            if OUTPUT_ROOT.is_symlink() or OUTPUT_ROOT.parent.is_symlink():
+                raise ValueError("D9_OUTPUT_ROOT_SYMLINK_FORBIDDEN")
+            safe_root = OUTPUT_ROOT.resolve()
+            if output == safe_root or not output.is_relative_to(safe_root):
+                raise ValueError("D9_OUTPUT_PATH_NOT_ALLOWED")
+            if output.exists():
+                raise ValueError("D9_OUTPUT_EXISTS")
         db = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True, timeout=10)
         try:
             db.execute("PRAGMA query_only=ON")
@@ -63,8 +74,9 @@ def main(argv=None):
     report["universe_file_sha256"] = hashlib.sha256(universe_raw).hexdigest()
     text = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output:
-        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.output).write_text(text, encoding="utf-8")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with output.open("x", encoding="utf-8") as target:
+            target.write(text)
     else:
         print(text, end="")
     if not report["universe_matches"]:
