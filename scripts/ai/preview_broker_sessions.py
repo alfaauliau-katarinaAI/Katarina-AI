@@ -74,9 +74,13 @@ def main(argv=None):
     report["universe_file_sha256"] = hashlib.sha256(universe_raw).hexdigest()
     text = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        with output.open("x", encoding="utf-8") as target:
-            target.write(text)
+        try:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            with output.open("x", encoding="utf-8") as target:
+                target.write(text)
+        except (OSError, ValueError):
+            print("D9_SESSION_PREVIEW BLOCKED D9_OUTPUT_WRITE_FAILED")
+            return 2
     else:
         print(text, end="")
     if not report["universe_matches"]:
