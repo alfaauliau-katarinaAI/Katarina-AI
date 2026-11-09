@@ -196,11 +196,16 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
                 self.schedule = original
 
     def test_report_cannot_overwrite_canonical_universe(self):
+        # Keep this destructive negative case inside the fixture even if the
+        # output guard regresses; never target the checkout's real config.
+        canonical_copy = self.root / "canonical-universe.json"
         before = preview_broker_sessions.UNIVERSE_PATH.read_bytes()
-        result, text = self.run_cli("--output", str(preview_broker_sessions.UNIVERSE_PATH))
+        canonical_copy.write_bytes(before)
+        with patch.object(preview_broker_sessions, "UNIVERSE_PATH", canonical_copy):
+            result, text = self.run_cli("--output", str(canonical_copy))
         self.assertEqual(result, 2)
         self.assertIn("D9_OUTPUT_OVERWRITES_INPUT", text)
-        self.assertEqual(preview_broker_sessions.UNIVERSE_PATH.read_bytes(), before)
+        self.assertEqual(canonical_copy.read_bytes(), before)
 
 
 if __name__ == "__main__":
