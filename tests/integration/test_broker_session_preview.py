@@ -55,8 +55,9 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
                 "--clock-proof", str(self.clock_path), *extra]
 
     def run_cli(self, *extra):
-        with contextlib.redirect_stdout(io.StringIO()) as output:
-            result = preview_broker_sessions.main(self.args(*extra))
+        with patch.object(preview_broker_sessions, "OUTPUT_ROOT", self.root):
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                result = preview_broker_sessions.main(self.args(*extra))
         return result, output.getvalue()
 
     def digest(self):
@@ -90,6 +91,20 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
         a, b = json.loads(official.read_text()), json.loads(after.read_text())
         self.assertEqual(a, b)
         self.assertEqual(self.digest(), before)
+
+    def test_output_rejects_existing_files_and_paths_outside_validation(self):
+        existing = self.root / "existing-report.json"
+        existing.write_text("preserve", encoding="utf-8")
+        result, message = self.run_cli("--output", str(existing))
+        self.assertEqual(result, 2)
+        self.assertIn("D9_OUTPUT_EXISTS", message)
+        self.assertEqual(existing.read_text(encoding="utf-8"), "preserve")
+        outside = self.root.parent / (self.root.name + "-outside.json")
+        self.assertFalse(outside.exists())
+        result, message = self.run_cli("--output", str(outside))
+        self.assertEqual(result, 2)
+        self.assertIn("D9_OUTPUT_PATH_NOT_ALLOWED", message)
+        self.assertFalse(outside.exists())
 
     def test_missing_clock_validity_and_holiday_scope_stay_unverified(self):
         self.schedule["valid_until_utc"] = None
@@ -175,8 +190,8 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
             other.doCleanups()
 
     def test_cli_blocks_reduced_or_expanded_schedule_against_canonical_universe(self):
-        out = self.root / "scope.json"
         for change in ("remove", "add"):
+            out = self.root / f"scope-{change}.json"
             original = json.loads(json.dumps(self.schedule))
             try:
                 if change == "remove":
