@@ -8,8 +8,10 @@ from pathlib import Path
 import argparse
 import hashlib
 import json
+import os
 import sqlite3
 import sys
+import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from katarina.intelligence.operations.broker_sessions import BrokerSessions, preview  # noqa: E402
@@ -17,6 +19,33 @@ from katarina.intelligence.operations.observation_ledger import STAGE0_COUNT_SIN
 
 UNIVERSE_PATH = Path(__file__).resolve().parents[2] / "config" / "observer_universe.json"
 OUTPUT_ROOT = Path(__file__).resolve().parents[2] / "build" / "validation"
+
+
+def _write_staged_report(target, text):
+    """Keep a deliberate failure-injection seam for partial-write regression tests."""
+    target.write(text)
+
+
+def _publish_report_exclusive(output: Path, text: str):
+    """Publish a complete diagnostic report without replacing an existing path.
+
+    Write and flush a hidden .tmp first. os.link atomically creates the final
+    name only if absent on POSIX and Windows; no partial .json is ever visible.
+    """
+    output.parent.mkdir(parents=True, exist_ok=True)
+    staged = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", newline="\n", prefix=".d9-preview-",
+                suffix=".tmp", dir=output.parent, delete=False) as target:
+            staged = Path(target.name)
+            _write_staged_report(target, text)
+            target.flush()
+            os.fsync(target.fileno())
+        os.link(staged, output)
+    finally:
+        if staged is not None:
+            staged.unlink(missing_ok=True)
 
 
 def main(argv=None):
@@ -75,9 +104,7 @@ def main(argv=None):
     text = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output:
         try:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            with output.open("x", encoding="utf-8") as target:
-                target.write(text)
+            _publish_report_exclusive(output, text)
         except (OSError, ValueError):
             print("D9_SESSION_PREVIEW BLOCKED D9_OUTPUT_WRITE_FAILED")
             return 2
