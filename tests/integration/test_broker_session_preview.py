@@ -106,6 +106,15 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
         self.assertIn("D9_OUTPUT_PATH_NOT_ALLOWED", message)
         self.assertFalse(outside.exists())
 
+    def test_output_write_failure_is_sanitized_and_never_claims_success(self):
+        out = self.root / "write-failure.json"
+        with patch.object(Path, "mkdir", side_effect=PermissionError("private path detail")):
+            result, message = self.run_cli("--output", str(out))
+        self.assertEqual(result, 2)
+        self.assertIn("D9_SESSION_PREVIEW BLOCKED D9_OUTPUT_WRITE_FAILED", message)
+        self.assertNotIn("private path detail", message)
+        self.assertFalse(out.exists())
+
     def test_missing_clock_validity_and_holiday_scope_stay_unverified(self):
         self.schedule["valid_until_utc"] = None
         self.schedule["verified_broker_dates"] = []
