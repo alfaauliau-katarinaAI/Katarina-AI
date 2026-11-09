@@ -191,3 +191,23 @@ universe kosong/duplikat/tidak sah ditolak; output tidak menimpa konfigurasi;
 laporan resmi dan file ledger tetap sama. Empat tes tambahan beserta regresi
 D9/D8 menghasilkan **39/39 OK** lokal. CI/review pada SHA revisi wajib diperiksa
 lagi; CI hijau pada `affb3e4a` tidak mengesahkan perubahan baru ini.
+
+## Review final tambahan — penguatan keluaran CLI
+
+- PR #294 pada SHA `e902f07` telah melewati Body, Ubuntu, Windows,
+  dan KAT-CG-04 CI. Ini **bukan** bukti Stage 0 lulus atau D9 aktif.
+- Pemeriksaan lanjutan menemukan kegagalan I/O saat menyimpan hasil
+  `--output` terjadi di luar penanganan error CLI. Pembatasan output
+  sebelumnya sudah mencegah overwrite, namun kegagalan izin/path dapat
+  menghasilkan traceback. Koreksi sekarang mengembalikan status
+  `D9_OUTPUT_WRITE_FAILED` (exit 2) tanpa membocorkan detail path privat.
+- Tes negatif menggunakan `PermissionError` sintetis dengan direktori
+  temporary dan membuktikan tidak ada file keluaran yang dibuat.
+- Kode CLI, tes, dan release manifest diperbarui dalam branch yang sama.
+  CI **wajib dievaluasi lagi pada SHA final terbaru**; keberhasilan
+  pada `e902f07` tidak mengesahkan commit sesudahnya.
+- Blocker terpisah yang **tidak ditutup oleh kode**: sertifikasi validitas
+  sesi broker/UTC-DST/libur; bukti 7 simbol pada observer VPS produksi
+  (snapshot terdahulu 5 simbol); review independen; izin Owner untuk
+  merge dan izin lain untuk deploy/aktivasi.
+
