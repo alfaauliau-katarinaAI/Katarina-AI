@@ -144,19 +144,28 @@ class BrokerSessions:
         return result("CLOSED", "D9_SCHEDULED_CLOSED")
 
 
-def preview(db, now: datetime, sessions: BrokerSessions, *, since: datetime | None = None) -> dict:
+def preview(db, now: datetime, sessions: BrokerSessions, *, required_symbols,
+            since: datetime | None = None) -> dict:
     """Read ledger quotes without rewriting statuses, criteria, cutoff or denominator.
 
     Reports quote readiness separately from system failures. A clock/connection
-    failure is never excused by a scheduled quote closure. Every configured
-    symbol is checked, including symbols with no ledger row. No PASS verdict.
+    failure is never excused by a scheduled quote closure. Required symbols
+    come from an independent universe, never from the schedule being checked.
+    Missing/extra schedule symbols block readiness. No PASS verdict.
     """
     now = _utc(now)
     since = _utc(since) if since is not None else None
     if since is not None and since > now:
         raise ValueError("D9_SINCE_IN_FUTURE")
+    if (not isinstance(required_symbols, (list, tuple)) or not required_symbols
+            or any(not isinstance(s, str) or not s.strip() for s in required_symbols)
+            or len(set(required_symbols)) != len(required_symbols)):
+        raise ValueError("D9_REQUIRED_UNIVERSE_INVALID")
+    required = set(required_symbols)
+    declared = set(sessions.symbols)
+    universe_matches = required == declared
     counts, reasons = Counter(), Counter()
-    by_symbol = {symbol: Counter() for symbol in sorted(sessions.symbols)}
+    by_symbol = {symbol: Counter() for symbol in sorted(required)}
     clause, params = "", []
     if since is not None:
         clause = " AND julianday(observed_utc)>=julianday(?)"
@@ -189,10 +198,12 @@ def preview(db, now: datetime, sessions: BrokerSessions, *, since: datetime | No
                              and bid > 0 and ask >= bid and 0 <= moment.timestamp() - tick <= 90)
                 by_symbol[symbol]["quotes_available" if valid else "quotes_missing_or_invalid"] += 1
                 missing_open |= not valid
+        if not universe_matches:
+            reasons["D9_UNIVERSE_MISMATCH"] += 1
         if orders != 0 or status not in ("OK", "PARTIAL") or (
                 status == "PARTIAL" and reason != "SOME_SYMBOLS_WITHOUT_QUOTE"):
             label = "SYSTEM_FAILURE_RETAINED"
-        elif "UNVERIFIED" in states:
+        elif not universe_matches or "UNVERIFIED" in states:
             label = "UNVERIFIED"
         elif missing_open:
             label = "MISSING_OPEN_QUOTES"
@@ -205,6 +216,10 @@ def preview(db, now: datetime, sessions: BrokerSessions, *, since: datetime | No
             "activation_effective_utc": None, "live_execution_authorized": False,
             "as_of_utc": now.isoformat(), "since_utc": since.isoformat() if since else None,
             "broker_server_sha256": sessions.server, "schedule_source_sha256": sessions.source,
+            "required_symbols": sorted(required), "declared_symbols": sorted(declared),
+            "universe_matches": universe_matches,
+            "missing_schedule_symbols": sorted(required - declared),
+            "unexpected_schedule_symbols": sorted(declared - required),
             "cycles": sum(counts.values()), "cycle_categories": dict(sorted(counts.items())),
             "session_reasons": dict(sorted(reasons.items())),
             "symbols": {s: dict(sorted(v.items())) for s, v in by_symbol.items()}}

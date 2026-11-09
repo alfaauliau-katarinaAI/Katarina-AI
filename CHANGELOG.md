@@ -1,5 +1,14 @@
 # Perubahan material Katarina AI
 
+## 2026-11-10 — D9: cegah pengurangan simbol wajib melalui file jadwal
+
+- Pratinjau mengikat scope ke `config/observer_universe.json`, bukan daftar simbol
+  dalam input jadwal. Kekurangan/kelebihan simbol menghasilkan UNVERIFIED dan exit 2.
+- Laporan mencatat hash universe dan perbedaan scope; output tidak boleh menimpa
+  konfigurasi universe. API mewajibkan daftar simbol independen dari schedule.
+- Reproduksi menunjukkan schedule yang dipersempit sebelumnya menyembunyikan quote
+  XAU/NAS yang hilang. Empat tes regresi baru menutup celah ini. Aturan resmi tetap D8.
+
 ## 2026-11-09 — D9: evaluator sesi per simbol dan pratinjau read-only (belum aktif)
 
 - `broker_sessions.py` memisahkan quote/trade, tanggal broker, batas sesi dan bukti offset UTC

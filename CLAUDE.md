@@ -5,6 +5,8 @@
 `docs/maintenance/D9_SYMBOL_SESSION_PREVIEW_20261109.md`. Contoh jadwal/clock sengaja
 UNVERIFIED tanpa rentang berlaku dan bukti tanggal/offset. Assessor resmi D8 tidak berubah;
 tidak ada izin aktivasi/deploy dari implementasi ini.
+Audit 10 Nov: scope pratinjau kini wajib cocok dengan `config/observer_universe.json`;
+jadwal kurang/lebih simbol diblokir, hash universe dicatat, API membutuhkan scope independen.
 
 **Peran (Owner, 29 Okt 2026): ChatGPT = manager (akses penuh: roadmap, antrean, merge, VPS); Claude = eksekutor rencana ChatGPT. Mulai dari `docs/ROADMAP.md` bagian "Mulai di sini"; rapat di `docs/ROADMAP_DISCUSSION.md`. Aturan tetap Owner (bagian 1–7) tetap berlaku.**
 

@@ -152,6 +152,7 @@ class BrokerSessionLedgerTests(unittest.TestCase):
         self.db = sqlite3.connect(":memory:")
         observation_ledger.setup(self.db)
         self.policy = BrokerSessions(*fixture())
+        self.required = tuple(self.policy.symbols)
 
     def tearDown(self):
         self.db.close()
@@ -181,7 +182,7 @@ class BrokerSessionLedgerTests(unittest.TestCase):
         now = datetime(2026, 11, 10, tzinfo=U)
         before = data_health.assess(self.db, now)
         total_changes = self.db.total_changes
-        report = preview(self.db, now, self.policy)
+        report = preview(self.db, now, self.policy, required_symbols=self.required)
         self.assertEqual(report["cycle_categories"], {"MISSING_OPEN_QUOTES": 1, "QUOTE_READY_ONLY": 1})
         self.assertEqual(self.db.total_changes, total_changes)
         self.assertEqual(data_health.assess(self.db, now), before)
@@ -191,14 +192,14 @@ class BrokerSessionLedgerTests(unittest.TestCase):
 
     def test_in_session_feed_failure_at_empirical_gap_is_not_excluded(self):
         self.cycle("2026-11-09T21:57:00Z", missing=("NAS100.vx",))
-        report = preview(self.db, datetime(2026, 11, 10, tzinfo=U), self.policy)
+        report = preview(self.db, datetime(2026, 11, 10, tzinfo=U), self.policy, required_symbols=self.required)
         self.assertEqual(report["cycle_categories"], {"MISSING_OPEN_QUOTES": 1})
         self.assertEqual(report["symbols"]["NAS100.vx"]["OPEN"], 1)
 
     def test_connection_clock_and_no_market_data_failures_are_retained(self):
         for minute, reason in enumerate(("LOCAL_CONNECT_FAILED", "STALE_QUOTES", "BROKER_CLOCK_NOT_VERIFIED")):
             self.cycle(f"2026-11-09T21:5{5+minute}:00Z", failed=reason)
-        report = preview(self.db, datetime(2026, 11, 10, tzinfo=U), self.policy)
+        report = preview(self.db, datetime(2026, 11, 10, tzinfo=U), self.policy, required_symbols=self.required)
         self.assertEqual(report["cycle_categories"], {"SYSTEM_FAILURE_RETAINED": 3})
 
     def test_missing_row_duplicate_and_future_quote_fail_closed(self):
@@ -206,16 +207,41 @@ class BrokerSessionLedgerTests(unittest.TestCase):
         self.db.execute("DELETE FROM observer_quotes WHERE cycle_id=? AND symbol='EURUSD.vx'", (cid,))
         self.cycle("2026-11-09T22:31:00Z", duplicate=True)
         self.cycle("2026-11-09T22:32:00Z", bad_tick=True)
-        report = preview(self.db, datetime(2026, 11, 10, tzinfo=U), self.policy)
+        report = preview(self.db, datetime(2026, 11, 10, tzinfo=U), self.policy, required_symbols=self.required)
         self.assertEqual(report["cycle_categories"], {"MISSING_OPEN_QUOTES": 3})
 
     def test_utc_equivalent_cutoff_and_as_of_bound_preview(self):
         self.cycle("2026-11-09T20:00:00+00:00")
         self.cycle("2026-11-09T20:01:00+00:00")
         self.cycle("2026-11-09T20:02:00+00:00")
-        report = preview(self.db, datetime.fromisoformat("2026-11-09T22:01:00+02:00"), self.policy,
+        report = preview(self.db, datetime.fromisoformat("2026-11-09T22:01:00+02:00"), self.policy, required_symbols=self.required,
                          since=datetime.fromisoformat("2026-11-09T22:01:00+02:00"))
         self.assertEqual(report["cycles"], 1)
+
+    def test_reduced_or_expanded_schedule_cannot_hide_missing_required_quotes(self):
+        self.cycle("2026-11-09T20:00:00Z", missing=("XAUUSD.vx", "NAS100.vx"))
+        now = datetime(2026, 11, 10, tzinfo=U)
+        for change in ("remove", "add"):
+            schedule, clock = fixture()
+            if change == "remove":
+                del schedule["symbols"]["XAUUSD.vx"]
+                del schedule["symbols"]["NAS100.vx"]
+            else:
+                schedule["symbols"]["UNKNOWN.vx"] = copy.deepcopy(schedule["symbols"]["EURUSD.vx"])
+            with self.subTest(change=change):
+                report = preview(self.db, now, BrokerSessions(schedule, clock), required_symbols=self.required)
+                self.assertFalse(report["universe_matches"])
+                self.assertEqual(report["cycle_categories"], {"UNVERIFIED": 1})
+                self.assertEqual(set(report["symbols"]), set(self.required))
+                self.assertEqual(report["session_reasons"]["D9_UNIVERSE_MISMATCH"], 1)
+
+    def test_required_universe_is_explicit_nonempty_unique_and_independent_of_schedule(self):
+        now = datetime(2026, 11, 10, tzinfo=U)
+        with self.assertRaises(TypeError):
+            preview(self.db, now, self.policy)
+        for required in (None, [], "EURUSD.vx", [""], [False], ["EURUSD.vx", "EURUSD.vx"]):
+            with self.subTest(required=required), self.assertRaisesRegex(ValueError, "D9_REQUIRED_UNIVERSE_INVALID"):
+                preview(self.db, now, self.policy, required_symbols=required)
 
 
 if __name__ == "__main__":

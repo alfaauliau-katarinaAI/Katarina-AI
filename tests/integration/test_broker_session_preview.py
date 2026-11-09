@@ -20,6 +20,7 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         self.db_path = self.root / "context.sqlite3"
+        self.symbols = json.loads(preview_broker_sessions.UNIVERSE_PATH.read_bytes())["core"]
         from datetime import datetime
         with contextlib.closing(sqlite3.connect(self.db_path)) as db, db:
             observation_ledger.setup(db)
@@ -27,8 +28,8 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
                                    ("2026-11-05T22:31:00Z", ("XAUUSD.vx", "EURUSD.vx"))):
                 moment = datetime.fromisoformat(stamp)
                 cid = observation_ledger.record_snapshot(db, observed_utc=moment, clock_shift_hours=2,
-                    cards={s: {} for s in ("XAUUSD.vx", "EURUSD.vx")},
-                    quotes={s: (1.0, 1.1, moment.timestamp()) for s in ("XAUUSD.vx", "EURUSD.vx") if s not in missing})
+                    cards={s: {} for s in self.symbols},
+                    quotes={s: (1.0, 1.1, moment.timestamp()) for s in self.symbols if s not in missing})
                 observation_ledger.close_cycle(db, cycle_id=cid, finished_utc=moment, status="PARTIAL",
                                                reason="SOME_SYMBOLS_WITHOUT_QUOTE")
         self.schedule = {
@@ -36,7 +37,8 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
             "captured_at_utc": "2026-11-05T00:00:00Z", "valid_from_utc": "2026-11-05T00:00:00Z",
             "valid_until_utc": "2026-11-07T00:00:00Z", "verified_broker_dates": ["2026-11-05", "2026-11-06"],
             "symbols": {s: {"quote": {str(d): [[start, 86100]] for d in range(7)}}
-                        for s, start in (("XAUUSD.vx", 3600), ("EURUSD.vx", 0))}}
+                        for s in self.symbols
+                        for start in [0 if s in ("EURUSD.vx", "GBPUSD.vx", "USDJPY.vx") else 3600]}}
         self.clock = {"schema_version": 1, "broker_server_sha256": "a" * 64, "intervals": [{
             "start_utc": "2026-11-05T00:00:00Z", "end_utc": "2026-11-07T00:00:00Z",
             "offset_seconds": 7200, "reason": "LIVE_FEED_CLOCK_VERIFIED", "evidence_sha256": "c" * 64}]}
@@ -171,6 +173,34 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
             for db in connections:
                 db.close()
             other.doCleanups()
+
+    def test_cli_blocks_reduced_or_expanded_schedule_against_canonical_universe(self):
+        out = self.root / "scope.json"
+        for change in ("remove", "add"):
+            original = json.loads(json.dumps(self.schedule))
+            try:
+                if change == "remove":
+                    del self.schedule["symbols"]["XAUUSD.vx"]
+                else:
+                    self.schedule["symbols"]["UNKNOWN.vx"] = self.schedule["symbols"]["EURUSD.vx"]
+                self.write_inputs()
+                result, text = self.run_cli("--output", str(out))
+                self.assertEqual(result, 2)
+                self.assertIn("D9_UNIVERSE_MISMATCH", text)
+                report = json.loads(out.read_text())
+                self.assertEqual(report["required_symbols"], sorted(self.symbols))
+                self.assertEqual(report["cycle_categories"], {"UNVERIFIED": 2})
+                self.assertEqual(report["universe_file_sha256"],
+                                 hashlib.sha256(preview_broker_sessions.UNIVERSE_PATH.read_bytes()).hexdigest())
+            finally:
+                self.schedule = original
+
+    def test_report_cannot_overwrite_canonical_universe(self):
+        before = preview_broker_sessions.UNIVERSE_PATH.read_bytes()
+        result, text = self.run_cli("--output", str(preview_broker_sessions.UNIVERSE_PATH))
+        self.assertEqual(result, 2)
+        self.assertIn("D9_OUTPUT_OVERWRITES_INPUT", text)
+        self.assertEqual(preview_broker_sessions.UNIVERSE_PATH.read_bytes(), before)
 
 
 if __name__ == "__main__":

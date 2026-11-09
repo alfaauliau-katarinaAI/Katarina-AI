@@ -105,8 +105,14 @@ tidak boleh dipromosikan menjadi verdict resmi hanya berdasarkan file input ini.
 
 Kategori keluaran: `QUOTE_READY_ONLY`, `MISSING_OPEN_QUOTES`,
 `NO_QUOTES_EXPECTED`, `UNVERIFIED`, `SYSTEM_FAILURE_RETAINED`.
-Semua simbol yang tercantum pada schedule diperiksa, termasuk bila baris quote
-hilang. Quote OK harus unik, finite, bid>0, ask>=bid, tick tidak dari masa depan,
+Semua simbol wajib dari `config/observer_universe.json` diperiksa, termasuk bila
+jadwal atau baris quote hilang. CLI tidak menerima override universe dari argv.
+Schedule yang menghapus/menambah simbol menghasilkan `D9_UNIVERSE_MISMATCH`,
+readiness UNVERIFIED dan exit 2; keluaran menyimpan hash file universe serta
+daftar simbol wajib, deklarasi, yang hilang dan yang tidak dikenal.
+API `preview` mewajibkan argumen `required_symbols` terpisah dari schedule.
+Output juga tidak boleh menimpa konfigurasi universe atau hardlink-nya.
+Quote OK harus unik, finite, bid>0, ask>=bid, tick tidak dari masa depan,
 dan umur <=90 detik (horizon default pembaca quote canonical).
 `QUOTE_READY_ONLY` tidak membuktikan clock/tick/reconciliation/reconnect/0-order
 atau kelulusan Stage 0. Tidak ada fallback ke pengabaian simbol yang hilang.
@@ -137,7 +143,7 @@ gagal deterministik di Linux (`ProgrammingError not raised`); dengan penutupan
 eksplisit, tes lulus. Tidak ada skip baru, retry cleanup atau pelonggaran assertion.
 CLI produksi sudah menutup koneksi eksplisit pada `finally` dan tidak diubah.
 
-Hasil lokal pada Python 3.12.14 / NumPy 2.3.5:
+Hasil lokal sebelumnya pada implementasi awal (Python 3.12.14 / NumPy 2.3.5):
 
 | Pemeriksaan | Hasil |
 |---|---|
@@ -150,5 +156,26 @@ Hasil lokal pada Python 3.12.14 / NumPy 2.3.5:
 | Manifest kode | MATCH 317; hanya dua entry source baru ditambahkan |
 
 Laporan lokal: `build/code-gate/d9-full.json` (tidak dilacak Git).
-CI hosted, review independen, merge, sertifikasi rentang bukti dan aktivasi belum dipenuhi.
+CI hosted pada `affb3e4a2f0ab6c0e889219be48d53aa5fdf1dbc` sudah PASS:
+run `42656279595`, Body/Ubuntu/Windows/KAT-CG-04. Review independen,
+merge, sertifikasi rentang bukti dan aktivasi belum dipenuhi.
 Tahap 0 tetap IN_PROGRESS; LIVE OFF. Tidak ada CLOSED_VERIFIED untuk D9 keseluruhan.
+
+### Audit lanjutan 10 November 2026 — scope universe (P1)
+
+Pada SHA `affb3e4a`, `broker_sessions.py:159` membentuk daftar pemeriksaan
+dari `sessions.symbols`, sementara CLI tidak membandingkannya dengan universe
+canonical. Reproduksi SQLite in-memory dengan ledger yang sama: EURUSD punya
+quote, XAU/NAS tidak punya quote ketika ketiganya dijadwalkan open. Schedule
+lengkap → `MISSING_OPEN_QUOTES`; schedule yang menyisakan EURUSD →
+`QUOTE_READY_ONLY`. Ini hasil diagnostik keliru, bukan perubahan verdict resmi.
+
+Koreksi: caller memasok daftar simbol wajib terpisah; CLI selalu membacanya dari
+konfigurasi universe pada checkout yang sama, menyimpan hash byte file dan
+menolak scope berbeda. Simbol wajib tidak boleh hilang dari laporan. Tidak ada
+perubahan universe canonical, cutoff, assessor D8, risk atau promotion lock.
+Acceptance: schedule lengkap tetap berfungsi; schedule kurang/lebih diblokir;
+universe kosong/duplikat/tidak sah ditolak; output tidak menimpa konfigurasi;
+laporan resmi dan file ledger tetap sama. Empat tes tambahan beserta regresi
+D9/D8 menghasilkan **39/39 OK** lokal. CI/review pada SHA revisi wajib diperiksa
+lagi; CI hijau pada `affb3e4a` tidak mengesahkan perubahan baru ini.
