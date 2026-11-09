@@ -192,11 +192,23 @@ class BrokerSessionLedgerTests(unittest.TestCase):
         total_changes = self.db.total_changes
         report = preview(self.db, now, self.policy, required_symbols=self.required)
         self.assertEqual(report["cycle_categories"], {"MISSING_OPEN_QUOTES": 1, "QUOTE_READY_ONLY": 1})
+        self.assertIs(report["ledger_broker_identity_verified"], False)
+        self.assertEqual(report["ledger_broker_identity_reason"], "D9_LEDGER_CYCLE_BROKER_IDENTITY_UNBOUND")
         self.assertEqual(self.db.total_changes, total_changes)
         self.assertEqual(data_health.assess(self.db, now), before)
         self.assertEqual(report["official_verdict_effect"], "NONE")
         self.assertIsNone(report["activation_effective_utc"])
         self.assertNotIn("verdict", report)
+
+    def test_unbound_broker_identity_never_becomes_verified_on_ready_quotes(self):
+        self.cycle("2026-11-09T22:30:00Z")
+        report = preview(self.db, datetime(2026, 11, 10, tzinfo=U), self.policy,
+                         required_symbols=self.required)
+        self.assertEqual(report["cycle_categories"], {"QUOTE_READY_ONLY": 1})
+        self.assertIs(report["ledger_broker_identity_verified"], False)
+        self.assertEqual(report["ledger_broker_identity_reason"], "D9_LEDGER_CYCLE_BROKER_IDENTITY_UNBOUND")
+        self.assertTrue(report["diagnostic_only"])
+        self.assertEqual(report["official_verdict_effect"], "NONE")
 
     def test_in_session_feed_failure_at_empirical_gap_is_not_excluded(self):
         self.cycle("2026-11-09T21:57:00Z", missing=("NAS100.vx",))
