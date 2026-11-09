@@ -9,6 +9,9 @@
 - Bukti GUI broker 7 simbol, contoh input yang belum mengesahkan tanggal, tes sintetis dan
   batas integrasi ada di `docs/maintenance/D9_SYMBOL_SESSION_PREVIEW_20261109.md`.
   Tidak ada aktivasi, perubahan risk/promotion, merge atau deployment.
+- Fixture integrasi menutup koneksi SQLite secara eksplisit setelah transaksi; CI Windows
+  pertama menemukan `WinError 32` saat cleanup. Tes referensi kuat mendeteksi kebocoran
+  yang sama di Linux tanpa bergantung pada garbage collection atau menambah skip.
 
 ## 2026-11-04 — Uji putus-sambung formal #2–#3, peta sesi broker, agenda D9 (dokumen)
 

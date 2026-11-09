@@ -21,7 +21,7 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.db_path = self.root / "context.sqlite3"
         from datetime import datetime
-        with sqlite3.connect(self.db_path) as db:
+        with contextlib.closing(sqlite3.connect(self.db_path)) as db, db:
             observation_ledger.setup(db)
             for stamp, missing in (("2026-11-05T22:30:00Z", ("XAUUSD.vx",)),
                                    ("2026-11-05T22:31:00Z", ("XAUUSD.vx", "EURUSD.vx"))):
@@ -147,6 +147,30 @@ class BrokerSessionPreviewCLI(unittest.TestCase):
             self.assertEqual(policy.classify(datetime.fromisoformat("2026-11-09T22:30:00Z"), symbol,
                                               observed_shift_hours=2)["state"], "UNVERIFIED")
             self.assertIsNone(observed["symbols"][symbol]["quote"]["6"])
+
+    def test_fixture_closes_database_before_temporary_directory_cleanup(self):
+        # Keep a strong reference: an open connection must not be left to GC.
+        # This reproduces the cause of WinError 32 even on Unix, which permits
+        # unlinking an open SQLite file and otherwise conceals the leak.
+        real_connect = sqlite3.connect
+        connections = []
+
+        def connect(*args, **kwargs):
+            db = real_connect(*args, **kwargs)
+            connections.append(db)
+            return db
+
+        other = type(self)("test_no_activation_or_historical_override_cli_switch")
+        try:
+            with patch.object(sqlite3, "connect", side_effect=connect):
+                other.setUp()
+            self.assertEqual(len(connections), 1)
+            with self.assertRaises(sqlite3.ProgrammingError):
+                connections[0].execute("SELECT 1")
+        finally:
+            for db in connections:
+                db.close()
+            other.doCleanups()
 
 
 if __name__ == "__main__":

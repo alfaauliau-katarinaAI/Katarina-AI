@@ -121,14 +121,30 @@ future tick, koneksi/clock gagal, dan batas cutoff/as-of.
 Tes CLI membandingkan report resmi pada waktu yang sama dan hash file input
 sebelum/sesudah pratinjau. Lulus tes ini hanya bukti mekanisme sintetis.
 
+### Perbaikan fixture Windows setelah CI pertama
+
+CI pada `fb4ebd16dcc0a9bee83a41c469df924371ffd644`, run
+`42654446484`: Body dan Ubuntu PASS; Windows gagal dengan empat error
+`WinError 32` saat membersihkan file database fixture. Ini bukan kegagalan
+assertion sesi broker. Akar masalah di `test_broker_session_preview.py:setUp`:
+context manager `sqlite3.Connection` menyelesaikan transaksi, tidak menutup
+connection. GC koneksi tidak deterministik; Windows melarang unlink file terbuka.
+
+Fixture kini memakai `contextlib.closing(...)` bersama context transaksi.
+Tes tambahan menahan referensi kuat pada koneksi dan memastikan `execute`
+ditolak setelah setup selesai. Dengan kode fixture sebelum perbaikan, tes itu
+gagal deterministik di Linux (`ProgrammingError not raised`); dengan penutupan
+eksplisit, tes lulus. Tidak ada skip baru, retry cleanup atau pelonggaran assertion.
+CLI produksi sudah menutup koneksi eksplisit pada `finally` dan tidak diubah.
+
 Hasil lokal pada Python 3.12.14 / NumPy 2.3.5:
 
 | Pemeriksaan | Hasil |
 |---|---|
-| 19 tes baru + regresi terarah D8/cutoff/breakdown | 34/34 OK |
+| 20 tes baru + regresi terarah D8/cutoff/breakdown | 35/35 OK |
 | Unit lengkap | 1.512 dijalankan, OK, 1 skip |
 | Statis lengkap | 98 dijalankan, OK, 4 skip |
-| Integrasi lengkap | 228 dijalankan, OK, 0 skip |
+| Integrasi lengkap sesudah perbaikan fixture | 229 dijalankan, OK, 0 skip |
 | KAT-CG-00/01/02/03 lokal | PASS |
 | Constitution Guard / promotion lock | PASS / PASS |
 | Manifest kode | MATCH 317; hanya dua entry source baru ditambahkan |
