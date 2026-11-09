@@ -212,7 +212,11 @@ def preview(db, now: datetime, sessions: BrokerSessions, *, required_symbols,
         else:
             label = "QUOTE_READY_ONLY"
         counts[label] += 1
+    # Legacy observer_cycles stores clock_shift_hours, but no broker-server ID
+    # per cycle. Matching schedule/clock hashes cannot certify ledger provenance.
     return {"schema_version": 1, "diagnostic_only": True, "official_verdict_effect": "NONE",
+            "ledger_broker_identity_verified": False,
+            "ledger_broker_identity_reason": "D9_LEDGER_CYCLE_BROKER_IDENTITY_UNBOUND",
             "activation_effective_utc": None, "live_execution_authorized": False,
             "as_of_utc": now.isoformat(), "since_utc": since.isoformat() if since else None,
             "broker_server_sha256": sessions.server, "schedule_source_sha256": sessions.source,
