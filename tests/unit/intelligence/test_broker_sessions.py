@@ -60,6 +60,14 @@ class BrokerSessionTests(unittest.TestCase):
         self.assertEqual(classify(policy, "2026-11-08T23:00:00Z"), "OPEN")
         self.assertEqual(classify(policy, "2026-11-06T23:00:00Z"), "CLOSED")
 
+    def test_verified_overnight_carry_when_next_day_schedule_unavailable(self):
+        schedule, clock = fixture()
+        schedule["symbols"]["XAUUSD.vx"]["quote"]["4"] = [[82800, 90000]]
+        schedule["symbols"]["XAUUSD.vx"]["quote"]["5"] = None
+        policy = BrokerSessions(schedule, clock)
+        self.assertEqual(classify(policy, "2026-11-06T22:30:00Z"), "OPEN")
+        self.assertEqual(classify(policy, "2026-11-06T23:00:00Z"), "UNVERIFIED")
+
     def test_missing_evidence_never_means_closed(self):
         schedule, clock = fixture()
         cases = []
