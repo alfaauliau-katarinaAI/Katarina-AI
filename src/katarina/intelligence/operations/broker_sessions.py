@@ -126,21 +126,21 @@ class BrokerSessions:
         sessions = week.get(str(day.weekday()))
         if day not in self.dates:
             return result("UNVERIFIED", "D9_DATE_NOT_VERIFIED")
-        if sessions is None:
-            return result("UNVERIFIED", "D9_DAY_SESSION_UNAVAILABLE")
         second = broker.hour * 3600 + broker.minute * 60 + broker.second + broker.microsecond / 1e6
-        if any(start <= second < end for start, end in sessions):
+        if sessions is not None and any(start <= second < end for start, end in sessions):
             return result("OPEN", "D9_SCHEDULED_OPEN")
-        # An explicit overnight session belongs to its starting broker date.
+        # An explicitly verified overnight carry remains open even when today's session is unavailable.
         previous = day - timedelta(days=1)
         previous_sessions = week.get(str(previous.weekday()))
-        if previous_sessions is None:
-            return result("UNVERIFIED", "D9_PREVIOUS_DAY_UNAVAILABLE")
-        carry = any(start <= second + 86400 < end for start, end in previous_sessions)
-        if carry:
+        if previous_sessions is not None and any(
+                start <= second + 86400 < end for start, end in previous_sessions):
             if previous not in self.dates:
                 return result("UNVERIFIED", "D9_DATE_NOT_VERIFIED")
             return result("OPEN", "D9_OVERNIGHT_OPEN")
+        if sessions is None:
+            return result("UNVERIFIED", "D9_DAY_SESSION_UNAVAILABLE")
+        if previous_sessions is None:
+            return result("UNVERIFIED", "D9_PREVIOUS_DAY_UNAVAILABLE")
         return result("CLOSED", "D9_SCHEDULED_CLOSED")
 
 
