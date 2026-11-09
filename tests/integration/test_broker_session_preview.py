@@ -1,0 +1,153 @@
+"""D9 CLI keeps real files read-only; fixtures here are entirely synthetic."""
+import contextlib
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import sqlite3
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from katarina.intelligence.operations import observation_ledger
+from scripts.ai import check_stage0_health, preview_broker_sessions
+
+
+class BrokerSessionPreviewCLI(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.db_path = self.root / "context.sqlite3"
+        from datetime import datetime
+        with sqlite3.connect(self.db_path) as db:
+            observation_ledger.setup(db)
+            for stamp, missing in (("2026-11-05T22:30:00Z", ("XAUUSD.vx",)),
+                                   ("2026-11-05T22:31:00Z", ("XAUUSD.vx", "EURUSD.vx"))):
+                moment = datetime.fromisoformat(stamp)
+                cid = observation_ledger.record_snapshot(db, observed_utc=moment, clock_shift_hours=2,
+                    cards={s: {} for s in ("XAUUSD.vx", "EURUSD.vx")},
+                    quotes={s: (1.0, 1.1, moment.timestamp()) for s in ("XAUUSD.vx", "EURUSD.vx") if s not in missing})
+                observation_ledger.close_cycle(db, cycle_id=cid, finished_utc=moment, status="PARTIAL",
+                                               reason="SOME_SYMBOLS_WITHOUT_QUOTE")
+        self.schedule = {
+            "schema_version": 1, "broker_server_sha256": "a" * 64, "source_sha256": "b" * 64,
+            "captured_at_utc": "2026-11-05T00:00:00Z", "valid_from_utc": "2026-11-05T00:00:00Z",
+            "valid_until_utc": "2026-11-07T00:00:00Z", "verified_broker_dates": ["2026-11-05", "2026-11-06"],
+            "symbols": {s: {"quote": {str(d): [[start, 86100]] for d in range(7)}}
+                        for s, start in (("XAUUSD.vx", 3600), ("EURUSD.vx", 0))}}
+        self.clock = {"schema_version": 1, "broker_server_sha256": "a" * 64, "intervals": [{
+            "start_utc": "2026-11-05T00:00:00Z", "end_utc": "2026-11-07T00:00:00Z",
+            "offset_seconds": 7200, "reason": "LIVE_FEED_CLOCK_VERIFIED", "evidence_sha256": "c" * 64}]}
+        self.schedule_path = self.root / "schedule.json"
+        self.clock_path = self.root / "clock.json"
+        self.write_inputs()
+
+    def write_inputs(self):
+        self.schedule_path.write_text(json.dumps(self.schedule), encoding="utf-8")
+        self.clock_path.write_text(json.dumps(self.clock), encoding="utf-8")
+
+    def args(self, *extra):
+        return ["--state-dir", str(self.root), "--schedule", str(self.schedule_path),
+                "--clock-proof", str(self.clock_path), *extra]
+
+    def run_cli(self, *extra):
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            result = preview_broker_sessions.main(self.args(*extra))
+        return result, output.getvalue()
+
+    def digest(self):
+        return {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                for p in (self.db_path, self.schedule_path, self.clock_path)}
+
+    def test_cli_proves_partial_closure_without_changing_official_results_or_files(self):
+        from datetime import datetime, timezone
+        fixed_now = datetime(2026, 11, 9, 16, tzinfo=timezone.utc)
+        # Official report hashes include as_of_utc; compare the same instant.
+        clock_patch = patch.object(check_stage0_health, "datetime", wraps=datetime)
+        mocked_clock = clock_patch.start()
+        self.addCleanup(clock_patch.stop)
+        mocked_clock.now.return_value = fixed_now
+        before = self.digest()
+        official = self.root / "official-before.json"
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(check_stage0_health.main(["--state-dir", str(self.root), "--since", "official",
+                                                       "--output", str(official)]), 0)
+        out = self.root / "preview.json"
+        result, text = self.run_cli("--output", str(out))
+        self.assertEqual(result, 0)
+        report = json.loads(out.read_text())
+        self.assertEqual(report["cycle_categories"], {"MISSING_OPEN_QUOTES": 1, "QUOTE_READY_ONLY": 1})
+        self.assertEqual(report["since_utc"], observation_ledger.STAGE0_COUNT_SINCE_UTC)
+        self.assertEqual(report["schedule_file_sha256"], before["schedule.json"])
+        self.assertIn("DIAGNOSTIC_ONLY", text)
+        after = self.root / "official-after.json"
+        with contextlib.redirect_stdout(io.StringIO()):
+            check_stage0_health.main(["--state-dir", str(self.root), "--since", "official", "--output", str(after)])
+        a, b = json.loads(official.read_text()), json.loads(after.read_text())
+        self.assertEqual(a, b)
+        self.assertEqual(self.digest(), before)
+
+    def test_missing_clock_validity_and_holiday_scope_stay_unverified(self):
+        self.schedule["valid_until_utc"] = None
+        self.schedule["verified_broker_dates"] = []
+        self.clock["intervals"] = []
+        self.write_inputs()
+        out = self.root / "preview.json"
+        self.assertEqual(self.run_cli("--output", str(out))[0], 0)
+        report = json.loads(out.read_text())
+        self.assertEqual(report["cycle_categories"], {"UNVERIFIED": 2})
+        self.assertNotIn("rate", report)
+        self.assertNotIn("verdict", report)
+
+    def test_output_cannot_overwrite_inputs_database_sidecars_or_hardlink_alias(self):
+        before = self.digest()
+        alias = self.root / "alias.json"
+        os.link(self.db_path, alias)
+        for path in (self.db_path, self.schedule_path, self.clock_path, alias,
+                     Path(str(self.db_path) + "-wal"), Path(str(self.db_path) + "-shm"),
+                     Path(str(self.db_path) + "-journal")):
+            with self.subTest(path=path):
+                result, text = self.run_cli("--output", str(path))
+                self.assertEqual(result, 2)
+                self.assertIn("D9_OUTPUT_OVERWRITES_INPUT", text)
+        self.assertEqual(self.digest(), before)
+
+    def test_malformed_inputs_missing_db_and_future_since_are_blocked(self):
+        for payload in ("not json", "[]", '{"schema_version": true}'):
+            self.schedule_path.write_text(payload, encoding="utf-8")
+            self.assertEqual(self.run_cli()[0], 2)
+        self.write_inputs()
+        self.assertEqual(self.run_cli("--since", "2099-01-01T00:00:00Z")[0], 2)
+        self.assertEqual(self.run_cli("--since", "2026-11-01")[0], 2)
+        self.db_path.unlink()
+        self.assertEqual(self.run_cli()[0], 2)
+        self.assertFalse(self.db_path.exists())
+
+    def test_no_activation_or_historical_override_cli_switch(self):
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
+            preview_broker_sessions.main(self.args("--effective-utc", "2026-01-01T00:00:00Z"))
+        self.assertEqual(error.exception.code, 2)
+
+    def test_observed_example_covers_core_universe_but_authorizes_no_dates(self):
+        from katarina.intelligence.operations.broker_sessions import BrokerSessions
+        repo = Path(__file__).resolve().parents[2]
+        observed = json.loads((repo / "config/broker_sessions.d9.example.json").read_text())
+        clock = json.loads((repo / "config/broker_session_clock.d9.example.json").read_text())
+        universe = json.loads((repo / "config/observer_universe.json").read_text())
+        self.assertEqual(set(observed["symbols"]), set(universe["core"]))
+        self.assertIsNone(observed["valid_from_utc"])
+        self.assertIsNone(observed["valid_until_utc"])
+        self.assertEqual(observed["verified_broker_dates"], [])
+        self.assertEqual(clock["intervals"], [])
+        policy = BrokerSessions(observed, clock)
+        from datetime import datetime
+        for symbol in universe["core"]:
+            self.assertEqual(policy.classify(datetime.fromisoformat("2026-11-09T22:30:00Z"), symbol,
+                                              observed_shift_hours=2)["state"], "UNVERIFIED")
+            self.assertIsNone(observed["symbols"][symbol]["quote"]["6"])
+
+
+if __name__ == "__main__":
+    unittest.main()

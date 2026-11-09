@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "description": "No UTC offset interval certified by this example. A point-in-time UTC+2 observation does not establish a forward or historical interval, DST or holiday proof.",
+  "broker_server_sha256": "dacabd748ea8f1b2394491a79990cde783e49bbcea518832934030cb00ad3c95",
+  "source_context_sha256": "e28806082b9a0d3dfd91ceedd46d456d16d67fabd941e41819e53c04a4df039b",
+  "intervals": []
+}

@@ -1,5 +1,11 @@
 # CLAUDE.md — peta cepat repositori Katarina AI
 
+**D9, 9 Nov 2026 (branch terisolasi, belum aktif):** evaluator per simbol dan CLI read-only
+`scripts/ai/preview_broker_sessions.py`; bukti, format input dan batasnya di
+`docs/maintenance/D9_SYMBOL_SESSION_PREVIEW_20261109.md`. Contoh jadwal/clock sengaja
+UNVERIFIED tanpa rentang berlaku dan bukti tanggal/offset. Assessor resmi D8 tidak berubah;
+tidak ada izin aktivasi/deploy dari implementasi ini.
+
 **Peran (Owner, 29 Okt 2026): ChatGPT = manager (akses penuh: roadmap, antrean, merge, VPS); Claude = eksekutor rencana ChatGPT. Mulai dari `docs/ROADMAP.md` bagian "Mulai di sini"; rapat di `docs/ROADMAP_DISCUSSION.md`. Aturan tetap Owner (bagian 1–7) tetap berlaku.**
 
 Ringkasan untuk sesi berikutnya agar tidak perlu membaca ulang seluruh repo (~800 berkas setelah perampingan 22 Okt).

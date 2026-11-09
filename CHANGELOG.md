@@ -1,5 +1,15 @@
 # Perubahan material Katarina AI
 
+## 2026-11-09 — D9: evaluator sesi per simbol dan pratinjau read-only (belum aktif)
+
+- `broker_sessions.py` memisahkan quote/trade, tanggal broker, batas sesi dan bukti offset UTC
+  per rentang. Identitas, validitas, DST/hari libur yang tidak terbukti tetap UNVERIFIED.
+- `preview_broker_sessions.py` membaca ledger dalam satu transaksi read-only; menunjukkan
+  quote yang tetap wajib tersedia ketika CFD tutup, tanpa mengubah hasil/cutoff resmi D8.
+- Bukti GUI broker 7 simbol, contoh input yang belum mengesahkan tanggal, tes sintetis dan
+  batas integrasi ada di `docs/maintenance/D9_SYMBOL_SESSION_PREVIEW_20261109.md`.
+  Tidak ada aktivasi, perubahan risk/promotion, merge atau deployment.
+
 ## 2026-11-04 — Uji putus-sambung formal #2–#3, peta sesi broker, agenda D9 (dokumen)
 
 - Uji `KILL_TERMINAL_MID_CYCLE` (17 s) dan `KILL_TERMINAL` (55 s) lolos; `reconnect_recoveries` 3/3 uji formal (RH-014).
