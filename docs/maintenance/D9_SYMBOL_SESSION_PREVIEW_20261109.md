@@ -121,7 +121,10 @@ atau kelulusan Stage 0. Tidak ada fallback ke pengabaian simbol yang hilang.
 
 - Output `--output` dibatasi ke file **baru** dalam `build/validation/`;
   lokasi di luar root validasi, symlink root, dan target yang sudah ada ditolak.
-  CLI menggunakan mode file eksklusif `x` agar tidak menimpa hasil sebelumnya.
+  Setelah revisi Owner, CLI menulis ke file sementara `.d9-preview-*.tmp`,
+  flush+fsync, lalu memublikasikan nama JSON secara eksklusif melalui
+  `os.link` (tidak melakukan overwrite). Jika penulisan/publikasi gagal,
+  nama JSON final tidak dibuat oleh proses ini dan file sementara dibersihkan.
 - Untuk pengujian, direktori validasi diganti dengan direktori sementara.
 - Jadwal overnight dari hari sebelumnya yang tervalidasi tetap diklasifikasi
   OPEN meskipun jadwal hari berikutnya belum tersedia. Tanpa bukti tetap
@@ -211,3 +214,29 @@ lagi; CI hijau pada `affb3e4a` tidak mengesahkan perubahan baru ini.
   (snapshot terdahulu 5 simbol); review independen; izin Owner untuk
   merge dan izin lain untuk deploy/aktivasi.
 
+
+## Revisi permintaan Owner 10 November 2026 — PR tetap Draft
+
+1. **P1 berkas parsial:** output tidak lagi ditulis langsung pada target `.json`.
+   Kegagalan I/O setelah sebagian teks sementara sudah ditulis menghasilkan
+   `D9_OUTPUT_WRITE_FAILED`, exit 2, tanpa menerbitkan `.json` yang tidak
+   lengkap dan tanpa meninggalkan file sementara pada kegagalan yang tertangani.
+   Jika proses terhenti paksa, sisa file sementara bukan berkas laporan final
+   dan tidak boleh dipakai sebagai bukti. Tes mensimulasikan kegagalan setelah
+   menulis prefiks serta race ketika file target dibuat proses lain.
+2. **P1 identitas broker ledger:** hasil `preview` selalu memuat
+   `ledger_broker_identity_verified: false` dan
+   `ledger_broker_identity_reason: D9_LEDGER_CYCLE_BROKER_IDENTITY_UNBOUND`.
+   Legacy `observer_cycles` hanya menyimpan `clock_shift_hours`, bukan
+   hash identitas broker per siklus. Bukti schedule dan clock yang cocok
+   tidak boleh ditafsirkan sebagai verifikasi independen untuk siklus ledger.
+   Kategori `QUOTE_READY_ONLY` tetap sebatas diagnostik. Tes regresi
+   memeriksa penanda ini bahkan ketika semua quote sintetis tersedia.
+3. **Belum dibenarkan untuk diisi:** rentang validitas jadwal broker,
+   bukti setiap tanggal/libur, interval UTC/DST, serta ketujuh simbol
+   benar-benar diamati di VPS pada scope yang sama. Tidak ada perubahan
+   assessor resmi D8, cutoff, denominator, Risk Governor, promotion lock,
+   koneksi MT5, atau kewenangan trading.
+4. **Syarat penerimaan:** CI Body/Ubuntu/Windows/KAT-CG-04 pada SHA
+   terbaru, review ulang Owner, dan tata kelola review independen tetap
+   dipenuhi sebelum merge. Tidak ada izin deploy atau aktivasi.
