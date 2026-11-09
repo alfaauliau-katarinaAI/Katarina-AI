@@ -176,9 +176,9 @@
       "sha256": "3366adcfdb5f15e97aec8c72836b20316295cfaa3eae1718eb29d63a09938137"
     },
     "scripts/ai/preview_broker_sessions.py": {
-      "bytes": 4438,
-      "normalized_sha256": "1c5ed42c048c54510fd274f583a26b7c77b08aacbefd1651938ab87247ca757f",
-      "sha256": "1c5ed42c048c54510fd274f583a26b7c77b08aacbefd1651938ab87247ca757f"
+      "bytes": 4593,
+      "sha256": "69a4db3bd5193def843559b64524dda88ed1daf23b0cfb0d121e0b92437258d1",
+      "normalized_sha256": "69a4db3bd5193def843559b64524dda88ed1daf23b0cfb0d121e0b92437258d1"
     },
     "scripts/ai/publish_runtime_monitor.py": {
       "bytes": 688,
