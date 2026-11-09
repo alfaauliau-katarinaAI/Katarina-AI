@@ -117,6 +117,18 @@ dan umur <=90 detik (horizon default pembaca quote canonical).
 `QUOTE_READY_ONLY` tidak membuktikan clock/tick/reconciliation/reconnect/0-order
 atau kelulusan Stage 0. Tidak ada fallback ke pengabaian simbol yang hilang.
 
+## Koreksi review berikutnya — belum aktif
+
+- Output `--output` dibatasi ke file **baru** dalam `build/validation/`;
+  lokasi di luar root validasi, symlink root, dan target yang sudah ada ditolak.
+  CLI menggunakan mode file eksklusif `x` agar tidak menimpa hasil sebelumnya.
+- Untuk pengujian, direktori validasi diganti dengan direktori sementara.
+- Jadwal overnight dari hari sebelumnya yang tervalidasi tetap diklasifikasi
+  OPEN meskipun jadwal hari berikutnya belum tersedia. Tanpa bukti tetap
+  UNVERIFIED, tidak dianggap CLOSED.
+- Aturan resmi D8, cutoff, denominator, sumber data, Risk Governor dan LIVE
+  tidak diubah. CI pada commit terbaru harus dijalankan ulang sebelum review.
+
 ## Verifikasi dan batas serah-terima
 
 Tes synthetic-only mencakup batas detik/mikrodetik, perbedaan trade lima menit,
