@@ -161,9 +161,9 @@
       "sha256": "a28aa24eac36b241d9bf0a8c565b0b3ccda2c7d8212441d75a30f24867a7e4fb"
     },
     "scripts/ai/diagnose_stage0_cutoff.py": {
-      "bytes": 8728,
-      "normalized_sha256": "e43936d5f2cfb15b01659941fdc58a7b2cabed20142fb66faaec44a963525fbd",
-      "sha256": "e43936d5f2cfb15b01659941fdc58a7b2cabed20142fb66faaec44a963525fbd"
+      "bytes": 8722,
+      "normalized_sha256": "ba45088c874bf5e45231bdce44bc21c80d29d5169767a8072a71af294f66a61b",
+      "sha256": "ba45088c874bf5e45231bdce44bc21c80d29d5169767a8072a71af294f66a61b"
     },
     "scripts/ai/hf_archive_sync.py": {
       "bytes": 32113,
@@ -1481,9 +1481,9 @@
       "sha256": "eddf97452478afdbe86a635bcd79818468fe0638a851e215a26e25e8ca0f20da"
     },
     "src/katarina/research/bar_clock_evidence.py": {
-      "bytes": 23478,
-      "normalized_sha256": "3e828ca1256c4d74db3fcbb6745bf6b2e60e8e5edeac2546f121928e0c227d3a",
-      "sha256": "3e828ca1256c4d74db3fcbb6745bf6b2e60e8e5edeac2546f121928e0c227d3a"
+      "bytes": 23463,
+      "normalized_sha256": "8d26562d86f01a85207d705b584dd52c4638441d2a420c7eb63d5a47860b9e5c",
+      "sha256": "8d26562d86f01a85207d705b584dd52c4638441d2a420c7eb63d5a47860b9e5c"
     },
     "src/katarina/research/blocker_ladder.py": {
       "bytes": 7618,
