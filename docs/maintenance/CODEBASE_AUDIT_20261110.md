@@ -112,7 +112,13 @@ Target sesudahnya: `main`, `claude-openai-mcp`, `claude-vps-bridge`, dan branch 
 
 ## 6. Risiko dan sisa pekerjaan
 
-1. **Tahap 0 rate 96,90 % < 98 %.** Sumber kegagalan perlu dipecah per jam/simbol (`--breakdown`) untuk memastikan apakah ini jeda CFD 22:30–23:00 UTC (D9). Tidak diubah di sini.
+1. **Tahap 0 rate 96,90 % < 98 %.** Kueri baca-saja (`mode=ro`) siklus non-OK sejak aturan D8 efektif (5 Nov 00:00 UTC), dibandingkan dengan jendela pengecualian:
+   - **21:45–22:30 UTC:** 192 siklus, sudah dikecualikan WP15.
+   - **22:30–23:05 UTC:** **hingga 89 siklus** berpotensi terhitung (`SOME_SYMBOLS_WITHOUT_QUOTE` 55, `STALE_QUOTES` 34), dari 157 non-OK di slot itu. Ini pola sisa jeda XAU/NAS yang sama dengan temuan D9 ([peta sesi](MT5_SESSION_MAP_20261104.md)). Sebagian bisa jatuh di tepi pembukaan Minggu, sehingga pemisahan ini belum memakai klasifikasi sesi resmi checker.
+   - **Jam lain:** 44 `STALE_QUOTES` dan 1 `LOCAL_CONNECT_FAILED`.
+   - `FX_MARKET_CLOSED` akhir pekan (2.685) berada di luar sesi resmi.
+
+   Perkiraan kasar bila seluruh 89 siklus itu juga dikecualikan: ±98,5 % (batas atas, bukan hasil resmi dan bukan usulan otomatis). Keputusan tetap di D9 (Owner); aturan, cutoff dan data tidak diubah.
 2. 10 branch menunggu workflow guarded cleanup (Owner/Yura).
 3. Dua branch tanpa PR menunggu keputusan Owner (D5).
 4. #295 menunggu update branch, CI ulang, dan approval/pengecualian.
