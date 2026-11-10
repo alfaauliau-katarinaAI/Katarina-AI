@@ -12,7 +12,8 @@ Two start modes are recognised:
   session 0 is unproven for this terminal, so it stays ``BLOCKED_EVIDENCE`` until tested on an
   isolated host.
 
-Verdicts: ``READY_AFTER_REBOOT`` | ``NOT_READY`` | ``BLOCKED_EVIDENCE``. Never authorizes trading.
+Verdicts: ``READY_FOR_REBOOT_TEST`` | ``NOT_READY`` | ``BLOCKED_EVIDENCE``. This checks configuration only;
+``READY_AFTER_REBOOT`` needs evidence from a real reboot (``post_reboot.assess``). Never authorizes trading.
 """
 from __future__ import annotations
 
@@ -111,6 +112,6 @@ def analyze(task_xml: str, launcher_text: str, *, autologon_enabled: bool | None
     if any(f["reason"] == "WP6_SESSION0_MT5_UNVERIFIED" for f in blocking) and len(blocking) == 1:
         verdict = "BLOCKED_EVIDENCE"
     else:
-        verdict = "NOT_READY" if blocking else "READY_AFTER_REBOOT"
+        verdict = "NOT_READY" if blocking else "READY_FOR_REBOOT_TEST"
     return {"verdict": verdict, "mode": mode, "logon_type": logon_type, "findings": findings,
             "orders_submitted": 0, "live_execution_authorized": False}

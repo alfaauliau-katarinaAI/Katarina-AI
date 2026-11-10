@@ -14,7 +14,7 @@ Severity mengikuti area sumber: **P0** = risk, eksekusi, broker/jam/identitas, a
 **P1** = observer/kognisi, operasi Tahap 0, persistence/memory, demo/shadow, script runtime; **P2** = riset, lab, berita, monitoring, tooling.
 Pesan exception mentah tidak dicatat (hanya kode/tipe) agar kredensial tidak bocor.
 
-Ringkasan: 614 kode — P0 101, P1 265, P2 248; 239 disebut di tes, 375 belum.
+Ringkasan: 628 kode — P0 101, P1 279, P2 248; 246 disebut di tes, 382 belum.
 
 | Kode | Sev | Area | Sumber | Tes |
 |---|---|---|---|---|
@@ -348,7 +348,7 @@ Ringkasan: 614 kode — P0 101, P1 265, P2 248; 239 disebut di tes, 375 belum.
 | `STATE_AND_CREDENTIAL_DIRECTORIES_MUST_DIFFER` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:38` | — |
 | `SYMBOL_SPEC_REVISION_ROLLBACK` | P1 | validation.engine | `src/katarina/validation/engine.py:470` | `tests/unit/validation/test_stage08_validation.py` |
 | `SYMLINK_SOURCE_FORBIDDEN` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:312` | — |
-| `TEST_*` | P1 | intelligence.operations, monitoring.activity_trace, monitoring.pair_activity, monitoring.public_research, monitoring.worker_runtime, scripts/governance | `scripts/governance/code_change_gate.py:252`<br>`src/katarina/intelligence/operations/runtime_evidence.py:43`<br>`src/katarina/monitoring/activity_trace.py:10`<br>`src/katarina/monitoring/pair_activity.py:8` (+2) | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_continuous_observation.py`<br>`tests/integration/test_demo_forward_runtime.py` (+54) |
+| `TEST_*` | P1 | intelligence.operations, monitoring.activity_trace, monitoring.pair_activity, monitoring.public_research, monitoring.worker_runtime, scripts/governance | `scripts/governance/code_change_gate.py:252`<br>`src/katarina/intelligence/operations/runtime_evidence.py:43`<br>`src/katarina/monitoring/activity_trace.py:10`<br>`src/katarina/monitoring/pair_activity.py:8` (+2) | `tests/integration/test_assistant_pretrial.py`<br>`tests/integration/test_continuous_observation.py`<br>`tests/integration/test_demo_forward_runtime.py` (+56) |
 | `TICK_DAY_STATUS_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:625`<br>`src/katarina/intelligence/operations/data_health.py:625` | — |
 | `TICK_FILE_HASH_MISMATCH_*` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:675`<br>`src/katarina/intelligence/operations/data_health.py:675` | `tests/integration/test_tick_replay_cli.py`<br>`tests/unit/operations/test_data_audit_wp14.py`<br>`tests/unit/research/test_context_export.py` (+1) |
 | `TICK_FILE_HASH_NOT_RECORDED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/data_health.py:664` | `tests/unit/operations/test_data_audit_wp14.py` |
@@ -368,21 +368,35 @@ Ringkasan: 614 kode — P0 101, P1 265, P2 248; 239 disebut di tes, 375 belum.
 | `VOLUME_OUT_OF_RANGE` | P1 | validation.engine | `src/katarina/validation/engine.py:953` | `tests/unit/validation/test_stage08_state_semantics.py` |
 | `VPS_PUBLIC_KEY_MISMATCH` | P1 | scripts/ai | `scripts/ai/seal_hf_secret.py:11` | — |
 | `WAITING_CLOUD_RATE_LIMIT` | P1 | scripts/ai | `scripts/ai/hf_archive_sync.py:83` | `tests/unit/test_hf_archive_sync.py` |
-| `WP6_ACTION_NOT_CANONICAL_LAUNCHER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:69` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_AUTOLOGON_STATE_UNKNOWN` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:103` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_AUTOLOGON_USER_MISMATCH` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:107` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_BATTERY_POLICY_CAN_STOP` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:83` | — |
-| `WP6_EXECUTION_TIME_LIMIT` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:75` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_LAUNCHER_ABANDONED_MUTEX_NOT_HANDLED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:91` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_LAUNCHER_NO_SINGLE_INSTANCE_MUTEX` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:87` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_LAUNCHER_NO_STOP_MARKER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:85` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_MULTIPLE_INSTANCES_ALLOWED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:71` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_NO_AUTOLOGON` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:105` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_NO_REBOOT_TRIGGER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:109` | — |
-| `WP6_NO_RESTART_ON_FAILURE` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:80` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_SESSION0_MT5_UNVERIFIED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:97` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_TASK_DISABLED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:65` | `tests/unit/operations/test_wp6_startup.py` |
-| `WP6_TASK_XML_INVALID` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:53` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_ACTION_NOT_CANONICAL_LAUNCHER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:70` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_AUTOLOGON_STATE_UNKNOWN` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:104` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_AUTOLOGON_USER_MISMATCH` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:108` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_BATTERY_POLICY_CAN_STOP` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:84` | — |
+| `WP6_DB_QUICK_CHECK_FAILED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:129` | — |
+| `WP6_DUPLICATE_CYCLES` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:144` | — |
+| `WP6_EXECUTION_TIME_LIMIT` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:76` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_FIRST_CYCLE_LATE` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:136` | `tests/unit/operations/test_wp6_post_reboot.py` |
+| `WP6_LAUNCHER_ABANDONED_MUTEX_NOT_HANDLED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:92` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_LAUNCHER_CHANGED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:117` | — |
+| `WP6_LAUNCHER_NO_SINGLE_INSTANCE_MUTEX` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:88` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_LAUNCHER_NO_STOP_MARKER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:86` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_LEDGER_MISSING` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:126` | — |
+| `WP6_MT5_COUNT` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:121` | — |
+| `WP6_MULTIPLE_INSTANCES_ALLOWED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:72` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_NOT_SAME_INTERACTIVE_SESSION` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:124` | `tests/unit/operations/test_wp6_post_reboot.py` |
+| `WP6_NO_AUTOLOGON` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:106` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_NO_BASELINE` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:108` | — |
+| `WP6_NO_OK_CYCLE_AFTER_BOOT` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:134` | `tests/unit/operations/test_wp6_post_reboot.py` |
+| `WP6_NO_REBOOT_SINCE_BASELINE` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:113` | — |
+| `WP6_NO_REBOOT_TRIGGER` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:110` | — |
+| `WP6_NO_RESTART_ON_FAILURE` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:81` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_OBSERVER_COUNT` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:119` | `tests/unit/operations/test_wp6_post_reboot.py` |
+| `WP6_ORDERS_RECORDED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:131` | `tests/unit/operations/test_wp6_post_reboot.py` |
+| `WP6_REBOOT_GAP_NOT_VISIBLE` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:142` | `tests/unit/operations/test_wp6_post_reboot.py` |
+| `WP6_SESSION0_MT5_UNVERIFIED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:98` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_TASK_DEFINITION_CHANGED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/post_reboot.py:115` | — |
+| `WP6_TASK_DISABLED` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:66` | `tests/unit/operations/test_wp6_startup.py` |
+| `WP6_TASK_XML_INVALID` | P1 | intelligence.operations | `src/katarina/intelligence/operations/startup_task.py:54` | `tests/unit/operations/test_wp6_startup.py` |
 | `WRONG_REPOSITORY` | P1 | scripts/ai, scripts/deployment | `scripts/ai/hf_archive_sync.py:408`<br>`scripts/deployment/recover_hf_catalog.py:22` | — |
 | `ABSTAIN_DATA_WITHIN_HISTORICAL_TRAINING` | P2 | scripts/research | `scripts/research/probe_current_market_analogs.py:49` | — |
 | `ABSTAIN_INVALID_OR_MISSING_REGIME` | P2 | scripts/research | `scripts/research/probe_current_market_analogs.py:42` | `tests/unit/intelligence/test_historical_analog_memory.py` |
@@ -532,7 +546,7 @@ Ringkasan: 614 kode — P0 101, P1 265, P2 248; 239 disebut di tes, 375 belum.
 | `MODEL_REVIEW_UNAVAILABLE` | P2 | intelligence.news | `src/katarina/intelligence/news/public_language_research.py:110` | `tests/unit/test_public_language_research.py` |
 | `NATIVE_MT5_REQUIRES_WINDOWS_64BIT` | P2 | scripts/pc | `scripts/pc/environment_recovery.py:150` | — |
 | `NOT_A_GIT_WORKTREE_ROOT` | P2 | scripts/governance | `scripts/governance/safe_cleanup.py:183` | `tests/static/test_safe_cleanup.py` |
-| `NOT_TESTED` | P2 | scripts/pc | `scripts/pc/run_system_acceptance.py:85` | — |
+| `NOT_TESTED` | P2 | scripts/pc | `scripts/pc/run_system_acceptance.py:85` | `tests/unit/operations/test_wp6_post_reboot.py` |
 | `NO_ARCHIVED_EVENTS` | P2 | intelligence.lab | `src/katarina/intelligence/lab/adaptive_walkforward.py:226` | `tests/unit/intelligence/test_adaptive_walkforward.py` |
 | `NO_AUTHORIZED_SESSION_POLICY` | P2 | scripts/governance | `scripts/governance/session_hypothesis.py:31` | `tests/unit/operations/test_session_hypothesis.py` |
 | `NO_CONSENSUS_OR_WEAK_EVIDENCE` | P2 | research.bar_clock_evidence | `src/katarina/research/bar_clock_evidence.py:545` | `tests/unit/research/test_bar_clock_evidence.py` |

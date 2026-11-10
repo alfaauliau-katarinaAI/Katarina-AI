@@ -46,7 +46,7 @@ class StartupTaskAnalysisTests(unittest.TestCase):
 
     def test_proposed_definition_with_owner_autologon_is_ready(self):
         report = analyze(PROPOSED_XML, REPO_LAUNCHER, autologon_enabled=True, autologon_user="WIN-HOST\\Administrator")
-        self.assertEqual(report["verdict"], "READY_AFTER_REBOOT", report["findings"])
+        self.assertEqual(report["verdict"], "READY_FOR_REBOOT_TEST", report["findings"])
         self.assertEqual(report["findings"], [])
         self.assertFalse(report["live_execution_authorized"])
 
@@ -65,7 +65,7 @@ class StartupTaskAnalysisTests(unittest.TestCase):
         self.assertEqual(reasons(blocked), {"WP6_SESSION0_MT5_UNVERIFIED"})
         proven = analyze(boot, REPO_LAUNCHER, autologon_enabled=False, autologon_user=None,
                          session0_mt5_verified=True)
-        self.assertEqual(proven["verdict"], "READY_AFTER_REBOOT")
+        self.assertEqual(proven["verdict"], "READY_FOR_REBOOT_TEST")
 
     def test_duplicate_instances_time_limits_and_missing_restart_are_rejected(self):
         bad = (PROPOSED_XML.replace("<MultipleInstancesPolicy>IgnoreNew", "<MultipleInstancesPolicy>Parallel")

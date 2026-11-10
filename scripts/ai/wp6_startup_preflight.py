@@ -4,7 +4,7 @@ Offline (any OS), from exported evidence:
   python scripts/ai/wp6_startup_preflight.py --task-xml task.xml --launcher run-observer.ps1 --autologon 0
 On the Windows host, read the live task and autologon flag (read-only; the password is never read):
   python scripts/ai/wp6_startup_preflight.py --live
-Exit code 0 only for READY_AFTER_REBOOT.
+Exit code 0 only for READY_FOR_REBOOT_TEST.
 """
 from pathlib import Path
 import argparse
@@ -63,7 +63,7 @@ def main(argv=None) -> int:
     for item in report["findings"]:
         print(f"{item['severity']} {item['reason']} {item['detail']}".rstrip())
     print("WP6_PREFLIGHT", report["verdict"], report["mode"])
-    return 0 if report["verdict"] == "READY_AFTER_REBOOT" else 1
+    return 0 if report["verdict"] == "READY_FOR_REBOOT_TEST" else 1
 
 
 if __name__ == "__main__":
