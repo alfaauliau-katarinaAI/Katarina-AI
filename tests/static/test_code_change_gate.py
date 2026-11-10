@@ -4,6 +4,7 @@ Each test copies the tracked repository into a temporary git repo, breaks it on 
 the gate turns red with file:line, never repairs anything itself, and stops repeated failures.
 """
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -195,6 +196,42 @@ class CodeChangeGateTests(unittest.TestCase):
 
 
 class RemoteGateTests(unittest.TestCase):
+    def test_anonymous_https_fetch_reads_actual_public_ci_schema(self):
+        path = "repos/owner/repo/commits/" + "a" * 40 + "/check-runs?per_page=100"
+        response = {"check_runs": [{"name": "body", "conclusion": "success"}]}
+        with patch.dict(os.environ, {"GITHUB_TOKEN": "", "GH_TOKEN": ""}):
+            with patch("urllib.request.urlopen",
+                       return_value=io.BytesIO(json.dumps(response).encode("utf-8"))) as read:
+                with patch.object(gate.subprocess, "run",
+                                  side_effect=AssertionError("CLI must not be needed")):
+                    data = gate._github_json(path)
+        self.assertEqual(data, response)
+        req = read.call_args.args[0]
+        self.assertEqual(req.full_url, "https://api.github.com/" + path)
+        self.assertIsNone(req.get_header("Authorization"))
+
+    def test_public_ci_lookup_fails_closed_if_network_or_payload_is_invalid(self):
+        path = "repos/owner/repo/commits/" + "b" * 40 + "/check-runs?per_page=100"
+        with patch.dict(os.environ, {"GITHUB_TOKEN": "", "GH_TOKEN": ""}):
+            for payload in (b"{invalid-json", b'{"check_runs": null}', b'{"message":"rate limited"}'):
+                with self.subTest(payload=payload):
+                    with patch("urllib.request.urlopen", return_value=io.BytesIO(payload)):
+                        with patch.object(gate.subprocess, "run", side_effect=OSError("no gh")):
+                            self.assertIsNone(gate._github_json(path))
+            with patch("urllib.request.urlopen", side_effect=OSError("network offline")):
+                with patch.object(gate.subprocess, "run", side_effect=OSError("no gh")):
+                    self.assertIsNone(gate._github_json(path))
+            with patch("urllib.request.urlopen", side_effect=AssertionError("bad URL must be rejected")):
+                self.assertIsNone(gate._github_json("https://untrusted.invalid/" + path))
+
+    def test_rejected_explicit_ci_credential_is_never_downgraded_to_anonymous(self):
+        path = "repos/owner/repo/commits/" + "c" * 40 + "/check-runs?per_page=100"
+        with patch.dict(os.environ, {"GITHUB_TOKEN": "bad-token", "GH_TOKEN": ""}):
+            with patch("urllib.request.urlopen", side_effect=OSError("403")):
+                with patch.object(gate.subprocess, "run",
+                                  side_effect=AssertionError("must not use unauthenticated fallback")):
+                    self.assertIsNone(gate._github_json(path))
+
     def test_ci_gate_blocks_without_evidence_or_with_failed_check(self):
         with patch.object(gate, "_github_json", return_value=None):
             report = gate.gate_04(ROOT, "0" * 40, "o/r")
