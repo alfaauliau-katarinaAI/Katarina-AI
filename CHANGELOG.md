@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-11-10 — K1: simulator tick replay enam kandidat XAUUSD.vx (offline, research-only)
+
+- Paket baru `src/katarina/research/tick_replay/` (kontrak input, candle BID, struktur pivot/BOS/zona/breakout, engine `TickReplay`, loader CSV+manifest) mengikuti D10-K1..K27. BUY masuk ASK/keluar BID, SELL masuk BID/keluar ASK, fill hanya pada tick sesudah candle sinyal tutup, urutan milidetik tak terbukti → `BLOCKED_INTRABAR_ORDER`, tanpa fallback OHLC.
+- CLI `scripts/research/replay_six_candidates.py`: tanpa `--owner-approval-ref` hanya memvalidasi input; output ledger + hitungan event, tanpa metrik profit.
+- 47 tes T01–T12 dengan fixture sintetis (teknis saja). Manifest +6 entri, MATCH 323. Dokumen: `docs/research/TICK_REPLAY_SIMULATOR.md`.
+- Belum ada backtest; data tick, sesi resmi dan biaya ber-hash masih blocker. LIVE tetap OFF.
+
 ## 2026-11-10 — Perampingan lanjutan: website yatim, topik MEETING selesai, sisa folder VPS
 
 - Hapus `website/market-news.js` dan `market-news.json`: tidak dimuat halaman mana pun sejak 11 Okt (digantikan `pulse.js`). Izin Owner.
