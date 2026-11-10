@@ -1575,6 +1575,36 @@
       "normalized_sha256": "04316838fe88722ff7cacd0933415a93c945020dc00dd812d42e368a710daacf",
       "sha256": "04316838fe88722ff7cacd0933415a93c945020dc00dd812d42e368a710daacf"
     },
+    "src/katarina/research/tick_replay/__init__.py": {
+      "bytes": 705,
+      "normalized_sha256": "1e244f3601854e0630cd8483fcf09790fed9a14df53a619d43bbabaf3334959c",
+      "sha256": "1e244f3601854e0630cd8483fcf09790fed9a14df53a619d43bbabaf3334959c"
+    },
+    "src/katarina/research/tick_replay/bars.py": {
+      "bytes": 3434,
+      "normalized_sha256": "8346184e937cfba6e46402ccff286df65feb5524c704d61a58a29e4a291536f1",
+      "sha256": "8346184e937cfba6e46402ccff286df65feb5524c704d61a58a29e4a291536f1"
+    },
+    "src/katarina/research/tick_replay/contract.py": {
+      "bytes": 11528,
+      "normalized_sha256": "f93e5ae235b478b45c99789b921db26bbc82ea910defa31ca63819baf4405a27",
+      "sha256": "f93e5ae235b478b45c99789b921db26bbc82ea910defa31ca63819baf4405a27"
+    },
+    "src/katarina/research/tick_replay/dataset.py": {
+      "bytes": 3942,
+      "normalized_sha256": "a3163596df7d50c2e15d4145b1fe8ef5966a41a7d0835e74a45f2f178f6e0e7e",
+      "sha256": "a3163596df7d50c2e15d4145b1fe8ef5966a41a7d0835e74a45f2f178f6e0e7e"
+    },
+    "src/katarina/research/tick_replay/engine.py": {
+      "bytes": 25527,
+      "normalized_sha256": "536a9fd714944b3cdcf33da49dbbfbdc31f99de641a73af5f80cc2497d5ed548",
+      "sha256": "536a9fd714944b3cdcf33da49dbbfbdc31f99de641a73af5f80cc2497d5ed548"
+    },
+    "src/katarina/research/tick_replay/structure.py": {
+      "bytes": 17535,
+      "normalized_sha256": "b83f77d636747c20c1e05605c8cd11516fc4ec0ef0ca895a3c3ef699e678fdcf",
+      "sha256": "b83f77d636747c20c1e05605c8cd11516fc4ec0ef0ca895a3c3ef699e678fdcf"
+    },
     "src/katarina/research/validation.py": {
       "bytes": 28523,
       "normalized_sha256": "def6b6073d3ce70f53e0ceb662f901713555b9141d61db00907f95607fa1218c",
