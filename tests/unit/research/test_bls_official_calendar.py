@@ -1,5 +1,5 @@
 """Official BLS Employment Situation release-calendar provenance checks (data-only)."""
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 import csv
 import unittest

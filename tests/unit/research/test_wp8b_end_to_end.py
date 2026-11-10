@@ -9,7 +9,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from katarina.research.dev_dataset import CSV_FIELDS, DEV_CUTOFF_UTC, TIMEFRAMES, load_dev_dataset
+from katarina.research.dev_dataset import CSV_FIELDS, DEV_CUTOFF_UTC, load_dev_dataset
 from katarina.research.validation import (
     CostModel, DataSplit, HoldoutVault, HypothesisRegistry, Trade, ValidationError,
     canonical, evaluate_development, sha256_text,

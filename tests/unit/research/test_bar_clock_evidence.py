@@ -1,5 +1,4 @@
 """Deterministic unit tests for WP8c independent bar clock evidence."""
-import io
 import json
 import tempfile
 import unittest

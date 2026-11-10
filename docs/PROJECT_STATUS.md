@@ -1,5 +1,7 @@
 # Status Katarina AI — snapshot operasional
 
+> **10 November 2026 13:03 UTC (Claude, audit baca-saja):** VPS `9b344d85` (manifest MATCH 317), observer Running sejak 4 Nov, 7.994 siklus, **0 order**. Tahap 0 `--since official`: `IN_PROGRESS`, streak **4/10** (4, 5, 6, 9 Nov), sukses **96,90 %** (< 98 %; `STALE_QUOTES` 123, `SOME_SYMBOLS_WITHOUT_QUOTE` 64), kriteria lain PASS. `main` `12cdda69` + perapian 10 Nov belum dideploy (hanya import/anotasi). Branch: 10 terbukti aman dihapus dan sudah didaftarkan untuk workflow *Guarded Branch Cleanup* (dijalankan Owner/Yura). PR terbuka: #295. Bukti: [CODEBASE_AUDIT_20261110](maintenance/CODEBASE_AUDIT_20261110.md).
+
 > **4 November 2026 13:20 UTC (Claude, izin Owner):** VPS = `main` **`82d93ef2`** (manifest MATCH 315), observer Running, 0 order. D8 aktif prospektif (WP15 −15/+30 mulai 5 Nov 00:00 UTC; hitungan 10 hari dari 3 Nov 15:18 UTC). WP6 task diterapkan, tetapi preflight **NOT_READY** (`WP6_NO_AUTOLOGON`, aksi Owner). Uji putus-sambung formal **3/3 PASS** (46 s, 17 s mid-cycle, 55 s). Peta sesi broker: jendela D8 tidak menutup jeda CFD 22:30–23:00 UTC (agenda D9). Sidecar Stage 0 memakai checker terkini. Bukti: [RH-014](REPAIR_HISTORY.md). Gate `GATE_ACTIVE_VERIFIED`, cleanup `AUTO_CLEANUP_SAFE_VERIFIED`, codebase `CODEBASE_CLEAN_BUT_STAGE_GATE_BLOCKED` ([RH-013](REPAIR_HISTORY.md)).
 
 > **Deploy 3 November 2026 15:18 UTC (Claude, izin Owner):** VPS `C:\Katarina\code` = `main` **`fd6cff16`** (WP13 jam live NTP + tick bergerak, WP4/WP8b/WP14, K-04). Bukti, backup dan rollback: [RH-011](REPAIR_HISTORY.md). Laporan K-01..K-07: [Issue #251](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/251).
@@ -37,7 +39,7 @@ Daftar ini **bukan** izin baru. Setiap butir dikerjakan hanya setelah Owner memu
 | 2 | Jadwal sesi **resmi** broker per simbol | Belum dibaca (peta empiris sudah ada) | Owner: MT5 → Market Watch → klik kanan simbol → *Specification* → screenshot *Sessions* | MT5_SESSION_MAP |
 | 3 | **WP6** — observer otomatis jalan setelah reboot | Task diterapkan; preflight `NOT_READY` (`WP6_NO_AUTOLOGON`) | Owner aktifkan autologon Windows (Claude tidak memasukkan sandi), lalu izin uji reboot di luar jam pasar | [WP6](operations/WP6_OBSERVER_STARTUP.md), RH-014 |
 | 4 | **#255** — host riset MT5 terpisah (bar M5 historis, bukti UTC, dataset beku, backtest) | BLOCKED: hanya satu perangkat Desktop Commander (VPS produksi) | Owner sambungkan PC/VM Windows kedua dan login broker sendiri | [#255](https://github.com/alfaauliau-katarinaAI/Katarina-AI/issues/255) |
-| 5 | Hapus 10 branch milik PR tertutup | BLOCKED: proxy Claude 403 | Owner hapus lewat halaman *Branches* GitHub (daftar SHA/PR di ledger E1, `maintenance/CODEBASE_CLEANUP_20261103.md`). Jangan hapus `main`, `claude-vps-bridge`, `claude-openai-mcp` | D5 |
+| 5 | Hapus 10 branch milik PR tertutup | Diaudit ulang 10 Nov: semua aman; SHA penuh terdaftar di `maintenance/superseded-branches.json`. Proxy Claude tetap 403 | Owner/Yura jalankan workflow *Katarina Guarded Branch Cleanup* dengan `execute=true` dari `main`. `claude-vps-bridge`, `claude-openai-mcp` tetap menunggu keputusan D5 | [audit 10 Nov](maintenance/CODEBASE_AUDIT_20261110.md) |
 | 6 | 49 reason code P0 belum diuji secara literal | Terbuka (bisa dikerjakan Claude tanpa VPS) | Persetujuan prioritas | [indeks](maintenance/REASON_CODE_INDEX.md) |
 | 7 | Cleanup worktree/folder lama di VPS | Terbuka | Izin Owner (menyentuh VPS produksi) | ledger E1 |
 | 8 | Tahap 0 lulus (10 hari bursa, sukses ≥ 98 %) | Berjalan sejak 3 Nov 15:18 UTC; recovery 3/3 dan 0 order sudah PASS | Waktu observasi + hasil D9 | ROADMAP Tahap 0 |
@@ -48,7 +50,7 @@ Selesai 4 Nov (bukti RH-014): deploy `82d93ef2`, D8 aktif prospektif, sidecar di
 
 **P0:** Tahap 0 **belum lulus**: hitungan 10 hari bursa resmi dimulai 3 Nov 15:18 UTC (D8), aturan WP15 efektif 5 Nov 00:00 UTC. Ini gate data/waktu, bukan bug codebase.
 **P1:** WP6: autologon (aksi Owner) lalu uji reboot. Bukti jam bar historis M5 butuh host riset MT5 terpisah (#255). Jadwal sesi resmi MT5 belum dibaca (GUI, Owner); peta empiris dari arsip tick sudah ada ([MT5_SESSION_MAP](maintenance/MT5_SESSION_MAP_20261104.md)). D9: lebar jendela jeda harian.
-**P2:** 49 reason code P0 belum diuji secara literal ([indeks](maintenance/REASON_CODE_INDEX.md)); cleanup worktree/folder lama VPS; 10 branch PR tertutup menunggu dihapus Owner (proxy Claude menolak hapus ref, 403); validasi edge menurut gerbang Roadmap. **Prioritas/antrean tunggal hanya [ROADMAP.md](ROADMAP.md)**.
+**P2:** 49 reason code P0 belum diuji secara literal ([indeks](maintenance/REASON_CODE_INDEX.md)); cleanup worktree/folder lama VPS; 10 branch PR tertutup terdaftar untuk workflow guarded cleanup (proxy Claude menolak hapus ref, 403); validasi edge menurut gerbang Roadmap. **Prioritas/antrean tunggal hanya [ROADMAP.md](ROADMAP.md)**.
 
 ## Pemeriksaan dan pelaporan
 

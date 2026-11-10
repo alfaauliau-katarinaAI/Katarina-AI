@@ -3,7 +3,6 @@ from pathlib import Path
 import argparse
 import json
 import os
-import platform
 import subprocess
 import sys
 ROOT=Path(__file__).resolve().parent
