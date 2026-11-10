@@ -26,6 +26,15 @@ Fail-fast: gate berikutnya tidak berjalan bila gate sebelumnya gagal (`not_run` 
 Exit code: `0` PASS, `1` FAIL, `2` BLOCKED, `3` `REPEATED_FAILURE_NEEDS_ROOT_CAUSE`.
 Review manusia tetap diatur branch protection GitHub; gate tidak bisa dan tidak boleh menggantikan atau mengklaimnya.
 
+**GitHub CI saat validasi rilis:** Untuk repository publik, `KAT-CG-04/05`
+membaca check-run langsung dari API HTTPS `api.github.com` (GET) tanpa
+kredensial lokal. Token `GITHUB_TOKEN`/`GH_TOKEN` tetap dipakai bila tersedia;
+CLI `gh` menjadi fallback jika akses publik gagal dan tidak ada token.
+Semua respons tanpa `check_runs` valid, kegagalan HTTPS, rate-limit,
+atau check wajib yang belum sukses akan **BLOCKED**, bukan PASS. Verifikasi
+ini hanya membaca CI SHA yang diminta; bukan persetujuan untuk mengaktifkan
+observer, Stage 0, VPS service atau trading.
+
 ## Cara menjalankan
 
 ```bash
