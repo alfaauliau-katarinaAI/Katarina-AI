@@ -1,6 +1,7 @@
 # CLAUDE.md — peta cepat repositori Katarina AI
 
-**D9, 9 Nov 2026 (branch terisolasi, belum aktif):** evaluator per simbol dan CLI read-only
+**D9 diputuskan Owner 10 Nov:** jendela jeda harian Tahap 0 = 17:00 New York −15/+60 mulai 11 Nov 00:00 UTC (`ROLLOVER_D9_EFFECTIVE_UTC`, RH-015); D8 −15/+30 berlaku 5–10 Nov.
+**Pratinjau sesi per simbol D9, 9 Nov 2026 (belum aktif):** evaluator per simbol dan CLI read-only
 `scripts/ai/preview_broker_sessions.py`; bukti, format input dan batasnya di
 `docs/maintenance/D9_SYMBOL_SESSION_PREVIEW_20261109.md`. Contoh jadwal/clock sengaja
 UNVERIFIED tanpa rentang berlaku dan bukti tanggal/offset. Assessor resmi D8 tidak berubah;

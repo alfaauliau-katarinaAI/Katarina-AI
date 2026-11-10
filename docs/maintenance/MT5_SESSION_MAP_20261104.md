@@ -37,7 +37,7 @@ Jendela pengecualian yang diputuskan **WP15 −15/+30**, efektif 5 Nov 2026 00:0
 - mencakup jeda FX: 21:45–22:30 UTC;
 - **tidak** mencakup sisa jeda XAU/NAS 22:30–23:01 UTC.
 
-Siklus pada 22:30–23:00 UTC tetap gagal (`SOME_SYMBOLS_WITHOUT_QUOTE`/`STALE_QUOTES`) karena broker memang tidak mengirim quote CFD. Tampilan diagnostik investigasi memberi 97,83 % untuk −15/+30 (di bawah 98 %) dan 99,85 % untuk −15/+60. Ini diajukan sebagai **D9** di MEETING.
+Siklus pada 22:30–23:00 UTC tetap gagal (`SOME_SYMBOLS_WITHOUT_QUOTE`/`STALE_QUOTES`) karena broker memang tidak mengirim quote CFD. Tampilan diagnostik investigasi memberi 97,83 % untuk −15/+30 (di bawah 98 %) dan 99,85 % untuk −15/+60. Ini diajukan sebagai **D9** di MEETING. **Diputuskan Owner 10 Nov:** −15/+60 mulai 11 Nov 2026 00:00 UTC (RH-015).
 
 ## Yang belum terbukti
 

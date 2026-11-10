@@ -39,6 +39,13 @@ ROLLOVER_RULE_EFFECTIVE_UTC = "2026-11-05T00:00:00+00:00"
 # Owner decision D8: the 10-trading-day count restarts at the WP13 deploy (first cycle of fd6cff16 on the
 # VPS). Older ledger rows stay stored and reportable with an explicit --since; they are not deleted.
 STAGE0_COUNT_SINCE_UTC = "2026-11-03T15:18:14+00:00"
+# Owner decision D9 (10 Nov 2026 13:50 UTC, choice "ganti -15/+60, prospektif"): from the next UTC midnight the
+# window after 17:00 New York grows to 60 minutes, covering the XAU/NAS 16:54-18:00 NY quote break seen in the
+# broker tick archive (docs/maintenance/MT5_SESSION_MAP_20261104.md). D8 (-15/+30) stays in force before it;
+# the count start, threshold and stored ledger rows are unchanged. Never move it backwards.
+ROLLOVER_D9_DECIDED_UTC = "2026-11-10T13:50:00+00:00"
+ROLLOVER_D9_EFFECTIVE_UTC = "2026-11-11T00:00:00+00:00"
+ROLLOVER_D9_AFTER_MINUTES = 60
 TICK_DIR = "broker-ticks"
 # A day is collected only after it is safely over on the broker server as well.
 DAY_SETTLE_SECONDS = 2 * 3600
@@ -367,12 +374,15 @@ def stage0_session_open(moment: datetime) -> bool:
     """Stage 0 cycle-counting FX trading window in UTC.
 
     Before ROLLOVER_RULE_EFFECTIVE_UTC, behavior is identical to fx_session_open.
-    On or after ROLLOVER_RULE_EFFECTIVE_UTC:
+    On or after ROLLOVER_RULE_EFFECTIVE_UTC (D8):
     Monday 00:00 to Friday 20:00 UTC, excluding 17:00 America/New_York rollover window
     [17:00 NY - 15 minutes, 17:00 NY + 30 minutes).
     Equivalently:
     - US DST: 20:45 to 21:30 UTC.
     - Outside US DST: 21:45 to 22:30 UTC.
+    On or after ROLLOVER_D9_EFFECTIVE_UTC (D9) the window is [17:00 NY - 15, 17:00 NY + 60):
+    - US DST: 20:45 to 22:00 UTC.
+    - Outside US DST: 21:45 to 23:00 UTC.
     """
     moment = _utc(moment)
     if ROLLOVER_RULE_EFFECTIVE_UTC is None:
@@ -387,12 +397,19 @@ def stage0_session_open(moment: datetime) -> bool:
         return False
 
     minutes = moment.hour * 60 + moment.minute
+    after = ROLLOVER_AFTER_MINUTES
+    if ROLLOVER_D9_EFFECTIVE_UTC is not None:
+        d9_dt = datetime.fromisoformat(ROLLOVER_D9_EFFECTIVE_UTC)
+        if d9_dt.tzinfo is None:
+            raise ValueError("rollover_d9_effective_utc_must_be_aware")
+        if moment >= d9_dt.astimezone(timezone.utc):
+            after = ROLLOVER_D9_AFTER_MINUTES
     if is_us_dst(moment):
         rollover_start = 20 * 60 + (60 - ROLLOVER_BEFORE_MINUTES)  # 20:45
-        rollover_end = 21 * 60 + ROLLOVER_AFTER_MINUTES            # 21:30
+        rollover_end = 21 * 60 + after                             # 21:30 (D8) / 22:00 (D9)
     else:
         rollover_start = 21 * 60 + (60 - ROLLOVER_BEFORE_MINUTES)  # 21:45
-        rollover_end = 22 * 60 + ROLLOVER_AFTER_MINUTES            # 22:30
+        rollover_end = 22 * 60 + after                             # 22:30 (D8) / 23:00 (D9)
 
     return not (rollover_start <= minutes < rollover_end)
 

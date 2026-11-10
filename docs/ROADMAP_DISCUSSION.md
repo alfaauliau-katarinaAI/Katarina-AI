@@ -797,21 +797,6 @@ Bukti minimum sebelum D9 diputuskan: 5 simbol dari terminal aktif, tanggal/waktu
 
 **Status tetap: `MEETING_OPEN_OWNER_DECISION_REQUIRED`.** Tidak ada promosi stage, trading, atau deployment karena dokumen ini.
 
-### D9 — Lebar jendela jeda harian: −15/+30 tidak menutup jeda CFD broker
-Claude · 4 Nov 2026 · status: Menunggu Owner
-Usulan: Peta sesi dari arsip tick broker ([MT5_SESSION_MAP_20261104](maintenance/MT5_SESSION_MAP_20261104.md)) menunjukkan:
-- jeda FX hanya 16:54–17:00 New York;
-- jeda XAUUSD.vx berlangsung 16:54–18:00 (65 menit) dan NAS100.vx 16:57–18:01 (63 menit).
-
-Jendela D8 (−15/+30, efektif 5 Nov) berakhir 17:30 New York, sehingga 22:30–23:00 UTC tetap gagal karena tidak ada quote CFD dari broker. Tampilan diagnostik: −15/+30 = 97,83 %, −15/+60 = 99,85 % (ambang 98 %).
-Pertanyaan:
-1. Pertahankan −15/+30, atau ganti ke −15/+60 (jeda CFD penuh) secara prospektif dari tanggal efektif baru?
-2. Atau tunggu jadwal sesi resmi per simbol dari MT5 *Specification → Sessions* (GUI, Owner)?
-Tanggapan:
-- [Claude 4 Nov] Bukti hanya 2 hari dengan jam terverifikasi (2–3 Nov) plus 3 hari pendukung (27–29 Okt). Tidak ada yang diubah; D8 tetap berlaku sampai Owner memutuskan.
-Keputusan: —
-Tindak lanjut: Owner memutuskan; bila diubah, PR konstanta prospektif seperti #288.
-
 ## Checkpoint Manager — 3 November 2026 (catatan koordinasi, BUKAN keputusan Owner baru)
 
 - **Bukti kode:** Draft [integrasi #265](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/265) head `cd3b576d`, setelah perbaikan audit Claude/Manager [#266](https://github.com/alfaauliau-katarinaAI/Katarina-AI/pull/266), sudah [CI Body/Ubuntu/Windows sukses](https://github.com/alfaauliau-katarinaAI/Katarina-AI/actions/runs/41480635219). Source PR #257/#259/#263/#264 ditutup sebagai digantikan, tidak di-merge ke main. **Head Jules #259 terbaru `ce7c4074` reintroduksi PASS+NO_DATA -> PASS**; jangan cherry-pick branch tersebut.
@@ -821,6 +806,10 @@ Tindak lanjut: Owner memutuskan; bila diubah, PR konstanta prospektif seperti #2
 
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
+- 10 Nov — **D9 diputuskan Owner** ("oke asya izinkan semuanya ya" + pilihan "Ganti −15/+60, prospektif"). Jendela setelah 17:00
+  New York menjadi +60 menit mulai 11 Nov 2026 00:00 UTC (`ROLLOVER_D9_EFFECTIVE_UTC`), menutup jeda quote XAU/NAS 16:54–18:00 NY.
+  D8 (−15/+30) tetap berlaku 5–10 Nov. Awal hitungan 10 hari (3 Nov 15:18:14 UTC), ambang 98 % dan ledger tidak diubah.
+  Pratinjau sesi per simbol (#294) tetap diagnostik, tidak aktif. Branch D5 (`claude-openai-mcp`, `claude-vps-bridge`) dipertahankan.
 - 4 Nov — **D8 diputuskan Owner** ("oke saya setujui semua"; pilihan WP15 −15/+30). Rollover DST-aware 17:00 New York
   −15/+30 menit berlaku prospektif mulai 5 Nov 2026 00:00 UTC. Hitungan 10 hari Tahap 0 dimulai ulang dari deploy WP13
   (3 Nov 15:18:14 UTC); data lama tetap tersimpan. Ambang 98 %, denominator dan data historis tidak diubah. Roadmap Tahap 0 diperbarui.
