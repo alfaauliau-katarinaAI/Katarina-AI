@@ -326,7 +326,7 @@ def _github_json(path: str):
     fallback remains available. Never accept a caller-supplied URL/hostname.
     """
     if not re.fullmatch(
-            r"repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/commits/[0-9a-fA-F]{40}/check-runs\\?per_page=100",
+            r"repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/commits/[0-9a-fA-F]{40}/check-runs\?per_page=100",
             path):
         return None
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
