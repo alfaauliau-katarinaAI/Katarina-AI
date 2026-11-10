@@ -21,6 +21,25 @@ Dokumen ini adalah **satu-satunya jurnal hasil perbaikan yang terverifikasi**: m
 4. `CHANGELOG.md` tetap mencatat ringkasan perubahan per PR; detail diagnosis dan hasil pemulihan hanya di sini, dengan tautan ke PR. `PROJECT_STATUS.md` hanya menyimpan kondisi saat ini dan merujuk ID perbaikan bila diperlukan.
 5. Pengembangan lewat GitHub dan PR + CI. VPS hanya untuk pengujian yang diizinkan. Tidak ada perubahan yang mengaktifkan LIVE, order, membuka holdout, atau melemahkan Risk Governor tanpa keputusan Owner yang berlaku.
 
+## RH-015 — Konsolidasi 10 Nov: merge #297/#295, 10 branch dihapus, deploy `e954c7a0`, handle `data_health.py` dilepas, D9
+
+**Tanggal:** 10 November 2026 WIB (izin Owner di chat 20:24 WIB: "oke asya izinkan semuanya ya"; pilihan D9 "Ganti −15/+60, prospektif"; DC kedua boleh di-restart; D5 dipertahankan)
+**Status:** **MERGED + DEPLOYED + KAT-CG-05 PASS** (`e954c7a0`). D9 MERGED via PR ini, efektif 11 Nov 00:00 UTC. Tahap 0 **BELUM LULUS**.
+
+| Aspek | Bukti |
+|---|---|
+| PR | #297 (perapian audit) merged `e479a011`. #295 (KAT-CG-05 via HTTPS publik) diperbarui ke `main` lalu merged `e954c7a0`. Keduanya dengan pengecualian review Owner per PR yang dicatat di PR; CI Body/Ubuntu/Windows/KAT-CG-04 success pada HEAD final |
+| Branch | Workflow *Katarina Guarded Branch Cleanup* (run `42824381502`, `execute=true`, dari `main` `e479a011`) menghapus tepat 10 branch dari `superseded-branches.json`. Sisa: `main`, `claude-openai-mcp`, `claude-vps-bridge` (D5: dipertahankan Owner) |
+| Deploy | Fase A: RAM 765 MB, disk 11,5 GB, NTP sinkron, ff `9b344d85`→`e954c7a0` mungkin, runtime berubah hanya import. Fase B: stop graceful 13:41:44, backup `C:\Katarina\backups\20261110-pre-e954c7a0` (`sqlite3.backup()`, `integrity_check=ok`; `context.sqlite3` `1a1cf2ef…`, `cognitive-memory.sqlite3` `d5af2526…`, 74 arsip tick) |
+| Insiden (TERBUKTI) | `git merge --ff-only` berhenti di `data_health.py`: *unable to create file … Permission denied*. Berkas lama berstatus **delete-pending**: masih tampil di `dir` (45.490 byte) tetapi tidak bisa dibuka; Restart Manager pun ditolak (rc=5). Skrip melakukan fail-closed: observer dijalankan ulang pada HEAD lama, dengan working tree sudah berisi versi baru kecuali satu berkas. Isi yang berubah hanya import, dan observer tidak memakai `data_health` |
+| Akar penyebab | Desktop Commander **kedua** (pair ChatGPT `--debug`, PID 3400/anak 772, berjalan sejak 16 Okt) memegang handle `data_health.py` dengan share-delete. Bukti: segera setelah PID 772/3400 dihentikan, entri berkas hilang (`FILE_LISTED_AFTER False`). Pola sama dengan RH-001 |
+| Pemulihan | (1) `git reset --mixed e954c7a0`: HEAD + index ke target tanpa menyentuh berkas kerja; `status` hanya menyisakan `data_health.py`. (2) Restart terkendali DC kedua dengan parameter watchdog (HOME `ChatGPT-DC-Home`, `--debug`) lewat WMI; pair baru PID 380 dengan 3 koneksi TLS 443. Watchdog tidak akan menghidupkannya sendiri selama pair lain online, jadi restart dilakukan manual dan dicatat di `dc-watchdog.log`. (3) `git checkout -- data_health.py` |
+| Verifikasi | HEAD `e954c7a0`, `status` bersih (hanya berkas Owner tak terlacak). Manifest **MATCH 317**. `check_stage0_health.py --since official` exit 0. Observer 2/2 siklus OK, 5 simbol, **0 order**, `live=False`. **KAT-CG-05 PASS** (receipt + KAT-CG-03 di worktree `e954c7a0` + CI hulu) |
+| Dampak Tahap 0 | Celah siklus 13:40:40 → 13:43:49 UTC (189 s; start dingin: NEWS 73 s, TECHNICAL XAU 43 s). Tercatat apa adanya |
+| Rollback | `continuous.stop` → `git reset --hard 9b344d85` → restore DB dari backup bila perlu → `schtasks /run` |
+| Pencegahan | Sebelum deploy, cek berkas runtime yang akan diganti tidak delete-pending atau dipegang proses lain. Bila `ff` gagal di tengah, jangan `reset --hard`: samakan HEAD/index dengan `reset --mixed`, cari pemegang handle, lalu pulihkan berkas tunggal. Inspeksi DC sebaiknya baca-sekali (RH-001) |
+| Sisa risiko | Tahap 0 sukses 96,90 % (sebelum D9). WP6 autologon + uji reboot, jadwal sesi resmi MT5, #255 host riset, 49 kode P0 |
+
 ## RH-014 — Deploy `main` ke VPS, WP6 task diterapkan, sidecar Stage 0, uji putus-sambung formal #1
 
 **Tanggal:** 4 November 2026 WIB (izin Owner di chat 19:26 WIB: "oke saya setujui semua"; D8 = WP15 −15/+30)

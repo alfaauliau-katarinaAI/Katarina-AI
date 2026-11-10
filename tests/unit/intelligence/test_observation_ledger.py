@@ -269,6 +269,39 @@ class ObservationLedgerTest(unittest.TestCase):
             self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 6, 20, 15, tzinfo=UTC)))
             self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 7, 12, 0, tzinfo=UTC)))
 
+    def test_d9_window_is_prospective_and_extends_only_the_after_side(self):
+        d8 = datetime.fromisoformat(ledger.ROLLOVER_RULE_EFFECTIVE_UTC)
+        d9 = datetime.fromisoformat(ledger.ROLLOVER_D9_EFFECTIVE_UTC)
+        decided = datetime.fromisoformat(ledger.ROLLOVER_D9_DECIDED_UTC)
+        self.assertEqual(ledger.ROLLOVER_D9_EFFECTIVE_UTC, "2026-11-11T00:00:00+00:00")  # Owner D9
+        self.assertEqual(ledger.ROLLOVER_D9_AFTER_MINUTES, 60)
+        self.assertGreater(d9, decided)  # never retroactive
+        self.assertGreater(decided, d8)
+        # Up to the D9 instant the D8 window (21:45-22:30 UTC in winter) is unchanged.
+        for when in (datetime(2026, 11, 10, 22, 30, tzinfo=UTC), datetime(2026, 11, 10, 22, 59, tzinfo=UTC),
+                     d9 - timedelta(microseconds=1)):
+            self.assertTrue(ledger.stage0_session_open(when))
+        self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 10, 22, 29, tzinfo=UTC)))
+        # From D9: winter window 21:45-23:00 UTC (17:00 New York -15/+60).
+        self.assertTrue(ledger.stage0_session_open(datetime(2026, 11, 11, 21, 44, tzinfo=UTC)))
+        self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 11, 21, 45, tzinfo=UTC)))
+        self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 11, 22, 30, tzinfo=UTC)))
+        self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 11, 22, 59, tzinfo=UTC)))
+        self.assertTrue(ledger.stage0_session_open(datetime(2026, 11, 11, 23, 0, tzinfo=UTC)))
+        self.assertFalse(ledger.stage0_session_open(datetime(2026, 11, 13, 20, 0, tzinfo=UTC)))  # Friday close
+
+    def test_d9_window_follows_us_dst(self):
+        with patch.object(ledger, "ROLLOVER_RULE_EFFECTIVE_UTC", "2026-02-01T00:00:00+00:00"), \
+             patch.object(ledger, "ROLLOVER_D9_EFFECTIVE_UTC", "2026-02-02T00:00:00+00:00"):
+            summer = datetime(2026, 6, 9, tzinfo=UTC)  # US DST: 17:00 New York = 21:00 UTC
+            self.assertTrue(ledger.stage0_session_open(summer + timedelta(hours=20, minutes=44)))
+            self.assertFalse(ledger.stage0_session_open(summer + timedelta(hours=20, minutes=45)))
+            self.assertFalse(ledger.stage0_session_open(summer + timedelta(hours=21, minutes=59)))
+            self.assertTrue(ledger.stage0_session_open(summer + timedelta(hours=22)))
+        with patch.object(ledger, "ROLLOVER_D9_EFFECTIVE_UTC", "2026-11-11T00:00"):
+            with self.assertRaises(ValueError):
+                ledger.stage0_session_open(datetime(2026, 11, 12, 12, 0, tzinfo=UTC))
+
     def test_stage0_cutoff_only_changes_future_timestamps(self):
         cutoff = "2026-11-02T22:10:00+00:00"
         before_rollover = datetime(2026, 11, 2, 22, 5, tzinfo=UTC)

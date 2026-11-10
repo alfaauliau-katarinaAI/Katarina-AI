@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-11-10 — D9: jendela jeda harian Tahap 0 −15/+60 prospektif (keputusan Owner)
+
+- `observation_ledger.py`: `ROLLOVER_D9_DECIDED_UTC`, `ROLLOVER_D9_EFFECTIVE_UTC = "2026-11-11T00:00:00+00:00"`, `ROLLOVER_D9_AFTER_MINUTES = 60`. `stage0_session_open` mengecualikan 17:00 New York −15/+60 sejak saat itu; sebelumnya D8 (−15/+30) identik.
+- `data_health.py`: laporan memuat `rollover_d9_effective_utc` dan `session_rule` diperbarui.
+- Tes: D9 prospektif (identik sampai 1 µs sebelum efektif), batas musim dingin 21:45–23:00 UTC, musim panas 20:45–22:00 UTC, tanggal efektif tanpa zona ditolak.
+- RH-015: merge #297/#295, 10 branch dihapus, deploy `e954c7a0`, insiden handle DC. Awal hitungan, ambang 98 % dan ledger tidak diubah. LIVE tetap OFF.
+
 ## 2026-11-10 — Audit dan perapian codebase (perintah Owner, baseline `12cdda69`)
 
 - Hapus 15 import tak terpakai (3 `src/`, `katarina_pc.py`, 11 tes); `data_health.py` mengimpor `Path` yang dipakai di anotasi `audit()` (F821). Tanpa perubahan perilaku.

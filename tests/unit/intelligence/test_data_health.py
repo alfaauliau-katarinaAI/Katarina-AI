@@ -188,6 +188,8 @@ class DataHealthTest(unittest.TestCase):
         self.assertIn("20:45-21:15 UTC", report["session_rule"])
         self.assertIn("17:00 America/New_York", report["session_rule"])
         self.assertEqual(report["rollover_rule_effective_utc"], "2026-11-05T00:00:00+00:00")  # Owner D8
+        self.assertEqual(report["rollover_d9_effective_utc"], "2026-11-11T00:00:00+00:00")  # Owner D9
+        self.assertIn("[-15m, +60m)", report["session_rule"])
         self.assertFalse(report["live_execution_authorized"])
 
     def test_post_dst_rollover_failure_excluded_only_after_approved_cutoff(self):
