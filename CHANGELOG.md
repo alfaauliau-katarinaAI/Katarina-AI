@@ -1,5 +1,11 @@
 # Perubahan material Katarina AI
 
+## 2026-11-10 — Perampingan lanjutan: website yatim, topik MEETING selesai, sisa folder VPS
+
+- Hapus `website/market-news.js` dan `market-news.json`: tidak dimuat halaman mana pun sejak 11 Okt (digantikan `pulse.js`). Izin Owner.
+- `ROADMAP_DISCUSSION.md`: D3, D5 dan D6 dipindah dari agenda ke "Keputusan terakhir".
+- VPS: 5 worktree review, 6 entri worktree basi, 3 clone lama dan 4 folder kosong dibersihkan. Commit dan perubahan yang belum di-commit diamankan dulu dalam bundle/patch terverifikasi di `C:\Katarina\backups\vps-cleanup-20261110`. Rincian di `docs/maintenance/CODEBASE_AUDIT_20261110.md` §7. LIVE tetap OFF.
+
 ## 2026-11-10 — D9: jendela jeda harian Tahap 0 −15/+60 prospektif (keputusan Owner)
 
 - `observation_ledger.py`: `ROLLOVER_D9_DECIDED_UTC`, `ROLLOVER_D9_EFFECTIVE_UTC = "2026-11-11T00:00:00+00:00"`, `ROLLOVER_D9_AFTER_MINUTES = 60`. `stage0_session_open` mengecualikan 17:00 New York −15/+60 sejak saat itu; sebelumnya D8 (−15/+30) identik.

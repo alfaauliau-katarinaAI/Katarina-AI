@@ -60,16 +60,6 @@ Tanggapan:
 Keputusan:
 Tindak lanjut: Claude (laporan ±2 Nov), Owner (keputusan).
 
-### D3 — Sisa 19 berkas terkunci di VPS
-Claude · 29 Okt 2026 · status: Menunggu Owner
-Usulan: 19 berkas (0,9 MB) di `C:\Katarina\_roadmap_validation` diberi larangan akses oleh pelaksana pada 27–28 Okt
-dan tidak bisa dihapus dari sesi Desktop Commander. Tidak mengganggu observer.
-Pertanyaan: 1. Owner menghapusnya sendiri lewat Remote Desktop sebagai Administrator (klik kanan → Properties →
-Security → Advanced → ganti pemilik, lalu hapus folder)?
-Tanggapan:
-Keputusan:
-Tindak lanjut: Owner.
-
 ### D4 — Target Agentic AI Katarina: fase, bukti kelulusan, dan batas kewenangan
 Owner/Yura (usulan untuk review Claude) · 29 Okt 2026 · status: Terbuka
 Usulan: Tujuan akhir adalah agent riset yang dapat merencanakan, menggunakan alat, menguji, menyimpan pembelajaran,
@@ -112,49 +102,6 @@ Tanggapan:
   dilakukan saat itu. Tidak ada konflik dengan Tahap 0–5 selama otonomi = riset + usulan, bukan otorisasi finansial.
 Keputusan: Menunggu pembahasan Claude dan keputusan pihak berwenang.
 Tindak lanjut: Claude audit existing dan berikan opsi paket serta tes; Owner memutuskan perubahan gerbang/kewenangan.
-
-### D5 — Perapian branch lama dan disiplin PR tanpa tumpukan
-Owner/Yura (usulan untuk review Claude) · 29 Okt 2026 · status: Terbuka
-Usulan: Pertahankan satu basis `main` untuk PR baru, hindari PR bergantung pada branch PR lain, dan hapus branch
-yang terbukti tidak digunakan setelah audit commit/PR. Jangan merge gabungan perubahan lama untuk sekadar bersih-bersih.
-Audit 29 Okt: PR terbuka 0 saat diperiksa; kandidat sisa branch PR ditutup tanpa merge adalah
-`chatgpt/docs-pr-review-blockers-20261023`, `chatgpt/dc2-repair-review-20261027`,
-`chatgpt/stage0-clock-audit-20261028`, `chatgpt/mt5-stage0-10day-readonly-20261028`,
-`chatgpt/claude-full-system-audit-20261028`; branch uji izin `chatgpt/write-permission-check-20261029`
-identik dengan `main`. Kelima branch lama masih mengandung commit unik, bukan otomatis aman dihapus.
-Pertanyaan: 1. Apakah seluruh commit unik sudah diganti/ditolak dengan alasan atau perlu dipecah menjadi paket baru?
-2. Apakah WP13, bridge MCP/VPS, dan broker discovery masih digunakan dan siapa pemiliknya?
-Tanggapan:
-- [ChatGPT/Yura 29 Okt] Jangan hapus branch aktif/bernilai tanpa verifikasi; tidak mengubah runtime VPS.
-- [Claude 30 Okt] Audit: kelima branch `chatgpt/*` lama sudah terhapus; `chatgpt/write-permission-check-20261029`
-  tidak ada lagi. Sisa yang aman dihapus: `chatgpt/wp13-clock-since-20261029` (#219 ditutup, digantikan #233) dan
-  `feat/roadmap-stage0-broker-discovery-20261022` (#183 ditutup tanpa merge; discovery seluruh broker digantikan
-  universe eksplisit WP1/T8). Sesi Claude tidak diizinkan menghapus branch (403) → manager/Owner menghapusnya lewat
-  tombol "Delete branch" di #219 dan #183. `claude-vps-bridge` dan `claude-openai-mcp`
-  (jembatan MCP Claude↔OpenAI, tanpa PR, tidak dipakai runtime) dibiarkan sampai Owner memutuskan.
-Keputusan: Menunggu verifikasi dan keputusan pembersihan.
-Tindak lanjut: Claude audit dependensi dan commit unik; manager menyetujui penghapusan kandidat terverifikasi lewat mekanisme GitHub.
-
-### D6 — Bukti jam broker untuk observer live: NTP + tick segar sudah independen
-Claude · 30 Okt 2026 · status: Terbuka
-Usulan: K-01/K-02 meminta observer canonical menolak semua siklus sampai ada dokumen jam resmi broker. Untuk data
-**live** itu tidak perlu dan akan menghentikan Tahap 0: jam VPS kini disinkron NTP (`time.windows.com`, T13), jadi
-selisih `symbol_info_tick` terhadap jam host **adalah** pengukuran langsung dari sumber UTC independen (30 Okt:
-+7176–7191 dtk = +2 jam bulat, 3 FX segar). Dokumen broker/DST hanya penting untuk data **historis** (WP8c).
-Bukti VPS: sejak WP12 (28 Okt 16:57 UTC) 1.223 siklus, offset konsisten 2,0; hari tick 28 Okt rekonsiliasi
-379/379, 334/334 (cocok sempurna); 0 order. Bila `require_evidence=True` dari berkas yang tidak ada, semua siklus
-`FAILED` → 0 data forward sampai dokumen itu ada (mungkin tidak pernah).
-Usulan teknis: (a) bukti live = host NTP tersinkron (status `w32tm` dicatat per hari) + ≥ 3 tick segar sepakat
-pada jam bulat + WP13 (buang quote basi, tutup akhir pekan); simpan basis ini di ledger per siklus;
-(b) berkas bukti broker tetap wajib untuk WP8c (historis) dan sebagai penguat bila tersedia; (c) siklus tanpa NTP
-tersinkron dicatat `NO_TRUSTED_HOST_CLOCK`, bukan diam-diam OK.
-Pertanyaan: 1. Manager setuju jalur (a) menggantikan syarat dokumen broker untuk observer live? 2. Bila tidak,
-dari mana dokumen jam resmi broker akan diperoleh, dan siapa yang mengambilnya?
-Tanggapan:
-- [Yura/ChatGPT, 30 Okt 2026] Analisis Claude diterima **sebagai arah desain untuk diuji bersama Jules nanti**, bukan penerimaan otomatis seluruh data sebagai valid. NTP host merupakan referensi UTC independen; tiga quote dari **satu broker** hanya cross-check offset, bukan tiga sumber jam independen. Setiap siklus wajib mencatat status kesehatan NTP, usia tick dan timestamp penerimaan, identitas/hash server, offset integer dan konsensus, serta alasan penolakan; wajib fail-closed pada NTP tidak terpercaya, quote stale, ketidakcocokan offset, market closed, DST ambigu, atau pergantian broker/VPS yang belum terverifikasi. Jangan mengganti/menurunkan guard produksi hanya untuk menjaga angka success. Untuk bar historis WP8c tetap diperlukan provenance historis terpisah. 
-- [Owner, 30 Okt 2026] "Oke, catat dulu dan kerjakan bersama nanti di Jules." Implementasi WP13 **ditunda** untuk sesi kerja bersama Jules; tidak ada otorisasi merge/deploy dari catatan ini.
-Keputusan: **Arah desain dicatat untuk penelaahan dan pengujian lanjutan**, belum berlaku sebagai perubahan acceptance WP13 atau pengecualian bukti jam. Sebelum implementasi, bandingkan jalur NTP+tick dengan syarat fail-closed R4, siapkan tes adversarial dan dapatkan persetujuan review hasil. LIVE OFF.
-Tindak lanjut: Yura siapkan spesifikasi/tes bersama Jules pada sesi berikutnya dalam PR #233 yang sama; Claude review independen. Jangan membuat PR WP13 baru, jangan mengubah runtime VPS/observer sekarang.
 
 ### D7 — Audit struktur 30 Okt (A-01–A-11): verifikasi dan urutan tindak lanjut
 Yura/ChatGPT (laporan `KATARINA_AI_AUDIT_STRUKTUR_2026-10-30.md`, dilampirkan Owner) · 31 Okt 2026 · status: Terbuka
@@ -806,6 +753,10 @@ Bukti minimum sebelum D9 diputuskan: 5 simbol dari terminal aktif, tanggal/waktu
 
 ## Keputusan terakhir (maks. 10 baris; yang lebih lama ada di Git)
 
+- 10 Nov — Topik selesai dikeluarkan dari agenda (isi lengkap di Git):
+  - **D3:** `C:\Katarina\_roadmap_validation` ternyata sudah kosong; folder dan 6 entri worktree basinya dibersihkan 10 Nov (izin Owner).
+  - **D5:** branch PR lama dihapus lewat workflow guarded cleanup; `claude-openai-mcp` dan `claude-vps-bridge` dipertahankan (keputusan Owner 10 Nov).
+  - **D6:** arah NTP + tick bergerak sudah diimplementasikan sebagai WP13 (#233) dan dideploy dengan izin Owner 3 Nov (RH-011).
 - 10 Nov — **D9 diputuskan Owner** ("oke asya izinkan semuanya ya" + pilihan "Ganti −15/+60, prospektif"). Jendela setelah 17:00
   New York menjadi +60 menit mulai 11 Nov 2026 00:00 UTC (`ROLLOVER_D9_EFFECTIVE_UTC`), menutup jeda quote XAU/NAS 16:54–18:00 NY.
   D8 (−15/+30) tetap berlaku 5–10 Nov. Awal hitungan 10 hari (3 Nov 15:18:14 UTC), ambang 98 % dan ledger tidak diubah.
