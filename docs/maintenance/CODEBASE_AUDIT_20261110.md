@@ -124,3 +124,25 @@ Target sesudahnya: `main`, `claude-openai-mcp`, `claude-vps-bridge`, dan branch 
 4. #295 menunggu update branch, CI ulang, dan approval/pengecualian.
 5. VPS belum sinkron dengan `main` (perlu izin deploy).
 6. Sisa dari daftar 4 Nov tetap: D9, jadwal sesi resmi, WP6 autologon/reboot, #255 host riset, 49 kode P0.
+
+## 7. Perampingan lanjutan (10 Nov, izin Owner ±22:30 WIB)
+
+**Audit ulang repo** (rujukan nama di semua berkas terlacak, modul kategori C, berkas besar):
+
+| Temuan | Keputusan |
+|---|---|
+| Kode, config, MQL5, skrip | Tidak ada yang terbukti tak terpakai |
+| 29 dokumen `docs/adr` + `docs/architecture` tanpa rujukan nama | Kontrak desain yang dilindungi CODEOWNERS; ADR KAT1 0004 dan dokumen bridge Stage 06 sengaja dipertahankan sejak 22 Okt; tidak dihapus |
+| Modul analog dan `probe_current_market_analogs.py` | Tercatat di `config/master_design_traceability_v1.json`; dipertahankan |
+| Berkas bukti besar `docs/research/outputs`, `docs/validation` | Dibaca alat audit dan tes; dipertahankan |
+
+**Dihapus (izin Owner):**
+- `website/market-news.js` dan `website/market-news.json`: tidak dimuat halaman mana pun sejak 11 Okt, karena renderer-nya disalin ke `pulse.js`.
+- MEETING: topik D3, D5 dan D6 dipindah ke "Keputusan terakhir".
+
+**VPS (izin Owner; observer tidak tersentuh; `downloads` dan backup dipertahankan):**
+- 5 worktree review lama dilepas dan dihapus, plus 6 entri worktree basi di-*prune*. Commit yang tidak ada di GitHub (7 ref, termasuk `37bbe7d` yang tidak terjangkau branch mana pun) disimpan dalam bundle terverifikasi `C:\Katarina\backups\vps-cleanup-20261110\worktrees-not-on-github.bundle`.
+- Clone `wp13-ci-review-20261030b` dan `KatarinaCleanup20261029` dihapus setelah bundle `--all` terverifikasi.
+- Clone `wp13-review-20261030`: bundle `--all` terverifikasi, 13 berkas berubah yang belum di-commit disimpan sebagai `wp13-review-20261030.uncommitted.patch`. Folder tersisa satu berkas delete-pending (`ops/deployment/release-manifest.json`, handle masih dibuka proses lain) yang hilang sendiri saat handle dilepas.
+- Folder kosong `C:\KatarinaDev`, `C:\KatarinaGitBridge`, `C:\KatarinaGitTest-4e14b098`, `C:\Katarina\_roadmap_validation` dihapus.
+- Worktree tersisa: hanya `C:\Katarina\code` (`main`). Folder aktif `ClaudeGitHubBridge`, `ClaudeOpenAIMCP` (scheduled task + proses berjalan) dan `DesktopCommanderCompat` tidak disentuh.
