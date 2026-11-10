@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Branches reviewed file-by-file as redundant with main; guarded cleanup may delete them only while they still point at the recorded commit. Rationale: BRANCH_ARCHIVE_20261022.md",
+  "description": "Branches reviewed file-by-file as redundant with main; guarded cleanup may delete them only while they still point at the recorded commit. Rationale: BRANCH_ARCHIVE_20261022.md and CODEBASE_AUDIT_20261110.md (branch audit 10 Nov 2026).",
   "branches": [
     {
       "name": "ccr-1758c3cd-9g5dcd",
@@ -29,6 +29,46 @@
     {
       "name": "research/v26-corrected-selection-guard-20261019",
       "sha": "6c50ed5f7b9a1d46f0026a30605148233db592a5"
+    },
+    {
+      "name": "chatgpt/wp13-clock-since-20261029",
+      "sha": "892c48a02bf4cbabea00ad0f8bf8e03cd1983d72"
+    },
+    {
+      "name": "feat/roadmap-stage0-broker-discovery-20261022",
+      "sha": "5a894de62f048bcfce1f0f3281f434a8ced98400"
+    },
+    {
+      "name": "jules-3382505266733406840-c6557a2a",
+      "sha": "d0db291e338d2648558a126321f92f4c793da404"
+    },
+    {
+      "name": "jules/wp10b-swap-cost-sensitivity-20261030-4394559798710015484",
+      "sha": "f36cc7fe248416db345d0d0733a035f88b9df957"
+    },
+    {
+      "name": "manager/roadmap-meeting-repair-sync-20261102",
+      "sha": "4ae1cdd609bb30b5f87f7d7356d22ddb4a0663e2"
+    },
+    {
+      "name": "manager/wp4-candidate-ledger-20261102",
+      "sha": "59d1679906e9ce64f7963c317d1a73884e3a886f"
+    },
+    {
+      "name": "manager/wp8-bls-official-calendar-20261102",
+      "sha": "3a31210c0713725e9913c2f934dd2a7798c5db63"
+    },
+    {
+      "name": "manager/wp8b-pure-setups-20261102",
+      "sha": "ad92a832ccdc3d3655449f8b5a380bfc66e8f280"
+    },
+    {
+      "name": "wp14-readonly-data-auditor-1946873786857947257",
+      "sha": "ce7c4074ee3a267160d83688c39e291e83aa3503"
+    },
+    {
+      "name": "wp4-research-candidate-ledger-replay-9483643892799621328",
+      "sha": "36e674d589f884df2daf0afd029f07bd8133db15"
     }
   ]
 }

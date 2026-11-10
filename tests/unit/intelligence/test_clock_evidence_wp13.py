@@ -10,8 +10,6 @@ from katarina.intelligence.broker.broker_clock_alignment import (
     HostClockTrust,
     infer_clock_shift,
     load_clock_evidence,
-    capture_time_reference,
-    normalize_incoming_time,
 )
 
 

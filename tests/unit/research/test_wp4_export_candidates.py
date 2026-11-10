@@ -1,7 +1,6 @@
 """WP4 candidate export from hash-verified, pre-cutoff synthetic tick archives."""
 import gzip
 import hashlib
-import io
 import sqlite3
 import tempfile
 import unittest

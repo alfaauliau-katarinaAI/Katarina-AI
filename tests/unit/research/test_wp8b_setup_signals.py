@@ -4,7 +4,6 @@ from __future__ import annotations
 import unittest
 from datetime import datetime, timedelta, timezone
 
-from katarina.research.setups import Signal
 from katarina.research.setups import fibonacci, liquidity_sweep, market_structure, pullback
 from katarina.research.validation import ValidationError
 

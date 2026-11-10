@@ -1,5 +1,4 @@
 """WP8b-B offline simulator/comparison regressions. Synthetic prices ONLY."""
-import json
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone

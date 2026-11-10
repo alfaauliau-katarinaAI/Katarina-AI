@@ -7,7 +7,6 @@ Fails closed when evidence is weak, shifted, ambiguous, or off-calendar.
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import math
 import re

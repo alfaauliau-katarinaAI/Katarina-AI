@@ -12,7 +12,6 @@ import sqlite3
 import tempfile
 import tracemalloc
 import unittest
-from bisect import bisect_right
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from pathlib import Path

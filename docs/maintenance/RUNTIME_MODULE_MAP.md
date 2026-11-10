@@ -19,10 +19,10 @@ kategori D adalah kandidat untuk dicek manual, bukan bukti tidak terpakai.
 |---|---|---|
 | A | dipakai runtime/operasional atau workflow | 195 |
 | B | hanya dipakai tests | 45 |
-| C | hanya dipakai script non-operasional (riset dll.) | 18 |
+| C | hanya dipakai script non-operasional (riset dll.) | 19 |
 | D | tidak terjangkau dari root mana pun | 2 |
 
-Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
+Total modul: 261. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset terjadwal), bukan entry point runtime atau launcher.
 
 ## Root yang dipakai
 
@@ -44,7 +44,7 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
-| `katarina` | runtime, ops, workflow, research, scripts, tests | 157 | 250 |
+| `katarina` | runtime, ops, workflow, research, scripts, tests | 157 | 253 |
 | `katarina.adapters` | runtime, ops, workflow, scripts, tests | 17 | 28 |
 | `katarina.adapters.agent_dashboard_page` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.adapters.automatic_connection` | runtime, ops, workflow, scripts, tests | 4 | 16 |
@@ -126,7 +126,7 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.health` | runtime, ops, workflow, scripts, tests | 2 | 4 |
 | `katarina.health.engine` | runtime, ops, workflow, scripts, tests | 3 | 4 |
 | `katarina.host` | runtime, ops, workflow, scripts, tests | 2 | 7 |
-| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 56 | 140 |
+| `katarina.intelligence` | runtime, ops, workflow, research, scripts, tests | 56 | 143 |
 | `katarina.intelligence.broker` | runtime, ops, workflow, research, scripts, tests | 13 | 28 |
 | `katarina.intelligence.broker.auto_calibration` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.broker.broker_account_monitor` | runtime, ops, workflow, scripts, tests | 3 | 4 |
@@ -177,13 +177,13 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.intelligence.news.research_agenda` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.news.research_news_collection` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.news.verified_policy_context` | runtime, ops, workflow, scripts, tests | 3 | 2 |
-| `katarina.intelligence.operations` | runtime, ops, workflow, scripts, tests | 8 | 24 |
+| `katarina.intelligence.operations` | runtime, ops, workflow, scripts, tests | 8 | 27 |
 | `katarina.intelligence.operations.candidate_ledger` | runtime, ops, workflow, scripts, tests | 1 | 3 |
-| `katarina.intelligence.operations.data_health` | ops, scripts, tests | 0 | 9 |
+| `katarina.intelligence.operations.data_health` | ops, scripts, tests | 0 | 10 |
 | `katarina.intelligence.operations.file_housekeeping` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.foundation_readiness` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.network_doctor` | runtime, ops, workflow, scripts, tests | 1 | 2 |
-| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, scripts, tests | 4 | 16 |
+| `katarina.intelligence.operations.observation_ledger` | runtime, ops, workflow, scripts, tests | 4 | 19 |
 | `katarina.intelligence.operations.parallel_storage` | runtime, ops, workflow, scripts, tests | 1 | 1 |
 | `katarina.intelligence.operations.runtime_evidence` | runtime, ops, workflow, scripts, tests | 2 | 1 |
 | `katarina.intelligence.operations.stage0_breakdown` | ops, scripts, tests | 0 | 2 |
@@ -290,10 +290,11 @@ Total modul: 260. Dari kategori A, 49 hanya terjangkau lewat workflow (CI/riset 
 | `katarina.research.shadow` | tests | 0 | 1 |
 | `katarina.research.walkforward` | tests | 0 | 1 |
 
-## C — hanya dipakai script non-operasional (riset dll.) (18)
+## C — hanya dipakai script non-operasional (riset dll.) (19)
 
 | Modul | via | Importir src | Importir lain |
 |---|---|---|---|
+| `katarina.intelligence.operations.broker_sessions` | scripts, tests | 0 | 3 |
 | `katarina.intelligence.perception.analog_feature_schema` | research, tests | 1 | 0 |
 | `katarina.intelligence.perception.historical_analog_memory` | research, tests | 0 | 2 |
 | `katarina.monitoring.monitor_relay` | scripts, tests | 0 | 2 |

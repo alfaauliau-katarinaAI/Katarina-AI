@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-11-10 — Audit dan perapian codebase (perintah Owner, baseline `12cdda69`)
+
+- Hapus 15 import tak terpakai (3 `src/`, `katarina_pc.py`, 11 tes); `data_health.py` mengimpor `Path` yang dipakai di anotasi `audit()` (F821). Tanpa perubahan perilaku.
+- Manifest: hanya 3 entri yang berubah diperbarui (`data_health`, `observation_ledger`, `symbol_playbooks`), MATCH 317. `RUNTIME_MODULE_MAP.md` dibuat ulang (C=19, termasuk `broker_sessions` D9).
+- `docs/maintenance/superseded-branches.json`: 10 branch PR tertutup yang terbukti terintegrasi atau sengaja ditolak didaftarkan untuk workflow guarded cleanup.
+- Laporan: `docs/maintenance/CODEBASE_AUDIT_20261110.md`. LIVE tetap OFF.
+
 ## 2026-11-10 — D9: cegah pengurangan simbol wajib melalui file jadwal
 
 - Pratinjau mengikat scope ke `config/observer_universe.json`, bukan daftar simbol
