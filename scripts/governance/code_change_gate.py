@@ -319,18 +319,39 @@ def gate_04(root: Path, sha: str | None, repo: str | None) -> GateResult:
 
 
 def _github_json(path: str):
+    """Read actual GitHub check runs; public repositories need no local GitHub credentials.
+
+    A failed HTTP request, malformed response, or missing check is never turned
+    into success. For private repositories, the existing authenticated GH CLI
+    fallback remains available. Never accept a caller-supplied URL/hostname.
+    """
+    if not re.fullmatch(
+            r"repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/commits/[0-9a-fA-F]{40}/check-runs\\?per_page=100",
+            path):
+        return None
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     try:
+        import urllib.request
+        headers = {"Accept": "application/vnd.github+json", "User-Agent": "Katarina-Code-Gate/1.0"}
         if token:
-            import urllib.request
-            request = urllib.request.Request("https://api.github.com/" + path, headers={
-                "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json"})
-            with urllib.request.urlopen(request, timeout=30) as response:
-                return json.loads(response.read().decode("utf-8"))
+            headers["Authorization"] = "Bearer " + token
+        request = urllib.request.Request("https://api.github.com/" + path, headers=headers)
+        with urllib.request.urlopen(request, timeout=30) as response:
+            data = json.loads(response.read().decode("utf-8"))
+        if isinstance(data, dict) and isinstance(data.get("check_runs"), list):
+            return data
+    except (OSError, ValueError, TypeError):  # fail closed; never use cached or synthetic CI results
+        pass
+    if token:  # a rejected explicit credential must not silently become anonymous success
+        return None
+    try:
         out = subprocess.run(["gh", "api", path], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                              text=True, timeout=60)
-        return json.loads(out.stdout) if out.returncode == 0 else None
-    except Exception:  # network/tooling absent → BLOCKED, never PASS
+        if out.returncode != 0:
+            return None
+        data = json.loads(out.stdout)
+        return data if isinstance(data, dict) and isinstance(data.get("check_runs"), list) else None
+    except (OSError, ValueError, TypeError, subprocess.TimeoutExpired):
         return None
 
 
