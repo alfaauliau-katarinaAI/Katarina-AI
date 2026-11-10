@@ -2,7 +2,6 @@
 from datetime import datetime,timedelta,timezone
 import http.client
 import json
-from pathlib import Path
 import tempfile
 import threading
 import unittest

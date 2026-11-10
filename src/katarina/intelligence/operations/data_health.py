@@ -11,11 +11,11 @@ import hashlib
 import json
 from bisect import bisect_right
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
 from katarina.domain.market_calendar import dst_transitions  # re-exported for callers and tests
 from katarina.intelligence.operations.observation_ledger import (
     ROLLOVER_RULE_EFFECTIVE_UTC,
-    fx_session_open,
     stage0_session_open,
 )
 

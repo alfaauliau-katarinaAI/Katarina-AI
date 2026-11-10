@@ -5,7 +5,6 @@ import unittest
 
 from katarina.intelligence.broker.broker_clock_alignment import (
     ClockEvidence,
-    HostClockTrust,
     infer_clock_shift,
     capture_time_reference,
     normalize_incoming_time,

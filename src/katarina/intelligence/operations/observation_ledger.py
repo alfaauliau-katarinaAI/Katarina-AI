@@ -24,7 +24,7 @@ import json
 import math
 import os
 from bisect import bisect_right
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from katarina.domain.market_calendar import is_us_dst

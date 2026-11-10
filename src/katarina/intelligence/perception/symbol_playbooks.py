@@ -6,7 +6,7 @@ No order API, no adaptive cross-symbol parameter sharing.
 """
 from __future__ import annotations
 
-from datetime import datetime,timezone
+from datetime import timezone
 from math import isfinite
 from statistics import mean
 from katarina.domain.market_calendar import is_eu_dst, is_us_dst

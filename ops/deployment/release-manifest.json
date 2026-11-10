@@ -1086,9 +1086,9 @@
       "sha256": "98b7060ed496aa327c5aa740e17aaba00544ee92235d875ba3664ec5bda9dcc9"
     },
     "src/katarina/intelligence/operations/data_health.py": {
-      "bytes": 45490,
-      "normalized_sha256": "3a6967635fb170eb8fbdabc8afe411173676ef596d2118a7ae66dcea4d011d84",
-      "sha256": "3a6967635fb170eb8fbdabc8afe411173676ef596d2118a7ae66dcea4d011d84"
+      "bytes": 45494,
+      "normalized_sha256": "2f937e051c14680826cc80682c4baf2c919b5c7b061db8622f1ee893d01e4c42",
+      "sha256": "2f937e051c14680826cc80682c4baf2c919b5c7b061db8622f1ee893d01e4c42"
     },
     "src/katarina/intelligence/operations/file_housekeeping.py": {
       "bytes": 6717,
@@ -1106,9 +1106,9 @@
       "sha256": "7226231d1cd5778e92088d422dae8754135ccef1c1f019ea8442a7c2eb07d0eb"
     },
     "src/katarina/intelligence/operations/observation_ledger.py": {
-      "bytes": 31644,
-      "normalized_sha256": "cc31f11d5218eba3cc76a2d0808fcd3cdaa0c2abd9d99dc7077736cdced48f20",
-      "sha256": "cc31f11d5218eba3cc76a2d0808fcd3cdaa0c2abd9d99dc7077736cdced48f20"
+      "bytes": 31638,
+      "normalized_sha256": "e56c52064468d111e09ba9fcd9b8dde9dc591f919bdc6228d21936f3c1d37bbd",
+      "sha256": "e56c52064468d111e09ba9fcd9b8dde9dc591f919bdc6228d21936f3c1d37bbd"
     },
     "src/katarina/intelligence/operations/parallel_storage.py": {
       "bytes": 727,
@@ -1231,9 +1231,9 @@
       "sha256": "31bfcb0c47a7ea6a239d7b004616cf21a68564ddd751dcbe0f3b6245decd036b"
     },
     "src/katarina/intelligence/perception/symbol_playbooks.py": {
-      "bytes": 10933,
-      "normalized_sha256": "ae0d8a114876acf0e5bdddd6e1dff33b39c9f427a420ca7aa2388298c9171ed3",
-      "sha256": "ae0d8a114876acf0e5bdddd6e1dff33b39c9f427a420ca7aa2388298c9171ed3"
+      "bytes": 10924,
+      "normalized_sha256": "7df425e11642e02c6bbad388c1630b03fe6162547630004bf0f64eb9492ee494",
+      "sha256": "7df425e11642e02c6bbad388c1630b03fe6162547630004bf0f64eb9492ee494"
     },
     "src/katarina/intelligence/perception/technical_regime.py": {
       "bytes": 3301,
