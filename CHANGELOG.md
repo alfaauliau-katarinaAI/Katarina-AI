@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-11-10 — K3: persiapan uji reboot WP6 (tanpa reboot, tanpa autologon)
+
+- `operations/post_reboot.py` + `scripts/ai/wp6_reboot_check.py`: `baseline` sebelum reboot (hash task/launcher, proses, ledger baca-saja, backup SQLite online opsional dengan `integrity_check` pada salinan). `check` setelah reboot memberi `READY_AFTER_REBOOT` hanya bila boot lebih baru dari baseline, satu rantai observer + satu MT5 di sesi interaktif yang sama, siklus OK ber-jam ≤ 20 menit, jeda reboot terlihat tanpa backfill, `quick_check=ok` dan 0 order. Selain itu `NOT_READY`/`NOT_TESTED`.
+- Rantai redirector venv Python 3.12 (`Scripts\python.exe` → `python312`) dihitung satu instance (bukti VPS 10 Nov).
+- Verdict preflight konfigurasi diganti `READY_AFTER_REBOOT` → `READY_FOR_REBOOT_TEST` agar tidak mengklaim hasil reboot.
+- `docs/operations/WP6_OBSERVER_STARTUP.md`: audit K3, evaluasi autologon (Sysinternals LSA direkomendasikan, `DefaultPassword` ditolak, sesi 0 `BLOCKED_EVIDENCE`), prosedur uji, rollback. VPS tidak diubah. LIVE tetap OFF.
+
 ## 2026-11-10 — Perampingan lanjutan: website yatim, topik MEETING selesai, sisa folder VPS
 
 - Hapus `website/market-news.js` dan `market-news.json`: tidak dimuat halaman mana pun sejak 11 Okt (digantikan `pulse.js`). Izin Owner.

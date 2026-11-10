@@ -1,47 +1,87 @@
 # WP6 — observer kembali sendiri setelah reboot VPS
 
-Status 4 Nov 2026: **CODE READY, BELUM DITERAPKAN**. Task aktif dan VPS tidak diubah. Penerapan memerlukan izin Owner.
+Status 10 Nov 2026: **PREPARED, `NOT_READY`**.
 
-## Kondisi produksi (bukti baca-saja, 4 Nov 2026)
+- Task dan launcher sudah diterapkan pada 4 Nov (RH-014).
+- Satu-satunya blocker konfigurasi adalah `WP6_NO_AUTOLOGON`, yang menunggu aksi Owner.
+- Uji reboot belum dijalankan.
+- `READY_AFTER_REBOOT` hanya boleh diberikan oleh `wp6_reboot_check.py check` sesudah reboot sungguhan.
 
-| Aspek | Nilai | Akibat |
-|---|---|---|
-| Trigger | `LogonTrigger` user Administrator, `InteractiveToken` | Hanya berjalan setelah ada login |
-| Autologon Windows | `AutoAdminLogon=0` (Sysinternals Autologon ada di `C:\AutoLogon` tetapi tidak aktif) | Setelah reboot tanpa login, observer **tidak** start |
-| Sesi | MT5 dan observer berjalan di sesi RDP 2 yang terputus (boot terakhir 5 Okt) | MT5 butuh desktop interaktif |
-| Sudah benar | `IgnoreNew`, `ExecutionTimeLimit PT0S`, `RestartOnFailure` 5 menit × 999, aksi `run-observer.ps1`, mutex `Global\KatarinaReadonlyObserver` + file lock `worker.lock` | Tidak ada instance ganda |
-| Launcher | Tidak pernah ada di Git sebelumnya. Kini salinan byte-identik ada di `ops/windows/run-observer.ps1` (commit baseline, SHA-256 `95bf61a9…976e`) | Drift VPS ↔ repo bisa diperiksa |
+## Kondisi produksi (audit baca-saja K3, 10 Nov 2026)
 
-Preflight: `python scripts/ai/wp6_startup_preflight.py --live` di VPS (baca-saja), atau offline dengan `--task-xml/--launcher/--autologon`. Hasil hari ini **`NOT_READY`**:
-- `WP6_NO_AUTOLOGON` (P0);
-- `WP6_LAUNCHER_ABANDONED_MUTEX_NOT_HANDLED` (P1): launcher yang mati saat reboot/crash meninggalkan mutex abandoned. `WaitOne` lalu melempar exception sehingga start pertama gagal sampai retry 5 menit;
-- `WP6_BATTERY_POLICY_CAN_STOP` (P2).
+| Aspek | Nilai |
+|---|---|
+| Task `Katarina-Readonly-Observer` | `LogonTrigger` Administrator + delay PT1M, `InteractiveToken`, `IgnoreNew`, `ExecutionTimeLimit PT0S`, `RestartOnFailure` 5 menit × 999, baterai tidak menghentikan. Status Running |
+| Launcher | `C:\Katarina\run-observer.ps1` = `ops/windows/run-observer.ps1`, berisi mutex `Global\KatarinaReadonlyObserver` dengan penanganan abandoned mutex dan marker `STOP_OBSERVER` |
+| Instance | Satu rantai observer: redirector venv `Scripts\python.exe` → interpreter `python312` (2 proses, 1 instance). Satu `terminal64.exe`. Keduanya berjalan di sesi interaktif 2 |
+| Autologon | `AutoAdminLogon=0`, `DefaultUserName` kosong, tidak ada `DefaultPassword`. Sysinternals Autologon tersedia di `C:\AutoLogon` |
+| Task lain | `Katarina-Stage0-Daily-Health` (SYSTEM, harian, baca-saja). `Katarina-DC-Connection-Watchdog` (SYSTEM, 3 menit) memulihkan Desktop Commander setelah reboot. Sisa task uji lama: `ChatGPTUserTest`, `DNSTT-Test-AutoCleanup` (perlu keputusan Owner) |
+| Windows Update | Tidak ada kebijakan AU; `PendingReboot` false. Reboot otomatis Windows Update tetap mungkin terjadi, dan karena itulah autologon diperlukan |
+| Boot terakhir | 4 Okt 2026 22:45 UTC |
 
-## Usulan (mode `AUTOLOGON_INTERACTIVE`, perubahan paling kecil)
+Preflight konfigurasi: `python scripts/ai/wp6_startup_preflight.py --live` (baca-saja). Hasil 10 Nov: `NOT_READY`, `WP6_NO_AUTOLOGON`.
 
-1. **Owner** mengaktifkan autologon Windows untuk user task dengan Sysinternals Autologon (password disimpan sebagai LSA secret). Claude/Katarina tidak pernah menangani password.
-2. Daftarkan `ops/windows/observer-task.autologon.xml` lewat `ops/windows/wp6_apply_observer_startup.ps1`. Isinya sama dengan task sekarang, hanya ditambah delay logon 1 menit dan kebijakan baterai dimatikan.
-   - Tanpa `-Apply` = dry-run.
-   - Dengan `-Apply`: XML lama di-backup ke `C:\Katarina\backups\wp6-task-<UTC>\` beserta SHA-256, lalu didaftarkan, lalu diverifikasi. Bila gagal, XML lama langsung dipulihkan.
-   - Rollback: `-Apply -Rollback <backup.xml>`.
-3. Deploy launcher `ops/windows/run-observer.ps1` (perbaikan mutex abandoned) bersama rilis berikutnya. Perlu izin deploy Owner dan gate `KAT-CG-05`.
-4. Verifikasi: `wp6_startup_preflight.py --live` → `READY_AFTER_REBOOT`. Lalu uji reboot terjadwal di luar jam pasar (Sabtu) dengan izin Owner. Hasil yang diharapkan:
-   - gap dicatat sebagai `observer_outages` dan tidak di-backfill;
-   - tidak ada siklus ganda;
-   - 0 order.
+Verdict preflight paling tinggi adalah **`READY_FOR_REBOOT_TEST`**. Preflight hanya menilai konfigurasi, jadi tidak boleh lagi disebut `READY_AFTER_REBOOT`.
 
-Alternatif `BOOT_NON_INTERACTIVE` (BootTrigger + S4U/Password, sesi 0) tetap **`BLOCKED_EVIDENCE`** sampai MT5 di sesi 0 terbukti berjalan di host riset terpisah.
+## Evaluasi mekanisme start setelah reboot
+
+| Opsi | Penilaian |
+|---|---|
+| **Sysinternals Autologon** (password disimpan sebagai LSA secret) + task `LogonTrigger` yang ada | **Direkomendasikan.** Kompatibel dengan MT5 yang butuh desktop interaktif. Perubahan paling kecil. Dijalankan oleh **Owner** di konsol VPS; Claude tidak pernah melihat password |
+| Registry `DefaultPassword` plaintext | **Ditolak.** Password terbaca oleh siapa pun yang punya akses registry |
+| `BootTrigger` + S4U/Password (sesi 0) | **`BLOCKED_EVIDENCE`.** MT5 di sesi 0 belum terbukti. Wajib diuji di host riset terpisah dulu |
+| Tanpa autologon (login RDP manual setelah reboot) | Aman, tetapi observer mati sampai ada login. Outage tercatat jujur dan tidak di-backfill |
+
+Risiko autologon: siapa pun yang punya akses fisik/konsol mendapat desktop Administrator. Mitigasi:
+
+- batasi akses konsol hypervisor;
+- akses RDP tetap memakai password kuat.
+
+## Prosedur uji reboot (butuh izin Owner terpisah; Sabtu, pasar tutup)
+
+1. **Owner**: aktifkan autologon dengan `C:\AutoLogon\Autologon.exe` untuk user task (Administrator).
+2. Jalankan preflight `wp6_startup_preflight.py --live`. Hasil yang diharapkan: `READY_FOR_REBOOT_TEST`.
+3. Rekam baseline dan backup. DB disalin dengan backup online SQLite ke folder baru, lalu `integrity_check` dijalankan pada salinan, bukan DB live:
+   `python scripts/ai/wp6_reboot_check.py baseline --output C:\Katarina\state\wp6\baseline-<UTC>.json --backup-dir C:\Katarina\backups\wp6-reboot-<UTC>`
+4. Tunggu backup selesai. Catat hash dan RAM bebas.
+5. **Owner** me-reboot VPS.
+6. Setelah ±15 menit, jalankan:
+   `python scripts/ai/wp6_reboot_check.py check --baseline <baseline.json> --output C:\Katarina\state\wp6\post-reboot-<UTC>.json`
+   - `READY_AFTER_REBOOT` hanya jika semua syarat ini terpenuhi:
+     - boot lebih baru dari baseline;
+     - tepat satu rantai observer dan satu MT5, di sesi interaktif yang sama;
+     - siklus OK pertama dengan offset jam ≤ 20 menit setelah boot;
+     - jeda reboot terlihat (≥ 180 s, tanpa backfill) dan tidak ada siklus duplikat;
+     - `quick_check=ok`;
+     - total order 0;
+     - task XML dan launcher sama dengan baseline.
+   - Selain itu `NOT_READY` (dengan alasan) atau `NOT_TESTED`.
+7. Jalankan `check_stage0_health.py --since official`. Outage reboot tercatat sebagai outage biasa; definisi keberhasilan tidak diubah.
+
+## Rollback
+
+| Masalah | Langkah |
+|---|---|
+| Autologon tidak diinginkan | Owner menjalankan `Autologon.exe` lalu memilih *Disable* |
+| Task | `ops/windows/wp6_apply_observer_startup.ps1 -Apply -Rollback C:\Katarina\backups\wp6-task-20261104T131438Z\Katarina-Readonly-Observer.xml` |
+| Observer tidak start | Login RDP sebagai Administrator. Task `LogonTrigger` menjalankan launcher. Jika tidak, `schtasks /run /tn Katarina-Readonly-Observer` (izin Owner) |
+| DB rusak | Hentikan observer (`continuous.stop`), pulihkan salinan dari `wp6-reboot-<UTC>` yang hash dan `integrity_check`-nya tercatat di baseline |
 
 ## Tes regresi
 
-`tests/unit/operations/test_wp6_startup.py`:
-- Task produksi dinilai NOT_READY.
-- Definisi usulan + autologon dinilai READY.
-- Autologon tidak diketahui, atau user-nya berbeda, ditolak.
-- Mode sesi 0 berstatus BLOCKED_EVIDENCE.
-- Instance paralel, batas waktu, restart kurang, task nonaktif, dan aksi non-canonical ditolak.
-- Launcher tanpa mutex/STOP ditolak.
-- Launcher repo hanya berbeda pada perbaikan mutex.
-- Skrip apply bersifat dry-run default, backup sebelum perubahan, restore saat gagal, dan tanpa start/stop task, restart komputer, autologon, password, atau MT5.
-- Observer kedua ditolak, dan lock pulih setelah crash.
-- Gap reboot 15 menit tercatat sebagai outage tanpa duplikat, tanpa backfill, dan 0 order.
+- `tests/unit/operations/test_wp6_startup.py` mencakup:
+  - definisi task dan launcher;
+  - verdict konfigurasi `READY_FOR_REBOOT_TEST`;
+  - mode sesi 0 berstatus `BLOCKED_EVIDENCE`;
+  - kompatibilitas PowerShell 4;
+  - skrip apply dry-run default dengan backup dan restore.
+- `tests/unit/operations/test_wp6_post_reboot.py` mencakup:
+  - rantai redirector venv dihitung satu instance;
+  - parsing waktu WMI;
+  - `READY_AFTER_REBOOT` hanya setelah boot baru;
+  - `NOT_TESTED` tanpa baseline atau reboot;
+  - observer ganda atau MT5 di sesi 0 gagal;
+  - order, siklus terlambat, backfill dan siklus tanpa jam gagal;
+  - DB dibuka baca-saja;
+  - backup tidak menimpa salinan yang sudah ada;
+  - CLI tanpa perintah reboot, kill, task, autologon atau order.
