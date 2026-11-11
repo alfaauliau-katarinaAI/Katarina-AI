@@ -7,7 +7,7 @@ Authority: Project Owner. Existing KATARINA_CONSTITUTION.md v1.1.0 remains highe
 1. KATARINA_CONSTITUTION.md (existing FROZEN constitution).
 2. Approved and versioned Master Blueprint (requirements, architecture, acceptance criteria).
 3. Approved decision records / change requests.
-4. ROADMAP.md (execution tracking only).
+4. `docs/ROADMAP.md` (execution tracking only).
 5. Operational logs and evidence (observed state, not policy).
 
 ## Change control
@@ -18,13 +18,13 @@ Authority: Project Owner. Existing KATARINA_CONSTITUTION.md v1.1.0 remains highe
 - No silent changes to approved blueprint. Propose changes in a change request and increment version after approval.
 
 ## Token-efficient handoff
-- Read this governance file, KATARINA_CONSTITUTION.md, current PROJECT_STATUS.md, and only the relevant work-item/decision files before touching code.
+- Read this governance file, KATARINA_CONSTITUTION.md, current `docs/PROJECT_STATUS.md`, and only the relevant work-item/decision files before touching code.
 - Maintain a concise latest-state summary: active work ID, current status, blocker, last verified commit, next action, and evidence paths.
 - Append one compact entry per meaningful minor fix; do not rescan the entire repository unless a dependency or evidence requires it.
 - At handoff, cite exact changed files and tests instead of repeating long chat histories.
 
 ## Initial application
-WP13 broker clock/quote freshness: remains UNVERIFIED until code and four scenario tests (normal session, stale quote, weekend, DST) are checked. Fail closed for unreliable timing; do not derive a new broker offset from stale quotes.
+WP13 live broker clock/quote freshness: DEPLOYED on the production read-only observer on 2026-11-03; the operational evidence is described in `docs/PROJECT_STATUS.md` and is **not** proof of historical broker-bar time alignment. Independent M5 historical bar-clock UTC/DST evidence remains BLOCKED pending a separate authorized research host and broker data (#255). Do not mark the full research data gate VERIFIED from live observer evidence. The four scenario checks (normal session, stale quote, weekend, DST) require their own traceable acceptance evidence; this draft does not independently certify them. Fail closed for unreliable timing; do not derive a new broker offset from stale quotes.
 
 ## Approval boundary
 This draft records the owner's approval of major/minor change governance. The complete technical blueprint and its baseline version still require review and approval before being labeled FROZEN.
