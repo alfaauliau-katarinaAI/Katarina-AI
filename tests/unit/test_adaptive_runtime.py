@@ -96,6 +96,28 @@ class AdaptiveResearchBudgetTests(unittest.TestCase):
             self.assertEqual(limiter.telemetry()["active_jobs"], 0)
             self.assertEqual(len(calls), 3)
 
+    def test_linux_container_memory_headroom_and_fail_closed(self):
+        from katarina.intelligence.lab.adaptive_runtime import _linux_available
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            meminfo = base / "meminfo"
+            meminfo.write_text("MemAvailable: 4194304 kB\n")
+            cgroup = base / "cgroup"
+            cgroup.mkdir()
+            (cgroup / "memory.max").write_text(str(2 * GiB))
+            (cgroup / "memory.current").write_text(str(1500 * MiB))
+            self.assertEqual(_linux_available(meminfo=meminfo, cgroup=cgroup),
+                             2 * GiB - 1500 * MiB)
+            (cgroup / "memory.current").unlink()
+            self.assertIsNone(_linux_available(meminfo=meminfo, cgroup=cgroup))
+            (cgroup / "memory.max").unlink()
+            legacy = cgroup / "memory"
+            legacy.mkdir()
+            (legacy / "memory.limit_in_bytes").write_text(str(1 * GiB))
+            (legacy / "memory.usage_in_bytes").write_text(str(900 * MiB))
+            self.assertEqual(_linux_available(meminfo=meminfo, cgroup=cgroup),
+                             124 * MiB)
+
     def test_sensor_error_pauses_instead_of_starting_research(self):
         with tempfile.TemporaryDirectory() as directory:
             limiter = AdaptiveResearchLimiter(
