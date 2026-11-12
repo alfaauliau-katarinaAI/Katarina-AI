@@ -5,11 +5,14 @@ import json
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
-CODE_DIRS=('src/katarina','scripts/ai','scripts/deployment','scripts/memory','mt5')
+CODE_DIRS=('src/katarina','scripts/ai','scripts/deployment','scripts/memory','scripts/pc','mt5')
 EXACT_FILES=('sites/runtime-monitor/worker/index.js','requirements-stage07.txt',
              'requirements-brain-observer.txt','requirements-pc.txt','requirements-hf-storage.txt',
              'config/hf-storage.example.json','ops/deployment/katarina-hf-storage.service',
-             'ops/deployment/katarina-hf-storage.timer')
+             'ops/deployment/katarina-hf-storage.timer',
+             'katarina_pc.py','START_KATARINA.bat','SETUP_KATARINA.bat',
+             'config/runtime_dependencies_v1.json','config/risk_governor_v2.json',
+             'config/katarina_unified_v1.json','config/promotion_lock.json')
 
 def inventory(root):
     root=Path(root);paths=set()

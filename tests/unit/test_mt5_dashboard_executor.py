@@ -21,3 +21,12 @@ class Mt5ExecutorTests(unittest.TestCase):
    v=fields();self.assertEqual(v[16],'1');self.assertEqual(v[7],'UNKNOWN');self.assertEqual(v[8],'PENDING')
    (p/'executor.json').write_text(json.dumps(dict(pid=99,independent=True,mode='DEMO',status='RUNNING',as_of_utc=old)))
    v=fields();self.assertEqual(v[16],'0');self.assertEqual(v[15],'999999');self.assertEqual(v[7],'UNKNOWN')
+
+ def test_universal_worker_is_visible_without_granting_execution_permission(self):
+  from katarina.monitoring.mt5_dashboard import dashboard_execution
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d);p=root/'demo-forward';p.mkdir();now=datetime.now(timezone.utc)
+   (p/'executor.json').write_text(json.dumps(dict(pid=99,independent=True,mode='UNIVERSAL',status='RUNNING',as_of_utc=now.isoformat())))
+   (p/'status.json').write_text(json.dumps(dict(pid=99,status='ACCOUNT_NOT_AUTHORIZED',execution_permission='BLOCKED',as_of_utc=now.isoformat())))
+   decision,_,bound=dashboard_execution(root,{},now.timestamp())
+   self.assertTrue(bound);self.assertEqual(decision['execution_permission'],'BLOCKED')

@@ -58,12 +58,10 @@ def inspect_broker_account(mt5, *, observed_at_utc: datetime) -> dict:
         return result
     result["connected"] = bool(getattr(terminal, "connected", False))
     result["algo_trading_off"] = getattr(terminal, "trade_allowed", None) is False
-    demo_flag = getattr(mt5, "ACCOUNT_TRADE_MODE_DEMO", 0)
+    from katarina.engines.account_authorization import account_mode
+    result['universal_observation_enabled'] = getattr(mt5, 'universal_observation_enabled', False) is True
     if account is not None:
-        result["account_mode"] = (
-            "DEMO" if getattr(account, "trade_mode", None) == demo_flag
-            else "OTHER_OR_UNVERIFIED"
-        )
+        result['account_mode'] = account_mode(mt5, account)
         result["account_financial_fields_available"] = (
             _amount_available(getattr(account, "balance", None)) and
             _amount_available(getattr(account, "equity", None)) and

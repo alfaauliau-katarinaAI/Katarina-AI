@@ -1,0 +1,121 @@
+{
+  "date_local": "2026-11-13",
+  "timezone": "Asia/Bangkok",
+  "scope": "AUDIT_AND_SOFTWARE_CANDIDATE_ONLY",
+  "verdict": "SOFTWARE_READY_FOR_CONTROLLED_DESTINATION_TEST; REAL_EXECUTION_NOT_CLEARED",
+  "deployed": false,
+  "real_broker_orders_sent": 0,
+  "fixes": [
+    "Explicit authorization cannot be removed or rebound to another mode on the same outbox; legacy reopening of an authorized outbox is rejected.",
+    "Account ledger and outbox reconciliation recheck identity after broker reads before persisting state.",
+    "Uncertain execution failures no longer claim zero submissions; status preserves original decision timestamps.",
+    "Universal worker publishes shared status and is recognized by the Python dashboard.",
+    "Release packaging refuses silent omission of uncommitted code; explicit snapshots include new modules and file hashes, excluding private untracked configuration.",
+    "Release manifest includes PC launchers and critical risk/runtime configuration; software promotion records include validated hashes."
+  ],
+  "passed": {
+    "targeted_tests": 123,
+    "pretrial": "PASS_SYNTHETIC_PRETRIAL_ONLY",
+    "code_gates": [
+      "KAT-CG-00",
+      "KAT-CG-01",
+      "KAT-CG-03"
+    ],
+    "promotion_gate": "PASS",
+    "release_manifest": {
+      "status": "MATCH",
+      "files": 347
+    },
+    "source_package_files_verified": 358,
+    "package_imports_and_cli_smoke": "PASS",
+    "windows_cp312_dependency_wheels": "DOWNLOAD_VERIFIED"
+  },
+  "destination_checks_remaining": [
+    "Windows Python/MT5 installation, actual terminal path, account identity, trade permissions, clock evidence, symbol specifications, and broker margin validation.",
+    "Five PowerShell tests skipped on Linux; execute them on Windows.",
+    "Controlled DEMO account-switch, disconnect/reconnect, restart and kill-switch tests on the target terminal.",
+    "Drain/reconcile and back up legacy demo-forward books before adopting new account-scoped storage; no concurrent legacy and universal executors.",
+    "Owner-approved account/strategy records with expiry; no actual records were granted by this audit.",
+    "External account-switch race during order_send: the Python SDK lacks atomic expected-account submission; enforce a controlled terminal/execution protocol before REAL activation.",
+    "Legacy MT5 chart EA still displays DEMO-specific labels and static account binding; it is not evidence of REAL execution readiness."
+  ],
+  "not_claimed": [
+    "Strategy profitability or validation on live broker data",
+    "Remote CI on a committed release SHA",
+    "Windows/MetaEditor compilation",
+    "Real-account production clearance"
+  ],
+  "software_acceptance": {
+    "final": {
+      "status": "PASS_SOFTWARE_ONLY_DESTINATION_GATES_REMAIN",
+      "groups": {
+        "unit": {
+          "status": "PASS",
+          "tests": 1602,
+          "skipped": 1,
+          "log_sha256": "7943246a77be92919a825c79f6ece2930b1b55101951312d06a482fd630c9e35"
+        },
+        "static": {
+          "status": "PASS",
+          "tests": 101,
+          "skipped": 4,
+          "log_sha256": "0c498840018ad05a7e600f59831fc2623d1f7ca6c91ae8faf60d2bbd65d925c4"
+        },
+        "integration": {
+          "status": "PASS",
+          "tests": 245,
+          "skipped": 0,
+          "log_sha256": "cb89d9faab851c967bba657d4a341955f348b4090556fda6c5e3ff622645af64"
+        }
+      },
+      "total_tests": 1948,
+      "skipped": 5
+    },
+    "pinned": {
+      "status": "PASS_SOFTWARE_ONLY_DESTINATION_GATES_REMAIN",
+      "groups": {
+        "unit": {
+          "status": "PASS",
+          "tests": 1602,
+          "skipped": 1,
+          "log_sha256": "cece97fd7105ac41d85b4b722cca01393c506c9f2fe266dbcfdabed883dd0f75"
+        },
+        "static": {
+          "status": "PASS",
+          "tests": 101,
+          "skipped": 4,
+          "log_sha256": "a8746d1c04f36a6b305a8fee3bed3e45f0905505aa849b9d6cf7c756b9edbbbf"
+        },
+        "integration": {
+          "status": "PASS",
+          "tests": 245,
+          "skipped": 0,
+          "log_sha256": "c0e24011b1bf6ba750ec4e5af91c7adaf2bca36d3229bcedf31177c0451b6b3b"
+        }
+      },
+      "total_tests": 1948,
+      "skipped": 5
+    }
+  },
+  "audit_environment": {
+    "os": "Linux",
+    "python": "3.12.14",
+    "numpy_pinned": "2.5.3",
+    "certifi_pinned": "2026.10.19",
+    "native_mt5": "NOT_EXECUTED; Windows wheel 5.0.6231 downloaded"
+  },
+  "package": {
+    "name": "Katarina-Universal-Candidate.zip",
+    "sha256": "8fdd3fb301935f6079e930310a48638970c7e808ebbec0d87875d0e6684d83a4",
+    "verified_files": 358,
+    "base_commit": "873de5fdcee883a123939a02488b46f0e37871b1",
+    "working_tree_snapshot": true,
+    "source_clean": false
+  },
+  "windows_wheels": {
+    "certifi-2026.10.19-py3-none-any.whl": "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b",
+    "metatrader5-5.0.6231-cp312-cp312-win_amd64.whl": "b94b1f8f52087ae36dfac5f352a96f5d04fe308704d9515f82cf5d1470bc31d4",
+    "numpy-2.5.3-cp312-cp312-win_amd64.whl": "0a59a421a32580a009e8a1751345bf829631b990dc1794b80514ab722b435def"
+  },
+  "release_manifest_sha256": "dfcce64952beb31584bbb9711de0859cdae86c3c5ab37044cd0b05bbf76a8c1d"
+}

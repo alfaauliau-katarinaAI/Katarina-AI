@@ -44,8 +44,18 @@ class ConnectionConfig:
     cloud_token_env: str = 'KATARINA_CLOUD_TOKEN'
     attempts: int = 2
     demo_experiments: bool = False
+    universal_execution: bool = False
+    execution_authorizations: tuple = ()
 
     def __post_init__(self):
+        from katarina.engines.account_authorization import AccountAuthorization
+        if type(self.universal_execution) is not bool:
+            raise ValueError('invalid_universal_execution')
+        if self.universal_execution and (not self.demo_experiments or self.priority != ('local',) or not self.terminal_path):
+            raise ValueError('explicit_local_execution_required')
+        keys = [AccountAuthorization.from_dict(a).key for a in self.execution_authorizations]
+        if len(keys) != len(set(keys)):
+            raise ValueError('duplicate_account_authorization')
         if type(self.demo_experiments) is not bool or (self.demo_experiments and (self.priority != ('local',) or not self.terminal_path)):
             raise ValueError('explicit_local_demo_configuration_required')
         if type(self.expected_login) is not int or self.expected_login <= 0:
@@ -79,6 +89,13 @@ class ConnectionConfig:
 def verify_identity(broker, config):
     try:
         terminal, account = broker.terminal_info(), broker.account_info()
+        from katarina.engines.account_authorization import account_mode
+        if config.universal_execution:
+            if (terminal is None or getattr(terminal, 'connected', None) is not True
+                    or account_mode(broker, account) == 'UNKNOWN'):
+                raise ConnectionUnavailable('ACCOUNT_UNAVAILABLE')
+            # Observation never grants execution authorization; the boundary owns it.
+            return
         flag=getattr(broker, 'ACCOUNT_TRADE_MODE_DEMO', None)
         demo_ok=(config.demo_experiments and type(flag) is int
                  and type(getattr(account,'trade_mode',None)) is int
@@ -116,6 +133,10 @@ class BoundLocalBroker:
         if not self._config.demo_experiments or not callable(callback):
             raise ValueError('explicit_demo_service_required')
         self._demo_service=callback
+
+    @property
+    def universal_observation_enabled(self):
+        return self._config.universal_execution
 
     @property
     def demo_observation_enabled(self):
@@ -166,7 +187,7 @@ class BoundLocalBroker:
         if name == 'COPY_TICKS_ALL':
             # Optional local capability; do not change the cloud handshake.
             return getattr(self._native,name)
-        if name in CONSTANTS:
+        if name in CONSTANTS or name in ('ACCOUNT_TRADE_MODE_REAL', 'ACCOUNT_TRADE_MODE_CONTEST'):
             return getattr(self._native,name)
         if name not in METHODS:
             raise AttributeError(name)

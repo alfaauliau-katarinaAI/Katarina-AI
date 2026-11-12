@@ -775,3 +775,27 @@ Bukti minimum sebelum D9 diputuskan: 5 simbol dari terminal aktif, tanggal/waktu
 
 - 29 Okt — Usulan agentic AI diterima sebagai arah; WP14 auditor data baca-saja masuk antrean setelah WP13 dan WP8c
   (Owner menjawab "ya", 29 Okt). Rincian: roadmap "Arah lanjutan → Usulan agentic AI".
+
+## Agenda MT5 universal — 13 November 2026 (handoff audit; belum ada keputusan integrasi)
+
+Owner meminta implementasi kemampuan eksekusi DEMO/REAL dengan otorisasi terpisah,
+research paralel dan pengaman tetap, kemudian audit kesiapan. Kandidat sebelumnya
+hanya tersedia pada workspace Linux agen, di atas commit #303. Snapshot dibagikan
+ke branch `codex/mt5-universal-audit-handoff-20261113` untuk audit Claude; rincian
+ada di [handoff MT5 universal](MT5_UNIVERSAL_CLAUDE_HANDOFF.md).
+
+**Belum diputuskan:** apakah dan dengan syarat apa kemampuan tersebut boleh masuk
+`main`, mengingat kebijakan LIVE OFF dan Stage 0 yang belum lulus. Persetujuan
+implementasi tidak dicatat sebagai izin merge, deploy, promosi strategi, atau
+aktivasi akun. Catatan promotion lock kandidat hanya bukti software lokal dan
+harus ditinjau sebelum integrasi; gate PASS bukan pengganti keputusan Owner.
+
+Terminal observer Stage 0 pada VPS tidak digunakan untuk account switch atau uji
+order. Pengujian host memerlukan lingkungan terpisah dan otorisasi operasional.
+Owner menangani kredensial/login dan pergantian akun REAL; auditor menyiapkan
+skrip serta memeriksa buktinya. P0 race Python `order_send` tetap terbuka; usulan
+EA MQL5 perlu bukti lifecycle/in-flight/replay, bukan asumsi bahwa reinitialization
+saja menjamin atomisitas.
+
+Status: `AUDIT_HANDOFF_ONLY_POLICY_DECISION_PENDING`. Tidak ada perubahan kebijakan
+produksi, kelulusan Stage 0, atau tindakan pada VPS akibat catatan ini.

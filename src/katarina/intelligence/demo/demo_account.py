@@ -12,15 +12,25 @@ def number(v):
 
 
 class DemoAccountLedger:
-    def __init__(self, db, *, login, server, clock):
+    def __init__(self, db, *, login, server, clock, expected_mode=None):
         self.db,self.clock=db,clock
+        self.login, self.server, self.expected_mode = login, server, expected_mode
         self.binding=sha256(f'{login}|{server}'.encode()).hexdigest()
         db.execute('CREATE TABLE IF NOT EXISTS demo_account_state(id INTEGER PRIMARY KEY CHECK(id=1),payload TEXT NOT NULL)')
         db.commit()
 
+    def _identity(self, broker, account):
+        from katarina.engines.account_authorization import account_key
+        key = account_key(broker, account)
+        if key[1:] != (self.login, self.server) or (self.expected_mode is not None and key[0] != self.expected_mode):
+            raise ValueError('ACCOUNT_LEDGER_BINDING_CHANGED')
+        return key
+
     def capture(self, broker):
         now=self.clock();day=datetime.fromtimestamp(now,timezone.utc).date().isoformat()
-        account=broker.account_info();positions=broker.positions_get();orders=broker.orders_get()
+        account=broker.account_info()
+        identity = self._identity(broker, account)
+        positions=broker.positions_get();orders=broker.orders_get()
         if account is None or positions is None or orders is None:
             raise ValueError('DEMO_ACCOUNT_BOOK_UNAVAILABLE')
         for key in ('balance','equity','margin_free'):
@@ -86,6 +96,8 @@ class DemoAccountLedger:
         # Pending orders are not guessed to have zero risk. This bounded trial
         # never creates them; any pending book blocks additional submissions.
         unbounded=unbounded or bool(orders)
+        if self._identity(broker, broker.account_info()) != identity:
+            raise ValueError('ACCOUNT_LEDGER_BINDING_CHANGED')
         with self.db:
             self.db.execute('INSERT OR REPLACE INTO demo_account_state VALUES(1,?)',
                             (json.dumps(state,allow_nan=False),))

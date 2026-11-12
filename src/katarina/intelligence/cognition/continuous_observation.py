@@ -139,12 +139,16 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
             seed_existing_gaps(context.db,root,datetime.now(timezone.utc))
         if getattr(config,'demo_experiments',False) and not (root/'demo-forward'/'independent.enabled').exists():
             from katarina.intelligence.demo.demo_forward import DemoForwardRuntime
-            demo=DemoForwardRuntime(root,config,trace=brain.activity_trace)
+            runtime_type=DemoForwardRuntime
+            if getattr(config, 'universal_execution', False):
+                from katarina.intelligence.demo.universal_forward import UniversalForwardRuntime
+                runtime_type=UniversalForwardRuntime
+            demo=runtime_type(root,config,trace=brain.activity_trace)
             from katarina.intelligence.operations.parallel_storage import prepare_parallel_storage
             # The private demo books also share readers with the doctor.
             from contextlib import closing
             import sqlite3
-            for book in (demo.path,demo.boundary.path):
+            for book in (() if getattr(config, 'universal_execution', False) else (demo.path,demo.boundary.path)):
                 with closing(sqlite3.connect(book,timeout=5)) as storage:
                     if storage.execute('PRAGMA journal_mode=WAL').fetchone()[0]!='wal':
                         raise RuntimeError('PARALLEL_STORAGE_UNAVAILABLE')

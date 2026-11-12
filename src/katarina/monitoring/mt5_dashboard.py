@@ -16,7 +16,7 @@ def dashboard_execution(root,status,now):
     executor=_read(root/'demo-forward/executor.json')
     demo=status.get('demo_forward') or {}
     pid=executor.get('pid')
-    independent=(executor.get('mode')=='DEMO' and executor.get('independent') is True
+    independent=(executor.get('mode') in ('DEMO','UNIVERSAL') and executor.get('independent') is True
                  and type(pid) is int and pid>0 and _fresh(executor,clock)
                  and executor.get('status') in ('STARTING','RUNNING','AUDIT_ONLY','RETRY_PENDING'))
     if independent:
