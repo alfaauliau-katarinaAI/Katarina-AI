@@ -95,6 +95,11 @@
       "normalized_sha256": "76afd8c4e105fb61738625fd39df6054de07dbf0cc76f285731b4f22bd3bdf1f",
       "sha256": "76afd8c4e105fb61738625fd39df6054de07dbf0cc76f285731b4f22bd3bdf1f"
     },
+    "mt5/Scripts/KatarinaStage0BrokerSessionProbe.mq5": {
+      "bytes": 4431,
+      "normalized_sha256": "a2f7414dbd5562e801ce303e6c5fb718578e85e497c22141830b943f316edc6b",
+      "sha256": "a2f7414dbd5562e801ce303e6c5fb718578e85e497c22141830b943f316edc6b"
+    },
     "mt5/Tests/KatarinaStage06AccountProbe.mq5": {
       "bytes": 9933,
       "normalized_sha256": "519e0a1933764fa0e16431cef263b2e450bc02f61768b4ea4a8866a490279dfa",
