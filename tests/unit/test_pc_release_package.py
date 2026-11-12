@@ -38,8 +38,9 @@ class PcReleasePackageTests(unittest.TestCase):
         self.assertFalse((self.root/'kit.zip').exists())
 
     def test_explicit_snapshot_includes_changes_and_new_source_but_not_private_config(self):
-        (self.root/'src/katarina/old.py').write_text('new = True\n')
-        (self.root/'src/katarina/new.py').write_text('pass\n')
+        # write_bytes: write_text would emit CRLF on Windows while the assertion checks exact packaged bytes.
+        (self.root/'src/katarina/old.py').write_bytes(b'new = True\n')
+        (self.root/'src/katarina/new.py').write_bytes(b'pass\n')
         (self.root/'config/private.json').write_text('{"token":"never-package"}')
         manifest = package.build(self.root/'kit.zip', working_tree=True)
         self.assertTrue(manifest['working_tree_snapshot'])

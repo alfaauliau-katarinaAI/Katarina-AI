@@ -148,12 +148,14 @@ class UniversalExecutionTests(legacy.DemoExecutionTests):
         boundary = self.authorized()
         self.broker.fail = True
         self.assertEqual(self.send(boundary=boundary)['orders_submitted'], 1)
-        with sqlite3.connect(boundary.path) as db:
+        from contextlib import closing
+        # closing(): a bare sqlite3 context manager only commits; an open handle blocks temp cleanup on Windows.
+        with closing(sqlite3.connect(boundary.path)) as db, db:
             db.execute('UPDATE demo_outbox SET updated_at=0')
         def switched_history(*args, **kwargs):
             self.broker.account.trade_mode = 2
             return []
         self.broker.history_deals_get = switched_history
         self.assertEqual(boundary.reconcile()['status'], 'ACCOUNT_NOT_AUTHORIZED')
-        with sqlite3.connect(boundary.path) as db:
+        with closing(sqlite3.connect(boundary.path)) as db:
             self.assertEqual(db.execute('SELECT state FROM demo_outbox').fetchone()[0], 'UNKNOWN')
