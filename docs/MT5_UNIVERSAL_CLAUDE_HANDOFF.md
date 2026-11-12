@@ -1,6 +1,6 @@
 # Handoff audit MT5 universal untuk Claude — 13 November 2026
 
-Status: **AUDIT CANDIDATE ONLY — NOT FOR MERGE OR DEPLOYMENT**.
+Status (13 Nov 2026, setelah keputusan Owner U1–U5 di `ROADMAP_DISCUSSION.md`): **digabung ke `main` sebagai kemampuan software dengan `execution_authorizations: []`** — tidak ada akun/strategi aktif, P0 terbuka, REAL tidak boleh diotorisasi sebelum EA executor terbukti. Riwayat di bawah adalah konteks handoff awal.
 
 ## Asal dan lokasi
 

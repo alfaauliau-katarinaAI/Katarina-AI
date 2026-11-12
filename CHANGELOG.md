@@ -1,5 +1,12 @@
 # Perubahan material Katarina AI
 
+## 2026-11-13 — Satu tubuh: executor universal MT5 + riset adaptif + probe sesi masuk `main`
+
+- Keputusan Owner U1–U5 (13 Nov 02:23–02:27 WIB): kemampuan penuh LIVE/DEMO di software, arsitektur EA executor disetujui, P-0001 disahkan untuk software executor saja, uji terminal setelah Stage 0, uji strategi diinginkan.
+- Executor universal (#309, kandidat Codex + audit Claude): otorisasi per akun (mode/login/server/strategi/batas/kedaluwarsa), ledger per identitas, rekonsiliasi berhenti saat identitas berubah, kill switch sebelum `order_send`. Audit Claude: 2 tes Windows diperbaiki, observer tetap terikat login/server (A3). P0 terbuka.
+- #306 limiter riset adaptif (RAM/CPU/disk) dan #310 (dari draft #305) probe MQL5 sesi broker baca-saja digabung.
+- Tidak ada akun/strategi diaktifkan; `execution_authorizations: []`.
+
 ## 2026-11-12 — Indeks cache berita (tindak lanjut RH-015, siklus lambat saat cache dingin)
 
 - `ContextStore` membuat `snapshots_source_fetched (source, fetched)` dan `snapshots_source_id (source, id)`; `_schema` artikel membuat `contextual_market_articles_published`. Bukti VPS 12 Nov (`mode=ro`): kueri `latest` per siklus masih `SCAN snapshots` + `TEMP B-TREE` pada DB 327 MB; dengan indeks menjadi `SEARCH ... USING INDEX`.
