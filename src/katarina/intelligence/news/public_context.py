@@ -91,6 +91,11 @@ class ContextStore:
         self.db.execute("""CREATE TABLE IF NOT EXISTS snapshots(
             id INTEGER PRIMARY KEY, source TEXT, fetched TEXT, status TEXT,
             digest TEXT, raw BLOB, payload TEXT, error TEXT)""")
+        # Per-cycle lookups filter on source and order by fetched/id. Without these indexes SQLite scans the
+        # whole table (raw/payload blobs, hundreds of MB) and a cold OS cache makes the NEWS phase take
+        # 40-120 s (RH-015). Indexes only add lookup structures; no row is changed.
+        self.db.execute("CREATE INDEX IF NOT EXISTS snapshots_source_fetched ON snapshots(source, fetched)")
+        self.db.execute("CREATE INDEX IF NOT EXISTS snapshots_source_id ON snapshots(source, id)")
         self.db.commit()
 
     def record(self, source, fetched, raw=b"", error=""):

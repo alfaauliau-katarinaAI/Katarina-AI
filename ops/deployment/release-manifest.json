@@ -1146,9 +1146,9 @@
       "sha256": "2bdf1cdaa73893c8b52ad7699203a8fc63d94687ce974494fc81157c20441d72"
     },
     "src/katarina/intelligence/news/market_article_context.py": {
-      "bytes": 10504,
-      "normalized_sha256": "98162248add083dd5e40347e6092bb8f7b766fb81a5c50f46a6bb3f90a7c0672",
-      "sha256": "98162248add083dd5e40347e6092bb8f7b766fb81a5c50f46a6bb3f90a7c0672"
+      "bytes": 10743,
+      "normalized_sha256": "270a68eb43e5c384a1517ddd846d4a3a6bd8b632cc5c340fe9dc89392048d770",
+      "sha256": "270a68eb43e5c384a1517ddd846d4a3a6bd8b632cc5c340fe9dc89392048d770"
     },
     "src/katarina/intelligence/news/news_intelligence.py": {
       "bytes": 5829,
@@ -1161,9 +1161,9 @@
       "sha256": "9910170b7e87c32786f11a060f2b5bab140018d176106f7e82ae48adb50215df"
     },
     "src/katarina/intelligence/news/public_context.py": {
-      "bytes": 9104,
-      "normalized_sha256": "54cc722ca7ccd2aeb0db9752437a947f037f8f063dfad46f28a8b13f0838e962",
-      "sha256": "54cc722ca7ccd2aeb0db9752437a947f037f8f063dfad46f28a8b13f0838e962"
+      "bytes": 9609,
+      "normalized_sha256": "312deb7693a82aa4d892a14f6ac732dc4bd6bf918ed062c96f24bb618e5e76b9",
+      "sha256": "312deb7693a82aa4d892a14f6ac732dc4bd6bf918ed062c96f24bb618e5e76b9"
     },
     "src/katarina/intelligence/news/public_language_research.py": {
       "bytes": 7378,
