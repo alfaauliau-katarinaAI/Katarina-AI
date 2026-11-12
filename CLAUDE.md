@@ -29,7 +29,7 @@ di `docs/ROADMAP.md`; rencana kerja dan status paket di Lampiran A R0/R5; status
 yang **lulus**. Alat tersedia ≠ tahap lulus ≠ trading diaktifkan.
 
 Sistem riset trading MT5 berbasis Python (bahasa dokumen utama: Indonesia).
-**Research-only / LIVE OFF**: tidak ada jalur kirim order live. Mode DEMO forward dan
+**Kemampuan eksekusi universal (keputusan Owner U1–U5, 13 Nov 2026)**: executor DEMO/REAL/CONTEST ada di kode (`engines/demo_execution.py` `UniversalExecutionBoundary`, `engines/account_authorization.py`, `demo/universal_forward.py`, rincian `docs/MT5_UNIVERSAL_EXECUTION.md`), tetapi **tanpa otorisasi akun + hash strategi dari Owner tidak ada order**; default `execution_authorizations: []` dan `--audit-only`. P0 (race Python `order_send`) terbuka: REAL tidak diotorisasi sebelum EA MQL5 executor terbukti. Observer Stage 0 tetap terikat login/server yang dideklarasikan. Mode DEMO forward dan
 lab riset VPS ada, tetapi Risk Governor (`src/katarina/engines/risk.py`) independen dan
 tidak boleh dilemahkan. Owner repo: `alfaauliau-katarinaAI`; `main` wajib PR + CI.
 

@@ -775,3 +775,17 @@ Bukti minimum sebelum D9 diputuskan: 5 simbol dari terminal aktif, tanggal/waktu
 
 - 29 Okt — Usulan agentic AI diterima sebagai arah; WP14 auditor data baca-saja masuk antrean setelah WP13 dan WP8c
   (Owner menjawab "ya", 29 Okt). Rincian: roadmap "Arah lanjutan → Usulan agentic AI".
+
+## KEPUTUSAN MT5 universal — 13 November 2026 (Owner, chat dengan Claude 02:23–02:27 WIB)
+
+Kandidat executor universal ada di branch `codex/mt5-universal-audit-handoff-20261113` (PR draft #309, audit Claude di PR).
+
+| No | Keputusan Owner | Kutipan / batas |
+|---|---|---|
+| U1 | Kemampuan penuh LIVE dan DEMO dibuka di software | "aku ingin katarina memiliki kemampuan penuhnya dilive atau demo jadi buka semua kemampuannya". Risk Governor, kill switch, identitas akun dan persetujuan per akun + hash strategi (batas risiko, masa berlaku) tetap wajib; kemampuan ≠ aktivasi |
+| U2 | Arsitektur pengirim order lewat EA MQL5 dengan intent terikat akun disetujui | "ya di setujui". P0 (race Python `order_send`) tetap terbuka sampai bukti lifecycle/in-flight/replay di terminal DEMO |
+| U3 | P-0001 disetujui untuk perubahan software executor saja | "oke untu p-0001 aku menyetujui". Catatan agen tanggal 12 Nov diganti; tidak mengaktifkan akun/strategi |
+| U4 | Uji terminal (ganti akun, order DEMO) memakai terminal yang sama dengan observasi, **setelah Stage 0 selesai** | "gabungkan saja dengan observasi stage 0" lalu "untuk uji terminal kita bisa tunggu dia selesai" |
+| U5 | Owner ingin uji strategi | "namun aku ingin uji strategi juga". Data development sebelum cutoff 13 Okt; holdout tetap terkunci |
+
+Status: `POLICY_DECIDED_CAPABILITY_OPEN`, `P0_OPEN`, `NO_ACCOUNT_OR_STRATEGY_ACTIVATED`, `STAGE0_IN_PROGRESS`. Belum merge/deploy.

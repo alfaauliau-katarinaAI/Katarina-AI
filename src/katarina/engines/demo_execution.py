@@ -1,4 +1,4 @@
-"""Demo-only submission boundary connecting RiskGovernor to a durable outbox.
+"""Shared account-authorized submission boundary connecting RiskGovernor to a durable outbox.
 
 No terminal initialization, login, strategy selection or background activation.
 The owner supplies an already connected broker and reconciled risk evidence.
@@ -43,19 +43,25 @@ class DemoIntent:
     loss_reserve_cash: float = 0.
 
 
-class DemoExecutionBoundary:
-    """Single-writer submission; safe for multiple producers, not live accounts.
+class UniversalExecutionBoundary:
+    """Single-writer submission; safe for multiple producers with account-scoped authorization.
 
-    All processes sharing a demo account must use this SAME outbox. Transactional
+    All processes sharing an account must use this SAME outbox. Transactional
     reservation allows only one unfinished submission across distinct intents.
     A successful send is not considered a reconciled position or a learning gain.
     """
     def __init__(self, broker, governor, outbox, *, expected_login,
-                 expected_server, stop_requested, clock=time.time, magic=20261020):
+                 expected_server, stop_requested, clock=time.time, magic=20261020,
+                 authorization=None):
         if (type(expected_login) is not int or expected_login <= 0
                 or not isinstance(expected_server, str) or not expected_server
                 or not callable(stop_requested) or type(magic) is not int or magic <= 0):
             raise ValueError('DEMO_BINDING_REQUIRED')
+        from katarina.engines.account_authorization import AccountAuthorization
+        if authorization is not None and not isinstance(authorization, AccountAuthorization):
+            raise ValueError('INVALID_ACCOUNT_AUTHORIZATION')
+        self.authorization = authorization
+        self._authorization_key = None if authorization is None else authorization.key
         self.broker, self.governor = broker, governor
         self.login, self.server = expected_login, expected_server
         self.stop_requested, self.clock, self.magic = stop_requested, clock, magic
@@ -67,6 +73,20 @@ class DemoExecutionBoundary:
                        'intent_id TEXT PRIMARY KEY,digest TEXT NOT NULL,'
                        'state TEXT NOT NULL,updated_at REAL NOT NULL,'
                        'retcode INTEGER,broker_order INTEGER,broker_deal INTEGER)')
+            if authorization is None and db.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='execution_binding'").fetchone():
+                raise ValueError('EXPLICIT_ACCOUNT_AUTHORIZATION_REQUIRED')
+            if authorization is not None:
+                from katarina.engines.account_authorization import AccountAuthorization
+                if not isinstance(authorization, AccountAuthorization) or authorization.key[1:] != (self.login, self.server):
+                    raise ValueError('INVALID_ACCOUNT_AUTHORIZATION')
+                db.execute('CREATE TABLE IF NOT EXISTS execution_binding(binding TEXT PRIMARY KEY)')
+                binding = sha256(repr(authorization.key).encode()).hexdigest()
+                previous = db.execute('SELECT binding FROM execution_binding').fetchall()
+                if previous != [(binding,)]:
+                    if previous or db.execute('SELECT 1 FROM demo_outbox LIMIT 1').fetchone():
+                        raise ValueError('OUTBOX_ACCOUNT_BINDING_CHANGED')
+                    db.execute('INSERT INTO execution_binding VALUES(?)', (binding,))
             fields={r[1] for r in db.execute('PRAGMA table_info(demo_outbox)')}
             for name,kind in [('intent_json','TEXT'),('position_id','INTEGER'),('outcome_json','TEXT')]:
                 if name not in fields:db.execute(f'ALTER TABLE demo_outbox ADD COLUMN {name} {kind}')
@@ -92,16 +112,62 @@ class DemoExecutionBoundary:
         terminal, account = pair if pair is not None else (b.terminal_info(), b.account_info())
         if terminal is None or getattr(terminal, 'connected', None) is not True:
             return 'TERMINAL_DISCONNECTED'
-        # Require the installed SDK constant. No fallback from a name/server label.
-        demo = getattr(b, 'ACCOUNT_TRADE_MODE_DEMO', None)
-        if (type(demo) is not int or account is None
-                or type(getattr(account, 'trade_mode', None)) is not int
-                or account.trade_mode != demo):
-            return 'DEMO_ACCOUNT_REQUIRED'
+        from katarina.engines.account_authorization import account_mode, AccountAuthorization
+        mode = account_mode(b, account)
+        if self._authorization_key is not None and (
+                not isinstance(self.authorization, AccountAuthorization)
+                or self.authorization.key != self._authorization_key):
+            return 'ACCOUNT_NOT_AUTHORIZED'
+        if self.authorization is None:
+            # Legacy explicit demo enrolment grants no permission to REAL/CONTEST.
+            if mode != 'DEMO':
+                return 'DEMO_ACCOUNT_REQUIRED'
+        else:
+            auth = self.authorization
+            if (not isinstance(auth, AccountAuthorization) or auth.expires_at <= self.clock()
+                    or (mode, getattr(account, 'login', None), getattr(account, 'server', None)) != auth.key):
+                return 'ACCOUNT_NOT_AUTHORIZED'
         if (type(getattr(account, 'login', None)) is not int
                 or account.login != self.login or account.server != self.server):
             return 'DEMO_ACCOUNT_BINDING_CHANGED'
         return None
+
+    def _authorized_risk(self, intent, risk):
+        auth = self.authorization
+        if intent.experiment_id not in auth.strategies:
+            return 'STRATEGY_NOT_APPROVED'
+        account = self.broker.account_info()
+        for field in ('balance', 'equity', 'margin_free', 'leverage'):
+            value = getattr(account, field, None)
+            if type(value) not in (int, float) or not isfinite(value) or value <= 0:
+                return 'ACCOUNT_FINANCIALS_UNVERIFIED'
+        if (not isinstance(getattr(account, 'currency', None), str)
+                or account.currency != risk.account_currency
+                or risk.risk_capital > min(account.balance, account.equity)):
+            return 'ACCOUNT_RISK_BINDING_INVALID'
+        positions, orders = self.broker.positions_get(), self.broker.orders_get()
+        if positions is None or orders is None:
+            return 'ACCOUNT_BOOK_UNAVAILABLE'
+        if positions or orders:
+            return 'ACCOUNT_BOOK_REQUIRES_RECONCILIATION'
+        info = self.broker.symbol_info(intent.symbol)
+        if info is None:
+            return 'SYMBOL_UNVERIFIED'
+        low, high, step = (getattr(info, k, None) for k in ('volume_min', 'volume_max', 'volume_step'))
+        if (any(type(v) not in (int, float) or not isfinite(v) or v <= 0 for v in (low, high, step))
+                or not low <= intent.volume <= high
+                or abs(intent.volume / step - round(intent.volume / step)) > 1e-7):
+            return 'VOLUME_INVALID'
+        side = self.broker.ORDER_TYPE_BUY if intent.side == 'BUY' else self.broker.ORDER_TYPE_SELL
+        margin = self.broker.order_calc_margin(side, intent.symbol, intent.volume, intent.price)
+        loss = self.broker.order_calc_profit(side, intent.symbol, intent.volume, intent.price, intent.stop_loss)
+        if (type(margin) not in (int, float) or not isfinite(margin) or margin < 0
+                or margin > account.margin_free * auth.max_margin_fraction):
+            return 'ACCOUNT_MARGIN_LIMIT'
+        if (type(loss) not in (int, float) or not isfinite(loss) or loss >= 0
+                or -loss + intent.loss_reserve_cash > risk.risk_capital * auth.max_risk_fraction):
+            return 'ACCOUNT_RISK_PROFILE_LIMIT'
+        return self._guard()
 
     def _valid(self, i, risk):
         if not isinstance(i, DemoIntent) or not isinstance(risk, RiskRequest):
@@ -148,7 +214,7 @@ class DemoExecutionBoundary:
 
     def _submit(self, i, risk, stamp, filling):
         def receipt(state, sent=0):
-            return dict(status=state, orders_submitted=sent, live_authorized=False)
+            return dict(status=state, orders_submitted=sent, live_authorized=bool(sent and self.authorization is not None and self.authorization.mode == 'REAL'))
         reason = self._valid(i, risk)
         if reason:
             return receipt(reason)
@@ -159,6 +225,10 @@ class DemoExecutionBoundary:
         if reason:
             return receipt(reason)
         b = self.broker
+        if self.authorization is not None:
+            reason = self._authorized_risk(i, risk)
+            if reason:
+                return receipt(reason)
         if type(filling) is not int or filling not in {
                 getattr(b, name, None) for name in ('ORDER_FILLING_FOK', 'ORDER_FILLING_IOC', 'ORDER_FILLING_RETURN')}:
             return receipt('UNVERIFIED_FILLING_MODE')
@@ -202,12 +272,16 @@ class DemoExecutionBoundary:
             if checked is None or type(checked.retcode) is not int or checked.retcode != 0:
                 self._mark(i.intent_id, 'CHECK_REJECTED')
                 return receipt('DEMO_ORDER_CHECK_REJECTED')
-            reason = self._guard()
+            reason = self._authorized_risk(i, risk) if self.authorization is not None else self._guard()
             if reason or self.clock()-stamp > 2 or self.clock()-i.created_at > 5:
                 self._mark(i.intent_id, 'CANCELLED')
                 return receipt(reason or 'DEMO_EVIDENCE_EXPIRED_BEFORE_SEND')
             # Durable reservation precedes the only possible native send.
             self._mark(i.intent_id, 'SUBMITTING')
+            reason = self._guard()
+            if reason:
+                self._mark(i.intent_id, 'CANCELLED')
+                return receipt(reason)
             attempted = True
             result = b.order_send(request)
             code = getattr(result, 'retcode', None)
@@ -242,9 +316,13 @@ class DemoExecutionBoundary:
                             candidates=None if candidates is None or len(candidates)>10000 else [d for d in candidates if getattr(d,'comment',None)==comment]
                             if (candidates==[] and state in ('SUBMITTING','UNKNOWN')
                                     and self.clock()-at>UNFILLED_AFTER_SECONDS and self._no_pending(comment)):
+                                reason = self._identity_error()
+                                if reason:return dict(status=reason,opened=opened,closed=closed)
                                 # Old enough, no deal and no pending order: the send never executed.
                                 with db:db.execute("UPDATE demo_outbox SET state='NOT_FILLED',updated_at=? WHERE intent_id=?",(self.clock(),ident))
                                 continue
+                        reason = self._identity_error()
+                        if reason:return dict(status=reason,opened=opened,closed=closed)
                         if candidates is None or len(candidates)!=1:continue
                         entry=candidates[0]
                         if (getattr(entry,'magic',None)!=self.magic or getattr(entry,'symbol',None)!=intent['symbol']
@@ -255,6 +333,8 @@ class DemoExecutionBoundary:
                         position_id=entry.position_id
                     positions=b.positions_get(ticket=position_id)
                     deals=b.history_deals_get(position=position_id)
+                    reason = self._identity_error()
+                    if reason:return dict(status=reason,opened=opened,closed=closed)
                     if positions is None or deals is None or not deals or len(deals)>256:continue
                     if any(getattr(d,'magic',None)!=self.magic or getattr(d,'symbol',None)!=intent['symbol'] for d in deals):
                         with db:db.execute("UPDATE demo_outbox SET state='OWNERSHIP_REVIEW' WHERE intent_id=?",(ident,))
@@ -343,8 +423,16 @@ class DemoExecutionBoundary:
                             state=reason or 'BOOK_CHANGED'
                         else:
                             with db:db.execute("UPDATE demo_closes SET state='SUBMITTING' WHERE position_id=?",(position_id,))
+                            reason = self._guard()
+                            if reason:
+                                with db:db.execute('UPDATE demo_closes SET state=? WHERE position_id=?',(reason,position_id))
+                                return {'status':reason,'orders_submitted':0}
                             attempted=True;result=b.order_send(request)
                             state='ACCEPTED' if getattr(result,'retcode',None)==b.TRADE_RETCODE_DONE else 'UNKNOWN'
                 except Exception:state='UNKNOWN'
                 with db:db.execute('UPDATE demo_closes SET state=? WHERE position_id=?',(state,position_id))
                 return {'status':'DEMO_CLOSE_'+state,'orders_submitted':int(attempted)}
+
+
+# Backward-compatible import; both modes use the identical implementation.
+DemoExecutionBoundary = UniversalExecutionBoundary

@@ -7,6 +7,9 @@ def observation_permission(broker, terminal=None):
         return False
     if getattr(terminal, 'trade_allowed', None) is False:
         return True
+    if getattr(broker, 'universal_observation_enabled', False) is True:
+        from katarina.engines.account_authorization import account_mode
+        return account_mode(broker, broker.account_info()) != 'UNKNOWN'
     if getattr(broker, 'demo_observation_enabled', None) is not True:
         return False
     account = broker.account_info()
@@ -18,7 +21,8 @@ def observation_permission(broker, terminal=None):
 
 
 def monitor_permission(monitor):
-    return (monitor.get('algo_trading_off') is True
+    return (monitor.get('universal_observation_enabled') is True
+            or monitor.get('algo_trading_off') is True
             or (monitor.get('algo_trading_off') is False
                 and monitor.get('demo_observation_enabled') is True
                 and monitor.get('account_mode') == 'DEMO'))

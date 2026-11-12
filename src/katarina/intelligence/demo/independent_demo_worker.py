@@ -1,4 +1,4 @@
-"""Independent DEMO-only execution loop; no orders/MT5 permissions are bypassed."""
+"""Independent account-authorized execution loop; no orders/MT5 permissions are bypassed."""
 from datetime import datetime, timezone
 import json
 import os
@@ -44,7 +44,10 @@ def run_demo_worker(root, config, *, runtime_factory=None, wait=time.sleep,
     if runtime_factory is None:
         from katarina.intelligence.demo.demo_forward import DemoForwardRuntime
         runtime_factory=DemoForwardRuntime
-    state=dict(schema_version=1,pid=os.getpid(),mode='DEMO',independent=True,
+        if getattr(config, 'universal_execution', False):
+            from katarina.intelligence.demo.universal_forward import UniversalForwardRuntime
+            runtime_factory=UniversalForwardRuntime
+    state=dict(schema_version=1,pid=os.getpid(),mode='UNIVERSAL' if getattr(config, 'universal_execution', False) else 'DEMO',independent=True,
                audit_only=audit_only,cycles=0,live_authorized=False,status='STARTING')
     def stopped():
         return any(p.exists() for p in (root/'continuous.stop',private/'demo.stop',private/'executor.stop'))

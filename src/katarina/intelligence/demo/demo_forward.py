@@ -24,18 +24,19 @@ from katarina.intelligence.demo.demo_strategy import qualify_variant, signal, va
 
 
 class DemoForwardRuntime:
-    def __init__(self, root, config, *, trace=None, native=None, clock=time.time):
+    def __init__(self, root, config, *, trace=None, native=None, clock=time.time, authorization=None, research_root=None):
         if (getattr(config,'demo_experiments',False) is not True
                 or config.priority!=('local',) or not config.terminal_path):
             raise ValueError('EXPLICIT_LOCAL_DEMO_CONFIGURATION_REQUIRED')
-        self.root=Path(root);self.config=config;self.trace=trace;self.clock=clock
+        self.root=Path(root);self.research_root=Path(research_root or root);self.config=config;self.trace=trace;self.clock=clock
         self.private=self.root/'demo-forward';self.private.mkdir(exist_ok=True)
         self.native=native if native is not None else importlib.import_module('MetaTrader5')
         self.path=self.private/'experiment.sqlite3';self.last_step=-1e12
         self.gov=RiskGovernor.from_config(Path(__file__).resolve().parents[4]/'config/risk_governor_v2.json')
         self.boundary=DemoExecutionBoundary(self.native,self.gov,self.private/'orders.sqlite3',
             expected_login=config.expected_login,expected_server=config.expected_server,
-            stop_requested=lambda:(self.root/'continuous.stop').exists() or (self.private/'demo.stop').exists(),clock=clock)
+            authorization=authorization,
+            stop_requested=lambda:(self.research_root/'continuous.stop').exists() or (self.research_root/'demo-forward'/'demo.stop').exists() or (self.research_root/'demo-forward'/'executor.stop').exists() or (self.private/'demo.stop').exists(),clock=clock)
         with closing(self._db()) as db,db:
             db.execute('CREATE TABLE IF NOT EXISTS demo_variants(id TEXT PRIMARY KEY,trial_id TEXT,report_json TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS demo_entries(intent_id TEXT PRIMARY KEY,variant_id TEXT NOT NULL,signal_bar REAL NOT NULL,horizon INTEGER NOT NULL,result TEXT NOT NULL)')
@@ -64,7 +65,7 @@ class DemoForwardRuntime:
                          losing_outcomes=sum(x['net_profit_native']<0 for x in outcomes),
                          unresolved_submissions=sum(states.get(k,0) for k in ('RESERVED','SUBMITTING','UNKNOWN','ACCEPTED','PARTIAL','OWNERSHIP_REVIEW','PROTECTION_REVIEW')),
                          risk_scope='DEMO_ENROLMENT_EPOCH_NOT_LIFETIME',execution_permission=self.permission,
-                         live_authorized=False,**extra)
+                         live_authorized=(self.boundary.authorization is not None and self.boundary.authorization.mode=='REAL' and self.boundary._guard() is None),**extra)
         tmp=self.private/'status.tmp';tmp.write_text(json.dumps(self.status,allow_nan=False)+'\n',encoding='utf-8');replace_snapshot(tmp,self.private/'status.json')
         return self.status
 
@@ -99,7 +100,7 @@ class DemoForwardRuntime:
             return
 
     def _candidate(self):
-        path=self.root/'experiment-jobs.sqlite3'
+        path=self.research_root/'experiment-jobs.sqlite3'
         if not path.exists():return None
         with closing(sqlite3.connect(path.resolve().as_uri()+'?mode=ro',uri=True,timeout=2)) as db:
             db.execute('PRAGMA query_only=ON');db.execute('BEGIN')
@@ -134,7 +135,7 @@ class DemoForwardRuntime:
         return updated
 
     def _clock_shift(self):
-        raw=(self.root/'latest.json').read_bytes()
+        raw=(self.research_root/'latest.json').read_bytes()
         if len(raw)>2_000_000:raise ValueError('DEMO_CLOCK_SNAPSHOT_TOO_LARGE')
         value=json.loads(raw);reference=value.get('time_reference') or {}
         stamp=datetime.fromisoformat(reference['observed_at_utc'])
@@ -212,7 +213,8 @@ class DemoForwardRuntime:
             self.permission=self.boundary._guard() or 'DEMO_ORDER_PERMISSION_ON'
             self._event('RISK_AUDIT','STARTED','DEMO_ACCOUNT_RECONCILIATION')
             with closing(self._db()) as db:
-                ledger=DemoAccountLedger(db,login=self.config.expected_login,server=self.config.expected_server,clock=self.clock)
+                ledger=DemoAccountLedger(db,login=self.config.expected_login,server=self.config.expected_server,clock=self.clock,
+                    expected_mode=self.boundary.authorization.mode if self.boundary.authorization else 'DEMO')
                 facts=ledger.capture(b)
             self._publish_position_telemetry()
             reconciled=self.boundary.reconcile()
@@ -274,7 +276,8 @@ class DemoForwardRuntime:
                     return self._publish('DEMO_SIGNAL_ALREADY_EVALUATED')
             # Refresh full account risk immediately before asking the boundary.
             with closing(self._db()) as db:
-                facts=DemoAccountLedger(db,login=self.config.expected_login,server=self.config.expected_server,clock=self.clock).capture(b)
+                facts=DemoAccountLedger(db,login=self.config.expected_login,server=self.config.expected_server,clock=self.clock,
+                    expected_mode=self.boundary.authorization.mode if self.boundary.authorization else 'DEMO').capture(b)
             if facts['positions'] or facts['orders']:return self._publish('DEMO_BOOK_CHANGED')
             if not 0<=self.clock()-quote[2]<=2:return self._publish('DEMO_QUOTE_EXPIRED_BEFORE_SUBMISSION')
             risk=replace(facts['risk'],expected_rr=abs(target-price)/abs(price-stop))
@@ -284,7 +287,7 @@ class DemoForwardRuntime:
             with closing(self._db()) as db,db:
                 db.execute('INSERT OR IGNORE INTO demo_entries VALUES(?,?,?,?,?)',(ident,variant['id'],bars[-1][0],config['horizon'],result['status']))
             self._event('EXPERIMENT','DONE' if result['status']=='DEMO_ACCEPTED' else 'FAILED',result['status'])
-            return self._publish(result['status'],risk_reconciled=True)
+            return self._publish(result['status'],risk_reconciled=True,orders_submitted=result.get('orders_submitted'))
         except Exception as exc:
             self._event('RISK_AUDIT','FAILED','DEMO_FORWARD_REQUIRES_REVIEW')
             frames=traceback.extract_tb(exc.__traceback__)
