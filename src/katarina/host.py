@@ -45,6 +45,39 @@ def _linux_limit(path):
         return None
 
 
+def windows_memory():
+    """Return (total, available) physical memory from native Windows API.
+
+    None means unknown; never treat detection failure as abundant RAM.
+    Does not require psutil or a broker connection.
+    """
+    try:
+        import ctypes
+
+        class MEMORYSTATUSEX(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_uint32),
+                ("dwMemoryLoad", ctypes.c_uint32),
+                ("ullTotalPhys", ctypes.c_uint64),
+                ("ullAvailPhys", ctypes.c_uint64),
+                ("ullTotalPageFile", ctypes.c_uint64),
+                ("ullAvailPageFile", ctypes.c_uint64),
+                ("ullTotalVirtual", ctypes.c_uint64),
+                ("ullAvailVirtual", ctypes.c_uint64),
+                ("ullAvailExtendedVirtual", ctypes.c_uint64),
+            ]
+
+        state = MEMORYSTATUSEX()
+        state.dwLength = ctypes.sizeof(state)
+        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(state)):
+            return None
+        if state.ullTotalPhys <= 0 or state.ullAvailPhys > state.ullTotalPhys:
+            return None
+        return int(state.ullTotalPhys), int(state.ullAvailPhys)
+    except (AttributeError, OSError, ValueError, TypeError):
+        return None
+
+
 def detect_capacity():
     cpus = os.cpu_count() or 1
     try:
@@ -56,8 +89,14 @@ def detect_capacity():
         memory = os.sysconf('SC_PHYS_PAGES') * os.sysconf('SC_PAGE_SIZE')
     except (AttributeError, OSError, ValueError):
         pass
+    if platform.system() == 'Windows':
+        native = windows_memory()
+        if native is not None:
+            memory = native[0]
     if platform.system() == 'Linux':
         limit = _linux_limit('/sys/fs/cgroup/memory.max')
+        if limit is None:
+            limit = _linux_limit('/sys/fs/cgroup/memory/memory.limit_in_bytes')
         if limit is not None:
             memory = min(memory, limit) if memory is not None else limit
         try:

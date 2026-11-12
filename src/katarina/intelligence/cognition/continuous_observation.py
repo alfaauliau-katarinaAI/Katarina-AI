@@ -134,7 +134,9 @@ def run_continuous(root, *, config, max_symbols=3, interval_seconds=60,
                 from katarina.adapters.dialog_model import JSONDialogModel
                 from dataclasses import replace
                 model = JSONDialogModel(replace(model.config, timeout_seconds=60, max_output_tokens=min(512,model.config.max_output_tokens)))
-            researcher = ResearchPool(root, brain.activity_trace, model).start()
+            from katarina.intelligence.lab.adaptive_runtime import AdaptiveResearchLimiter
+            researcher = ResearchPool(root, brain.activity_trace, model,
+                                      limiter=AdaptiveResearchLimiter(root)).start()
             from katarina.intelligence.broker.data_recovery import seed_existing_gaps
             seed_existing_gaps(context.db,root,datetime.now(timezone.utc))
         if getattr(config,'demo_experiments',False) and not (root/'demo-forward'/'independent.enabled').exists():
