@@ -85,8 +85,9 @@ def evaluate(rows, config, spread, range_cost=.2):
 
 
 class ResearchWorker:
-    def __init__(self, root, trace, family=None, horizon=None):
+    def __init__(self, root, trace, family=None, horizon=None, *, limiter=None):
         self.root=Path(root);self.trace=trace;self.stop=threading.Event()
+        self.limiter=limiter
         self.family=family
         self.horizon=horizon
         self.phase={None:"EXPERIMENT","MOMENTUM":"TEST_MOMENTUM","MEAN_REVERSION":"TEST_REVERSION","BREAKOUT":"TEST_BREAKOUT"}[family]
@@ -161,7 +162,14 @@ class ResearchWorker:
     def run(self):
         while not self.stop.is_set():
             try:
-                worked=self.tick()
+                if self.limiter is not None and not self.limiter.try_acquire():
+                    self.state['status']=self.limiter.telemetry()['status']
+                    worked=False
+                else:
+                    try:
+                        worked=self.tick()
+                    finally:
+                        if self.limiter is not None:self.limiter.release()
             except sqlite3.OperationalError:
                 self.state['status']='WAITING_DATA_OR_DATABASE';worked=False
             except Exception:
@@ -178,10 +186,10 @@ class ResearchWorker:
 
 class ResearchPool:
     """Nine disjoint pattern/horizon experiments, two cost reviews and Gemini ideation."""
-    def __init__(self,root,trace,model=None):
-        self.root=Path(root);self.trace=trace;self.model=model
+    def __init__(self,root,trace,model=None,*,limiter=None):
+        self.root=Path(root);self.trace=trace;self.model=model;self.limiter=limiter
         self.stop=threading.Event();self.state={'status':'STARTING','completed':0,'live_authorized':False}
-        self.workers=[ResearchWorker(root,trace,f,h) for f in ('MOMENTUM','MEAN_REVERSION','BREAKOUT') for h in (4,12,24)]
+        self.workers=[ResearchWorker(root,trace,f,h,limiter=limiter) for f in ('MOMENTUM','MEAN_REVERSION','BREAKOUT') for h in (4,12,24)]
         self.review_thread=threading.Thread(target=self.review_loop,args=(2,),name='cost-stress-2x',daemon=True)
         self.stress_thread=threading.Thread(target=self.review_loop,args=(3,),name='cost-stress-3x',daemon=True)
         self.model_thread=threading.Thread(target=self.model_loop,name='gemini-hypotheses',daemon=True)
@@ -262,7 +270,14 @@ class ResearchPool:
 
     def review_loop(self,level=2):
         while not self.stop.is_set():
-            try:worked=self.review_one(level)
+            try:
+                if self.limiter is not None and not self.limiter.try_acquire():
+                    self.review_states[level]['status']=self.limiter.telemetry()['status']
+                    worked=False
+                else:
+                    try:worked=self.review_one(level)
+                    finally:
+                        if self.limiter is not None:self.limiter.release()
             except Exception as exc:
                 self.review_states[level].update(status='RETRY_PENDING',last_error=error_code(exc))
                 self.trace.emit('VALIDATE' if level==2 else 'VALIDATE3','FAILED',action='RETRY_PENDING',error=error_code(exc));worked=False
@@ -304,7 +319,13 @@ class ResearchPool:
 
     def model_loop(self):
         while not self.stop.is_set():
-            try:self.model_once()
+            try:
+                if self.limiter is not None and not self.limiter.try_acquire():
+                    self.model_state['status']=self.limiter.telemetry()['status']
+                else:
+                    try:self.model_once()
+                    finally:
+                        if self.limiter is not None:self.limiter.release()
             except Exception:self.model_state['status']='RETRY_AFTER_COOLDOWN'
             self._publish_role('GEMINI',self.model_state)
             self.stop.wait(5)
@@ -329,6 +350,7 @@ class ResearchPool:
                     count=db.execute('SELECT COUNT(*) FROM trials').fetchone()[0]
                     reviews=db.execute('SELECT COUNT(*) FROM stress_reviews').fetchone()[0]
                 self.state.update(status='RUNNING',completed=count,stress_reviews=reviews,background_workers=self.background_count,
+                                  **({'resource_budget':self.limiter.telemetry()} if self.limiter is not None else {}),
                                   research_workers=12,workers=[dict(w.state,role=w.family,phase=w.phase,horizon=w.horizon) for w in self.workers],gemini=dict(self.model_state))
                 temp=self.root/'multitask-status.tmp';temp.write_text(json.dumps(dict(self.state,as_of_utc=datetime.now(timezone.utc).isoformat(),grid_size=len(GRID)))+'\n');replace_snapshot(temp,self.root/'multitask-status.json')
             except (sqlite3.Error,OSError):pass
