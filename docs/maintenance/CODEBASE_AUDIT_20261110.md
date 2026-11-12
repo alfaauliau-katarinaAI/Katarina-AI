@@ -146,3 +146,30 @@ Target sesudahnya: `main`, `claude-openai-mcp`, `claude-vps-bridge`, dan branch 
 - Clone `wp13-review-20261030`: bundle `--all` terverifikasi, 13 berkas berubah yang belum di-commit disimpan sebagai `wp13-review-20261030.uncommitted.patch`. Folder tersisa satu berkas delete-pending (`ops/deployment/release-manifest.json`, handle masih dibuka proses lain) yang hilang sendiri saat handle dilepas.
 - Folder kosong `C:\KatarinaDev`, `C:\KatarinaGitBridge`, `C:\KatarinaGitTest-4e14b098`, `C:\Katarina\_roadmap_validation` dihapus.
 - Worktree tersisa: hanya `C:\Katarina\code` (`main`). Folder aktif `ClaudeGitHubBridge`, `ClaudeOpenAIMCP` (scheduled task + proses berjalan) dan `DesktopCommanderCompat` tidak disentuh.
+
+## 8. Satu tubuh — 13 November 2026 (Owner: "jadikan satu tubuh katarina … bersihkan hal yang tidak berguna")
+
+**Integrasi ke `main`** (review Claude, CI Body/Ubuntu/Windows PASS per head, izin Owner 02:37 WIB):
+- #308 dokumen prioritas paralel 0a;
+- #306 limiter riset adaptif;
+- #310 (dari draft #305) probe sesi broker MQL5 baca-saja;
+- #311 (dari draft #309) executor universal dengan `execution_authorizations: []` dan P-0001 yang disahkan Owner.
+
+Draft ditutup karena REST API tidak dapat menandai draft siap merge. Setelah ini tidak ada PR terbuka.
+
+**Kode:**
+- Pemindaian AST tidak menemukan import tak terpakai selain re-export bertanda `noqa`.
+- Modul kelas C/D peta runtime adalah alat riset yang dipakai skrip (WP8b, validasi) atau paket kosong yang dikunci kontrak arsitektur, jadi tidak dihapus.
+- Dokumen tanpa rujukan hanya ADR/arsitektur (dilindungi CODEOWNERS) dan laporan data 11 Nov (baru), jadi juga tidak dihapus.
+
+**Branch:**
+- `claude-openai-mcp` hanya berisi `server.js` lama. Server yang berjalan adalah `server.cjs` di `claude-vps-bridge`. Bundle `branch-claude-openai-mcp.bundle` sudah diverifikasi, lalu branch didaftarkan untuk dihapus.
+- Handoff `codex/mt5-universal-audit-handoff-20261113` dan `fix/stage0-broker-session-evidence-20261112` isinya sudah ada di `main` (#311, #310), jadi didaftarkan untuk dihapus.
+- **`claude-vps-bridge` dipertahankan.** Branch ini dipakai aktif oleh task VPS `ClaudeGitHubBridgePoll` (`bridge.ps1` fetch/reset branch itu) dan checkout `C:\ClaudeOpenAIMCP\repo` (task `ClaudeOpenAIConnector`). Menghapusnya memutus kedua jalur itu.
+
+**VPS** (log `C:\Katarina\state\vps_cleanup_20261113.txt`, salinan di `C:\Katarina\backups\vps-cleanup-20261113\`):
+- `_sync_staging` (19 salinan staging 2 Nov, 135 MB): setiap HEAD di-bundle dan diverifikasi, diff yang belum di-commit dan status disimpan, lalu folder dihapus.
+- 12 folder riset kosong di `C:\` (16–17 Okt) dihapus.
+- `C:\cleanup_check_20261029.py` disalin ke backup, lalu dihapus.
+- `wp13-review-20261030` dihapus (berkas delete-pending 10 Nov sudah lepas).
+- Yang tidak disentuh: `code`, `state\readonly-observer`, backup, `downloads`, `python312`, `private`, `research`, `_validation_sessionprobe` (bukti probe 3 Nov), konektor, OpenSSH, AutoLogon.
