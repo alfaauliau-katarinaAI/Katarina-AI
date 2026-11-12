@@ -791,9 +791,9 @@
       "sha256": "71d4395e4e2d37cb7c0fef92f93fc6c783c7e750e9e67c8de51fbe13f4ef264c"
     },
     "src/katarina/host.py": {
-      "bytes": 4397,
-      "normalized_sha256": "f8ad6f3ba3a83d4461bee892e2e4af65d321f78007a58f9b3e539f29bb4b2b29",
-      "sha256": "f8ad6f3ba3a83d4461bee892e2e4af65d321f78007a58f9b3e539f29bb4b2b29"
+      "bytes": 5900,
+      "normalized_sha256": "9c6ad6aa31ef9fcc8b3c0626b53d9c01ad4361b4a117bc942d0f0919178b9a99",
+      "sha256": "9c6ad6aa31ef9fcc8b3c0626b53d9c01ad4361b4a117bc942d0f0919178b9a99"
     },
     "src/katarina/intelligence/__init__.py": {
       "bytes": 100,
@@ -881,9 +881,9 @@
       "sha256": "7347c79ffe39ec2ef625396cca3fa099fd9d91346de444492f39c2d219a3a8fe"
     },
     "src/katarina/intelligence/cognition/continuous_observation.py": {
-      "bytes": 17712,
-      "normalized_sha256": "d5ba660320d5f73ac44edec5fcf01e34ea541e941b80e65852cf4437f262634e",
-      "sha256": "d5ba660320d5f73ac44edec5fcf01e34ea541e941b80e65852cf4437f262634e"
+      "bytes": 17880,
+      "normalized_sha256": "cdb752ecd0e84f373a61229b433c92aa42119b46a3f79027852f358ffb427254",
+      "sha256": "cdb752ecd0e84f373a61229b433c92aa42119b46a3f79027852f358ffb427254"
     },
     "src/katarina/intelligence/cognition/decision_inputs.py": {
       "bytes": 2855,
@@ -975,6 +975,11 @@
       "normalized_sha256": "b49be07c196c64d63a61d0d92abdf0fb89e127ba3cd72b34e9f60ee273d8cb6e",
       "sha256": "b49be07c196c64d63a61d0d92abdf0fb89e127ba3cd72b34e9f60ee273d8cb6e"
     },
+    "src/katarina/intelligence/lab/adaptive_runtime.py": {
+      "bytes": 8404,
+      "normalized_sha256": "c9d330e4e685e45535fcd71b847cdfe0e0bfe46624af2b6d17abfedf277d97c7",
+      "sha256": "c9d330e4e685e45535fcd71b847cdfe0e0bfe46624af2b6d17abfedf277d97c7"
+    },
     "src/katarina/intelligence/lab/adaptive_strategy_library.py": {
       "bytes": 6193,
       "normalized_sha256": "2e45ff644cf488d9450fb857d0173668f5bee1f216499a62852b9356b1b337d3",
@@ -986,9 +991,9 @@
       "sha256": "42c02baab9884af1efaea7f743e72a3a455c82879470be20ce4308b8116c9801"
     },
     "src/katarina/intelligence/lab/autonomous_research.py": {
-      "bytes": 23614,
-      "normalized_sha256": "94a47cb57ae8f38395e033f061aa1e2c022e6d19861c6afa0fd4289e51399de8",
-      "sha256": "94a47cb57ae8f38395e033f061aa1e2c022e6d19861c6afa0fd4289e51399de8"
+      "bytes": 25269,
+      "normalized_sha256": "b1f0ea6a0d16c5b8c299987ad9f46018b48c8b17c833f43ea533344f2dc0217e",
+      "sha256": "b1f0ea6a0d16c5b8c299987ad9f46018b48c8b17c833f43ea533344f2dc0217e"
     },
     "src/katarina/intelligence/lab/autonomous_strategy_discovery.py": {
       "bytes": 14543,
