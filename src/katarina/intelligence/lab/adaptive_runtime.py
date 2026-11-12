@@ -72,26 +72,42 @@ def decide_allowance(snapshot: ResourceSnapshot) -> ResearchAllowance:
                              "READY" if slots > 0 else "PAUSED_MEMORY_PRESSURE")
 
 
-def _linux_available() -> int | None:
+def _linux_available(*, meminfo=Path("/proc/meminfo"),
+                     cgroup=Path("/sys/fs/cgroup")) -> int | None:
+    """Account for both host MemAvailable and a cgroup's remaining allowance."""
     try:
-        values = {}
-        for line in Path("/proc/meminfo").read_text().splitlines():
-            if ":" in line:
-                name, value = line.split(":", 1)
-                parts = value.split()
-                if name == "MemAvailable" and len(parts) == 2 and parts[1] == "kB":
-                    values[name] = int(parts[0]) * 1024
-        available = values.get("MemAvailable")
-        # Respect effective cgroup v2 memory remaining, where supplied.
-        base = Path("/sys/fs/cgroup")
-        limit = (base / "memory.max").read_text().strip()
-        current = int((base / "memory.current").read_text().strip())
-        if limit != "max":
-            constrained = max(0, int(limit) - current)
-            available = min(available, constrained) if available is not None else constrained
+        available = None
+        for line in meminfo.read_text().splitlines():
+            if line.startswith("MemAvailable:"):
+                parts = line.split()
+                if len(parts) == 3 and parts[2] == "kB":
+                    available = int(parts[1]) * 1024
+                break
+        if available is None or available < 0:
+            return None
+        v2_limit = cgroup / "memory.max"
+        if v2_limit.is_file():
+            raw = v2_limit.read_text().strip()
+            if raw != "max":
+                limit = int(raw)
+                usage = int((cgroup / "memory.current").read_text().strip())
+                if limit < 0 or usage < 0:
+                    return None
+                available = min(available, max(0, limit - usage))
+        else:
+            v1_limit = cgroup / "memory/memory.limit_in_bytes"
+            if v1_limit.is_file():
+                limit = int(v1_limit.read_text().strip())
+                usage = int((cgroup / "memory/memory.usage_in_bytes").read_text().strip())
+                if limit < 0 or usage < 0:
+                    return None
+                # v1 often uses a huge sentinel for unlimited memory.
+                if limit < (1 << 60):
+                    available = min(available, max(0, limit - usage))
         return available
     except (OSError, ValueError):
-        return available if "available" in locals() else None
+        # If a declared container limit cannot be read, do not use host RAM.
+        return None
 
 
 def _available_memory() -> int | None:
