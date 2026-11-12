@@ -169,6 +169,9 @@ def _schema(db):
         fetched TEXT NOT NULL,sha256 TEXT NOT NULL)""")
     db.execute("""CREATE TABLE IF NOT EXISTS contextual_market_article_failures(
         url TEXT PRIMARY KEY,attempted TEXT NOT NULL,reason TEXT NOT NULL)""")
+    # The newest-articles read runs every cycle; without this index it sorts every stored article body.
+    db.execute("""CREATE INDEX IF NOT EXISTS contextual_market_articles_published
+        ON contextual_market_articles(published)""")
     db.commit()
 
 
