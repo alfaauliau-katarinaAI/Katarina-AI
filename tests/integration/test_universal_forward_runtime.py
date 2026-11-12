@@ -63,6 +63,19 @@ class UniversalForwardTests(unittest.TestCase):
         self.assertEqual(runtime.step()['status'], 'ACCOUNT_NOT_AUTHORIZED')
         self.assertFalse(f.native.sent)
 
+    def test_universal_observer_stays_bound_to_declared_account(self):
+        from katarina.adapters.automatic_connection import ConnectionUnavailable, verify_identity
+        f = self.fixture
+        cfg = replace(f.config, universal_execution=True)
+        verify_identity(f.native, cfg)
+        f.native.account.login = 456
+        with self.assertRaisesRegex(ConnectionUnavailable, 'ACCOUNT_LOGIN_MISMATCH'):
+            verify_identity(f.native, cfg)
+        f.native.account.login = 123
+        f.native.account.server = 'OTHER-SERVER'
+        with self.assertRaisesRegex(ConnectionUnavailable, 'ACCOUNT_SERVER_MISMATCH'):
+            verify_identity(f.native, cfg)
+
     def test_switch_during_ledger_read_does_not_persist_foreign_account(self):
         import sqlite3
         from katarina.intelligence.demo.demo_account import DemoAccountLedger

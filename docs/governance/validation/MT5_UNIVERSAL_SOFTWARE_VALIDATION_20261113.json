@@ -2,18 +2,24 @@
   "schema_version": 1,
   "status": "PASS",
   "scope": "SOFTWARE_ACCOUNT_AUTHORIZATION_AND_EXECUTION_SAFETY_ONLY",
-  "generated_at_utc": "2026-11-12T17:32:44.774814+00:00",
+  "generated_at_utc": "2026-11-12T19:28:52.510076+00:00",
+  "supersedes": "agent-generated report of 2026-11-12T17:32Z (no Owner approval)",
   "tests": {
-    "targeted_tests_run": 123,
+    "targeted_tests_run": 124,
     "failures": 0,
     "errors": 0,
-    "command": "PYTHONPATH=src python -m unittest tests.unit.engines.test_demo_execution tests.unit.engines.test_universal_execution tests.integration.test_demo_forward_runtime tests.integration.test_universal_forward_runtime tests.unit.test_pc_release_package tests.unit.test_mt5_dashboard_executor tests.integration.test_automatic_connection tests.integration.test_continuous_observation tests.unit.test_independent_demo_worker tests.unit.test_independent_demo_position_monitor tests.unit.intelligence.test_broker_account_monitor -q",
-    "log_sha256": "84533038151c846843d4572f1cfc0fbe1f256bbdd908adfc5a32d92c7e15210b"
+    "command": "PYTHONPATH=src python -m unittest tests.unit.engines.test_demo_execution tests.unit.engines.test_universal_execution tests.integration.test_demo_forward_runtime tests.integration.test_universal_forward_runtime tests.unit.test_pc_release_package tests.unit.test_mt5_dashboard_executor tests.integration.test_automatic_connection tests.integration.test_continuous_observation tests.unit.test_independent_demo_worker tests.unit.test_independent_demo_position_monitor tests.unit.intelligence.test_broker_account_monitor",
+    "log_sha256": "c2b0ef8dc59c7cf5dec9b16da59409395399c4b69d5322825e76cdd3cae0e332",
+    "ci_evidence": "PR #309 head 45d3c234: Body, Ubuntu and Windows (unit 1605, static 101 incl. PowerShell, integration 245) PASS"
   },
+  "audit_changes": [
+    "A3: universal observer keeps login/server binding (verify_identity)",
+    "Windows test fixes (handle close, LF fixture)"
+  ],
   "validated_source_hashes": {
     "config/katarina_unified_v1.json": "4621be4aa6d82a0cdb11fe429d366b6fcd91be5373efc6d4f846bf407263e0a4",
     "config/risk_governor_v2.json": "29c103295b5622a70e57b7c6c97c6f00bf664d32f6cc4f3182f246671ed45a90",
-    "src/katarina/adapters/automatic_connection.py": "767d31bc8f3039c145fef74253569c43939781e4589b95dfed04f70873b66de6",
+    "src/katarina/adapters/automatic_connection.py": "eeb22e1b8c27b8c391b889762c2a812febf767ba50d2524cffaef98a3538b780",
     "src/katarina/engines/account_authorization.py": "9a5bcc28462a7af6fa197bfd86d727a46ed6d617a2426544f814e8723c8eca36",
     "src/katarina/engines/account_risk_state.py": "e24d415264f730114f944de2822ab102370e3480da1e02839be402fd9c2902e7",
     "src/katarina/engines/adaptive_risk.py": "ebfeb35dc464c17f9337f4b2d5493327ae183a3b726ee989611526dd1dffa0de",
@@ -43,7 +49,7 @@
   "production_execution_ready": false,
   "limitations": [
     "No Windows MT5 host or broker exercised; tests use simulated brokers.",
-    "The SDK has no atomic expected-account send; external switching during native submission remains a live-execution blocker.",
-    "Full software suites and release inventory are recorded separately by the deployment audit."
+    "P0 open: Python order_send has no account-atomic send; EA executor (approved architecture) must replace it before any REAL order.",
+    "Account and strategy activation require separate Owner approval with risk limits and expiry."
   ]
 }

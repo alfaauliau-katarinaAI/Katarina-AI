@@ -776,26 +776,16 @@ Bukti minimum sebelum D9 diputuskan: 5 simbol dari terminal aktif, tanggal/waktu
 - 29 Okt — Usulan agentic AI diterima sebagai arah; WP14 auditor data baca-saja masuk antrean setelah WP13 dan WP8c
   (Owner menjawab "ya", 29 Okt). Rincian: roadmap "Arah lanjutan → Usulan agentic AI".
 
-## Agenda MT5 universal — 13 November 2026 (handoff audit; belum ada keputusan integrasi)
+## KEPUTUSAN MT5 universal — 13 November 2026 (Owner, chat dengan Claude 02:23–02:27 WIB)
 
-Owner meminta implementasi kemampuan eksekusi DEMO/REAL dengan otorisasi terpisah,
-research paralel dan pengaman tetap, kemudian audit kesiapan. Kandidat sebelumnya
-hanya tersedia pada workspace Linux agen, di atas commit #303. Snapshot dibagikan
-ke branch `codex/mt5-universal-audit-handoff-20261113` untuk audit Claude; rincian
-ada di [handoff MT5 universal](MT5_UNIVERSAL_CLAUDE_HANDOFF.md).
+Kandidat executor universal ada di branch `codex/mt5-universal-audit-handoff-20261113` (PR draft #309, audit Claude di PR).
 
-**Belum diputuskan:** apakah dan dengan syarat apa kemampuan tersebut boleh masuk
-`main`, mengingat kebijakan LIVE OFF dan Stage 0 yang belum lulus. Persetujuan
-implementasi tidak dicatat sebagai izin merge, deploy, promosi strategi, atau
-aktivasi akun. Catatan promotion lock kandidat hanya bukti software lokal dan
-harus ditinjau sebelum integrasi; gate PASS bukan pengganti keputusan Owner.
+| No | Keputusan Owner | Kutipan / batas |
+|---|---|---|
+| U1 | Kemampuan penuh LIVE dan DEMO dibuka di software | "aku ingin katarina memiliki kemampuan penuhnya dilive atau demo jadi buka semua kemampuannya". Risk Governor, kill switch, identitas akun dan persetujuan per akun + hash strategi (batas risiko, masa berlaku) tetap wajib; kemampuan ≠ aktivasi |
+| U2 | Arsitektur pengirim order lewat EA MQL5 dengan intent terikat akun disetujui | "ya di setujui". P0 (race Python `order_send`) tetap terbuka sampai bukti lifecycle/in-flight/replay di terminal DEMO |
+| U3 | P-0001 disetujui untuk perubahan software executor saja | "oke untu p-0001 aku menyetujui". Catatan agen tanggal 12 Nov diganti; tidak mengaktifkan akun/strategi |
+| U4 | Uji terminal (ganti akun, order DEMO) memakai terminal yang sama dengan observasi, **setelah Stage 0 selesai** | "gabungkan saja dengan observasi stage 0" lalu "untuk uji terminal kita bisa tunggu dia selesai" |
+| U5 | Owner ingin uji strategi | "namun aku ingin uji strategi juga". Data development sebelum cutoff 13 Okt; holdout tetap terkunci |
 
-Terminal observer Stage 0 pada VPS tidak digunakan untuk account switch atau uji
-order. Pengujian host memerlukan lingkungan terpisah dan otorisasi operasional.
-Owner menangani kredensial/login dan pergantian akun REAL; auditor menyiapkan
-skrip serta memeriksa buktinya. P0 race Python `order_send` tetap terbuka; usulan
-EA MQL5 perlu bukti lifecycle/in-flight/replay, bukan asumsi bahwa reinitialization
-saja menjamin atomisitas.
-
-Status: `AUDIT_HANDOFF_ONLY_POLICY_DECISION_PENDING`. Tidak ada perubahan kebijakan
-produksi, kelulusan Stage 0, atau tindakan pada VPS akibat catatan ini.
+Status: `POLICY_DECIDED_CAPABILITY_OPEN`, `P0_OPEN`, `NO_ACCOUNT_OR_STRATEGY_ACTIVATED`, `STAGE0_IN_PROGRESS`. Belum merge/deploy.

@@ -94,6 +94,12 @@ def verify_identity(broker, config):
             if (terminal is None or getattr(terminal, 'connected', None) is not True
                     or account_mode(broker, account) == 'UNKNOWN'):
                 raise ConnectionUnavailable('ACCOUNT_UNAVAILABLE')
+            # The observer stays bound to its declared login/server in every mode, so a terminal
+            # account switch can never mix another account into the Stage 0 ledger (audit A3).
+            if type(getattr(account, 'login', None)) is not int or account.login != config.expected_login:
+                raise ConnectionUnavailable('ACCOUNT_LOGIN_MISMATCH')
+            if getattr(account, 'server', None) != config.expected_server:
+                raise ConnectionUnavailable('ACCOUNT_SERVER_MISMATCH')
             # Observation never grants execution authorization; the boundary owns it.
             return
         flag=getattr(broker, 'ACCOUNT_TRADE_MODE_DEMO', None)

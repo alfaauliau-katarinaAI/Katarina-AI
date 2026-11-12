@@ -22,8 +22,8 @@
     },
     "config/promotion_lock.json": {
       "bytes": 3413,
-      "normalized_sha256": "2cbe4cd17d81a10199da26cd3f4cfa3e7aae3e570c39fde16b228f5320dbdf48",
-      "sha256": "2cbe4cd17d81a10199da26cd3f4cfa3e7aae3e570c39fde16b228f5320dbdf48"
+      "normalized_sha256": "c9c8f957041b1dd8c62dee9a4d7d3183f2c9c6b8164bb7b09474e14efd3d49fd",
+      "sha256": "c9c8f957041b1dd8c62dee9a4d7d3183f2c9c6b8164bb7b09474e14efd3d49fd"
     },
     "config/risk_governor_v2.json": {
       "bytes": 1693,
@@ -401,9 +401,9 @@
       "sha256": "d064cb85db22fa8e6d0f76a5ca6d2fc1b5607f36285b4f5774eeeea0e4d35c05"
     },
     "src/katarina/adapters/automatic_connection.py": {
-      "bytes": 12650,
-      "normalized_sha256": "767d31bc8f3039c145fef74253569c43939781e4589b95dfed04f70873b66de6",
-      "sha256": "767d31bc8f3039c145fef74253569c43939781e4589b95dfed04f70873b66de6"
+      "bytes": 13165,
+      "normalized_sha256": "eeb22e1b8c27b8c391b889762c2a812febf767ba50d2524cffaef98a3538b780",
+      "sha256": "eeb22e1b8c27b8c391b889762c2a812febf767ba50d2524cffaef98a3538b780"
     },
     "src/katarina/adapters/brain_feedback.py": {
       "bytes": 2175,

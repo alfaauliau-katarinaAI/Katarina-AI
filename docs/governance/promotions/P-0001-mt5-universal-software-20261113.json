@@ -2,22 +2,22 @@
   "schema_version": 1,
   "id": "P-0001",
   "kind": "PROMOTION",
-  "title": "Owner-requested MT5 universal account execution software",
+  "title": "MT5 universal account execution software (Owner-approved software change only)",
   "owner_approval": {
-    "approved_by": "Owner (user instruction in this session)",
+    "approved_by": "Owner (alfaauliau-katarinaAI)",
     "date": "2026-11-13",
-    "source": "Explicit instruction: Implementasikan kemampuan tersebut, tambahkan tes pergantian akun DEMO → REAL → DEMO, dan pastikan tidak pernah ada order pada akun yang belum diotorisasi. Follow-up: oke sekarang audit ya, dan pastikan katarina siap untuk di deploy ya.",
-    "scope": "Implementation and audit of the universal execution capability only. No account, strategy, live execution, strategy-performance claim, or deployment to a remote host is authorized by this record."
+    "source": "Chat with Claude, 13 Nov 2026 02:27 WIB: \"oke untu p-0001 aku menyetujui\" after Claude explained P-0001 covers only the executor software change and activates no account or strategy. Related Owner decisions same session (02:23 WIB): full LIVE/DEMO capability wanted; EA MQL5 executor architecture approved; terminal tests wait until Stage 0 completes; strategy testing wanted.",
+    "scope": "Executor software capability only. No account, strategy, live execution, performance claim or deployment is authorized by this record. Supersedes the agent-written P-0001 of 2026-11-12 that lacked Owner approval."
   },
   "validation": {
     "status": "PASS",
     "report": "docs/governance/validation/MT5_UNIVERSAL_SOFTWARE_VALIDATION_20261113.json",
-    "report_sha256": "4245480a31b9623bb2ca804e8ecd15e2cbcbebabb7125f8b08f0d9cb89572c6f"
+    "report_sha256": "02df720e7692be9184f7c79a25d8a905836c850098d501a54a74cdcf9b208d9a"
   },
   "files": {
     "config/katarina_unified_v1.json": "4621be4aa6d82a0cdb11fe429d366b6fcd91be5373efc6d4f846bf407263e0a4",
     "config/risk_governor_v2.json": "29c103295b5622a70e57b7c6c97c6f00bf664d32f6cc4f3182f246671ed45a90",
-    "src/katarina/adapters/automatic_connection.py": "767d31bc8f3039c145fef74253569c43939781e4589b95dfed04f70873b66de6",
+    "src/katarina/adapters/automatic_connection.py": "eeb22e1b8c27b8c391b889762c2a812febf767ba50d2524cffaef98a3538b780",
     "src/katarina/engines/account_authorization.py": "9a5bcc28462a7af6fa197bfd86d727a46ed6d617a2426544f814e8723c8eca36",
     "src/katarina/engines/account_risk_state.py": "e24d415264f730114f944de2822ab102370e3480da1e02839be402fd9c2902e7",
     "src/katarina/engines/adaptive_risk.py": "ebfeb35dc464c17f9337f4b2d5493327ae183a3b726ee989611526dd1dffa0de",
