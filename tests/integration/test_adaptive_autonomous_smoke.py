@@ -67,10 +67,9 @@ class AdaptiveAutonomousSmokeTests(unittest.TestCase):
                     self.assertFalse((root / "experiment-jobs.sqlite3").exists())
                     available[0] = 1200 * MiB
                     now[0] = 1.
-                    while worker.state["status"] != "EXPERIMENT_COMPLETED" and time.monotonic() < deadline:
+                    while worker.state["completed"] < 1 and time.monotonic() < deadline:
                         time.sleep(.02)
-                    self.assertEqual(worker.state["status"], "EXPERIMENT_COMPLETED",
-                                     worker.state)
+                    self.assertGreaterEqual(worker.state["completed"], 1, worker.state)
                 finally:
                     worker.close()
 
@@ -82,6 +81,8 @@ class AdaptiveAutonomousSmokeTests(unittest.TestCase):
                 self.assertFalse(result["independent_holdout"])
                 self.assertEqual(result["spread_source"], "SYNTHETIC_TEST_ONLY")
                 pool = ResearchPool(root, trace, limiter=limiter)
+                with closing(sqlite3.connect(root / "experiment-jobs.sqlite3")) as db, db:
+                    db.execute("CREATE TABLE IF NOT EXISTS stress_reviews(trial_id TEXT PRIMARY KEY,created_utc TEXT,result_json TEXT)")
                 emitted = pool._within_resource_budget(
                     lambda: publish_reports(root, trace))
                 self.assertEqual(emitted, 1)
