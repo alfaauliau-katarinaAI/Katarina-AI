@@ -1,5 +1,10 @@
 # Perubahan material Katarina AI
 
+## 2026-11-12 — Indeks cache berita (tindak lanjut RH-015, siklus lambat saat cache dingin)
+
+- `ContextStore` membuat `snapshots_source_fetched (source, fetched)` dan `snapshots_source_id (source, id)`; `_schema` artikel membuat `contextual_market_articles_published`. Bukti VPS 12 Nov (`mode=ro`): kueri `latest` per siklus masih `SCAN snapshots` + `TEMP B-TREE` pada DB 327 MB; dengan indeks menjadi `SEARCH ... USING INDEX`.
+- Hanya struktur pencarian; tidak ada baris ledger/berita yang diubah (dijaga tes). Indeks dibuat sekali saat observer start sesudah deploy.
+
 ## 2026-11-10 — K3: persiapan uji reboot WP6 (tanpa reboot, tanpa autologon)
 
 - `operations/post_reboot.py` + `scripts/ai/wp6_reboot_check.py`: `baseline` sebelum reboot (hash task/launcher, proses, ledger baca-saja, backup SQLite online opsional dengan `integrity_check` pada salinan). `check` setelah reboot memberi `READY_AFTER_REBOOT` hanya bila boot lebih baru dari baseline, satu rantai observer + satu MT5 di sesi interaktif yang sama, siklus OK ber-jam ≤ 20 menit, jeda reboot terlihat tanpa backfill, `quick_check=ok` dan 0 order. Selain itu `NOT_READY`/`NOT_TESTED`.
