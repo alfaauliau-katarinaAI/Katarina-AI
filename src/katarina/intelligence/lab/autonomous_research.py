@@ -330,6 +330,17 @@ class ResearchPool:
             self._publish_role('GEMINI',self.model_state)
             self.stop.wait(5)
 
+    def _within_resource_budget(self, action):
+        """Run deferred auxiliary work only when the same pool has spare capacity."""
+        if self.limiter is None:
+            return action()
+        if not self.limiter.try_acquire():
+            return None
+        try:
+            return action()
+        finally:
+            self.limiter.release()
+
     def run(self):
         next_repair=0;next_reports=0
         while not self.stop.is_set():
@@ -337,14 +348,14 @@ class ResearchPool:
                 import time
                 if time.monotonic()>=next_repair:
                     next_repair=time.monotonic()+30
-                    try:self.repair_one()
+                    try:self._within_resource_budget(self.repair_one)
                     except Exception as exc:
                         self.trace.emit('LEARNING_REVIEW','FAILED',action='REPAIR_RETRY_PENDING',error=error_code(exc))
                 if time.monotonic()>=next_reports:
                     next_reports=time.monotonic()+REPORT_INTERVAL_SECONDS
                     try:
                         from katarina.intelligence.lab.research_reports import publish_reports
-                        publish_reports(self.root,self.trace)
+                        self._within_resource_budget(lambda: publish_reports(self.root,self.trace))
                     except Exception as exc:self.trace.emit('REPORT','FAILED',action='REPORT_RETRY_PENDING',error=error_code(exc))
                 with closing(sqlite3.connect(self.root/'experiment-jobs.sqlite3',timeout=DB_TIMEOUT)) as db:
                     count=db.execute('SELECT COUNT(*) FROM trials').fetchone()[0]
