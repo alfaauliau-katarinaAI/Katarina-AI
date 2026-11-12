@@ -118,6 +118,32 @@ class AdaptiveResearchBudgetTests(unittest.TestCase):
             self.assertEqual(_linux_available(meminfo=meminfo, cgroup=cgroup),
                              124 * MiB)
 
+    def test_coordinator_maintenance_respects_same_permit(self):
+        from katarina.intelligence.lab.autonomous_research import ResearchPool
+        from katarina.monitoring.activity_trace import ActivityTrace
+
+        class Gate:
+            allowed = False
+            released = 0
+            def try_acquire(self):
+                return self.allowed
+            def release(self):
+                self.released += 1
+
+        with tempfile.TemporaryDirectory() as directory:
+            gate = Gate()
+            pool = ResearchPool(directory, ActivityTrace(directory), limiter=gate)
+            called = []
+            def action():
+                called.append(True)
+                return 42
+            self.assertIsNone(pool._within_resource_budget(action))
+            self.assertFalse(called)
+            gate.allowed = True
+            self.assertEqual(pool._within_resource_budget(action), 42)
+            self.assertEqual(gate.released, 1)
+            self.assertEqual(called, [True])
+
     def test_sensor_error_pauses_instead_of_starting_research(self):
         with tempfile.TemporaryDirectory() as directory:
             limiter = AdaptiveResearchLimiter(
