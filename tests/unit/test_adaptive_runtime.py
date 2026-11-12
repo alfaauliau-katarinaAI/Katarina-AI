@@ -62,7 +62,8 @@ class AdaptiveResearchBudgetTests(unittest.TestCase):
         with patch("katarina.host.platform.system", return_value="Windows"), \
              patch("katarina.host.windows_memory",
                    return_value=(16 * GiB, 12 * GiB)), \
-             patch("katarina.host.os.cpu_count", return_value=8):
+             patch("katarina.host.os.cpu_count", return_value=8), \
+             patch("katarina.host.os.sched_getaffinity", return_value=set(range(8)), create=True):
             cpu, total = detect_capacity()
             self.assertEqual(cpu, 8)
             self.assertEqual(total, 16 * GiB)
