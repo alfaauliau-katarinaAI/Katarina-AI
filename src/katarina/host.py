@@ -95,6 +95,8 @@ def detect_capacity():
             memory = native[0]
     if platform.system() == 'Linux':
         limit = _linux_limit('/sys/fs/cgroup/memory.max')
+        if limit is None:
+            limit = _linux_limit('/sys/fs/cgroup/memory/memory.limit_in_bytes')
         if limit is not None:
             memory = min(memory, limit) if memory is not None else limit
         try:
