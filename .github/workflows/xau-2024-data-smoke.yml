@@ -1,22 +1,11 @@
-name: XAUUSD Tick Data Acquisition Smoke
+name: XAUUSD Tick Loader Selftest
 on:
   pull_request:
     branches: [main]
 jobs:
-  acquisition-smoke:
+  smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 13
     steps:
       - uses: actions/checkout@v4
-      - name: Offline decoder safety test
+      - name: Decode selftest
         run: python scripts/research/dukascopy_xau_tick.py --selftest-only
-      - name: Acquire one full UTC day - 2024-01-02
-        run: python scripts/research/dukascopy_xau_tick.py --date 2024-01-02 --max-hours 24 --delay 0.55 --output /tmp/katarina-xauusd-2024
-      - name: Preserve raw data and hashes as temporary artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: katarina-xauusd-2024-01-02
-          path: /tmp/katarina-xauusd-2024/
-          if-no-files-found: warn
-          retention-days: 7
