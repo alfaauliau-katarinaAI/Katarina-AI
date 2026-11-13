@@ -1,0 +1,38 @@
+name: XAUUSD 2024 Dukascopy Acquisition Smoke (isolated)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/research/dukascopy_xau_tick.py'
+      - '.github/workflows/xau-2024-data-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  acquisition-smoke:
+    if: github.head_ref == 'research/xauusd-2024-tick-acquisition'
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify offline decoder
+        run: python scripts/research/dukascopy_xau_tick.py --selftest-only
+      - name: Download XAUUSD one full UTC day (2024-01-02, no broker login)
+        run: |
+          python scripts/research/dukascopy_xau_tick.py \
+            --date 2024-01-02 \
+            --max-hours 24 \
+            --delay 0.55 \
+            --output "${{ runner.temp }}/xau2024"
+      - name: Upload research-only evidence (not git)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xauusd-duka-2024-01-02-evidence
+          path: ${{ runner.temp }}/xau2024/
+          if-no-files-found: warn
+          retention-days: 7
