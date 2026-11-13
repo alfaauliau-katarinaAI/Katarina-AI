@@ -1,10 +1,22 @@
-name: XAUUSD Tick Runner Smoke
+name: XAUUSD Tick Data Acquisition Smoke
 on:
   pull_request:
     branches: [main]
 jobs:
-  smoke:
+  acquisition-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 13
     steps:
-      - name: Runner health
-        run: echo RUNNER_BOOT_OK
+      - uses: actions/checkout@v4
+      - name: Offline decoder safety test
+        run: python scripts/research/dukascopy_xau_tick.py --selftest-only
+      - name: Acquire one full UTC day - 2024-01-02
+        run: python scripts/research/dukascopy_xau_tick.py --date 2024-01-02 --max-hours 24 --delay 0.55 --output /tmp/katarina-xauusd-2024
+      - name: Preserve raw data and hashes as temporary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katarina-xauusd-2024-01-02
+          path: /tmp/katarina-xauusd-2024/
+          if-no-files-found: warn
+          retention-days: 7
