@@ -47,26 +47,29 @@ def extract_ticks(payload: bytes, day: date, hour: int):
         yield anchor + ms, f"{bid_i / SCALE:.3f}", f"{ask_i / SCALE:.3f}"
 
 
-def fetch_hour(url: str, tries: int = 2) -> tuple[bytes | None, str]:
+def fetch_hour(url: str, tries: int = 4) -> tuple[bytes | None, str, str]:
+    alternate = url.replace("https://datafeed.dukascopy.com", "https://www.dukascopy.com", 1)
+    last_url = url
     for attempt in range(tries):
+        last_url = url if attempt % 2 == 0 else alternate
         try:
-            req = Request(url, headers={"User-Agent": "Katarina-Research-Historical-Ticks/1.0"})
-            with urlopen(req, timeout=18) as response:
+            req = Request(last_url, headers={"User-Agent": "Katarina-Research-Historical-Ticks/1.0"})
+            with urlopen(req, timeout=12) as response:
                 if response.status != 200:
                     raise RuntimeError(f"HTTP_{response.status}")
-                return response.read(18 * 1024 * 1024 + 1), "HTTP_200"
+                return response.read(18 * 1024 * 1024 + 1), "HTTP_200", last_url
         except HTTPError as error:
-            if error.code == 404:
-                return None, "HTTP_404_NO_FILE"
+            if error.code == 404 and attempt == 0:
+                return None, "HTTP_404_NO_FILE", last_url
             reason = f"HTTP_{error.code}"
         except (URLError, TimeoutError, OSError, RuntimeError) as error:
             reason = f"NETWORK_ERROR:{type(error).__name__}"
         if attempt + 1 < tries:
             time.sleep(2 + 2 * attempt)
-    return None, reason
+    return None, reason, last_url
 
 
-def acquire_day(day: date, root: Path, delay: float, max_hours: int) -> dict:
+def acquire_day(day: date, root: Path, delay: float, max_hours: int, start_hour: int = 0) -> dict:
     folder = root / day.isoformat()
     folder.mkdir(parents=True, exist_ok=True)
     raw_dir = folder / "raw"
@@ -80,10 +83,10 @@ def acquire_day(day: date, root: Path, delay: float, max_hours: int) -> dict:
     with gzip.open(temp_csv, "wt", encoding="utf-8", newline="", compresslevel=6) as stream:
         writer = csv.writer(stream, lineterminator="\n")
         writer.writerow(("time_msc", "bid", "ask"))
-        for hour in range(max_hours):
+        for hour in range(start_hour, start_hour + max_hours):
             url = f"{BASE}/{day.year}/{day.month - 1:02d}/{day.day:02d}/{hour:02d}h_ticks.bi5"
-            payload, status = fetch_hour(url)
-            note = {"hour_utc": hour, "url": url, "status": status, "rows": 0}
+            payload, status, fetched_url = fetch_hour(url)
+            note = {"hour_utc": hour, "url": fetched_url, "status": status, "rows": 0}
             if payload is None:
                 if status != "HTTP_404_NO_FILE":
                     failures += 1
@@ -128,10 +131,13 @@ def acquire_day(day: date, root: Path, delay: float, max_hours: int) -> dict:
         "tick_count": total,
         "hours_attempted": len(hours),
         "hours_expected": max_hours,
+        "start_hour_utc": start_hour,
+        "end_hour_utc_exclusive": start_hour + max_hours,
         "network_or_decode_failures": failures,
         "hours": hours,
         "research_role": "development_candidate" if day < DEV_CUTOFF else "holdout_not_for_tuning",
-        "status": ("ACQUIRED_PENDING_SESSIONS_COST_AND_COVERAGE_VERIFICATION"
+        "status": (("ACQUIRED_CHUNK_PENDING_REASSEMBLY" if max_hours < 24
+                    else "ACQUIRED_PENDING_SESSIONS_COST_AND_COVERAGE_VERIFICATION")
                    if total > 0 and failures == 0 and len(hours) == max_hours
                    else "INCOMPLETE_NOT_BACKTEST_READY"),
         "validation_limits": [
@@ -162,17 +168,18 @@ def main():
     parser.add_argument("--output", default="artifacts/xauusd-dukascopy")
     parser.add_argument("--delay", type=float, default=0.45)
     parser.add_argument("--max-hours", type=int, default=24)
+    parser.add_argument("--start-hour", type=int, default=0)
     parser.add_argument("--selftest-only", action="store_true")
     args = parser.parse_args()
     offline_selftest()
     if args.selftest_only:
         return
-    if not 1 <= args.max_hours <= 24 or not 0 <= args.delay <= 10:
+    if not 1 <= args.max_hours <= 24 or not 0 <= args.start_hour <= 23 or args.start_hour + args.max_hours > 24 or not 0 <= args.delay <= 10:
         parser.error("invalid max hours / delay")
     day = date.fromisoformat(args.date)
     if not date(2024, 1, 1) <= day <= date(2026, 11, 13):
         parser.error("date outside requested scope")
-    report = acquire_day(day, Path(args.output), args.delay, args.max_hours)
+    report = acquire_day(day, Path(args.output), args.delay, args.max_hours, args.start_hour)
     print("FINAL_RESULT", json.dumps({
         k: report[k] for k in ("date_utc", "tick_count", "hours_attempted",
                              "network_or_decode_failures", "status", "orders_sent")}), flush=True)
