@@ -63,10 +63,25 @@ class TestP9V2V31HybridFrozenResearch(unittest.TestCase):
                 p=DIR/path
                 self.assertTrue(p.is_file())
                 raw=p.read_bytes()
-                self.assertEqual(hashlib.sha256(raw).hexdigest(),record["sha256"])
+                self.assertEqual(
+                    hashlib.sha256(raw.replace(b"\r\n",b"\n")).hexdigest(),
+                    record["normalized_lf_sha256"],
+                )
+                self.assertEqual(
+                    len(raw.replace(b"\r\n",b"\n")),
+                    record["normalized_lf_size"],
+                )
                 decoded=gzip.decompress(raw) if record["gzip"] else raw
-                self.assertEqual(hashlib.sha256(decoded).hexdigest(),record["source_sha256"])
-                self.assertEqual(len(decoded),record["source_size"])
+                # Git checkout may convert EOLs for text sources on Windows;
+                # normalized content must remain exactly the frozen source.
+                source=(DIR/path).read_bytes()
+                self.assertEqual(
+                    hashlib.sha256(source.replace(b"\r\n",b"\n")).hexdigest(),
+                    record["normalized_lf_sha256"],
+                )
+                if record["gzip"]:
+                    self.assertEqual(hashlib.sha256(decoded).hexdigest(),record["source_sha256"])
+                    self.assertEqual(len(decoded),record["source_size"])
         for sha in self.info["source_sha256_on_vps"].values():
             self.assertRegex(sha,r"^[0-9a-f]{64}$")
 

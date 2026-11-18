@@ -62,48 +62,64 @@
   "repo_evidence_files": {
     "evidence/FINAL_HYBRID_MATCHED_SCENARIOS_AND_CAP025.json.gz": {
       "gzip": true,
+      "normalized_lf_sha256": "2a1edfca1a90e6c49fc523f0fab06dd2f4efcd2ecc24eb4b08ec6f271654ab79",
+      "normalized_lf_size": 9834,
       "sha256": "2a1edfca1a90e6c49fc523f0fab06dd2f4efcd2ecc24eb4b08ec6f271654ab79",
       "source_sha256": "b2fc27837d7e47ba8c11746f718fc2bc49e2ff60e3eaa3c236cee8e1ed92f11f",
       "source_size": 123984
     },
     "evidence/FINAL_P9_V2_V31_HYBRID_RESEARCH_20261119.md": {
       "gzip": false,
+      "normalized_lf_sha256": "0cdb3b54d4c88d1a2a8b20e24b3e15a2606a4c3a062db660952a9735ac55e467",
+      "normalized_lf_size": 4687,
       "sha256": "331b78abc0ec7e5dd60863edcbe51b9d2f85749bc77b00a48061a304fefac531",
       "source_sha256": "331b78abc0ec7e5dd60863edcbe51b9d2f85749bc77b00a48061a304fefac531",
       "source_size": 4780
     },
     "evidence/HYBRID_OPTIMAL_MONTHLY_V2_V3_COMPARISON.csv": {
       "gzip": false,
+      "normalized_lf_sha256": "cb5b58112fe7cd1a9b11d4f4e742503938caf48e51af655f5a9de566a1d4a9f1",
+      "normalized_lf_size": 1532,
       "sha256": "7214f4db553541336888e71a2f18c0e8028808bb10594d42199cea70ef3af4e6",
       "source_sha256": "7214f4db553541336888e71a2f18c0e8028808bb10594d42199cea70ef3af4e6",
       "source_size": 1560
     },
     "evidence/HYBRID_P9_V2_V31_ADR_REGIME_GRID.json.gz": {
       "gzip": true,
+      "normalized_lf_sha256": "a7a82319d565e99239714ab5fa403a0dd9ed914179749d5420cadf374879458b",
+      "normalized_lf_size": 82868,
       "sha256": "a7a82319d565e99239714ab5fa403a0dd9ed914179749d5420cadf374879458b",
       "source_sha256": "5879e90207779f8a11a9889988aa468c0c3f40e3dd59a64b64f2dcb7e3ab713a",
       "source_size": 1620870
     },
     "evidence/HYBRID_P9_V2_V31_STAGE1_FULL_GRID.json.gz": {
       "gzip": true,
+      "normalized_lf_sha256": "2b750e653ef6eca3d76b54ec27a7549221811ab83ac010aca6ba7d859da76235",
+      "normalized_lf_size": 90402,
       "sha256": "bb9b9c38d28de10f6473ae42f6fc600b803a5940b7637ef7e0331a882c10f58d",
       "source_sha256": "71e01a5a7a5c78cf72789b2ccb3d008fae770c50482358df5e72fbf8c52733db",
       "source_size": 1639106
     },
     "evidence/hybrid_p9_v2_v31_robust_grid.py": {
       "gzip": false,
+      "normalized_lf_sha256": "8f04b69f9bde304f2333655a881a542afec6db76280c65ce608d62a63d8cab42",
+      "normalized_lf_size": 10241,
       "sha256": "8f04b69f9bde304f2333655a881a542afec6db76280c65ce608d62a63d8cab42",
       "source_sha256": "8f04b69f9bde304f2333655a881a542afec6db76280c65ce608d62a63d8cab42",
       "source_size": 10241
     },
     "evidence/test_causal_adr_gated_hybrid.py": {
       "gzip": false,
+      "normalized_lf_sha256": "ec5cb5ed4ecc43c841c48949f16cf31bd80284021bce124f38b428e5dcf8026f",
+      "normalized_lf_size": 6833,
       "sha256": "ec5cb5ed4ecc43c841c48949f16cf31bd80284021bce124f38b428e5dcf8026f",
       "source_sha256": "ec5cb5ed4ecc43c841c48949f16cf31bd80284021bce124f38b428e5dcf8026f",
       "source_size": 6833
     },
     "evidence/verify_optimal_hybrid_against_baselines.py": {
       "gzip": false,
+      "normalized_lf_sha256": "8e0fc942ff5e752d9aede79cad610fe02fca359df8ff47c23eb069c2943a0c8c",
+      "normalized_lf_size": 6726,
       "sha256": "8e0fc942ff5e752d9aede79cad610fe02fca359df8ff47c23eb069c2943a0c8c",
       "source_sha256": "8e0fc942ff5e752d9aede79cad610fe02fca359df8ff47c23eb069c2943a0c8c",
       "source_size": 6726
