@@ -1,0 +1,38 @@
+{
+  "package": "KATARINA_P9_V2_ROBUST_LATEST_GITHUB_SYNC",
+  "record_date": "2026-11-18",
+  "repository": "alfaauliau-katarinaAI/Katarina-AI",
+  "target_branch": "main",
+  "files_sha256": {
+    "docs/research/FINAL_ADR_ADAPTIVE_RISK_MAXIMUM_RESEARCH_20261118.md": "96e44a23347c1bea96076a8be0d31d2f73a1f12cd5c5a68f4d74c7ce4b940992",
+    "docs/research/FINAL_MAXIMUM_RISK_BACKTEST_REPORT_20261118.md": "6fd7c8582889eb748248d6231f57ea5fd021443fd6dee470ba395e60524ed396",
+    "docs/research/FINAL_P9_V31_COMPOUNDING_SCHEME_20261118.md": "63fad2a379df9e1c62340e189f666df3ca358ea397f39d217a3e104f0ee4d3e0",
+    "docs/research/P9_V2_ROBUST_FIVE_INTEGRATION_20261118.md": "1d26fdeec0e5743c26d15cec55cbf009f409c6d5ce9da1680729f7e7c2af9e16",
+    "mt5/Experts/P9V2RobustFiveResearchShadow.mq5": "a60811372af40c71e0f528af8f57ffdea80f6854a75e9f0dd521a96bd40e4097",
+    "research/p9_v2_robust/P9_V2_ROBUST_RESEARCH_CANDIDATES.json": "6914141a84057a52f8fa97a822428bb9546a6e6607dcd8baf2e6af7c0277fcd8",
+    "research/p9_v2_robust/README.md": "8ac5a18ec4b91c0dc05493769a4ce5e08c11d90fe7d3c587ba89ec73986135f5",
+    "research/p9_v2_robust/evidence/FINAL_P9_V2_ROBUST_FIVE_KATARINA_INTEGRATION_20261118.md": "e6d97305d56f15b36d3a1d658c78ca1c13d84f7d86c9924e877b61970c317019",
+    "research/p9_v2_robust/evidence/INTEGRATION_VERIFICATION.json": "8ead229d4db3b332c0b48147139fb2fdf8213fac354fe4b1ffc8892f2f0e4fcd",
+    "research/p9_v2_robust/evidence/P9_V2_ROBUST_FIVE_ADR_RISK_SCAN_20261118.json.gz": "ebec970cd3738dd9b5cd1d8cd935ddaca1181ee2ee2cf5436c9bbf12fff7a372",
+    "research/p9_v2_robust/evidence/P9_V2_ROBUST_FIVE_MONTHLY_COMPARE.csv": "cd8498a7cb727cfa8ee3f0fe75c57069cb2c5d84d6f5a1d4b0a8caa1430c9104",
+    "research/p9_v2_robust/evidence/P9_V31_ADR_MONTHLY_OPTIMAL_VS_STATIC_20261118.csv": "b6551c95788b2e85a09261f49133fbc68870e11c22bf3fe18c2f7e0b62caee4c",
+    "research/p9_v2_robust/evidence/P9_V31_MAXIMUM_RISK_MONTHLY_NORMAL_VS_STRESSES_20261118.csv": "5e9d867694a4627d0bf7cf3d0421fbdaa1a4298fd673c0bc3e5bfc6b6cf41c49",
+    "research/p9_v2_robust/evidence/optimize_p9_v2_robust_five_adr.py": "19d469416e8608886d2eb132683713b1c15e57c1729920379f19c71813d2155a",
+    "src/katarina/research/p9_v2_robust.py": "c59ee42800a78cb5e2fa64f49dc4c03c2b8e03e11512a4fa27275aede6f38035",
+    "tests/unit/test_p9_v2_robust_research.py": "c898b617aa375d97e60910a1499c7ec4b81aeb190c409e5ac6c384e4b411c516"
+  },
+  "compressed_full_research_scan": {
+    "path": "research/p9_v2_robust/evidence/P9_V2_ROBUST_FIVE_ADR_RISK_SCAN_20261118.json.gz",
+    "original_bytes": 9642116,
+    "compressed_bytes": 640780,
+    "original_sha256": "bae6dde4fd4f2a3574434e2ed51eda99381aa5919143dd57e7dccbd902365072"
+  },
+  "not_pushed": {
+    "mt5_ex5_compiled_binary": "Excluded by pre-existing .gitignore (*.ex5); retained on VPS, reproducible from .mq5",
+    "raw_broker_price_ticks": "Excluded due data size, source provenance and privacy",
+    "research_full_adr_grid": "Retained VPS; final ADR report and monthly comparison are included",
+    "risk_status": "EvidenceRiskGate WAIT, per entry live cap 0.25% unchanged, all >0.25 research-only"
+  },
+  "broker_orders": 0,
+  "live_promoted": false
+}

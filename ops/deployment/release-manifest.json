@@ -50,6 +50,11 @@
       "normalized_sha256": "452c3aafcaa4460d1a4fcb848d5c3b320e645f5fb14a1a87b5bf55ba3c1eb948",
       "sha256": "452c3aafcaa4460d1a4fcb848d5c3b320e645f5fb14a1a87b5bf55ba3c1eb948"
     },
+    "mt5/Experts/P9V2RobustFiveResearchShadow.mq5": {
+      "bytes": 13242,
+      "normalized_sha256": "a60811372af40c71e0f528af8f57ffdea80f6854a75e9f0dd521a96bd40e4097",
+      "sha256": "a60811372af40c71e0f528af8f57ffdea80f6854a75e9f0dd521a96bd40e4097"
+    },
     "mt5/Include/Katarina/BarSource.mqh": {
       "bytes": 1206,
       "normalized_sha256": "1fca0ee5fe450eb24b4b81c3b3f18779d0d875fae0188cb23e2ef681ea70f889",
@@ -1639,6 +1644,11 @@
       "bytes": 11271,
       "normalized_sha256": "cdf89fd1c7ed6393f8661351ed6833f8cf24c88567ee2f141b4975fad88c0094",
       "sha256": "cdf89fd1c7ed6393f8661351ed6833f8cf24c88567ee2f141b4975fad88c0094"
+    },
+    "src/katarina/research/p9_v2_robust.py": {
+      "bytes": 4259,
+      "normalized_sha256": "c59ee42800a78cb5e2fa64f49dc4c03c2b8e03e11512a4fa27275aede6f38035",
+      "sha256": "c59ee42800a78cb5e2fa64f49dc4c03c2b8e03e11512a4fa27275aede6f38035"
     },
     "src/katarina/research/research.py": {
       "bytes": 604,
