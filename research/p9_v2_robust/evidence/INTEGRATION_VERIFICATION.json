@@ -1,0 +1,14 @@
+{
+  "status": "P9_V2_ROBUST_FIVE_KATARINA_RESEARCH_INTEGRATION_VALIDATED",
+  "mql5_compiled": true,
+  "mq5_source": "C:\\Katarina\\code\\mt5\\Experts\\P9V2RobustFiveResearchShadow.mq5",
+  "ex5": "C:\\Katarina\\code\\mt5\\Experts\\P9V2RobustFiveResearchShadow.ex5",
+  "unit_tests": "PASS",
+  "verified_promotion_lock_files": 25,
+  "live_permission": false,
+  "max_native_pct": 0.25,
+  "EvidenceRiskGate": "WAIT",
+  "broker_orders": 0,
+  "version_orig_P9_P7_unchanged": true,
+  "git_changes": "?? docs/research/P9_V2_ROBUST_FIVE_INTEGRATION_20261118.md\n?? mt5/Experts/P9V2RobustFiveResearchShadow.mq5\n?? research/p9_v2_robust/\n?? src/katarina/research/p9_v2_robust.py\n?? tests/unit/test_p9_v2_robust_research.py\n"
+}

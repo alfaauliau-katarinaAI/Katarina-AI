@@ -1,0 +1,116 @@
+{
+  "id": "P9_V2_ROBUST_FIVE_ADR_RESEARCH_20261118",
+  "status": "INTEGRATED_SHADOW_RESEARCH_NOT_PRODUCTION",
+  "selected": "BALANCED_ROBUST",
+  "engines": [
+    "XAU_H1_BUY",
+    "XAU_H4_BUY",
+    "NAS_H4_SELL",
+    "EUR_H4_BUY",
+    "CHF_H4_BUY"
+  ],
+  "risk_allocation": {
+    "max_open_symbol_families": 2,
+    "risk_sizing_not_executable": true,
+    "live_authorized": false,
+    "evidence_gate": "WAIT",
+    "native_live_cap_pct_per_entry": 0.25,
+    "dd_reduce_at_pct": 4.0,
+    "dd_reduce_multiplier": 0.5,
+    "dd_new_entry_stop_at_pct": 8.0
+  },
+  "profiles": {
+    "BALANCED_ROBUST": {
+      "base_risk_pct_by_family": {
+        "XAU": 0.75,
+        "NAS": 3.0,
+        "EUR": 0.5,
+        "CHF": 0.5
+      },
+      "adr": {
+        "threshold_low": 0.9,
+        "threshold_high": 1.3,
+        "factor_low": 0.75,
+        "factor_mid": 1.0,
+        "factor_high": 1.25,
+        "targets": [
+          "XAU",
+          "NAS",
+          "EUR",
+          "CHF"
+        ],
+        "measure": "ADR20_OVER_PRIOR_EXPANDING_MEDIAN_ADR20"
+      },
+      "historical": {
+        "normal_month": 1293.84,
+        "normal_closed_dd": 5.525,
+        "stress04_month": 361.9,
+        "stress05_month": 158.81,
+        "stress06_month": 99.88,
+        "stress06_closed_dd": 6.951,
+        "completed_fills_normal": 205
+      }
+    },
+    "MAX_GROWTH": {
+      "base_risk_pct_by_family": {
+        "XAU": 1.0,
+        "NAS": 3.0,
+        "EUR": 1.0,
+        "CHF": 1.0
+      },
+      "adr": {
+        "threshold_low": 0.8,
+        "threshold_high": 1.2,
+        "factor_low": 0.5,
+        "factor_mid": 1.0,
+        "factor_high": 1.25,
+        "targets": [
+          "XAU",
+          "NAS",
+          "EUR",
+          "CHF"
+        ],
+        "measure": "ADR20_OVER_ADR100"
+      },
+      "historical": {
+        "normal_month": 1664.93,
+        "normal_closed_dd": 5.805,
+        "stress04_month": 324.5,
+        "stress05_month": 160.54,
+        "stress06_month": 39.59,
+        "stress06_closed_dd": 7.83,
+        "completed_fills_normal": 205
+      }
+    },
+    "MAX_STRESS": {
+      "base_risk_pct_by_family": {
+        "XAU": 0.25,
+        "NAS": 3.0,
+        "EUR": 0.5,
+        "CHF": 0.25
+      },
+      "adr": {
+        "threshold_low": 0.9,
+        "threshold_high": 1.3,
+        "factor_low": 0.5,
+        "factor_mid": 1.0,
+        "factor_high": 1.5,
+        "targets": [
+          "NAS"
+        ],
+        "measure": "ADR20_OVER_PRIOR_EXPANDING_MEDIAN_ADR20"
+      },
+      "historical": {
+        "normal_month": 818.92,
+        "normal_closed_dd": 4.917,
+        "stress04_month": 277.05,
+        "stress05_month": 201.03,
+        "stress06_month": 142.65,
+        "stress06_closed_dd": 7.906,
+        "completed_fills_normal": 199
+      }
+    }
+  },
+  "research_origin": "C:\\Katarina\\research\\p9-v2-robust-max-integration-20261118\\P9_V2_ROBUST_FIVE_ADR_RISK_SCAN.json",
+  "historical_caveat": "2024-2026 repeatedly mined, H1/H4 OHLC first-touch not MT5 native real ticks; NO live authorization."
+}
