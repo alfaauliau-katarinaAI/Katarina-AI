@@ -1,0 +1,148 @@
+{
+  "authorization": {
+    "authorized_risk_pct": 0.0,
+    "can_send_orders": false,
+    "demo_authorized": false,
+    "evidence_risk_gate": "WAIT",
+    "live_authorized": false,
+    "native_cap_research_reference_pct": 0.25,
+    "order_execution_authorized": false,
+    "production_changes_allowed": false,
+    "promotion_requires_owner_approval_and_validated_record": true
+  },
+  "code_non_executable": true,
+  "engine_map": {
+    "EURJPY_H1_SELL": "DISABLED",
+    "EURJPY_H4_BUY": "SHARED_MOMENTUM24",
+    "NAS100_BUY": "DISABLED",
+    "NAS100_H4_SELL": "V3_GROWTH_DEFENSIVE_MACD_ZERO",
+    "USDCHF_H4_BUY": "SHARED_RSI_REENTRY",
+    "USDCHF_H4_SELL": "V3_MACD_ZERO_GATED_BY_PREVIOUS_DAY_ADR_RATIO",
+    "XAUUSD_H1_BUY": "V3_GROWTH_DEFENSIVE_DONCHIAN48",
+    "XAUUSD_H1_SELL": "DISABLED",
+    "XAUUSD_H4_BUY": "V2_KELTNER"
+  },
+  "forward_test": {
+    "do_not_refit_on_holdout": true,
+    "not_before_frozen_at_utc": "2026-11-18T21:20:11+00:00",
+    "official_stage0_not_forward_performance_evidence": true,
+    "status": "NOT_STARTED_NO_INDEPENDENT_FORWARD_OUTCOMES"
+  },
+  "frozen_at_utc": "2026-11-18T21:20:11+00:00",
+  "historical": {
+    "2026_already_seen_not_holdout": true,
+    "from": "2024-08",
+    "hybrid_27m_net_usd": 36428.78,
+    "hybrid_normal_closed_dd_pct": 5.667,
+    "hybrid_normal_usd_per_month": 1349.21,
+    "hybrid_stress_minus06r_closed_dd_pct": 6.984,
+    "hybrid_stress_minus06r_usd_per_month": 121.78,
+    "hybrid_stress_minus07r_closed_dd_pct": 8.547,
+    "hybrid_stress_minus07r_dd_veto": 99,
+    "months": 27,
+    "native_cap_strict_minus06r_usd_per_month": 6.44,
+    "native_cap_strict_research_normal_usd_per_month": 21.79,
+    "source_is_broker_h1h4_ohlc_not_native_realtick": true,
+    "starting_usd": 10000,
+    "to": "2026-10",
+    "v2_normal_usd_per_month": 1293.84,
+    "variants_tested": 1184
+  },
+  "id": "P9_V2_V31_HYBRID_BALANCED_ADR_FROZEN_20261119",
+  "note": "Frozen hash research candidate only. No active trading modules, no broker orders.",
+  "readiness": {
+    "EURJPY_broker_symbol_available": true,
+    "USDCHF_broker_symbol_available": true,
+    "broker_costs_independently_verified": false,
+    "external_model_review_pass": false,
+    "floating_equity_dd_verified": false,
+    "real_tick_27_month_native_tester_completed": false,
+    "stage0": "IN_PROGRESS"
+  },
+  "repo_evidence_files": {
+    "evidence/FINAL_HYBRID_MATCHED_SCENARIOS_AND_CAP025.json.gz": {
+      "gzip": true,
+      "sha256": "2a1edfca1a90e6c49fc523f0fab06dd2f4efcd2ecc24eb4b08ec6f271654ab79",
+      "source_sha256": "b2fc27837d7e47ba8c11746f718fc2bc49e2ff60e3eaa3c236cee8e1ed92f11f",
+      "source_size": 123984
+    },
+    "evidence/FINAL_P9_V2_V31_HYBRID_RESEARCH_20261119.md": {
+      "gzip": false,
+      "sha256": "331b78abc0ec7e5dd60863edcbe51b9d2f85749bc77b00a48061a304fefac531",
+      "source_sha256": "331b78abc0ec7e5dd60863edcbe51b9d2f85749bc77b00a48061a304fefac531",
+      "source_size": 4780
+    },
+    "evidence/HYBRID_OPTIMAL_MONTHLY_V2_V3_COMPARISON.csv": {
+      "gzip": false,
+      "sha256": "7214f4db553541336888e71a2f18c0e8028808bb10594d42199cea70ef3af4e6",
+      "source_sha256": "7214f4db553541336888e71a2f18c0e8028808bb10594d42199cea70ef3af4e6",
+      "source_size": 1560
+    },
+    "evidence/HYBRID_P9_V2_V31_ADR_REGIME_GRID.json.gz": {
+      "gzip": true,
+      "sha256": "a7a82319d565e99239714ab5fa403a0dd9ed914179749d5420cadf374879458b",
+      "source_sha256": "5879e90207779f8a11a9889988aa468c0c3f40e3dd59a64b64f2dcb7e3ab713a",
+      "source_size": 1620870
+    },
+    "evidence/HYBRID_P9_V2_V31_STAGE1_FULL_GRID.json.gz": {
+      "gzip": true,
+      "sha256": "bb9b9c38d28de10f6473ae42f6fc600b803a5940b7637ef7e0331a882c10f58d",
+      "source_sha256": "71e01a5a7a5c78cf72789b2ccb3d008fae770c50482358df5e72fbf8c52733db",
+      "source_size": 1639106
+    },
+    "evidence/hybrid_p9_v2_v31_robust_grid.py": {
+      "gzip": false,
+      "sha256": "8f04b69f9bde304f2333655a881a542afec6db76280c65ce608d62a63d8cab42",
+      "source_sha256": "8f04b69f9bde304f2333655a881a542afec6db76280c65ce608d62a63d8cab42",
+      "source_size": 10241
+    },
+    "evidence/test_causal_adr_gated_hybrid.py": {
+      "gzip": false,
+      "sha256": "ec5cb5ed4ecc43c841c48949f16cf31bd80284021bce124f38b428e5dcf8026f",
+      "source_sha256": "ec5cb5ed4ecc43c841c48949f16cf31bd80284021bce124f38b428e5dcf8026f",
+      "source_size": 6833
+    },
+    "evidence/verify_optimal_hybrid_against_baselines.py": {
+      "gzip": false,
+      "sha256": "8e0fc942ff5e752d9aede79cad610fe02fca359df8ff47c23eb069c2943a0c8c",
+      "source_sha256": "8e0fc942ff5e752d9aede79cad610fe02fca359df8ff47c23eb069c2943a0c8c",
+      "source_size": 6726
+    }
+  },
+  "research_only": true,
+  "risk_research_only": {
+    "base_pct_by_family": {
+      "CHF": 0.5,
+      "EUR": 0.5,
+      "NAS": 3.0,
+      "XAU": 0.75
+    },
+    "closed_dd_new_orders_stop_at_pct": 8.0,
+    "closed_dd_reduce_at_pct": 4.0,
+    "high_mult": 1.25,
+    "high_threshold_inclusive": 1.3,
+    "low_mult": 0.75,
+    "low_threshold_exclusive": 0.9,
+    "max_open_distinct_families": 2,
+    "mid_mult": 1.0,
+    "not_approved_for_demo_or_live": true,
+    "risk_measure": "ADR20_OVER_PRIOR_EXPANDING_MEDIAN_ADR20"
+  },
+  "schema_version": 1,
+  "source_sha256_on_vps": {
+    "p7_lock": "37846fd71ad17371c206d2e6e56e712fff8c09ad119b5858467d6131e02cfdae",
+    "p9_v2_adr_optimizer": "36172ce374c4ad4140d29c1e7277f5b91acd25832d5451d59d19bcdfa0facd0d",
+    "p9_v2_lock": "17bdf0bc910c1147f950f2efa94b7d5cabfd8adda69b1a98e37d3005a0ea1fd8",
+    "p9_v31_adr_optimizer": "4b665fd8b5077fb7d5d83757e74839fa683d5bfae94ac374da5ade6e05344670",
+    "p9_v31_events": "e469fdb31e69e8e78bd4459bd16e6e7c9d3f6f7ff46f31fe76b6beeea29fbe9d"
+  },
+  "status": "FROZEN_RESEARCH_CHALLENGER_NOT_PROMOTED",
+  "usdchf_sell_conditional": {
+    "eligible_candidate_signals_in_27_months": 12,
+    "lower_inclusive": 0.8,
+    "measure": "ADR20_OVER_ADR100",
+    "min_full_days": 100,
+    "source": "PREVIOUS_FULLY_COMPLETED_BROKER_TRADING_DAYS_ONLY",
+    "upper_exclusive": 1.2
+  }
+}
